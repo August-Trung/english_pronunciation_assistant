@@ -1,0 +1,47 @@
+# Thư mục môi trường ảo
+.venv/
+venv/
+env/
+
+# Tệp bytecode Python
+*.pyc
+__pycache__/
+
+# Các tệp nhật ký/log
+*.log
+!logs/.gitkeep  # Giữ thư mục logs trống nếu bạn muốn
+
+# Tệp cài đặt/cấu hình nhạy cảm (nếu có)
+*.ini
+*.cfg
+*.conf
+*.json
+.env
+
+# Tệp bản sao lưu của trình chỉnh sửa
+*~
+\#*
+.\#*
+
+# Hệ điều hành và tệp tạm thời
+.DS_Store # macOS
+Thumbs.db # Windows
+
+# Tệp phát sinh từ các công cụ/IDE phổ biến (ví dụ: VS Code)
+.vscode/
+
+# Tệp phát sinh từ pip/setuptools
+build/
+dist/
+*.egg-info/
+
+# Tệp kiểm tra cài đặt
+test_installation.py
+
+# Nếu bạn sử dụng packages.txt để ghi lại gói và không phải là tệp yêu cầu chính
+# Bạn có thể bỏ qua nó, nhưng thường thì requirements.txt là tệp quan trọng
+# packages.txt
+
+# Tệp chứa các gói đã cài đặt (thường không được commit)
+# Nếu bạn tạo nó từ `pip freeze > installed_packages.txt`
+installed_packages.txt
