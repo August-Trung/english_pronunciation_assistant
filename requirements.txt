@@ -3,5 +3,7 @@ openai-whisper>=20231117
 fuzzywuzzy>=0.18.0
 python-Levenshtein>=0.21.0
 pydub>=0.25.1
-numpy>=1.24.0
+numpy>=2.3.3
+pandas==2.3.3
+plotly==5.18.0
 ffmpeg-python>=0.2.0
