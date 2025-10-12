@@ -1,23 +1,19 @@
 import streamlit as st
 import whisper
-from fuzzywuzzy import fuzz
 from pydub import AudioSegment
-import numpy as np
 import tempfile
 import os
 from datetime import datetime, timedelta
-import io
-import difflib
 import pandas as pd
 import plotly.graph_objects as go
-import plotly.express as px
 from collections import Counter
 import json
+import re
 
 # Cấu hình trang
 st.set_page_config(
-    page_title="Chấm Phát Âm Tiếng Anh",
-    page_icon="assets/logo-augusttrung.png",
+    page_title="Phân tích Phát Âm Tiếng Anh",
+    page_icon="🎤",
     layout="wide",
 )
 
@@ -78,75 +74,11 @@ if "model" not in st.session_state:
 if "user_name" not in st.session_state:
     st.session_state.user_name = "Học viên"
 
-if "practice_mode" not in st.session_state:
-    st.session_state.practice_mode = "Tự do"
-
 if "daily_goal" not in st.session_state:
     st.session_state.daily_goal = 10
 
-if "favorite_sentences" not in st.session_state:
-    st.session_state.favorite_sentences = []
-
 if "model_size" not in st.session_state:
     st.session_state.model_size = "base"
-
-if "dark_mode" not in st.session_state:
-    st.session_state.dark_mode = False
-
-if "sentence_notes" not in st.session_state:
-    st.session_state.sentence_notes = {}
-
-# Thư viện câu mẫu theo chủ đề
-SENTENCE_LIBRARY = {
-    "📚 Cơ bản - Beginner": [
-        "Hello, my name is John",
-        "I like apples",
-        "This is a book",
-        "Good morning teacher",
-        "How are you today",
-        "Thank you very much",
-        "I am a student",
-        "The weather is nice",
-    ],
-    "🎓 Trung cấp - Intermediate": [
-        "I want to eat an apple",
-        "She is reading a book in the library",
-        "The weather is nice today",
-        "Can you help me with this problem",
-        "I am studying English every day",
-        "My favorite color is blue",
-        "I enjoy listening to music",
-        "We will go to the park tomorrow",
-    ],
-    "🚀 Nâng cao - Advanced": [
-        "I would like to introduce myself to everyone here",
-        "The quick brown fox jumps over the lazy dog",
-        "She sells seashells by the seashore",
-        "Peter Piper picked a peck of pickled peppers",
-        "How much wood would a woodchuck chuck",
-        "The sixth sick sheikh's sixth sheep's sick",
-        "I saw Susie sitting in a shoeshine shop",
-        "Unique New York, unique New York, you know you need unique New York",
-    ],
-    "💼 Giao tiếp - Communication": [
-        "Excuse me, where is the nearest bus stop",
-        "Could you please speak more slowly",
-        "I would like to book a table for two",
-        "What time does the meeting start",
-        "I need to cancel my appointment",
-        "Can I have the menu please",
-        "How much does this cost",
-        "I'm looking for the train station",
-    ],
-    "📖 IELTS Speaking": [
-        "I believe that education is the key to success",
-        "In my opinion, technology has changed our lives",
-        "There are several reasons why I prefer living in the city",
-        "I would like to talk about my hometown",
-        "One of the most important things in life is health",
-        "I think that learning a foreign language is essential",
-    ],
-}
 
 
 @st.cache_resource
@@ -189,46 +121,614 @@ def transcribe_audio(audio_path, model):
         return None
 
 
-def compare_texts(reference, transcribed):
-    """So sánh câu mẫu với câu nhận dạng được"""
-    ref_clean = reference.lower().strip()
-    trans_clean = transcribed.lower().strip()
+def check_grammar_basic(text):
+    """
+    Kiểm tra lỗi ngữ pháp cơ bản (mô phỏng)
+    Trả về điểm từ 0-2
+    """
+    words = text.lower().split()
+    errors = []
+    score = 2.0
 
-    similarity = fuzz.ratio(ref_clean, trans_clean)
+    # Kiểm tra Subject-Verb Agreement cơ bản
+    common_errors = [
+        ("i is", "i am"),
+        ("he are", "he is"),
+        ("she are", "she is"),
+        ("they is", "they are"),
+        ("we is", "we are"),
+        ("i does", "i do"),
+        ("he do", "he does"),
+        ("she do", "she does"),
+    ]
 
-    ref_words = ref_clean.split()
-    trans_words = trans_clean.split()
+    text_lower = text.lower()
+    for wrong, correct in common_errors:
+        if wrong in text_lower:
+            errors.append(f"Lỗi S-V: '{wrong}' → '{correct}'")
+            score -= 0.3
 
-    matcher = difflib.SequenceMatcher(None, ref_words, trans_words)
-    wrong_words = []
+    # Kiểm tra thiếu động từ (câu không có động từ phổ biến)
+    sentences = re.split(r"[.!?]", text)
+    basic_verbs = [
+        "is",
+        "are",
+        "am",
+        "was",
+        "were",
+        "have",
+        "has",
+        "had",
+        "do",
+        "does",
+        "did",
+        "can",
+        "could",
+        "will",
+        "would",
+        "should",
+        "go",
+        "get",
+        "make",
+        "take",
+        "see",
+        "know",
+    ]
 
-    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-        if tag == "delete":
-            for word in ref_words[i1:i2]:
-                wrong_words.append(f"❌ Thiếu: '{word}'")
-        elif tag == "insert":
-            for word in trans_words[j1:j2]:
-                wrong_words.append(f"➕ Thừa: '{word}'")
-        elif tag == "replace":
-            for ref_w, trans_w in zip(ref_words[i1:i2], trans_words[j1:j2]):
-                wrong_words.append(f"🔄 '{ref_w}' → '{trans_w}'")
+    for sent in sentences:
+        sent_words = sent.lower().split()
+        if len(sent_words) > 3:  # Câu đủ dài
+            has_verb = any(verb in sent_words for verb in basic_verbs)
+            if not has_verb:
+                score -= 0.2
 
-    return similarity, wrong_words
+    return max(score, 0), errors
 
 
-def save_result_to_history(reference, transcribed, score, wrong_words):
+def check_fluency(text):
+    """
+    Đánh giá độ trôi chảy và tự nhiên (dựa trên cấu trúc câu)
+    Trả về điểm từ 0-2
+    """
+    words = text.split()
+    word_count = len(words)
+
+    if word_count == 0:
+        return 0, ["Không có nội dung"]
+
+    # Đếm số câu
+    sentences = re.split(r"[.!?]+", text)
+    sentences = [s.strip() for s in sentences if s.strip()]
+    sentence_count = len(sentences)
+
+    # Tính độ dài câu trung bình
+    avg_sentence_length = word_count / max(sentence_count, 1)
+
+    score = 1.5  # Điểm cơ bản
+    issues = []
+
+    # Độ dài bài nói
+    if word_count >= 40:
+        score += 0.3
+    elif word_count < 20:
+        score -= 0.3
+        issues.append("Bài nói quá ngắn")
+
+    # Độ dài câu (câu quá ngắn hoặc quá dài đều không tốt)
+    if 5 <= avg_sentence_length <= 15:
+        score += 0.2
+    elif avg_sentence_length < 3:
+        issues.append("Câu quá ngắn, thiếu tự nhiên")
+        score -= 0.2
+
+    return max(min(score, 2.0), 0), issues
+
+
+def check_vocabulary(text):
+    """
+    Đánh giá từ vựng (đa dạng và phù hợp chủ đề)
+    Trả về điểm từ 0-2
+    """
+    words = text.lower().split()
+    words_clean = [re.sub(r"[^a-z]", "", w) for w in words]
+    words_clean = [w for w in words_clean if len(w) > 2]
+
+    if len(words_clean) == 0:
+        return 0, ["Không có từ vựng"]
+
+    # Tính độ đa dạng từ vựng
+    unique_words = set(words_clean)
+    vocab_diversity = len(unique_words) / len(words_clean)
+
+    # Đếm từ phức tạp (>= 6 ký tự)
+    complex_words = [w for w in words_clean if len(w) >= 6]
+    complex_ratio = len(complex_words) / len(words_clean)
+
+    score = 1.0  # Điểm cơ bản
+    issues = []
+
+    # Điểm từ độ đa dạng
+    if vocab_diversity >= 0.6:
+        score += 0.5
+    elif vocab_diversity < 0.4:
+        issues.append("Từ vựng bị lặp lại nhiều")
+        score -= 0.2
+
+    # Điểm từ độ phức tạp
+    if complex_ratio >= 0.2:
+        score += 0.5
+    elif complex_ratio < 0.1:
+        issues.append("Nên sử dụng từ vựng đa dạng hơn")
+        score -= 0.2
+
+    return max(min(score, 2.0), 0), issues
+
+
+def check_pronunciation(text, reference_text=None):
+    """
+    Đánh giá phát âm dựa trên:
+    1. Độ CHÍNH XÁC và MẠCH LẠC của transcription (nếu không có reference)
+    2. Độ TƯƠNG ĐỒNG với câu gốc (nếu có reference)
+    Trả về điểm từ 0-2 và feedback chi tiết
+    """
+    words = text.split()
+    word_count = len(words)
+
+    if word_count == 0:
+        return 0, ["⚠️ Không nhận dạng được nội dung"]
+
+    # ==== PHẦN 1: NẾU CÓ REFERENCE TEXT - SO SÁNH TRỰC TIẾP ====
+    if reference_text and reference_text.strip():
+        return check_pronunciation_with_reference(text, reference_text)
+
+    # ==== PHẦN 2: NẾU KHÔNG CÓ REFERENCE - ĐÁNH GIÁ DỰA TRÊN CHẤT LƯỢNG ====
+    # Các pattern báo hiệu phát âm KÉM (Whisper nhận dạng sai)
+    error_indicators = {
+        # Từ vô nghĩa / ngẫu nhiên
+        "nonsense_words": [
+            "hver",
+            "ung",
+            "hver",
+            "isch",
+            "artstrom",
+            "justarta",
+            "matery",
+            "hver",
+            "الت",
+            "ال",
+        ],
+        # Pattern lặp lại bất thường
+        "repetitive": ["me me", "I I", "you you", "the the the"],
+        # Từ quá ngắn không rõ nghĩa
+        "unclear_short": ["i", "a", "o", "u", "e"],  # Đơn lẻ, không có ngữ cảnh
+    }
+
+    # Phân tích chất lượng transcription
+    issues = []
+    penalty = 0.0
+
+    # 1. Kiểm tra từ vô nghĩa
+    nonsense_count = 0
+    nonsense_found = []
+    text_lower = text.lower()
+
+    for nonsense in error_indicators["nonsense_words"]:
+        if nonsense in text_lower:
+            nonsense_count += 1
+            nonsense_found.append(nonsense)
+
+    if nonsense_count > 0:
+        penalty += 0.3 * min(nonsense_count, 3)  # Max -0.9
+        issues.append(f"⚠️ Phát hiện {nonsense_count} từ không rõ nghĩa")
+
+    # 2. Kiểm tra pattern lặp lại bất thường
+    repetition_count = 0
+    for pattern in error_indicators["repetitive"]:
+        if pattern in text_lower:
+            repetition_count += 1
+
+    if repetition_count > 0:
+        penalty += 0.2 * repetition_count
+        issues.append("⚠️ Phát hiện pattern lặp từ bất thường")
+
+    # 3. Kiểm tra tỷ lệ từ quá ngắn (< 3 ký tự) - dấu hiệu nói ngắt quãng
+    short_words = [w for w in words if len(re.sub(r"[^a-zA-Z]", "", w)) < 3]
+    short_ratio = len(short_words) / word_count
+
+    if short_ratio > 0.5:  # Quá 50% từ ngắn
+        penalty += 0.3
+        issues.append(
+            f"⚠️ Quá nhiều từ ngắn ({short_ratio*100:.0f}%) - phát âm có thể không rõ"
+        )
+
+    # 4. Kiểm tra độ dài trung bình của từ (từ quá ngắn = phát âm không rõ)
+    avg_word_length = sum(len(re.sub(r"[^a-zA-Z]", "", w)) for w in words) / word_count
+
+    if avg_word_length < 3.0:
+        penalty += 0.2
+        issues.append(f"⚠️ Từ trung bình quá ngắn ({avg_word_length:.1f} ký tự)")
+
+    # 5. Kiểm tra tính mạch lạc câu (có động từ, danh từ cơ bản)
+    has_basic_structure = any(
+        word in text_lower
+        for word in ["is", "am", "are", "have", "can", "my", "i", "you", "we"]
+    )
+
+    if not has_basic_structure:
+        penalty += 0.3
+        issues.append("⚠️ Thiếu cấu trúc câu cơ bản")
+
+    # 6. Kiểm tra tỷ lệ ký tự số/đặc biệt (dấu hiệu Whisper không nhận dạng được)
+    special_char_count = len(re.findall(r"[^a-zA-Z0-9\s\.\,\!\?]", text))
+    if special_char_count > word_count * 0.1:  # Quá 10%
+        penalty += 0.2
+        issues.append("⚠️ Chứa nhiều ký tự đặc biệt (dấu hiệu không nhận dạng được)")
+
+    # Tính điểm pronunciation (2.0 - penalty)
+    score = max(2.0 - penalty, 0.0)
+
+    # Tạo feedback chi tiết
+    feedback = []
+    feedback.append(f"**📊 Phân tích Pronunciation:**")
+    feedback.append(f"• Tổng số từ: **{word_count}** từ")
+    feedback.append(f"• Độ dài từ TB: **{avg_word_length:.1f}** ký tự")
+    feedback.append(f"• Tỷ lệ từ ngắn: **{short_ratio*100:.0f}%**")
+    feedback.append("")
+
+    # Hiển thị các vấn đề phát hiện được
+    if issues:
+        feedback.append("**🔍 Vấn đề phát hiện:**")
+        for issue in issues:
+            feedback.append(f"• {issue}")
+        feedback.append("")
+
+        if nonsense_found:
+            feedback.append("**❌ Từ không rõ nghĩa:**")
+            feedback.append(f"• {', '.join(nonsense_found[:5])}")
+            feedback.append("")
+
+    # Đánh giá tổng quan
+    if score >= 1.8:
+        feedback.append(
+            "**✅ Phát âm xuất sắc!** Whisper nhận dạng rất tốt, giọng nói rõ ràng."
+        )
+    elif score >= 1.5:
+        feedback.append(
+            "**✅ Phát âm tốt!** Whisper nhận dạng tốt, chỉ một vài chỗ cần cải thiện."
+        )
+    elif score >= 1.2:
+        feedback.append(
+            "**📌 Phát âm khá.** Một số từ chưa rõ, cần phát âm rõ ràng hơn."
+        )
+    elif score >= 0.8:
+        feedback.append(
+            "**⚠️ Phát âm cần cải thiện.** Nhiều từ Whisper nhận dạng không chính xác."
+        )
+    else:
+        feedback.append(
+            "**❌ Phát âm kém.** Whisper gặp khó khăn nhận dạng, cần luyện tập nhiều."
+        )
+
+    # Gợi ý cải thiện
+    if score < 1.5:
+        feedback.append("")
+        feedback.append("**💡 Cách cải thiện:**")
+        feedback.append("1. **Phát âm rõ từng từ:** Nói chậm, rõ ràng")
+        feedback.append("2. **Không nói ngắt quãng:** Nói trọn câu, không dừng giữa từ")
+        feedback.append("3. **Luyện âm khó:** /r/, /l/, /th/, /v/, /s/")
+        feedback.append(
+            "4. **Ghi âm và nghe lại:** So sánh với phát âm chuẩn (Google Translate, Youglish)"
+        )
+
+    return round(score, 1), feedback
+
+
+def check_pronunciation_with_reference(transcribed, reference):
+    """
+    So sánh transcribed text với reference text để đánh giá phát âm
+    Sử dụng Word Error Rate (WER) và phân tích chi tiết
+    """
+
+    # Chuẩn hóa text
+    def normalize(text):
+        text = text.lower()
+        text = re.sub(r"[^a-z\s]", "", text)  # Chỉ giữ chữ cái và space
+        return text.split()
+
+    ref_words = normalize(reference)
+    trans_words = normalize(transcribed)
+
+    if len(ref_words) == 0:
+        return 0, ["⚠️ Câu tham chiếu không hợp lệ"]
+
+    # Tính Word Error Rate (WER) bằng Levenshtein Distance
+    def levenshtein_distance(s1, s2):
+        if len(s1) < len(s2):
+            return levenshtein_distance(s2, s1)
+        if len(s2) == 0:
+            return len(s1)
+        previous_row = range(len(s2) + 1)
+        for i, c1 in enumerate(s1):
+            current_row = [i + 1]
+            for j, c2 in enumerate(s2):
+                insertions = previous_row[j + 1] + 1
+                deletions = current_row[j] + 1
+                substitutions = previous_row[j] + (c1 != c2)
+                current_row.append(min(insertions, deletions, substitutions))
+            previous_row = current_row
+        return previous_row[-1]
+
+    # Phân tích chi tiết từng từ
+    correct_words = 0
+    missing_words = []
+    extra_words = []
+
+    # So sánh từng từ (simple alignment)
+    ref_set = set(ref_words)
+    trans_set = set(trans_words)
+
+    # Từ đúng: có trong cả 2
+    matched_ref = []
+    matched_trans = []
+
+    for word in ref_words:
+        if word in trans_set and word not in matched_ref:
+            correct_words += 1
+            matched_ref.append(word)
+            matched_trans.append(word)
+
+    # Từ thiếu: có trong ref nhưng không khớp
+    for word in ref_words:
+        if word not in matched_ref:
+            missing_words.append(word)
+
+    # Từ thừa: có trong trans nhưng không khớp (CHỈ ĐỂ HIỂN THỊ, KHÔNG TRỪ ĐIỂM)
+    for word in trans_words:
+        if word not in matched_trans and word not in ref_set:
+            extra_words.append(word)
+
+    # Tính accuracy CHỈ dựa trên từ ĐÚNG và THIẾU (bỏ qua từ thừa)
+    # Công thức: Accuracy = (Từ đúng) / (Tổng từ gốc)
+    accuracy = correct_words / len(ref_words)
+    accuracy_percent = accuracy * 100
+
+    # Tính lỗi chỉ từ missing words
+    error_rate = len(missing_words) / len(ref_words)
+
+    # Tính điểm pronunciation dựa trên accuracy
+    if accuracy >= 0.95:
+        score = 2.0
+        grade = "Xuất sắc"
+        emoji = "🟢"
+    elif accuracy >= 0.90:
+        score = 1.8
+        grade = "Rất tốt"
+        emoji = "🟢"
+    elif accuracy >= 0.80:
+        score = 1.5
+        grade = "Khá tốt"
+        emoji = "🟡"
+    elif accuracy >= 0.70:
+        score = 1.2
+        grade = "Trung bình khá"
+        emoji = "🟡"
+    elif accuracy >= 0.60:
+        score = 0.9
+        grade = "Trung bình"
+        emoji = "🟠"
+    elif accuracy >= 0.50:
+        score = 0.6
+        grade = "Yếu"
+        emoji = "🟠"
+    else:
+        score = 0.3
+        grade = "Kém"
+        emoji = "🔴"
+
+    # Tạo feedback chi tiết
+    feedback = []
+    feedback.append(f"**📊 Phân tích So sánh với Câu Gốc:**")
+    feedback.append(f"• **Độ chính xác: {emoji} {accuracy_percent:.1f}%** ({grade})")
+    feedback.append(f"• Câu gốc: **{len(ref_words)}** từ")
+    feedback.append(f"• Bạn nói: **{len(trans_words)}** từ")
+    feedback.append(f"• Từ phát âm đúng: **{correct_words}/{len(ref_words)}** từ")
+    feedback.append(f"• Từ thiếu/sai: **{len(missing_words)}** từ")
+    if extra_words:
+        feedback.append(
+            f"• Từ mở rộng thêm: **{len(extra_words)}** từ *(không trừ điểm)*"
+        )
+    feedback.append("")
+
+    # Hiển thị từ thiếu chi tiết
+    if missing_words:
+        feedback.append(f"**❌ Từ THIẾU/SAI ({len(missing_words)} từ):**")
+        missing_unique = list(set(missing_words))[:15]
+        feedback.append(f"• {', '.join(missing_unique)}")
+        feedback.append("")
+
+    if extra_words:
+        feedback.append(f"**➕ Từ MỞ RỘNG THÊM ({len(extra_words)} từ):**")
+        extra_unique = list(set(extra_words))[:15]
+        feedback.append(f"• {', '.join(extra_unique)}")
+        feedback.append(f"• *(Không bị trừ điểm - Khuyến khích mở rộng ý!)*")
+        feedback.append("")
+
+    # Đánh giá tổng quan
+    if accuracy >= 0.90:
+        feedback.append(
+            "**✅ Xuất sắc!** Phát âm rất chuẩn, phần lớn từ trong câu gốc đều đúng."
+        )
+    elif accuracy >= 0.80:
+        feedback.append(
+            "**✅ Rất tốt!** Phần lớn từ phát âm chuẩn, chỉ thiếu/sai một vài từ."
+        )
+    elif accuracy >= 0.70:
+        feedback.append("**📌 Khá tốt.** Một số từ trong câu gốc cần cải thiện.")
+    elif accuracy >= 0.60:
+        feedback.append("**⚠️ Trung bình.** Nhiều từ trong câu gốc bị thiếu/sai.")
+    else:
+        feedback.append(
+            "**❌ Cần cải thiện.** Phần lớn từ trong câu gốc chưa phát âm đúng."
+        )
+
+    # Gợi ý cải thiện
+    if accuracy < 0.85:
+        feedback.append("")
+        feedback.append("**💡 Gợi ý cải thiện:**")
+        feedback.append("1. **Tập trung vào từ THIẾU/SAI** ở trên")
+        feedback.append("2. **Đọc chậm từng từ** trong câu gốc")
+        feedback.append("3. **Nghe và nhắc lại** nhiều lần")
+        feedback.append("4. **So sánh ghi âm** của bạn với phát âm chuẩn")
+
+    if extra_words and accuracy >= 0.75:
+        feedback.append("")
+        feedback.append("**🌟 Điểm cộng:**")
+        feedback.append("• Bạn đã mở rộng ý rất tốt! Tiếp tục phát triển kỹ năng này!")
+
+    return round(score, 1), feedback
+
+
+def check_communication(text):
+    """
+    Đánh giá khả năng truyền đạt ý (có trả lời đúng câu hỏi, logic, rõ ràng)
+    Trả về điểm từ 0-2
+    """
+    words = text.lower().split()
+    word_count = len(words)
+
+    score = 1.0  # Điểm cơ bản
+    issues = []
+
+    # Kiểm tra độ dài (có đủ nội dung không)
+    if word_count >= 30:
+        score += 0.5
+    elif word_count < 15:
+        score -= 0.3
+        issues.append("Câu trả lời quá ngắn, thiếu chi tiết")
+
+    # Kiểm tra có từ nối (because, and, so, but) - thể hiện logic
+    connectors = ["because", "and", "so", "but", "also", "however", "therefore"]
+    has_connector = any(conn in words for conn in connectors)
+    if has_connector:
+        score += 0.3
+    else:
+        issues.append("Nên dùng từ nối để liên kết ý")
+
+    # Kiểm tra có câu giới thiệu (my name, i am, i like, my favorite)
+    intro_phrases = ["my name", "i am", "my favorite", "i like", "i love"]
+    has_intro = any(phrase in text.lower() for phrase in intro_phrases)
+    if has_intro:
+        score += 0.2
+
+    return max(min(score, 2.0), 0), issues
+
+
+def analyze_speech(transcribed_text, audio_path=None, reference_text=None):
+    """
+    Phân tích bài nói theo 5 tiêu chí (mỗi tiêu chí /2 điểm, tổng /10)
+    """
+    if not transcribed_text or len(transcribed_text.strip()) == 0:
+        return 0, ["⚠️ Không nhận dạng được nội dung. Vui lòng thử lại."], {}
+
+    # Chấm từng tiêu chí
+    pronunciation_score, pronunciation_issues = check_pronunciation(
+        transcribed_text, reference_text
+    )
+    fluency_score, fluency_issues = check_fluency(transcribed_text)
+    grammar_score, grammar_issues = check_grammar_basic(transcribed_text)
+    vocabulary_score, vocabulary_issues = check_vocabulary(transcribed_text)
+    communication_score, communication_issues = check_communication(transcribed_text)
+
+    # Tổng điểm /10
+    total_score = (
+        pronunciation_score
+        + fluency_score
+        + grammar_score
+        + vocabulary_score
+        + communication_score
+    )
+
+    # Chuyển sang thang điểm 100
+    final_score_100 = (total_score / 10) * 100
+
+    # Tạo breakdown chi tiết
+    breakdown = {
+        "Pronunciation": pronunciation_score,
+        "Fluency": fluency_score,
+        "Grammar": grammar_score,
+        "Vocabulary": vocabulary_score,
+        "Communication": communication_score,
+        "Total": total_score,
+    }
+
+    # Tạo feedback chi tiết
+    feedback = []
+
+    feedback.append(
+        f"📊 **TỔNG ĐIỂM: {total_score:.1f}/10** ({final_score_100:.0f}/100)"
+    )
+    feedback.append("---")
+
+    # 1. Pronunciation
+    feedback.append(f"🗣️ **1. Pronunciation (Phát âm): {pronunciation_score:.1f}/2**")
+    feedback.append("")
+    if pronunciation_issues:
+        for issue in pronunciation_issues:
+            feedback.append(f"{issue}")
+    feedback.append("")
+
+    # 2. Fluency
+    feedback.append(f"🎵 **2. Fluency (Độ trôi chảy): {fluency_score:.1f}/2**")
+    if fluency_issues:
+        for issue in fluency_issues:
+            feedback.append(f"   • {issue}")
+    else:
+        feedback.append("   • Nói khá tự nhiên và mạch lạc")
+    feedback.append("")
+
+    # 3. Grammar
+    feedback.append(f"📝 **3. Grammar (Ngữ pháp): {grammar_score:.1f}/2**")
+    if grammar_issues:
+        for issue in grammar_issues:
+            feedback.append(f"   • {issue}")
+    else:
+        feedback.append("   • Ngữ pháp chính xác")
+    feedback.append("")
+
+    # 4. Vocabulary
+    feedback.append(f"📚 **4. Vocabulary (Từ vựng): {vocabulary_score:.1f}/2**")
+    if vocabulary_issues:
+        for issue in vocabulary_issues:
+            feedback.append(f"   • {issue}")
+    else:
+        feedback.append("   • Từ vựng đa dạng và phù hợp")
+    feedback.append("")
+
+    # 5. Communication
+    feedback.append(f"💬 **5. Communication (Giao tiếp): {communication_score:.1f}/2**")
+    if communication_issues:
+        for issue in communication_issues:
+            feedback.append(f"   • {issue}")
+    else:
+        feedback.append("   • Truyền đạt ý rõ ràng và logic")
+
+    return round(final_score_100, 1), feedback, breakdown
+
+
+def save_result_to_history(topic, transcribed, score, wrong_words, breakdown=None):
     """Lưu kết quả vào lịch sử"""
     result = {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "date": datetime.now().strftime("%Y-%m-%d"),
         "time": datetime.now().strftime("%H:%M:%S"),
-        "reference": reference,
+        "reference": topic,
         "transcribed": transcribed,
         "score": score,
         "wrong_words": wrong_words,
-        "word_count": len(reference.split()),
+        "word_count": len(transcribed.split()),
         "user": st.session_state.user_name,
-        "mode": st.session_state.practice_mode,
+        "mode": "Bài nói tự do",
+        "breakdown": breakdown if breakdown else {},
     }
     st.session_state.history.append(result)
 
@@ -251,8 +751,6 @@ def export_history_to_json():
         "export_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "user_name": st.session_state.user_name,
         "history": st.session_state.history,
-        "favorites": st.session_state.favorite_sentences,
-        "notes": st.session_state.sentence_notes,
     }
     return json.dumps(data, indent=2, ensure_ascii=False).encode("utf-8")
 
@@ -262,8 +760,6 @@ def import_history_from_json(json_file):
     try:
         data = json.loads(json_file.read())
         st.session_state.history = data.get("history", [])
-        st.session_state.favorite_sentences = data.get("favorites", [])
-        st.session_state.sentence_notes = data.get("notes", {})
         return True
     except Exception as e:
         st.error(f"Lỗi import: {e}")
@@ -305,9 +801,7 @@ def calculate_streak():
 
     today = datetime.now().strftime("%Y-%m-%d")
 
-    # Kiểm tra có luyện hôm nay không
     if unique_dates[0] != today:
-        # Kiểm tra có luyện hôm qua không
         yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
         if unique_dates[0] != yesterday:
             return 0
@@ -323,25 +817,6 @@ def calculate_streak():
             break
 
     return streak
-
-
-def get_weak_words():
-    """Phân tích từ thường bị sai"""
-    if not st.session_state.history:
-        return []
-
-    all_wrong_words = []
-    for item in st.session_state.history:
-        for error in item.get("wrong_words", []):
-            if "→" in error:
-                word = error.split("'")[1]
-                all_wrong_words.append(word)
-            elif "Thiếu" in error:
-                word = error.split("'")[1]
-                all_wrong_words.append(word)
-
-    word_counts = Counter(all_wrong_words)
-    return word_counts.most_common(10)
 
 
 def create_progress_chart():
@@ -417,7 +892,6 @@ def create_weekly_chart():
     df = pd.DataFrame(st.session_state.history)
     df["date"] = pd.to_datetime(df["date"])
 
-    # Lấy 7 ngày gần nhất
     end_date = datetime.now()
     start_date = end_date - timedelta(days=6)
 
@@ -466,13 +940,11 @@ def create_weekly_chart():
 # ========== GIAO DIỆN CHÍNH ==========
 
 # Header với tabs
-tab1, tab2, tab3, tab4 = st.tabs(
-    ["🎯 Luyện tập", "📊 Thống kê", "📚 Thư viện câu", "⚙️ Cài đặt"]
-)
+tab1, tab2, tab3 = st.tabs(["🎤 Phân tích Bài nói", "📊 Thống kê", "⚙️ Cài đặt"])
 
-# TAB 1: LUYỆN TẬP
+# TAB 1: PHÂN TÍCH BÀI NÓI
 with tab1:
-    st.title("🎯 ỨNG DỤNG CHẤM PHÁT ÂM TIẾNG ANH")
+    st.title("🎤 PHÂN TÍCH PHÁT ÂM BÀI NÓI TỰ DO")
 
     # Thông tin người dùng và streak
     col_info1, col_info2, col_info3, col_info4 = st.columns(4)
@@ -500,56 +972,39 @@ with tab1:
 
     st.divider()
 
-    # Chọn chế độ luyện tập
-    practice_mode = st.radio(
-        "🎮 Chế độ luyện tập:",
-        ["Tự do", "Theo chủ đề", "Yêu thích"],
-        horizontal=True,
-        key="practice_mode_radio",
-    )
-    st.session_state.practice_mode = practice_mode
+    # Phần nhập chủ đề
+    st.subheader("📝 Bước 1: Nhập chủ đề/đề bài")
 
-    # Phần nhập câu mẫu
-    st.subheader("📝 Bước 1: Chọn hoặc nhập câu mẫu")
+    # THÊM COLUMNS
+    col_topic1, col_topic2 = st.columns([2, 1])
 
-    if practice_mode == "Theo chủ đề":
-        col_cat, col_sent = st.columns([1, 2])
-        with col_cat:
-            category = st.selectbox("Chọn chủ đề:", list(SENTENCE_LIBRARY.keys()))
-        with col_sent:
-            reference_text = st.selectbox("Chọn câu:", SENTENCE_LIBRARY[category])
-    elif practice_mode == "Yêu thích":
-        if st.session_state.favorite_sentences:
-            reference_text = st.selectbox(
-                "Chọn từ danh sách yêu thích:", st.session_state.favorite_sentences
-            )
-        else:
-            st.info(
-                "💡 Chưa có câu yêu thích. Thêm câu yêu thích trong tab 'Thư viện câu'!"
-            )
-            reference_text = st.text_input(
-                "Hoặc nhập câu mới:",
-                value="I want to eat an apple",
-                placeholder="Nhập câu tiếng Anh...",
-            )
-    else:
-        reference_text = st.text_input(
-            "Câu mẫu:",
-            value="I want to eat an apple",
-            placeholder="Nhập câu tiếng Anh cần luyện phát âm...",
+    with col_topic1:
+        topic_input = st.text_input(
+            "Chủ đề bài nói của bạn:",
+            value="",
+            placeholder="Ví dụ: My favorite hobby, My hometown, A memorable trip...",
+            help="Nhập chủ đề mà bạn sẽ nói về",
         )
 
-    # Hiển thị thông tin câu và ghi chú
-    if reference_text:
-        col_info_a, col_info_b = st.columns(2)
-        with col_info_a:
-            st.caption(f"📏 Độ dài: {len(reference_text.split())} từ")
-        with col_info_b:
-            st.caption(f"🔤 Ký tự: {len(reference_text)} ký tự")
+    with col_topic2:
+        use_reference = st.checkbox(
+            "📋 Có câu mẫu?", help="Bật nếu bạn có câu gốc cần đọc theo", value=False
+        )
 
-        # Hiển thị ghi chú nếu có
-        if reference_text in st.session_state.sentence_notes:
-            st.info(f"📝 Ghi chú: {st.session_state.sentence_notes[reference_text]}")
+    # THÊM PHẦN REFERENCE TEXT
+    reference_text = None
+    if use_reference:
+        reference_text = st.text_area(
+            "📝 Nhập câu gốc (reference):",
+            value="",
+            placeholder="Ví dụ: Hello everyone, my name is Ivy. I'm a student...",
+            help="Nhập câu gốc mà bạn cần đọc theo",
+            height=100,
+        )
+        if reference_text:
+            st.info(f"📌 Câu gốc: **{reference_text[:100]}...**")
+    elif topic_input:
+        st.info(f"📌 Chủ đề: **{topic_input}**")
 
     st.divider()
 
@@ -570,13 +1025,13 @@ with tab1:
 
     st.divider()
 
-    # Nút chấm điểm
-    st.subheader("🎯 Bước 3: Chấm điểm")
+    # Nút phân tích
+    st.subheader("🎯 Bước 3: Phân tích bài nói")
 
-    if st.button("🔍 Chấm điểm phát âm", type="primary", use_container_width=True):
+    if st.button("🔍 Phân tích phát âm", type="primary", use_container_width=True):
 
-        if not reference_text:
-            st.error("⚠️ Vui lòng nhập câu mẫu!")
+        if not topic_input:
+            st.warning("⚠️ Vui lòng nhập chủ đề bài nói!")
         elif not audio_recording and not uploaded_file:
             st.error("⚠️ Vui lòng ghi âm hoặc upload file audio!")
         elif not st.session_state.model:
@@ -599,32 +1054,69 @@ with tab1:
                             pass
 
                         if transcribed_text:
-                            score, wrong_words = compare_texts(
-                                reference_text, transcribed_text
+                            score, feedback, breakdown = analyze_speech(
+                                transcribed_text, wav_path, reference_text
                             )
                             save_result_to_history(
-                                reference_text, transcribed_text, score, wrong_words
+                                topic_input,
+                                transcribed_text,
+                                score,
+                                feedback,
+                                breakdown,
                             )
 
-                            st.success("✅ Chấm điểm hoàn tất!")
+                            st.success("✅ Phân tích hoàn tất!")
                             st.balloons()
 
                             st.divider()
 
-                            # Kết quả với animation
+                            # Kết quả
                             col_result1, col_result2 = st.columns(2)
 
                             with col_result1:
-                                st.markdown("**📝 Câu mẫu:**")
-                                st.info(reference_text)
+                                st.markdown("**📌 Chủ đề:**")
+                                st.info(topic_input)
 
                             with col_result2:
-                                st.markdown("**🗣️ Bạn đã nói:**")
+                                st.markdown("**🗣️ Nội dung bạn đã nói:**")
                                 st.info(transcribed_text)
 
-                            # Điểm số lớn với màu sắc
-                            st.markdown("### 🎯 Điểm số")
+                            # Điểm số tổng quan
+                            st.markdown("### 🎯 Kết quả chấm điểm")
 
+                            # Hiển thị điểm chi tiết theo 5 tiêu chí
+                            col_breakdown = st.columns(6)
+
+                            criteria_emojis = ["🗣️", "🎵", "📝", "📚", "💬", "⭐"]
+                            criteria_names = [
+                                "Pronunciation",
+                                "Fluency",
+                                "Grammar",
+                                "Vocabulary",
+                                "Communication",
+                                "Total",
+                            ]
+
+                            for i, (emoji, name) in enumerate(
+                                zip(criteria_emojis, criteria_names)
+                            ):
+                                with col_breakdown[i]:
+                                    if name == "Total":
+                                        st.metric(
+                                            f"{emoji} {name}",
+                                            f"{breakdown.get('Total', 0):.1f}/10",
+                                            help="Tổng điểm",
+                                        )
+                                    else:
+                                        st.metric(
+                                            f"{emoji} {name[:4]}.",
+                                            f"{breakdown.get(name, 0):.1f}/2",
+                                            help=name,
+                                        )
+
+                            st.divider()
+
+                            # Điểm số lớn với màu sắc (chuyển sang thang 100 để hiển thị)
                             if score >= 90:
                                 score_class = "score-excellent"
                                 grade = "Xuất sắc"
@@ -646,7 +1138,7 @@ with tab1:
 
                             with col_score1:
                                 st.markdown(
-                                    f'<div class="{score_class}">{emoji} {score}</div>',
+                                    f'<div class="{score_class}">{emoji} {score:.0f}/100</div>',
                                     unsafe_allow_html=True,
                                 )
 
@@ -654,38 +1146,60 @@ with tab1:
                                 st.markdown(f"### {grade}")
                                 st.progress(score / 100)
 
-                                # Lời khuyên
                                 if score >= 90:
-                                    st.success("🎉 Xuất sắc! Phát âm của bạn rất tốt!")
+                                    st.success(
+                                        "🎉 Xuất sắc! Phát âm và nội dung rất tốt!"
+                                    )
                                 elif score >= 75:
                                     st.info(
                                         "👍 Tốt lắm! Tiếp tục luyện tập để hoàn thiện hơn."
                                     )
                                 elif score >= 60:
                                     st.warning(
-                                        "💪 Khá ổn! Hãy chú ý các từ bị sai phía dưới."
+                                        "💪 Khá ổn! Hãy chú ý các góp ý phía dưới."
                                     )
                                 else:
                                     st.error(
-                                        "📚 Cần cải thiện. Hãy nghe và bắt chước kỹ hơn."
+                                        "📚 Cần cải thiện. Hãy luyện tập thêm về phát âm và độ dài bài nói."
                                     )
 
-                            # Từ sai
-                            if wrong_words:
-                                st.markdown("### ⚠️ Chi tiết lỗi:")
-                                for word in wrong_words:
-                                    st.warning(word)
-                            else:
-                                st.success("🎉 Hoàn hảo! Không có lỗi nào!")
+                            # Feedback chi tiết
+                            st.markdown("### 💡 Phản hồi chi tiết")
+
+                            # Hiển thị feedback dạng markdown
+                            feedback_text = "\n".join(feedback)
+                            st.markdown(feedback_text)
 
                             # Gợi ý luyện tập
-                            if wrong_words:
-                                with st.expander("💡 Gợi ý cải thiện"):
-                                    st.write("**Cách luyện tập hiệu quả:**")
-                                    st.write("1. Nghe lại câu mẫu từ người bản ngữ")
-                                    st.write("2. Tập phát âm chậm từng từ bị sai")
-                                    st.write("3. Ghi âm lại và so sánh")
-                                    st.write("4. Luyện tập 3-5 lần/ngày")
+                            with st.expander("📖 Gợi ý cải thiện cho từng tiêu chí"):
+                                st.markdown(
+                                    """
+                                **🗣️ Pronunciation (Phát âm):**
+                                - Nghe và bắt chước người bản ngữ (BBC Learning English, VOA)
+                                - Tập phát âm các âm khó: /θ/, /ð/, /r/, /l/
+                                - Ghi âm và so sánh với bản gốc
+                                
+                                **🎵 Fluency (Độ trôi chảy):**
+                                - Luyện nói không ngắt quãng 1-2 phút
+                                - Giảm "uh", "um" bằng cách suy nghĩ trước khi nói
+                                - Đọc to 10-15 phút mỗi ngày
+                                
+                                **📝 Grammar (Ngữ pháp):**
+                                - Học thuộc các thì cơ bản (hiện tại, quá khứ, tương lai)
+                                - Chú ý Subject-Verb Agreement (I am, He is, They are)
+                                - Làm bài tập ngữ pháp trên app (Duolingo, Grammarly)
+                                
+                                **📚 Vocabulary (Từ vựng):**
+                                - Học 10 từ mới mỗi ngày theo chủ đề
+                                - Sử dụng từ vựng đa dạng, tránh lặp lại
+                                - Đọc sách/báo tiếng Anh để mở rộng vốn từ
+                                
+                                **💬 Communication (Giao tiếp):**
+                                - Trả lời đầy đủ câu hỏi với lý do và ví dụ
+                                - Sử dụng từ nối: because, and, so, but
+                                - Tổ chức ý: Introduction → Main idea → Example → Conclusion
+                                """
+                                )
 
                         else:
                             st.error(
@@ -706,17 +1220,29 @@ with tab1:
             with st.expander(f"⏰ {item['timestamp']} - Điểm: {item['score']}/100"):
                 col_h1, col_h2 = st.columns(2)
                 with col_h1:
-                    st.write(f"**📝 Câu mẫu:** {item['reference']}")
-                    st.write(f"**🗣️ Nhận dạng:** {item['transcribed']}")
+                    st.write(f"**📌 Chủ đề:** {item['reference']}")
+                    st.write(f"**🗣️ Nội dung:** {item['transcribed'][:100]}...")
                 with col_h2:
                     st.metric("Điểm số", f"{item['score']}/100")
                     st.write(f"**👤 Người dùng:** {item['user']}")
-                    st.write(f"**🎮 Chế độ:** {item['mode']}")
+                    st.write(f"**📝 Số từ:** {item['word_count']}")
 
-                if item["wrong_words"]:
-                    st.write("**⚠️ Lỗi:**")
-                    for w in item["wrong_words"]:
-                        st.write(f"- {w}")
+                # Hiển thị breakdown nếu có
+                if "breakdown" in item and item["breakdown"]:
+                    st.write("**📊 Chi tiết điểm:**")
+                    breakdown = item["breakdown"]
+                    col_b = st.columns(5)
+                    labels = [
+                        "Pronunciation",
+                        "Fluency",
+                        "Grammar",
+                        "Vocabulary",
+                        "Communication",
+                    ]
+                    for idx, label in enumerate(labels):
+                        if label in breakdown:
+                            with col_b[idx]:
+                                st.metric(label[:6], f"{breakdown[label]:.1f}/2")
 
 # TAB 2: THỐNG KÊ
 with tab2:
@@ -744,7 +1270,7 @@ with tab2:
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
-            st.metric("Tổng số lần chấm", stats["total_attempts"])
+            st.metric("Tổng số lần phân tích", stats["total_attempts"])
 
         with col2:
             st.metric("Điểm trung bình", f"{stats['avg_score']:.1f}/100")
@@ -834,41 +1360,6 @@ with tab2:
 
         st.divider()
 
-        # Phân tích từ hay sai
-        st.subheader("🔍 Từ thường bị sai")
-        weak_words = get_weak_words()
-
-        if weak_words:
-            col_weak1, col_weak2 = st.columns([2, 1])
-
-            with col_weak1:
-                st.write("**Top 10 từ cần luyện thêm:**")
-                for idx, (word, count) in enumerate(weak_words, 1):
-                    st.write(f"{idx}. **{word}** - Sai {count} lần")
-
-            with col_weak2:
-                # Biểu đồ từ hay sai
-                if len(weak_words) > 0:
-                    words, counts = zip(*weak_words[:5])
-                    fig_weak = go.Figure(
-                        data=[
-                            go.Bar(
-                                x=list(counts),
-                                y=list(words),
-                                orientation="h",
-                                marker_color="#ff5252",
-                            )
-                        ]
-                    )
-                    fig_weak.update_layout(
-                        title="Top 5 từ hay sai", xaxis_title="Số lần", height=300
-                    )
-                    st.plotly_chart(fig_weak, use_container_width=True)
-        else:
-            st.info("Chưa có dữ liệu về từ bị sai.")
-
-        st.divider()
-
         # Xuất báo cáo
         st.subheader("📥 Xuất dữ liệu")
 
@@ -880,7 +1371,7 @@ with tab2:
                 st.download_button(
                     label="💾 Tải CSV",
                     data=csv_data,
-                    file_name=f"pronunciation_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                    file_name=f"speech_analysis_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
                     mime="text/csv",
                     use_container_width=True,
                 )
@@ -891,7 +1382,7 @@ with tab2:
                 st.download_button(
                     label="💾 Tải JSON (Backup)",
                     data=json_data,
-                    file_name=f"pronunciation_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                    file_name=f"speech_analysis_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
                     mime="application/json",
                     use_container_width=True,
                 )
@@ -907,114 +1398,10 @@ with tab2:
                     st.warning("⚠️ Nhấn lần nữa để xác nhận!")
 
     else:
-        st.info("📊 Chưa có dữ liệu thống kê. Hãy bắt đầu luyện tập!")
+        st.info("📊 Chưa có dữ liệu thống kê. Hãy bắt đầu phân tích bài nói đầu tiên!")
 
-# TAB 3: THƯ VIỆN CÂU
+# TAB 3: CÀI ĐẶT
 with tab3:
-    st.title("📚 Thư viện câu mẫu")
-
-    st.markdown("### Danh sách câu theo chủ đề")
-
-    for category, sentences in SENTENCE_LIBRARY.items():
-        with st.expander(f"{category} ({len(sentences)} câu)"):
-            for idx, sentence in enumerate(sentences, 1):
-                col_sent, col_fav, col_note = st.columns([3, 1, 1])
-
-                with col_sent:
-                    st.write(f"{idx}. {sentence}")
-
-                with col_fav:
-                    if sentence in st.session_state.favorite_sentences:
-                        if st.button("⭐", key=f"unfav_{category}_{idx}"):
-                            st.session_state.favorite_sentences.remove(sentence)
-                            st.rerun()
-                    else:
-                        if st.button("☆", key=f"fav_{category}_{idx}"):
-                            st.session_state.favorite_sentences.append(sentence)
-                            st.rerun()
-
-                with col_note:
-                    if st.button("📝", key=f"note_{category}_{idx}"):
-                        st.session_state[f"show_note_{sentence}"] = True
-
-                # Hiển thị form ghi chú
-                if st.session_state.get(f"show_note_{sentence}", False):
-                    with st.form(key=f"note_form_{category}_{idx}"):
-                        current_note = st.session_state.sentence_notes.get(sentence, "")
-                        note_text = st.text_area(
-                            "Ghi chú của bạn:", value=current_note, height=100
-                        )
-
-                        col_save, col_cancel = st.columns(2)
-                        with col_save:
-                            if st.form_submit_button("💾 Lưu"):
-                                if note_text.strip():
-                                    st.session_state.sentence_notes[sentence] = (
-                                        note_text
-                                    )
-                                else:
-                                    if sentence in st.session_state.sentence_notes:
-                                        del st.session_state.sentence_notes[sentence]
-                                st.session_state[f"show_note_{sentence}"] = False
-                                st.rerun()
-
-                        with col_cancel:
-                            if st.form_submit_button("❌ Hủy"):
-                                st.session_state[f"show_note_{sentence}"] = False
-                                st.rerun()
-
-    st.divider()
-
-    # Danh sách yêu thích
-    st.markdown("### ⭐ Câu yêu thích của bạn")
-
-    if st.session_state.favorite_sentences:
-        for idx, sentence in enumerate(st.session_state.favorite_sentences, 1):
-            col_fav_sent, col_fav_note, col_fav_remove = st.columns([3, 1, 1])
-
-            with col_fav_sent:
-                st.write(f"{idx}. {sentence}")
-                # Hiển thị ghi chú nếu có
-                if sentence in st.session_state.sentence_notes:
-                    st.caption(f"📝 {st.session_state.sentence_notes[sentence]}")
-
-            with col_fav_note:
-                if st.button("📝", key=f"note_fav_{idx}"):
-                    st.session_state[f"show_note_fav_{sentence}"] = True
-
-            with col_fav_remove:
-                if st.button("🗑️", key=f"remove_fav_{idx}"):
-                    st.session_state.favorite_sentences.remove(sentence)
-                    st.rerun()
-
-            # Form ghi chú cho câu yêu thích
-            if st.session_state.get(f"show_note_fav_{sentence}", False):
-                with st.form(key=f"note_form_fav_{idx}"):
-                    current_note = st.session_state.sentence_notes.get(sentence, "")
-                    note_text = st.text_area(
-                        "Ghi chú của bạn:", value=current_note, height=100
-                    )
-
-                    col_save, col_cancel = st.columns(2)
-                    with col_save:
-                        if st.form_submit_button("💾 Lưu"):
-                            if note_text.strip():
-                                st.session_state.sentence_notes[sentence] = note_text
-                            else:
-                                if sentence in st.session_state.sentence_notes:
-                                    del st.session_state.sentence_notes[sentence]
-                            st.session_state[f"show_note_fav_{sentence}"] = False
-                            st.rerun()
-
-                    with col_cancel:
-                        if st.form_submit_button("❌ Hủy"):
-                            st.session_state[f"show_note_fav_{sentence}"] = False
-                            st.rerun()
-    else:
-        st.info("Chưa có câu yêu thích. Nhấn ☆ để thêm câu vào danh sách!")
-
-# TAB 4: CÀI ĐẶT
-with tab4:
     st.title("⚙️ Cài đặt")
 
     # Thông tin người dùng
@@ -1030,11 +1417,11 @@ with tab4:
     # Cài đặt mục tiêu
     st.subheader("🎯 Mục tiêu luyện tập")
     daily_goal = st.slider(
-        "Số lần luyện tập mỗi ngày:",
+        "Số lần phân tích mỗi ngày:",
         min_value=1,
         max_value=50,
         value=st.session_state.daily_goal,
-        help="Đặt mục tiêu số lần luyện tập hàng ngày",
+        help="Đặt mục tiêu số lần phân tích bài nói hàng ngày",
     )
 
     if daily_goal != st.session_state.daily_goal:
@@ -1121,26 +1508,31 @@ with tab4:
 
     st.info(
         """
-    **🎯 Ứng dụng Chấm Phát Âm Tiếng Anh**
+    **🎤 Ứng dụng Phân tích Phát Âm Bài Nói Tự Do**
     
-    **Phiên bản:** 2.0 Enhanced
+    **Phiên bản:** 3.1 - Enhanced Pronunciation Feedback
     
     **Tính năng chính:**
-    - Chấm điểm phát âm tự động với AI
+    - Phân tích phát âm tự động với AI (Whisper)
+    - Chấm điểm theo 5 tiêu chí với phản hồi chi tiết
+    - Phát hiện từ phát âm sai và đưa ra gợi ý sửa
     - Thống kê chi tiết và biểu đồ trực quan
     - Theo dõi streak và mục tiêu hàng ngày
-    - Thư viện câu mẫu phong phú
-    - Ghi chú cá nhân cho từng câu
     - Sao lưu/khôi phục dữ liệu
-    - Phân tích từ hay bị sai
     
     **Công nghệ:**
     - Streamlit
-    - OpenAI Whisper
+    - OpenAI Whisper (ASR)
     - Plotly Charts
-    - FuzzyWuzzy
+    - Advanced NLP Analysis
     
-    **Hỗ trợ:** Mọi thắc mắc vui lòng liên hệ qua email hoặc GitHub.
+    **Thang điểm:**
+    - Pronunciation: Độ rõ ràng, chính xác phát âm (/2)
+    - Fluency: Độ trôi chảy, tự nhiên (/2)
+    - Grammar: Ngữ pháp chính xác (/2)
+    - Vocabulary: Từ vựng đa dạng (/2)
+    - Communication: Truyền đạt ý rõ ràng (/2)
+    - Tổng: /10 điểm (tương đương /100)
     """
     )
 
@@ -1152,8 +1544,6 @@ with tab4:
     if st.button("🗑️ Xóa toàn bộ dữ liệu và cài đặt", type="secondary"):
         if st.session_state.get("confirm_reset_all", False):
             st.session_state.history = []
-            st.session_state.favorite_sentences = []
-            st.session_state.sentence_notes = {}
             st.session_state.user_name = "Học viên"
             st.session_state.daily_goal = 10
             st.session_state.confirm_reset_all = False
@@ -1176,14 +1566,14 @@ st.markdown(
     transition: color 0.3s ease;
 }
 .footer-link:hover {
-    color: #1f77b4; /* xanh nhạt khi hover */
+    color: #1f77b4;
 }
 </style>
 
 <div style='text-align: center; color: gray; padding: 16px 0; font-size: 14px;'>
-    <p><strong>Ứng dụng Chấm Phát Âm Tiếng Anh</strong></p>
+    <p><strong>Ứng dụng Phân tích Phát Âm Bài Nói Tự Do</strong></p>
     <p>Miễn phí • Offline/Online • Không dùng API trả phí</p>
-    <p>Sử dụng: Whisper (OpenAI) + Streamlit</p>
+    <p>Sử dụng: Whisper (OpenAI) + Streamlit + Enhanced Pronunciation Analysis</p>
     <p style='margin-top:10px;'>© 2025 
         <a href='https://www.facebook.com/augusttrung1823/' target='_blank' class='footer-link'>
             August Trung

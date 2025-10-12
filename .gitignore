@@ -40,6 +40,7 @@ test_installation.py
 
 # Tệp ứng dụng chính (nếu bạn có nhiều phiên bản hoặc tệp thử nghiệm)
 app_v1.py
+app_v2.py
 
 # Nếu bạn sử dụng packages.txt để ghi lại gói và không phải là tệp yêu cầu chính
 # Bạn có thể bỏ qua nó, nhưng thường thì requirements.txt là tệp quan trọng
