@@ -10,14 +10,14 @@ from collections import Counter
 import json
 import re
 
-# Cấu hình trang
+# Page config
 st.set_page_config(
-    page_title="Phân tích Phát Âm Tiếng Anh",
+    page_title="English Speaking Practice",
     page_icon="🎤",
     layout="wide",
 )
 
-# CSS tùy chỉnh
+# Custom CSS
 st.markdown(
     """
 <style>
@@ -64,7 +64,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Khởi tạo session state
+# Initialize session state
 if "history" not in st.session_state:
     st.session_state.history = []
 
@@ -72,10 +72,10 @@ if "model" not in st.session_state:
     st.session_state.model = None
 
 if "user_name" not in st.session_state:
-    st.session_state.user_name = "Học viên"
+    st.session_state.user_name = "Student"
 
 if "daily_goal" not in st.session_state:
-    st.session_state.daily_goal = 10
+    st.session_state.daily_goal = 5
 
 if "model_size" not in st.session_state:
     st.session_state.model_size = "base"
@@ -83,22 +83,22 @@ if "model_size" not in st.session_state:
 
 @st.cache_resource
 def load_whisper_model(model_size="base"):
-    """Load mô hình Whisper (chỉ load 1 lần)"""
+    """Load Whisper model (only once)"""
     try:
         model = whisper.load_model(model_size)
         return model
     except Exception as e:
-        st.error(f"Lỗi khi load Whisper model: {e}")
+        st.error(f"Error loading Whisper model: {e}")
         return None
 
 
-# Tự động load model lần đầu
+# Auto-load model on first run
 if st.session_state.model is None:
     st.session_state.model = load_whisper_model("base")
 
 
 def convert_audio_to_wav(audio_file):
-    """Chuyển đổi file audio về định dạng WAV chuẩn"""
+    """Convert audio file to standard WAV format"""
     try:
         audio = AudioSegment.from_file(audio_file)
         audio = audio.set_channels(1)
@@ -107,539 +107,468 @@ def convert_audio_to_wav(audio_file):
         audio.export(temp_file.name, format="wav")
         return temp_file.name
     except Exception as e:
-        st.error(f"Lỗi chuyển đổi audio: {e}")
+        st.error(f"Error converting audio: {e}")
         return None
 
 
 def transcribe_audio(audio_path, model):
-    """Nhận dạng giọng nói từ file audio bằng Whisper"""
+    """Transcribe audio using Whisper with confidence check"""
     try:
-        result = model.transcribe(audio_path, language="en")
-        return result["text"].strip()
+        result = model.transcribe(audio_path, language="en", word_timestamps=True)
+
+        # Get transcribed text
+        text = result["text"].strip()
+
+        # Calculate average confidence from segments
+        avg_confidence = 0
+        if "segments" in result and len(result["segments"]) > 0:
+            confidences = []
+            for segment in result["segments"]:
+                if "no_speech_prob" in segment:
+                    # Lower no_speech_prob = higher confidence
+                    confidence = 1.0 - segment["no_speech_prob"]
+                    confidences.append(confidence)
+
+            if confidences:
+                avg_confidence = sum(confidences) / len(confidences)
+
+        return text, avg_confidence
     except Exception as e:
-        st.error(f"Lỗi nhận dạng giọng nói: {e}")
-        return None
+        st.error(f"Error transcribing audio: {e}")
+        return None, 0
 
 
-def check_grammar_basic(text):
+def detect_transcription_quality(text, whisper_confidence):
     """
-    Kiểm tra lỗi ngữ pháp cơ bản (mô phỏng)
-    Trả về điểm từ 0-2
+    Detect transcription quality using linguistic patterns (NOT content-specific)
+    Returns: (quality_score: float 0-1, warnings: list)
+    """
+    warnings = []
+    quality_score = whisper_confidence
+
+    words = text.split()
+    word_count = len(words)
+
+    if word_count == 0:
+        return 0, ["No speech detected"]
+
+    # 1. Check for very short/fragmented words (sign of poor audio)
+    very_short = [w for w in words if len(re.sub(r"[^a-zA-Z]", "", w)) <= 2]
+    very_short_ratio = len(very_short) / word_count
+
+    if very_short_ratio > 0.5:
+        quality_score -= 0.2
+        warnings.append("Many short/unclear words detected")
+
+    # 2. Check for repeated words (stuttering or audio glitch)
+    word_list = [re.sub(r"[^a-z]", "", w.lower()) for w in words]
+    word_list = [w for w in word_list if w]
+
+    if len(word_list) > 1:
+        repeated_count = 0
+        for i in range(len(word_list) - 1):
+            if word_list[i] == word_list[i + 1] and len(word_list[i]) > 2:
+                repeated_count += 1
+
+        if repeated_count > 2:
+            quality_score -= 0.1
+            warnings.append("Audio may have stuttering or glitches")
+
+    # 3. Check sentence structure completeness
+    sentences = [s.strip() for s in re.split(r"[.!?]+", text) if s.strip()]
+
+    if len(sentences) > 0:
+        incomplete_count = 0
+        for sent in sentences:
+            sent_words = sent.lower().split()
+            # Very basic: sentence should have at least subject + verb pattern
+            has_pronoun = any(
+                w in sent_words
+                for w in ["i", "you", "he", "she", "we", "they", "it", "my", "there"]
+            )
+            has_verb = any(
+                w in sent_words
+                for w in [
+                    "is",
+                    "are",
+                    "am",
+                    "was",
+                    "were",
+                    "have",
+                    "has",
+                    "had",
+                    "do",
+                    "does",
+                    "did",
+                    "can",
+                    "will",
+                    "like",
+                    "love",
+                    "want",
+                    "go",
+                    "play",
+                    "make",
+                ]
+            )
+
+            if len(sent_words) > 4 and not (has_pronoun and has_verb):
+                incomplete_count += 1
+
+        if incomplete_count > len(sentences) // 2:
+            quality_score -= 0.15
+            warnings.append("Some sentences may be incomplete or unclear")
+
+    # 4. Check for excessive special characters (sign of recognition failure)
+    special_char_count = len(re.findall(r"[^a-zA-Z0-9\s\.,!?\'-]", text))
+    if special_char_count > word_count * 0.1:
+        quality_score -= 0.15
+        warnings.append("Audio contains unclear segments")
+
+    quality_score = max(quality_score, 0.1)
+
+    return quality_score, warnings
+
+
+def check_pronunciation(text, whisper_confidence=1.0):
+    """
+    Check pronunciation quality based on:
+    1. Whisper confidence
+    2. General linguistic quality (NOT content-specific)
+    Returns score 0-2, level, adjusted confidence, and warnings
+    """
+    words = text.split()
+    word_count = len(words)
+
+    if word_count == 0:
+        return 0, "Needs practice", whisper_confidence, ["No speech detected"]
+
+    # Detect quality issues using general patterns
+    quality_score, warnings = detect_transcription_quality(text, whisper_confidence)
+
+    # Calculate pronunciation score
+    score = quality_score * 2.0  # Convert 0-1 to 0-2
+
+    # Cap score based on quality
+    if quality_score < 0.5:
+        score = min(score, 1.0)
+    elif quality_score < 0.7:
+        score = min(score, 1.5)
+
+    score = max(min(score, 2.0), 0.3)
+
+    # Feedback level
+    if quality_score < 0.6:
+        level = "Needs practice"
+    elif score >= 1.7:
+        level = "Good"
+    elif score >= 1.2:
+        level = "Fair"
+    else:
+        level = "Needs practice"
+
+    return round(score, 1), level, quality_score, warnings
+
+
+def check_fluency(text):
+    """
+    Check fluency based on response length
+    Returns score 0-2
+    """
+    words = text.split()
+    word_count = len(words)
+
+    if word_count == 0:
+        return 0
+
+    # Simple scoring based on length
+    if word_count < 10:
+        score = 0.8
+    elif 10 <= word_count < 25:
+        score = 1.5
+    else:
+        score = 2.0
+
+    return round(score, 1)
+
+
+def check_grammar(text):
+    """
+    Basic grammar check
+    Returns score 0-2
     """
     words = text.lower().split()
-    errors = []
     score = 2.0
 
-    # Kiểm tra Subject-Verb Agreement cơ bản
+    # Check for common errors
     common_errors = [
         ("i is", "i am"),
         ("he are", "he is"),
         ("she are", "she is"),
         ("they is", "they are"),
         ("we is", "we are"),
-        ("i does", "i do"),
-        ("he do", "he does"),
-        ("she do", "she does"),
     ]
 
     text_lower = text.lower()
+    error_count = 0
+
     for wrong, correct in common_errors:
         if wrong in text_lower:
-            errors.append(f"Lỗi S-V: '{wrong}' → '{correct}'")
-            score -= 0.3
+            error_count += 1
+            score -= 0.5
 
-    # Kiểm tra thiếu động từ (câu không có động từ phổ biến)
-    sentences = re.split(r"[.!?]", text)
-    basic_verbs = [
-        "is",
-        "are",
-        "am",
-        "was",
-        "were",
-        "have",
-        "has",
-        "had",
-        "do",
-        "does",
-        "did",
-        "can",
-        "could",
-        "will",
-        "would",
-        "should",
-        "go",
-        "get",
-        "make",
-        "take",
-        "see",
-        "know",
-    ]
+    # Check for basic sentence structure
+    has_verb = any(
+        word in words
+        for word in ["is", "am", "are", "have", "has", "like", "love", "play", "go"]
+    )
 
-    for sent in sentences:
-        sent_words = sent.lower().split()
-        if len(sent_words) > 3:  # Câu đủ dài
-            has_verb = any(verb in sent_words for verb in basic_verbs)
-            if not has_verb:
-                score -= 0.2
+    if not has_verb and len(words) > 3:
+        score -= 0.5
 
-    return max(score, 0), errors
-
-
-def check_fluency(text):
-    """
-    Đánh giá độ trôi chảy và tự nhiên (dựa trên cấu trúc câu)
-    Trả về điểm từ 0-2
-    """
-    words = text.split()
-    word_count = len(words)
-
-    if word_count == 0:
-        return 0, ["Không có nội dung"]
-
-    # Đếm số câu
-    sentences = re.split(r"[.!?]+", text)
-    sentences = [s.strip() for s in sentences if s.strip()]
-    sentence_count = len(sentences)
-
-    # Tính độ dài câu trung bình
-    avg_sentence_length = word_count / max(sentence_count, 1)
-
-    score = 1.5  # Điểm cơ bản
-    issues = []
-
-    # Độ dài bài nói
-    if word_count >= 40:
-        score += 0.3
-    elif word_count < 20:
-        score -= 0.3
-        issues.append("Bài nói quá ngắn")
-
-    # Độ dài câu (câu quá ngắn hoặc quá dài đều không tốt)
-    if 5 <= avg_sentence_length <= 15:
-        score += 0.2
-    elif avg_sentence_length < 3:
-        issues.append("Câu quá ngắn, thiếu tự nhiên")
-        score -= 0.2
-
-    return max(min(score, 2.0), 0), issues
+    return max(round(score, 1), 1.0)
 
 
 def check_vocabulary(text):
     """
-    Đánh giá từ vựng (đa dạng và phù hợp chủ đề)
-    Trả về điểm từ 0-2
+    Check vocabulary diversity
+    Returns score 0-2
     """
     words = text.lower().split()
     words_clean = [re.sub(r"[^a-z]", "", w) for w in words]
     words_clean = [w for w in words_clean if len(w) > 2]
 
     if len(words_clean) == 0:
-        return 0, ["Không có từ vựng"]
+        return 1.0
 
-    # Tính độ đa dạng từ vựng
+    # Calculate diversity
     unique_words = set(words_clean)
-    vocab_diversity = len(unique_words) / len(words_clean)
+    diversity = len(unique_words) / len(words_clean)
 
-    # Đếm từ phức tạp (>= 6 ký tự)
-    complex_words = [w for w in words_clean if len(w) >= 6]
-    complex_ratio = len(complex_words) / len(words_clean)
+    score = 1.0
 
-    score = 1.0  # Điểm cơ bản
-    issues = []
-
-    # Điểm từ độ đa dạng
-    if vocab_diversity >= 0.6:
-        score += 0.5
-    elif vocab_diversity < 0.4:
-        issues.append("Từ vựng bị lặp lại nhiều")
-        score -= 0.2
-
-    # Điểm từ độ phức tạp
-    if complex_ratio >= 0.2:
-        score += 0.5
-    elif complex_ratio < 0.1:
-        issues.append("Nên sử dụng từ vựng đa dạng hơn")
-        score -= 0.2
-
-    return max(min(score, 2.0), 0), issues
-
-
-def check_pronunciation(text, reference_text=None):
-    """
-    Đánh giá phát âm dựa trên:
-    1. Độ CHÍNH XÁC và MẠCH LẠC của transcription (nếu không có reference)
-    2. Độ TƯƠNG ĐỒNG với câu gốc (nếu có reference)
-    Trả về điểm từ 0-2 và feedback chi tiết
-    """
-    words = text.split()
-    word_count = len(words)
-
-    if word_count == 0:
-        return 0, ["⚠️ Không nhận dạng được nội dung"]
-
-    # ==== PHẦN 1: NẾU CÓ REFERENCE TEXT - SO SÁNH TRỰC TIẾP ====
-    if reference_text and reference_text.strip():
-        return check_pronunciation_with_reference(text, reference_text)
-
-    # ==== PHẦN 2: NẾU KHÔNG CÓ REFERENCE - ĐÁNH GIÁ DỰA TRÊN CHẤT LƯỢNG ====
-    # Các pattern báo hiệu phát âm KÉM (Whisper nhận dạng sai)
-    error_indicators = {
-        # Từ vô nghĩa / ngẫu nhiên
-        "nonsense_words": [
-            "hver",
-            "ung",
-            "hver",
-            "isch",
-            "artstrom",
-            "justarta",
-            "matery",
-            "hver",
-            "الت",
-            "ال",
-        ],
-        # Pattern lặp lại bất thường
-        "repetitive": ["me me", "I I", "you you", "the the the"],
-        # Từ quá ngắn không rõ nghĩa
-        "unclear_short": ["i", "a", "o", "u", "e"],  # Đơn lẻ, không có ngữ cảnh
-    }
-
-    # Phân tích chất lượng transcription
-    issues = []
-    penalty = 0.0
-
-    # 1. Kiểm tra từ vô nghĩa
-    nonsense_count = 0
-    nonsense_found = []
-    text_lower = text.lower()
-
-    for nonsense in error_indicators["nonsense_words"]:
-        if nonsense in text_lower:
-            nonsense_count += 1
-            nonsense_found.append(nonsense)
-
-    if nonsense_count > 0:
-        penalty += 0.3 * min(nonsense_count, 3)  # Max -0.9
-        issues.append(f"⚠️ Phát hiện {nonsense_count} từ không rõ nghĩa")
-
-    # 2. Kiểm tra pattern lặp lại bất thường
-    repetition_count = 0
-    for pattern in error_indicators["repetitive"]:
-        if pattern in text_lower:
-            repetition_count += 1
-
-    if repetition_count > 0:
-        penalty += 0.2 * repetition_count
-        issues.append("⚠️ Phát hiện pattern lặp từ bất thường")
-
-    # 3. Kiểm tra tỷ lệ từ quá ngắn (< 3 ký tự) - dấu hiệu nói ngắt quãng
-    short_words = [w for w in words if len(re.sub(r"[^a-zA-Z]", "", w)) < 3]
-    short_ratio = len(short_words) / word_count
-
-    if short_ratio > 0.5:  # Quá 50% từ ngắn
-        penalty += 0.3
-        issues.append(
-            f"⚠️ Quá nhiều từ ngắn ({short_ratio*100:.0f}%) - phát âm có thể không rõ"
-        )
-
-    # 4. Kiểm tra độ dài trung bình của từ (từ quá ngắn = phát âm không rõ)
-    avg_word_length = sum(len(re.sub(r"[^a-zA-Z]", "", w)) for w in words) / word_count
-
-    if avg_word_length < 3.0:
-        penalty += 0.2
-        issues.append(f"⚠️ Từ trung bình quá ngắn ({avg_word_length:.1f} ký tự)")
-
-    # 5. Kiểm tra tính mạch lạc câu (có động từ, danh từ cơ bản)
-    has_basic_structure = any(
-        word in text_lower
-        for word in ["is", "am", "are", "have", "can", "my", "i", "you", "we"]
-    )
-
-    if not has_basic_structure:
-        penalty += 0.3
-        issues.append("⚠️ Thiếu cấu trúc câu cơ bản")
-
-    # 6. Kiểm tra tỷ lệ ký tự số/đặc biệt (dấu hiệu Whisper không nhận dạng được)
-    special_char_count = len(re.findall(r"[^a-zA-Z0-9\s\.\,\!\?]", text))
-    if special_char_count > word_count * 0.1:  # Quá 10%
-        penalty += 0.2
-        issues.append("⚠️ Chứa nhiều ký tự đặc biệt (dấu hiệu không nhận dạng được)")
-
-    # Tính điểm pronunciation (2.0 - penalty)
-    score = max(2.0 - penalty, 0.0)
-
-    # Tạo feedback chi tiết
-    feedback = []
-    feedback.append(f"**📊 Phân tích Pronunciation:**")
-    feedback.append(f"• Tổng số từ: **{word_count}** từ")
-    feedback.append(f"• Độ dài từ TB: **{avg_word_length:.1f}** ký tự")
-    feedback.append(f"• Tỷ lệ từ ngắn: **{short_ratio*100:.0f}%**")
-    feedback.append("")
-
-    # Hiển thị các vấn đề phát hiện được
-    if issues:
-        feedback.append("**🔍 Vấn đề phát hiện:**")
-        for issue in issues:
-            feedback.append(f"• {issue}")
-        feedback.append("")
-
-        if nonsense_found:
-            feedback.append("**❌ Từ không rõ nghĩa:**")
-            feedback.append(f"• {', '.join(nonsense_found[:5])}")
-            feedback.append("")
-
-    # Đánh giá tổng quan
-    if score >= 1.8:
-        feedback.append(
-            "**✅ Phát âm xuất sắc!** Whisper nhận dạng rất tốt, giọng nói rõ ràng."
-        )
-    elif score >= 1.5:
-        feedback.append(
-            "**✅ Phát âm tốt!** Whisper nhận dạng tốt, chỉ một vài chỗ cần cải thiện."
-        )
-    elif score >= 1.2:
-        feedback.append(
-            "**📌 Phát âm khá.** Một số từ chưa rõ, cần phát âm rõ ràng hơn."
-        )
-    elif score >= 0.8:
-        feedback.append(
-            "**⚠️ Phát âm cần cải thiện.** Nhiều từ Whisper nhận dạng không chính xác."
-        )
-    else:
-        feedback.append(
-            "**❌ Phát âm kém.** Whisper gặp khó khăn nhận dạng, cần luyện tập nhiều."
-        )
-
-    # Gợi ý cải thiện
-    if score < 1.5:
-        feedback.append("")
-        feedback.append("**💡 Cách cải thiện:**")
-        feedback.append("1. **Phát âm rõ từng từ:** Nói chậm, rõ ràng")
-        feedback.append("2. **Không nói ngắt quãng:** Nói trọn câu, không dừng giữa từ")
-        feedback.append("3. **Luyện âm khó:** /r/, /l/, /th/, /v/, /s/")
-        feedback.append(
-            "4. **Ghi âm và nghe lại:** So sánh với phát âm chuẩn (Google Translate, Youglish)"
-        )
-
-    return round(score, 1), feedback
-
-
-def check_pronunciation_with_reference(transcribed, reference):
-    """
-    So sánh transcribed text với reference text để đánh giá phát âm
-    Sử dụng Word Error Rate (WER) và phân tích chi tiết
-    """
-
-    # Chuẩn hóa text
-    def normalize(text):
-        text = text.lower()
-        text = re.sub(r"[^a-z\s]", "", text)  # Chỉ giữ chữ cái và space
-        return text.split()
-
-    ref_words = normalize(reference)
-    trans_words = normalize(transcribed)
-
-    if len(ref_words) == 0:
-        return 0, ["⚠️ Câu tham chiếu không hợp lệ"]
-
-    # Tính Word Error Rate (WER) bằng Levenshtein Distance
-    def levenshtein_distance(s1, s2):
-        if len(s1) < len(s2):
-            return levenshtein_distance(s2, s1)
-        if len(s2) == 0:
-            return len(s1)
-        previous_row = range(len(s2) + 1)
-        for i, c1 in enumerate(s1):
-            current_row = [i + 1]
-            for j, c2 in enumerate(s2):
-                insertions = previous_row[j + 1] + 1
-                deletions = current_row[j] + 1
-                substitutions = previous_row[j] + (c1 != c2)
-                current_row.append(min(insertions, deletions, substitutions))
-            previous_row = current_row
-        return previous_row[-1]
-
-    # Phân tích chi tiết từng từ
-    correct_words = 0
-    missing_words = []
-    extra_words = []
-
-    # So sánh từng từ (simple alignment)
-    ref_set = set(ref_words)
-    trans_set = set(trans_words)
-
-    # Từ đúng: có trong cả 2
-    matched_ref = []
-    matched_trans = []
-
-    for word in ref_words:
-        if word in trans_set and word not in matched_ref:
-            correct_words += 1
-            matched_ref.append(word)
-            matched_trans.append(word)
-
-    # Từ thiếu: có trong ref nhưng không khớp
-    for word in ref_words:
-        if word not in matched_ref:
-            missing_words.append(word)
-
-    # Từ thừa: có trong trans nhưng không khớp (CHỈ ĐỂ HIỂN THỊ, KHÔNG TRỪ ĐIỂM)
-    for word in trans_words:
-        if word not in matched_trans and word not in ref_set:
-            extra_words.append(word)
-
-    # Tính accuracy CHỈ dựa trên từ ĐÚNG và THIẾU (bỏ qua từ thừa)
-    # Công thức: Accuracy = (Từ đúng) / (Tổng từ gốc)
-    accuracy = correct_words / len(ref_words)
-    accuracy_percent = accuracy * 100
-
-    # Tính lỗi chỉ từ missing words
-    error_rate = len(missing_words) / len(ref_words)
-
-    # Tính điểm pronunciation dựa trên accuracy
-    if accuracy >= 0.95:
+    if diversity >= 0.7:
         score = 2.0
-        grade = "Xuất sắc"
-        emoji = "🟢"
-    elif accuracy >= 0.90:
-        score = 1.8
-        grade = "Rất tốt"
-        emoji = "🟢"
-    elif accuracy >= 0.80:
+    elif diversity >= 0.5:
         score = 1.5
-        grade = "Khá tốt"
-        emoji = "🟡"
-    elif accuracy >= 0.70:
-        score = 1.2
-        grade = "Trung bình khá"
-        emoji = "🟡"
-    elif accuracy >= 0.60:
-        score = 0.9
-        grade = "Trung bình"
-        emoji = "🟠"
-    elif accuracy >= 0.50:
-        score = 0.6
-        grade = "Yếu"
-        emoji = "🟠"
     else:
-        score = 0.3
-        grade = "Kém"
-        emoji = "🔴"
+        score = 1.0
 
-    # Tạo feedback chi tiết
-    feedback = []
-    feedback.append(f"**📊 Phân tích So sánh với Câu Gốc:**")
-    feedback.append(f"• **Độ chính xác: {emoji} {accuracy_percent:.1f}%** ({grade})")
-    feedback.append(f"• Câu gốc: **{len(ref_words)}** từ")
-    feedback.append(f"• Bạn nói: **{len(trans_words)}** từ")
-    feedback.append(f"• Từ phát âm đúng: **{correct_words}/{len(ref_words)}** từ")
-    feedback.append(f"• Từ thiếu/sai: **{len(missing_words)}** từ")
-    if extra_words:
-        feedback.append(
-            f"• Từ mở rộng thêm: **{len(extra_words)}** từ *(không trừ điểm)*"
-        )
-    feedback.append("")
-
-    # Hiển thị từ thiếu chi tiết
-    if missing_words:
-        feedback.append(f"**❌ Từ THIẾU/SAI ({len(missing_words)} từ):**")
-        missing_unique = list(set(missing_words))[:15]
-        feedback.append(f"• {', '.join(missing_unique)}")
-        feedback.append("")
-
-    if extra_words:
-        feedback.append(f"**➕ Từ MỞ RỘNG THÊM ({len(extra_words)} từ):**")
-        extra_unique = list(set(extra_words))[:15]
-        feedback.append(f"• {', '.join(extra_unique)}")
-        feedback.append(f"• *(Không bị trừ điểm - Khuyến khích mở rộng ý!)*")
-        feedback.append("")
-
-    # Đánh giá tổng quan
-    if accuracy >= 0.90:
-        feedback.append(
-            "**✅ Xuất sắc!** Phát âm rất chuẩn, phần lớn từ trong câu gốc đều đúng."
-        )
-    elif accuracy >= 0.80:
-        feedback.append(
-            "**✅ Rất tốt!** Phần lớn từ phát âm chuẩn, chỉ thiếu/sai một vài từ."
-        )
-    elif accuracy >= 0.70:
-        feedback.append("**📌 Khá tốt.** Một số từ trong câu gốc cần cải thiện.")
-    elif accuracy >= 0.60:
-        feedback.append("**⚠️ Trung bình.** Nhiều từ trong câu gốc bị thiếu/sai.")
-    else:
-        feedback.append(
-            "**❌ Cần cải thiện.** Phần lớn từ trong câu gốc chưa phát âm đúng."
-        )
-
-    # Gợi ý cải thiện
-    if accuracy < 0.85:
-        feedback.append("")
-        feedback.append("**💡 Gợi ý cải thiện:**")
-        feedback.append("1. **Tập trung vào từ THIẾU/SAI** ở trên")
-        feedback.append("2. **Đọc chậm từng từ** trong câu gốc")
-        feedback.append("3. **Nghe và nhắc lại** nhiều lần")
-        feedback.append("4. **So sánh ghi âm** của bạn với phát âm chuẩn")
-
-    if extra_words and accuracy >= 0.75:
-        feedback.append("")
-        feedback.append("**🌟 Điểm cộng:**")
-        feedback.append("• Bạn đã mở rộng ý rất tốt! Tiếp tục phát triển kỹ năng này!")
-
-    return round(score, 1), feedback
+    return round(score, 1)
 
 
-def check_communication(text):
+def check_communication(text, topic):
     """
-    Đánh giá khả năng truyền đạt ý (có trả lời đúng câu hỏi, logic, rõ ràng)
-    Trả về điểm từ 0-2
+    Check if student answered the topic
+    Returns score 0-2
     """
     words = text.lower().split()
     word_count = len(words)
 
-    score = 1.0  # Điểm cơ bản
-    issues = []
+    score = 1.0
 
-    # Kiểm tra độ dài (có đủ nội dung không)
-    if word_count >= 30:
+    # Length bonus
+    if word_count >= 20:
         score += 0.5
-    elif word_count < 15:
+    elif word_count < 10:
         score -= 0.3
-        issues.append("Câu trả lời quá ngắn, thiếu chi tiết")
 
-    # Kiểm tra có từ nối (because, and, so, but) - thể hiện logic
-    connectors = ["because", "and", "so", "but", "also", "however", "therefore"]
+    # Check for connectors (shows organized thinking)
+    connectors = ["because", "and", "so", "but", "also"]
     has_connector = any(conn in words for conn in connectors)
     if has_connector:
         score += 0.3
-    else:
-        issues.append("Nên dùng từ nối để liên kết ý")
 
-    # Kiểm tra có câu giới thiệu (my name, i am, i like, my favorite)
-    intro_phrases = ["my name", "i am", "my favorite", "i like", "i love"]
-    has_intro = any(phrase in text.lower() for phrase in intro_phrases)
-    if has_intro:
+    # Check for personal response markers
+    personal_markers = ["i", "my", "me"]
+    has_personal = any(marker in words for marker in personal_markers)
+    if has_personal:
         score += 0.2
 
-    return max(min(score, 2.0), 0), issues
+    return max(min(round(score, 1), 2.0), 0.5)
 
 
-def analyze_speech(transcribed_text, audio_path=None, reference_text=None):
+def generate_feedback(transcribed_text, breakdown, topic, quality_score=1.0):
     """
-    Phân tích bài nói theo 5 tiêu chí (mỗi tiêu chí /2 điểm, tổng /10)
+    Generate encouraging English feedback for elementary students
+    Includes warnings about transcription quality when needed
+    """
+    feedback = []
+
+    # Add IMPORTANT notice if quality is questionable
+    if quality_score < 0.7:
+        feedback.append("### ⚠️ IMPORTANT: Please Read This First!\n")
+        feedback.append(f"**Audio Recognition Quality: {quality_score*100:.0f}%**\n")
+
+        if quality_score < 0.5:
+            feedback.append(
+                "❌ **The audio was very unclear.** The text below might be VERY DIFFERENT from what you actually said!\n"
+            )
+            feedback.append("**What to do:**")
+            feedback.append("1. ✅ Check if the text matches what you said")
+            feedback.append("2. 🔄 If it's wrong, please record again")
+            feedback.append("3. 🎤 Speak clearly and slowly")
+            feedback.append("4. 🤫 Record in a quiet room\n")
+        else:
+            feedback.append(
+                "⚠️ **Some words might not be recognized correctly.** Please check if the text below matches what you said.\n"
+            )
+            feedback.append("**Tips for better recognition:**")
+            feedback.append("- Speak clearly (not too fast)")
+            feedback.append("- Use a quiet room")
+            feedback.append("- Hold microphone close to your mouth\n")
+
+        feedback.append("---\n")
+
+    feedback.append("### 🌟 Your Feedback\n")
+
+    word_count = len(transcribed_text.split())
+
+    # Adjust tone based on quality
+    if quality_score < 0.6:
+        feedback.append(
+            "*Note: The scores below are based on what the system heard, which may not be accurate due to audio quality issues.*\n"
+        )
+
+    # Fluency feedback
+    feedback.append("**Fluency & Speaking:**")
+    if breakdown["Fluency"] >= 1.5:
+        feedback.append("Great job! You spoke clearly and smoothly. Keep it up!")
+    elif breakdown["Fluency"] >= 1.0:
+        feedback.append(
+            "Good effort! Try to speak a little more next time. You can add more details about your ideas."
+        )
+    else:
+        feedback.append(
+            "Keep practicing! Try to speak in longer sentences. For example, instead of saying 'I like blue', you can say 'I like blue because it makes me feel happy.'"
+        )
+    feedback.append("")
+
+    # Vocabulary feedback
+    feedback.append("**Vocabulary:**")
+    if breakdown["Vocabulary"] >= 1.5:
+        feedback.append(
+            "Wonderful! You used different words in your answer. That's excellent!"
+        )
+    else:
+        feedback.append(
+            "Good start! Next time, try to use more describing words like 'beautiful', 'exciting', 'delicious', or 'interesting'."
+        )
+    feedback.append("")
+
+    # Grammar feedback
+    feedback.append("**Grammar:**")
+    if breakdown["Grammar"] >= 1.5:
+        feedback.append("Excellent! Your sentences were correct. Well done!")
+    else:
+        feedback.append(
+            "Nice try! Remember to use complete sentences. For example: 'I like playing soccer' instead of 'Like soccer'."
+        )
+    feedback.append("")
+
+    # Pronunciation feedback
+    feedback.append("**Pronunciation:**")
+    if quality_score < 0.5:
+        feedback.append(
+            "I couldn't hear your pronunciation clearly because of audio quality. Please:"
+        )
+        feedback.append("- Record in a quiet room with no background noise")
+        feedback.append("- Speak directly into the microphone")
+        feedback.append("- Speak at a normal speed (not too fast or slow)")
+        feedback.append("- Make sure your device microphone works properly")
+    elif quality_score < 0.7:
+        feedback.append("Some parts were hard to hear. Try to:")
+        feedback.append("- Speak more clearly")
+        feedback.append("- Reduce background noise")
+        feedback.append("- Check your microphone")
+    elif breakdown["Pronunciation"] >= 1.7:
+        feedback.append(
+            "Amazing! Your pronunciation was clear and easy to understand. Keep speaking with confidence!"
+        )
+    elif breakdown["Pronunciation"] >= 1.2:
+        feedback.append(
+            "Good job! Your pronunciation was mostly clear. Keep practicing speaking slowly and clearly."
+        )
+    else:
+        feedback.append(
+            "Keep practicing! Try to speak each word clearly. You're doing great, and practice will make you even better!"
+        )
+    feedback.append("")
+
+    # Communication feedback
+    feedback.append("**Communication:**")
+    if breakdown["Communication"] >= 1.5:
+        feedback.append(
+            "Fantastic! You answered the question well and shared your ideas clearly!"
+        )
+    else:
+        feedback.append(
+            "Good effort! Try to give more details when you answer. Think about: What? Why? How? When?"
+        )
+    feedback.append("")
+
+    # Overall suggestion
+    total_score = breakdown["Total"]
+    feedback.append("---")
+    feedback.append("### 💡 Suggestion for next time:\n")
+
+    if quality_score < 0.6:
+        feedback.append("**Most Important: Fix your audio quality first!**")
+        feedback.append(
+            "Your speaking might be good, but the system can't hear it properly."
+        )
+        feedback.append("Please follow the recording tips above, then try again. 🎤")
+    elif total_score >= 8:
+        feedback.append(
+            "You're doing excellent! Keep practicing and try speaking about different topics."
+        )
+    elif total_score >= 6:
+        feedback.append(
+            "You're doing well! Try to speak a bit longer and use more interesting words."
+        )
+    else:
+        feedback.append(
+            "Great start! Keep practicing every day. Try to speak at least 2-3 sentences about any topic you like."
+        )
+
+    feedback.append(
+        "\n**Remember:** Practice makes perfect! Don't be afraid to make mistakes. Every try makes you better! 🌈"
+    )
+
+    return "\n".join(feedback)
+
+
+def analyze_speech(transcribed_text, topic, whisper_confidence=1.0):
+    """
+    Analyze speech with simplified criteria for elementary students
+    Uses general linguistic patterns, NOT content-specific checks
+    Returns score, feedback, and breakdown
     """
     if not transcribed_text or len(transcribed_text.strip()) == 0:
-        return 0, ["⚠️ Không nhận dạng được nội dung. Vui lòng thử lại."], {}
+        return 0, ["⚠️ No speech detected. Please try again."], {}
 
-    # Chấm từng tiêu chí
-    pronunciation_score, pronunciation_issues = check_pronunciation(
-        transcribed_text, reference_text
+    # Score each criterion (0-2 points each)
+    pronunciation_score, pronunciation_level, quality_score, detected_warnings = (
+        check_pronunciation(transcribed_text, whisper_confidence)
     )
-    fluency_score, fluency_issues = check_fluency(transcribed_text)
-    grammar_score, grammar_issues = check_grammar_basic(transcribed_text)
-    vocabulary_score, vocabulary_issues = check_vocabulary(transcribed_text)
-    communication_score, communication_issues = check_communication(transcribed_text)
+    fluency_score = check_fluency(transcribed_text)
+    grammar_score = check_grammar(transcribed_text)
+    vocabulary_score = check_vocabulary(transcribed_text)
+    communication_score = check_communication(transcribed_text, topic)
 
-    # Tổng điểm /10
+    # Apply quality penalty to all scores if recognition is questionable
+    quality_multiplier = 1.0
+    if quality_score < 0.5:
+        quality_multiplier = 0.6  # Reduce all scores by 40%
+    elif quality_score < 0.7:
+        quality_multiplier = 0.8  # Reduce all scores by 20%
+
+    # Apply multiplier to all scores except pronunciation (already considered)
+    fluency_score *= quality_multiplier
+    grammar_score *= quality_multiplier
+    vocabulary_score *= quality_multiplier
+    communication_score *= quality_multiplier
+
+    # Total score out of 10
     total_score = (
         pronunciation_score
         + fluency_score
@@ -648,105 +577,57 @@ def analyze_speech(transcribed_text, audio_path=None, reference_text=None):
         + communication_score
     )
 
-    # Chuyển sang thang điểm 100
-    final_score_100 = (total_score / 10) * 100
+    # Convert to 0-10 scale
+    final_score_10 = round(total_score, 1)
 
-    # Tạo breakdown chi tiết
+    # Create breakdown
     breakdown = {
-        "Pronunciation": pronunciation_score,
-        "Fluency": fluency_score,
-        "Grammar": grammar_score,
-        "Vocabulary": vocabulary_score,
-        "Communication": communication_score,
-        "Total": total_score,
+        "Pronunciation": round(pronunciation_score, 1),
+        "Fluency": round(fluency_score, 1),
+        "Grammar": round(grammar_score, 1),
+        "Vocabulary": round(vocabulary_score, 1),
+        "Communication": round(communication_score, 1),
+        "Total": final_score_10,
+        "Confidence": round(quality_score * 100, 1),
+        "RawConfidence": round(whisper_confidence * 100, 1),
+        "DetectedWarnings": detected_warnings,
     }
 
-    # Tạo feedback chi tiết
-    feedback = []
+    # Generate encouraging feedback
+    feedback_text = generate_feedback(transcribed_text, breakdown, topic, quality_score)
 
-    feedback.append(
-        f"📊 **TỔNG ĐIỂM: {total_score:.1f}/10** ({final_score_100:.0f}/100)"
-    )
-    feedback.append("---")
-
-    # 1. Pronunciation
-    feedback.append(f"🗣️ **1. Pronunciation (Phát âm): {pronunciation_score:.1f}/2**")
-    feedback.append("")
-    if pronunciation_issues:
-        for issue in pronunciation_issues:
-            feedback.append(f"{issue}")
-    feedback.append("")
-
-    # 2. Fluency
-    feedback.append(f"🎵 **2. Fluency (Độ trôi chảy): {fluency_score:.1f}/2**")
-    if fluency_issues:
-        for issue in fluency_issues:
-            feedback.append(f"   • {issue}")
-    else:
-        feedback.append("   • Nói khá tự nhiên và mạch lạc")
-    feedback.append("")
-
-    # 3. Grammar
-    feedback.append(f"📝 **3. Grammar (Ngữ pháp): {grammar_score:.1f}/2**")
-    if grammar_issues:
-        for issue in grammar_issues:
-            feedback.append(f"   • {issue}")
-    else:
-        feedback.append("   • Ngữ pháp chính xác")
-    feedback.append("")
-
-    # 4. Vocabulary
-    feedback.append(f"📚 **4. Vocabulary (Từ vựng): {vocabulary_score:.1f}/2**")
-    if vocabulary_issues:
-        for issue in vocabulary_issues:
-            feedback.append(f"   • {issue}")
-    else:
-        feedback.append("   • Từ vựng đa dạng và phù hợp")
-    feedback.append("")
-
-    # 5. Communication
-    feedback.append(f"💬 **5. Communication (Giao tiếp): {communication_score:.1f}/2**")
-    if communication_issues:
-        for issue in communication_issues:
-            feedback.append(f"   • {issue}")
-    else:
-        feedback.append("   • Truyền đạt ý rõ ràng và logic")
-
-    return round(final_score_100, 1), feedback, breakdown
+    return final_score_10, feedback_text, breakdown
 
 
-def save_result_to_history(topic, transcribed, score, wrong_words, breakdown=None):
-    """Lưu kết quả vào lịch sử"""
+def save_result_to_history(topic, transcribed, score, feedback, breakdown=None):
+    """Save result to history"""
     result = {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "date": datetime.now().strftime("%Y-%m-%d"),
         "time": datetime.now().strftime("%H:%M:%S"),
-        "reference": topic,
+        "topic": topic,
         "transcribed": transcribed,
         "score": score,
-        "wrong_words": wrong_words,
+        "feedback": feedback,
         "word_count": len(transcribed.split()),
         "user": st.session_state.user_name,
-        "mode": "Bài nói tự do",
         "breakdown": breakdown if breakdown else {},
     }
     st.session_state.history.append(result)
 
 
 def export_history_to_csv():
-    """Xuất lịch sử ra CSV"""
+    """Export history to CSV"""
     if not st.session_state.history:
         return None
-
     df = pd.DataFrame(st.session_state.history)
     return df.to_csv(index=False).encode("utf-8")
 
 
 def export_history_to_json():
-    """Xuất lịch sử ra JSON (để backup)"""
+    """Export history to JSON"""
     if not st.session_state.history:
         return None
-
     data = {
         "export_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "user_name": st.session_state.user_name,
@@ -756,18 +637,18 @@ def export_history_to_json():
 
 
 def import_history_from_json(json_file):
-    """Nhập lịch sử từ JSON"""
+    """Import history from JSON"""
     try:
         data = json.loads(json_file.read())
         st.session_state.history = data.get("history", [])
         return True
     except Exception as e:
-        st.error(f"Lỗi import: {e}")
+        st.error(f"Import error: {e}")
         return False
 
 
 def get_statistics():
-    """Tính toán thống kê"""
+    """Calculate statistics"""
     if not st.session_state.history:
         return None
 
@@ -779,17 +660,17 @@ def get_statistics():
         "max_score": df["score"].max(),
         "min_score": df["score"].min(),
         "today_attempts": len(df[df["date"] == datetime.now().strftime("%Y-%m-%d")]),
-        "excellent_count": len(df[df["score"] >= 90]),
-        "good_count": len(df[(df["score"] >= 75) & (df["score"] < 90)]),
-        "average_count": len(df[(df["score"] >= 60) & (df["score"] < 75)]),
-        "poor_count": len(df[df["score"] < 60]),
+        "excellent_count": len(df[df["score"] >= 8]),
+        "good_count": len(df[(df["score"] >= 6) & (df["score"] < 8)]),
+        "average_count": len(df[(df["score"] >= 4) & (df["score"] < 6)]),
+        "poor_count": len(df[df["score"] < 4]),
     }
 
     return stats
 
 
 def calculate_streak():
-    """Tính chuỗi ngày luyện tập liên tục"""
+    """Calculate practice streak"""
     if not st.session_state.history:
         return 0
 
@@ -820,7 +701,7 @@ def calculate_streak():
 
 
 def create_progress_chart():
-    """Tạo biểu đồ tiến độ"""
+    """Create progress chart"""
     if not st.session_state.history:
         return None
 
@@ -834,58 +715,32 @@ def create_progress_chart():
             x=df["attempt_number"],
             y=df["score"],
             mode="lines+markers",
-            name="Điểm số",
+            name="Score",
             line=dict(color="#1f77b4", width=3),
             marker=dict(size=8),
         )
     )
 
     fig.add_hline(
-        y=90, line_dash="dash", line_color="green", annotation_text="Xuất sắc (90)"
+        y=8, line_dash="dash", line_color="green", annotation_text="Excellent (8)"
     )
     fig.add_hline(
-        y=75, line_dash="dash", line_color="orange", annotation_text="Khá (75)"
-    )
-    fig.add_hline(
-        y=60, line_dash="dash", line_color="red", annotation_text="Trung bình (60)"
+        y=6, line_dash="dash", line_color="orange", annotation_text="Good (6)"
     )
 
     fig.update_layout(
-        title="📈 Biểu đồ tiến độ học tập",
-        xaxis_title="Lần chấm",
-        yaxis_title="Điểm số",
-        yaxis_range=[0, 105],
+        title="📈 Your Progress",
+        xaxis_title="Practice Number",
+        yaxis_title="Score",
+        yaxis_range=[0, 11],
         hovermode="x unified",
     )
 
     return fig
 
 
-def create_score_distribution():
-    """Tạo biểu đồ phân bố điểm"""
-    if not st.session_state.history:
-        return None
-
-    df = pd.DataFrame(st.session_state.history)
-
-    fig = go.Figure()
-
-    fig.add_trace(
-        go.Histogram(x=df["score"], nbinsx=20, marker_color="#1f77b4", opacity=0.7)
-    )
-
-    fig.update_layout(
-        title="📊 Phân bố điểm số",
-        xaxis_title="Điểm số",
-        yaxis_title="Số lần",
-        bargap=0.1,
-    )
-
-    return fig
-
-
 def create_weekly_chart():
-    """Biểu đồ theo tuần"""
+    """Create weekly activity chart"""
     if not st.session_state.history:
         return None
 
@@ -923,130 +778,142 @@ def create_weekly_chart():
         go.Bar(
             x=stats_df["date"],
             y=stats_df["count"],
-            name="Số lần luyện",
+            name="Practice Times",
             marker_color="#1f77b4",
         )
     )
 
     fig.update_layout(
-        title="📅 Hoạt động 7 ngày gần nhất",
-        xaxis_title="Ngày",
-        yaxis_title="Số lần luyện tập",
+        title="📅 Last 7 Days Activity",
+        xaxis_title="Date",
+        yaxis_title="Number of Practices",
     )
 
     return fig
 
 
-# ========== GIAO DIỆN CHÍNH ==========
+# ========== MAIN INTERFACE ==========
 
-# Header với tabs
-tab1, tab2, tab3 = st.tabs(["🎤 Phân tích Bài nói", "📊 Thống kê", "⚙️ Cài đặt"])
+# Header with tabs
+tab1, tab2, tab3 = st.tabs(["🎤 Practice", "📊 Stats", "⚙️ Settings"])
 
-# TAB 1: PHÂN TÍCH BÀI NÓI
+# TAB 1: PRACTICE
 with tab1:
-    st.title("🎤 PHÂN TÍCH PHÁT ÂM BÀI NÓI TỰ DO")
+    st.title("🎤 ENGLISH SPEAKING PRACTICE")
+    st.markdown("### Practice speaking English with fun topics!")
 
-    # Thông tin người dùng và streak
-    col_info1, col_info2, col_info3, col_info4 = st.columns(4)
+    # User info and streak
+    col_info1, col_info2, col_info3 = st.columns(3)
 
     with col_info1:
-        st.markdown(f"**👤 Học viên:** {st.session_state.user_name}")
+        st.markdown(f"**👤 Student:** {st.session_state.user_name}")
 
     with col_info2:
         streak = calculate_streak()
         if streak > 0:
-            st.markdown(f"**🔥 Streak:** {streak} ngày")
+            st.markdown(f"**🔥 Streak:** {streak} days")
 
     with col_info3:
         stats = get_statistics()
         if stats:
             st.markdown(
-                f"**📈 Hôm nay:** {stats['today_attempts']}/{st.session_state.daily_goal} lần"
+                f"**📈 Today:** {stats['today_attempts']}/{st.session_state.daily_goal}"
             )
             progress = min(stats["today_attempts"] / st.session_state.daily_goal, 1.0)
             st.progress(progress)
 
-    with col_info4:
-        if stats:
-            st.markdown(f"**⭐ Điểm TB:** {stats['avg_score']:.1f}/100")
-
     st.divider()
 
-    # Phần nhập chủ đề
-    st.subheader("📝 Bước 1: Nhập chủ đề/đề bài")
+    # Topic input
+    st.subheader("📝 Step 1: Choose your topic")
 
-    # THÊM COLUMNS
-    col_topic1, col_topic2 = st.columns([2, 1])
+    # Provide example topics
+    example_topics = [
+        "What is your favorite color?",
+        "Tell me about your family",
+        "What do you like to do after school?",
+        "Describe your best friend",
+        "What is your favorite food?",
+        "Tell me about your pet",
+        "What do you want to be when you grow up?",
+        "Describe your favorite toy",
+    ]
+
+    col_topic1, col_topic2 = st.columns([3, 1])
 
     with col_topic1:
         topic_input = st.text_input(
-            "Chủ đề bài nói của bạn:",
+            "Your speaking topic:",
             value="",
-            placeholder="Ví dụ: My favorite hobby, My hometown, A memorable trip...",
-            help="Nhập chủ đề mà bạn sẽ nói về",
+            placeholder="Example: What is your favorite color?",
+            help="Choose a topic you want to talk about",
         )
 
     with col_topic2:
-        use_reference = st.checkbox(
-            "📋 Có câu mẫu?", help="Bật nếu bạn có câu gốc cần đọc theo", value=False
-        )
+        if st.button("🎲 Random Topic", use_container_width=True):
+            import random
 
-    # THÊM PHẦN REFERENCE TEXT
-    reference_text = None
-    if use_reference:
-        reference_text = st.text_area(
-            "📝 Nhập câu gốc (reference):",
-            value="",
-            placeholder="Ví dụ: Hello everyone, my name is Ivy. I'm a student...",
-            help="Nhập câu gốc mà bạn cần đọc theo",
-            height=100,
-        )
-        if reference_text:
-            st.info(f"📌 Câu gốc: **{reference_text[:100]}...**")
-    elif topic_input:
-        st.info(f"📌 Chủ đề: **{topic_input}**")
+            topic_input = random.choice(example_topics)
+            st.rerun()
+
+    # Show example topics
+    with st.expander("💡 Need ideas? Click here for example topics"):
+        st.write("Here are some fun topics you can talk about:")
+        for i, topic in enumerate(example_topics, 1):
+            st.write(f"{i}. {topic}")
+
+    if topic_input:
+        st.info(f"📌 Your topic: **{topic_input}**")
 
     st.divider()
 
-    # Phần ghi âm và upload
+    # Recording section
     col1, col2 = st.columns(2)
 
     with col1:
-        st.subheader("🎙️ Bước 2a: Ghi âm trực tiếp")
-        audio_recording = st.audio_input("Nhấn để ghi âm:")
+        st.subheader("🎙️ Step 2a: Record your answer")
+        audio_recording = st.audio_input("Click to record:")
 
     with col2:
-        st.subheader("📤 Bước 2b: Hoặc upload file audio")
+        st.subheader("📤 Step 2b: Or upload audio file")
         uploaded_file = st.file_uploader(
-            "Chọn file audio:",
+            "Choose audio file:",
             type=["wav", "mp3", "m4a", "ogg", "flac"],
-            help="Hỗ trợ các định dạng: WAV, MP3, M4A, OGG, FLAC",
+            help="Supported formats: WAV, MP3, M4A, OGG, FLAC",
         )
 
     st.divider()
 
-    # Nút phân tích
-    st.subheader("🎯 Bước 3: Phân tích bài nói")
+    # Analyze button
+    st.subheader("🎯 Step 3: Check your speaking")
 
-    if st.button("🔍 Phân tích phát âm", type="primary", use_container_width=True):
+    if st.button("🔍 Analyze My Speaking", type="primary", use_container_width=True):
 
         if not topic_input:
-            st.warning("⚠️ Vui lòng nhập chủ đề bài nói!")
+            st.warning("⚠️ Please enter a topic first!")
         elif not audio_recording and not uploaded_file:
-            st.error("⚠️ Vui lòng ghi âm hoặc upload file audio!")
+            st.error("⚠️ Please record or upload your audio!")
         elif not st.session_state.model:
-            st.error("⚠️ Model chưa được load. Vui lòng load trong tab Cài đặt.")
+            st.error("⚠️ Model not loaded. Please load it in Settings.")
         else:
-            with st.spinner("🔄 Đang xử lý âm thanh..."):
+            with st.spinner("🔄 Processing your audio..."):
                 try:
                     audio_source = uploaded_file if uploaded_file else audio_recording
                     wav_path = convert_audio_to_wav(audio_source)
 
                     if wav_path:
-                        with st.spinner("🎧 Đang nhận dạng giọng nói..."):
-                            transcribed_text = transcribe_audio(
+                        with st.spinner("🎧 Listening to your speaking..."):
+                            transcription_result = transcribe_audio(
                                 wav_path, st.session_state.model
                             )
+
+                            if transcription_result:
+                                transcribed_text, whisper_confidence = (
+                                    transcription_result
+                                )
+                            else:
+                                transcribed_text = None
+                                whisper_confidence = 0
 
                         try:
                             os.unlink(wav_path)
@@ -1055,8 +922,26 @@ with tab1:
 
                         if transcribed_text:
                             score, feedback, breakdown = analyze_speech(
-                                transcribed_text, wav_path, reference_text
+                                transcribed_text, topic_input, whisper_confidence
                             )
+
+                            # Show confidence warning if issues detected
+                            if (
+                                "DetectedWarnings" in breakdown
+                                and breakdown["DetectedWarnings"]
+                            ):
+                                with st.expander(
+                                    "⚠️ Quality Warnings Detected - Click to see details"
+                                ):
+                                    st.warning(
+                                        "The system detected some potential audio quality issues:"
+                                    )
+                                    for warning in breakdown["DetectedWarnings"]:
+                                        st.write(f"• {warning}")
+                                    st.info(
+                                        "💡 These warnings don't mean your speaking is bad! They just mean the microphone might not have captured everything clearly. Try recording again for a better result."
+                                    )
+
                             save_result_to_history(
                                 topic_input,
                                 transcribed_text,
@@ -1065,26 +950,45 @@ with tab1:
                                 breakdown,
                             )
 
-                            st.success("✅ Phân tích hoàn tất!")
+                            st.success("✅ Analysis complete!")
                             st.balloons()
 
                             st.divider()
 
-                            # Kết quả
+                            # Results
                             col_result1, col_result2 = st.columns(2)
 
                             with col_result1:
-                                st.markdown("**📌 Chủ đề:**")
+                                st.markdown("**📌 Topic:**")
                                 st.info(topic_input)
 
                             with col_result2:
-                                st.markdown("**🗣️ Nội dung bạn đã nói:**")
+                                st.markdown("**🗣️ What you said:**")
                                 st.info(transcribed_text)
 
-                            # Điểm số tổng quan
-                            st.markdown("### 🎯 Kết quả chấm điểm")
+                                # Show confidence indicator
+                                if "Confidence" in breakdown:
+                                    conf_pct = breakdown["Confidence"]
+                                    if conf_pct < 60:
+                                        st.error(
+                                            f"🔴 Recognition Confidence: {conf_pct:.0f}% - Very Low"
+                                        )
+                                    elif conf_pct < 70:
+                                        st.warning(
+                                            f"🟠 Recognition Confidence: {conf_pct:.0f}% - Low"
+                                        )
+                                    elif conf_pct < 85:
+                                        st.info(
+                                            f"🟡 Recognition Confidence: {conf_pct:.0f}% - Medium"
+                                        )
+                                    else:
+                                        st.success(
+                                            f"🟢 Recognition Confidence: {conf_pct:.0f}% - Good"
+                                        )
 
-                            # Hiển thị điểm chi tiết theo 5 tiêu chí
+                            # Detailed scores
+                            st.markdown("### 🎯 Your Scores")
+
                             col_breakdown = st.columns(6)
 
                             criteria_emojis = ["🗣️", "🎵", "📝", "📚", "💬", "⭐"]
@@ -1105,7 +1009,7 @@ with tab1:
                                         st.metric(
                                             f"{emoji} {name}",
                                             f"{breakdown.get('Total', 0):.1f}/10",
-                                            help="Tổng điểm",
+                                            help="Total Score",
                                         )
                                     else:
                                         st.metric(
@@ -1116,120 +1020,85 @@ with tab1:
 
                             st.divider()
 
-                            # Điểm số lớn với màu sắc (chuyển sang thang 100 để hiển thị)
-                            if score >= 90:
+                            # Overall score with color
+                            if score >= 8:
                                 score_class = "score-excellent"
-                                grade = "Xuất sắc"
-                                emoji = "🟢"
-                            elif score >= 75:
+                                grade = "Excellent!"
+                                emoji_grade = "🟢"
+                            elif score >= 6:
                                 score_class = "score-good"
-                                grade = "Khá"
-                                emoji = "🟡"
-                            elif score >= 60:
+                                grade = "Good Job!"
+                                emoji_grade = "🟡"
+                            elif score >= 4:
                                 score_class = "score-average"
-                                grade = "Trung bình"
-                                emoji = "🟠"
+                                grade = "Keep Trying!"
+                                emoji_grade = "🟠"
                             else:
                                 score_class = "score-poor"
-                                grade = "Cần cải thiện"
-                                emoji = "🔴"
+                                grade = "Keep Practicing!"
+                                emoji_grade = "🔴"
 
                             col_score1, col_score2 = st.columns([1, 2])
 
                             with col_score1:
                                 st.markdown(
-                                    f'<div class="{score_class}">{emoji} {score:.0f}/100</div>',
+                                    f'<div class="{score_class}">{emoji_grade} {score:.1f}/10</div>',
                                     unsafe_allow_html=True,
                                 )
 
                             with col_score2:
                                 st.markdown(f"### {grade}")
-                                st.progress(score / 100)
+                                st.progress(score / 10)
 
-                                if score >= 90:
+                                if score >= 8:
                                     st.success(
-                                        "🎉 Xuất sắc! Phát âm và nội dung rất tốt!"
+                                        "🎉 Excellent! Your speaking is very good!"
                                     )
-                                elif score >= 75:
+                                elif score >= 6:
                                     st.info(
-                                        "👍 Tốt lắm! Tiếp tục luyện tập để hoàn thiện hơn."
+                                        "👍 Good job! Keep practicing to get even better!"
                                     )
-                                elif score >= 60:
+                                elif score >= 4:
                                     st.warning(
-                                        "💪 Khá ổn! Hãy chú ý các góp ý phía dưới."
+                                        "💪 You're doing okay! Read the feedback below to improve."
                                     )
                                 else:
-                                    st.error(
-                                        "📚 Cần cải thiện. Hãy luyện tập thêm về phát âm và độ dài bài nói."
+                                    st.info(
+                                        "📚 Keep practicing! Every practice makes you better!"
                                     )
 
-                            # Feedback chi tiết
-                            st.markdown("### 💡 Phản hồi chi tiết")
-
-                            # Hiển thị feedback dạng markdown
-                            feedback_text = "\n".join(feedback)
-                            st.markdown(feedback_text)
-
-                            # Gợi ý luyện tập
-                            with st.expander("📖 Gợi ý cải thiện cho từng tiêu chí"):
-                                st.markdown(
-                                    """
-                                **🗣️ Pronunciation (Phát âm):**
-                                - Nghe và bắt chước người bản ngữ (BBC Learning English, VOA)
-                                - Tập phát âm các âm khó: /θ/, /ð/, /r/, /l/
-                                - Ghi âm và so sánh với bản gốc
-                                
-                                **🎵 Fluency (Độ trôi chảy):**
-                                - Luyện nói không ngắt quãng 1-2 phút
-                                - Giảm "uh", "um" bằng cách suy nghĩ trước khi nói
-                                - Đọc to 10-15 phút mỗi ngày
-                                
-                                **📝 Grammar (Ngữ pháp):**
-                                - Học thuộc các thì cơ bản (hiện tại, quá khứ, tương lai)
-                                - Chú ý Subject-Verb Agreement (I am, He is, They are)
-                                - Làm bài tập ngữ pháp trên app (Duolingo, Grammarly)
-                                
-                                **📚 Vocabulary (Từ vựng):**
-                                - Học 10 từ mới mỗi ngày theo chủ đề
-                                - Sử dụng từ vựng đa dạng, tránh lặp lại
-                                - Đọc sách/báo tiếng Anh để mở rộng vốn từ
-                                
-                                **💬 Communication (Giao tiếp):**
-                                - Trả lời đầy đủ câu hỏi với lý do và ví dụ
-                                - Sử dụng từ nối: because, and, so, but
-                                - Tổ chức ý: Introduction → Main idea → Example → Conclusion
-                                """
-                                )
+                            # Detailed feedback
+                            st.markdown("### 💬 Your Feedback")
+                            st.markdown(feedback)
 
                         else:
                             st.error(
-                                "❌ Không thể nhận dạng giọng nói. Vui lòng thử lại."
+                                "❌ Could not understand the audio. Please try again."
                             )
                     else:
-                        st.error("❌ Không thể xử lý file audio.")
+                        st.error("❌ Could not process audio file.")
 
                 except Exception as e:
-                    st.error(f"❌ Lỗi: {e}")
+                    st.error(f"❌ Error: {e}")
 
-    # Hiển thị lịch sử gần đây
+    # Recent history
     if st.session_state.history:
         st.divider()
-        st.subheader("📜 Lịch sử gần đây (5 lần cuối)")
+        st.subheader("📜 Recent Practice (Last 5)")
 
         for item in reversed(st.session_state.history[-5:]):
-            with st.expander(f"⏰ {item['timestamp']} - Điểm: {item['score']}/100"):
+            with st.expander(f"⏰ {item['timestamp']} - Score: {item['score']}/10"):
                 col_h1, col_h2 = st.columns(2)
                 with col_h1:
-                    st.write(f"**📌 Chủ đề:** {item['reference']}")
-                    st.write(f"**🗣️ Nội dung:** {item['transcribed'][:100]}...")
+                    st.write(f"**📌 Topic:** {item['topic']}")
+                    st.write(f"**🗣️ You said:** {item['transcribed'][:100]}...")
                 with col_h2:
-                    st.metric("Điểm số", f"{item['score']}/100")
-                    st.write(f"**👤 Người dùng:** {item['user']}")
-                    st.write(f"**📝 Số từ:** {item['word_count']}")
+                    st.metric("Score", f"{item['score']}/10")
+                    st.write(f"**👤 Student:** {item['user']}")
+                    st.write(f"**📝 Words:** {item['word_count']}")
 
-                # Hiển thị breakdown nếu có
                 if "breakdown" in item and item["breakdown"]:
-                    st.write("**📊 Chi tiết điểm:**")
+                    st.write("**📊 Detailed Scores:**")
                     breakdown = item["breakdown"]
                     col_b = st.columns(5)
                     labels = [
@@ -1244,46 +1113,46 @@ with tab1:
                             with col_b[idx]:
                                 st.metric(label[:6], f"{breakdown[label]:.1f}/2")
 
-# TAB 2: THỐNG KÊ
+# TAB 2: STATISTICS
 with tab2:
-    st.title("📊 Thống kê và Phân tích")
+    st.title("📊 Your Statistics")
 
     stats = get_statistics()
 
     if stats and stats["total_attempts"] > 0:
-        # Hiển thị Streak
+        # Show streak
         streak = calculate_streak()
         if streak > 0:
             st.markdown(
                 f"""
             <div class="streak-badge">
-                🔥 Streak: {streak} ngày liên tục!
+                🔥 {streak} days in a row! Keep going!
             </div>
             """,
                 unsafe_allow_html=True,
             )
             st.markdown("")
 
-        # Tổng quan
-        st.subheader("📈 Tổng quan")
+        # Overview
+        st.subheader("📈 Overview")
 
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
-            st.metric("Tổng số lần phân tích", stats["total_attempts"])
+            st.metric("Total Practices", stats["total_attempts"])
 
         with col2:
-            st.metric("Điểm trung bình", f"{stats['avg_score']:.1f}/100")
+            st.metric("Average Score", f"{stats['avg_score']:.1f}/10")
 
         with col3:
-            st.metric("Điểm cao nhất", f"{stats['max_score']}/100")
+            st.metric("Best Score", f"{stats['max_score']}/10")
 
         with col4:
-            st.metric("Hôm nay", f"{stats['today_attempts']} lần")
+            st.metric("Today", f"{stats['today_attempts']} times")
 
         st.divider()
 
-        # Biểu đồ
+        # Charts
         col_chart1, col_chart2 = st.columns(2)
 
         with col_chart1:
@@ -1292,21 +1161,14 @@ with tab2:
                 st.plotly_chart(progress_chart, use_container_width=True)
 
         with col_chart2:
-            dist_chart = create_score_distribution()
-            if dist_chart:
-                st.plotly_chart(dist_chart, use_container_width=True)
+            weekly_chart = create_weekly_chart()
+            if weekly_chart:
+                st.plotly_chart(weekly_chart, use_container_width=True)
 
         st.divider()
 
-        # Biểu đồ hoạt động 7 ngày
-        weekly_chart = create_weekly_chart()
-        if weekly_chart:
-            st.plotly_chart(weekly_chart, use_container_width=True)
-
-        st.divider()
-
-        # Phân loại điểm
-        st.subheader("🎯 Phân loại kết quả")
+        # Score categories
+        st.subheader("🎯 Score Distribution")
 
         col_cat1, col_cat2, col_cat3, col_cat4 = st.columns(4)
 
@@ -1314,9 +1176,9 @@ with tab2:
             st.markdown(
                 f"""
             <div class="stat-box" style="border-left: 4px solid #00c853;">
-                <h3>🟢 Xuất sắc</h3>
+                <h3>🟢 Excellent</h3>
                 <h2>{stats['excellent_count']}</h2>
-                <p>≥ 90 điểm</p>
+                <p>≥ 8 points</p>
             </div>
             """,
                 unsafe_allow_html=True,
@@ -1326,9 +1188,9 @@ with tab2:
             st.markdown(
                 f"""
             <div class="stat-box" style="border-left: 4px solid #ffd600;">
-                <h3>🟡 Khá</h3>
+                <h3>🟡 Good</h3>
                 <h2>{stats['good_count']}</h2>
-                <p>75-89 điểm</p>
+                <p>6-7 points</p>
             </div>
             """,
                 unsafe_allow_html=True,
@@ -1338,9 +1200,9 @@ with tab2:
             st.markdown(
                 f"""
             <div class="stat-box" style="border-left: 4px solid #ff9800;">
-                <h3>🟠 Trung bình</h3>
+                <h3>🟠 OK</h3>
                 <h2>{stats['average_count']}</h2>
-                <p>60-74 điểm</p>
+                <p>4-5 points</p>
             </div>
             """,
                 unsafe_allow_html=True,
@@ -1350,9 +1212,9 @@ with tab2:
             st.markdown(
                 f"""
             <div class="stat-box" style="border-left: 4px solid #ff5252;">
-                <h3>🔴 Cần cải thiện</h3>
+                <h3>🔴 Keep Trying</h3>
                 <h2>{stats['poor_count']}</h2>
-                <p>< 60 điểm</p>
+                <p>< 4 points</p>
             </div>
             """,
                 unsafe_allow_html=True,
@@ -1360,8 +1222,8 @@ with tab2:
 
         st.divider()
 
-        # Xuất báo cáo
-        st.subheader("📥 Xuất dữ liệu")
+        # Export data
+        st.subheader("💾 Download Your Data")
 
         col_export1, col_export2, col_export3 = st.columns(3)
 
@@ -1369,9 +1231,9 @@ with tab2:
             csv_data = export_history_to_csv()
             if csv_data:
                 st.download_button(
-                    label="💾 Tải CSV",
+                    label="💾 Download CSV",
                     data=csv_data,
-                    file_name=f"speech_analysis_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                    file_name=f"speaking_report_{datetime.now().strftime('%Y%m%d')}.csv",
                     mime="text/csv",
                     use_container_width=True,
                 )
@@ -1380,180 +1242,185 @@ with tab2:
             json_data = export_history_to_json()
             if json_data:
                 st.download_button(
-                    label="💾 Tải JSON (Backup)",
+                    label="💾 Download JSON",
                     data=json_data,
-                    file_name=f"speech_analysis_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                    file_name=f"speaking_backup_{datetime.now().strftime('%Y%m%d')}.json",
                     mime="application/json",
                     use_container_width=True,
                 )
 
         with col_export3:
-            if st.button("🗑️ Xóa lịch sử", use_container_width=True):
+            if st.button("🗑️ Clear History", use_container_width=True):
                 if st.session_state.get("confirm_delete", False):
                     st.session_state.history = []
                     st.session_state.confirm_delete = False
                     st.rerun()
                 else:
                     st.session_state.confirm_delete = True
-                    st.warning("⚠️ Nhấn lần nữa để xác nhận!")
+                    st.warning("⚠️ Click again to confirm!")
 
     else:
-        st.info("📊 Chưa có dữ liệu thống kê. Hãy bắt đầu phân tích bài nói đầu tiên!")
+        st.info("📊 No statistics yet. Start practicing to see your progress!")
 
-# TAB 3: CÀI ĐẶT
+# TAB 3: SETTINGS
 with tab3:
-    st.title("⚙️ Cài đặt")
+    st.title("⚙️ Settings")
 
-    # Thông tin người dùng
-    st.subheader("👤 Thông tin người dùng")
-    user_name = st.text_input("Tên của bạn:", value=st.session_state.user_name)
+    # User info
+    st.subheader("👤 Your Information")
+    user_name = st.text_input("Your name:", value=st.session_state.user_name)
 
     if user_name != st.session_state.user_name:
         st.session_state.user_name = user_name
-        st.success("✅ Đã lưu tên!")
+        st.success("✅ Name saved!")
 
     st.divider()
 
-    # Cài đặt mục tiêu
-    st.subheader("🎯 Mục tiêu luyện tập")
+    # Daily goal
+    st.subheader("🎯 Daily Goal")
     daily_goal = st.slider(
-        "Số lần phân tích mỗi ngày:",
+        "Number of practices per day:",
         min_value=1,
-        max_value=50,
+        max_value=20,
         value=st.session_state.daily_goal,
-        help="Đặt mục tiêu số lần phân tích bài nói hàng ngày",
+        help="Set your daily practice goal",
     )
 
     if daily_goal != st.session_state.daily_goal:
         st.session_state.daily_goal = daily_goal
-        st.success(f"✅ Đã đặt mục tiêu: {daily_goal} lần/ngày")
+        st.success(f"✅ Goal set to {daily_goal} practices per day!")
 
     st.divider()
 
-    # Cài đặt Model Whisper
-    st.subheader("🤖 Mô hình AI")
+    # Whisper model settings
+    st.subheader("🤖 AI Model Settings")
 
     col_model1, col_model2 = st.columns(2)
 
     with col_model1:
         model_size = st.selectbox(
-            "Chọn mô hình Whisper:",
+            "Choose Whisper model:",
             options=["tiny", "base", "small"],
             index=["tiny", "base", "small"].index(st.session_state.model_size),
             help="""
-            - tiny: Nhanh nhất, độ chính xác thấp nhất (39MB)
-            - base: Cân bằng tốc độ và độ chính xác (74MB) - Khuyến nghị
-            - small: Chậm hơn nhưng chính xác hơn (244MB)
+            - tiny: Fastest, less accurate (39MB)
+            - base: Balanced speed and accuracy (74MB) - Recommended
+            - small: Slower but more accurate (244MB)
             """,
         )
 
     with col_model2:
         if st.session_state.model is not None:
-            st.success(f"Model đang dùng: **{st.session_state.model_size}**")
+            st.success(f"Current model: **{st.session_state.model_size}**")
         else:
-            st.warning("Chưa load model")
+            st.warning("Model not loaded")
 
     if st.button("Load/Reload Model", type="primary", use_container_width=True):
-        with st.spinner(f"Đang tải model {model_size}..."):
+        with st.spinner(f"Loading {model_size} model..."):
             model = load_whisper_model(model_size)
             if model:
                 st.session_state.model = model
                 st.session_state.model_size = model_size
-                st.success(f"✅ Đã load model {model_size} thành công!")
+                st.success(f"✅ Successfully loaded {model_size} model!")
                 st.balloons()
             else:
-                st.error("❌ Không thể load model. Vui lòng thử lại.")
+                st.error("❌ Could not load model. Please try again.")
 
     st.divider()
 
-    # Import/Export dữ liệu
-    st.subheader("💾 Sao lưu & Khôi phục")
+    # Backup & Restore
+    st.subheader("💾 Backup & Restore")
 
     col_backup1, col_backup2 = st.columns(2)
 
     with col_backup1:
-        st.markdown("**Xuất dữ liệu (Backup)**")
+        st.markdown("**Export Data (Backup)**")
         json_backup = export_history_to_json()
         if json_backup:
             st.download_button(
-                label="📥 Tải file backup (JSON)",
+                label="💾 Download Backup",
                 data=json_backup,
                 file_name=f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
                 mime="application/json",
                 use_container_width=True,
             )
         else:
-            st.info("Chưa có dữ liệu để backup")
+            st.info("No data to backup")
 
     with col_backup2:
-        st.markdown("**Nhập dữ liệu (Restore)**")
+        st.markdown("**Import Data (Restore)**")
         upload_backup = st.file_uploader(
-            "Chọn file backup JSON:",
+            "Choose backup file:",
             type=["json"],
-            help="Upload file JSON đã backup trước đó",
+            help="Upload your backup JSON file",
         )
 
         if upload_backup:
-            if st.button("📤 Khôi phục dữ liệu", use_container_width=True):
+            if st.button("📤 Restore Data", use_container_width=True):
                 if import_history_from_json(upload_backup):
-                    st.success("✅ Đã khôi phục dữ liệu thành công!")
+                    st.success("✅ Data restored successfully!")
                     st.rerun()
                 else:
-                    st.error("❌ Không thể khôi phục. File không hợp lệ.")
+                    st.error("❌ Could not restore data. Invalid file.")
 
     st.divider()
 
-    # Thông tin ứng dụng
-    st.subheader("ℹ️ Thông tin ứng dụng")
+    # App information
+    st.subheader("ℹ️ About This App")
 
     st.info(
         """
-    **🎤 Ứng dụng Phân tích Phát Âm Bài Nói Tự Do**
+    **🎤 English Speaking Practice for Elementary Students**
     
-    **Phiên bản:** 3.1 - Enhanced Pronunciation Feedback
+    **Version:** 4.0 - Elementary Edition
     
-    **Tính năng chính:**
-    - Phân tích phát âm tự động với AI (Whisper)
-    - Chấm điểm theo 5 tiêu chí với phản hồi chi tiết
-    - Phát hiện từ phát âm sai và đưa ra gợi ý sửa
-    - Thống kê chi tiết và biểu đồ trực quan
-    - Theo dõi streak và mục tiêu hàng ngày
-    - Sao lưu/khôi phục dữ liệu
+    **Features:**
+    - AI-powered speech recognition (Whisper)
+    - Simple scoring: Pronunciation, Fluency, Grammar, Vocabulary, Communication
+    - Encouraging English feedback
+    - Progress tracking with fun charts
+    - Daily goals and streak tracking
+    - Backup and restore your progress
     
-    **Công nghệ:**
-    - Streamlit
-    - OpenAI Whisper (ASR)
-    - Plotly Charts
-    - Advanced NLP Analysis
+    **How to Use:**
+    1. Choose a topic you want to talk about
+    2. Record your answer (or upload audio)
+    3. Get your score and helpful feedback
+    4. Practice every day to improve!
     
-    **Thang điểm:**
-    - Pronunciation: Độ rõ ràng, chính xác phát âm (/2)
-    - Fluency: Độ trôi chảy, tự nhiên (/2)
-    - Grammar: Ngữ pháp chính xác (/2)
-    - Vocabulary: Từ vựng đa dạng (/2)
-    - Communication: Truyền đạt ý rõ ràng (/2)
-    - Tổng: /10 điểm (tương đương /100)
+    **Scoring System:**
+    - Each skill: 0-2 points
+    - Total: 0-10 points
+    - 8-10: Excellent! 🟢
+    - 6-7: Good Job! 🟡
+    - 4-5: Keep Trying! 🟠
+    - 0-3: Keep Practicing! 🔴
+    
+    **Technology:**
+    - Streamlit (Web Interface)
+    - OpenAI Whisper (Speech Recognition)
+    - Plotly (Charts)
+    
+    **Remember:** Practice makes perfect! Don't worry about mistakes - they help you learn! 🌈
     """
     )
 
     st.divider()
 
-    # Nút reset toàn bộ
-    st.subheader("🚨 Zone Nguy hiểm")
+    # Reset button
+    st.subheader("🚨 Danger Zone")
 
-    if st.button("🗑️ Xóa toàn bộ dữ liệu và cài đặt", type="secondary"):
+    if st.button("🗑️ Delete All Data and Settings", type="secondary"):
         if st.session_state.get("confirm_reset_all", False):
             st.session_state.history = []
-            st.session_state.user_name = "Học viên"
-            st.session_state.daily_goal = 10
+            st.session_state.user_name = "Student"
+            st.session_state.daily_goal = 5
             st.session_state.confirm_reset_all = False
-            st.success("✅ Đã reset toàn bộ!")
+            st.success("✅ All data reset!")
             st.rerun()
         else:
             st.session_state.confirm_reset_all = True
-            st.error(
-                "⚠️ CẢNH BÁO: Bạn sẽ mất toàn bộ dữ liệu! Nhấn lần nữa để xác nhận."
-            )
+            st.error("⚠️ WARNING: You will lose all your data! Click again to confirm.")
 
 # Footer
 st.divider()
@@ -1571,9 +1438,9 @@ st.markdown(
 </style>
 
 <div style='text-align: center; color: gray; padding: 16px 0; font-size: 14px;'>
-    <p><strong>Ứng dụng Phân tích Phát Âm Bài Nói Tự Do</strong></p>
-    <p>Miễn phí • Offline/Online • Không dùng API trả phí</p>
-    <p>Sử dụng: Whisper (OpenAI) + Streamlit + Enhanced Pronunciation Analysis</p>
+    <p><strong>🎤 English Speaking Practice for Elementary Students</strong></p>
+    <p>Free • Offline/Online • No API costs</p>
+    <p>Powered by: Whisper (OpenAI) + Streamlit</p>
     <p style='margin-top:10px;'>© 2025 
         <a href='https://www.facebook.com/augusttrung1823/' target='_blank' class='footer-link'>
             August Trung
