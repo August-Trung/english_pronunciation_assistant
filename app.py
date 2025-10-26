@@ -13,7 +13,7 @@ import re
 # Page config
 st.set_page_config(
     page_title="English Speaking Practice",
-    page_icon="🎤",
+    page_icon="assets/logo-augusttrung.png",
     layout="wide",
 )
 
