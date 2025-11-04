@@ -13,7 +13,7 @@ import re
 # Page config
 st.set_page_config(
     page_title="English Speaking Practice",
-    page_icon="🎤",
+    page_icon="assets/logo-augusttrung.png",
     layout="wide",
 )
 
@@ -59,15 +59,6 @@ st.markdown(
         font-size: 24px;
         font-weight: bold;
     }
-    .fluent-badge {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        color: white;
-        padding: 10px;
-        border-radius: 8px;
-        text-align: center;
-        font-weight: bold;
-        margin: 10px 0;
-    }
 </style>
 """,
     unsafe_allow_html=True,
@@ -112,16 +103,12 @@ def convert_audio_to_wav(audio_file):
         audio = AudioSegment.from_file(audio_file)
         audio = audio.set_channels(1)
         audio = audio.set_frame_rate(16000)
-
-        # Calculate duration for speech rate
-        duration_seconds = len(audio) / 1000.0
-
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
         audio.export(temp_file.name, format="wav")
-        return temp_file.name, duration_seconds
+        return temp_file.name
     except Exception as e:
         st.error(f"Error converting audio: {e}")
-        return None, 0
+        return None
 
 
 def transcribe_audio(audio_path, model):
@@ -151,147 +138,130 @@ def transcribe_audio(audio_path, model):
         return None, 0
 
 
-def calculate_speech_rate(word_count, duration_seconds):
+def detect_transcription_quality(text, whisper_confidence):
     """
-    Calculate speaking rate (words per second)
-    Returns: words_per_second, speed_category
+    Detect transcription quality using linguistic patterns (NOT content-specific)
+    Returns: (quality_score: float 0-1, warnings: list)
     """
-    if duration_seconds <= 0:
-        return 0, "unknown"
-
-    wps = word_count / duration_seconds
-
-    # Categorize speed
-    if wps >= 2.5:
-        category = "fast"  # Fluent speaker
-    elif wps >= 1.5:
-        category = "normal"  # Average speaker
-    elif wps >= 1.0:
-        category = "slow"  # Beginner
-    else:
-        category = "very_slow"  # Very slow
-
-    return round(wps, 2), category
-
-
-def detect_fluent_speaker(text, word_count, speech_rate_wps):
-    """
-    Detect if student is a fluent speaker
-    Criteria:
-    - Word count ≥ 30
-    - OR speech rate > 2.5 words/sec
-    - OR has complex sentence structures
-
-    Returns: (is_fluent: bool, confidence_level: str)
-    """
-    is_fluent = False
-    confidence_level = "beginner"
-
-    # Criterion 1: Word count
-    if word_count >= 30:
-        is_fluent = True
-        confidence_level = "fluent"
-
-    # Criterion 2: Speech rate
-    if speech_rate_wps >= 2.5:
-        is_fluent = True
-        confidence_level = "fluent"
-
-    # Criterion 3: Complex structures
-    connectors = ["because", "although", "however", "therefore", "while", "since"]
-    text_lower = text.lower()
-    connector_count = sum(1 for conn in connectors if conn in text_lower)
-
-    if connector_count >= 2 and word_count >= 20:
-        is_fluent = True
-        confidence_level = "advanced"
-
-    # Intermediate level
-    if not is_fluent and word_count >= 15 and speech_rate_wps >= 1.8:
-        confidence_level = "intermediate"
-
-    return is_fluent, confidence_level
-
-
-def check_pronunciation(text, whisper_confidence, word_count, is_fluent_speaker):
-    """
-    NEW FAIR PRONUNCIATION SCORING
-
-    Fluent speakers get protection:
-    - Base score: 1.5/2 (instead of 1.0)
-    - Floor score: 1.2/2 (instead of 0.3)
-    - Less penalty for low confidence
-
-    Returns: score (0-2), level, quality_score, warnings
-    """
-    if word_count == 0:
-        return 0, "Needs practice", whisper_confidence, ["No speech detected"]
-
-    # Detect basic quality issues
-    words = text.split()
     warnings = []
     quality_score = whisper_confidence
 
-    # 1. Check for very short/fragmented words
+    words = text.split()
+    word_count = len(words)
+
+    if word_count == 0:
+        return 0, ["No speech detected"]
+
+    # 1. Check for very short/fragmented words (sign of poor audio)
     very_short = [w for w in words if len(re.sub(r"[^a-zA-Z]", "", w)) <= 2]
-    very_short_ratio = len(very_short) / word_count if word_count > 0 else 0
+    very_short_ratio = len(very_short) / word_count
 
     if very_short_ratio > 0.5:
-        quality_score -= 0.1
-        warnings.append("Some words may be unclear")
+        quality_score -= 0.2
+        warnings.append("Many short/unclear words detected")
 
-    # 2. Check for repeated words (stuttering)
+    # 2. Check for repeated words (stuttering or audio glitch)
     word_list = [re.sub(r"[^a-z]", "", w.lower()) for w in words]
     word_list = [w for w in word_list if w]
 
     if len(word_list) > 1:
-        repeated_count = sum(
-            1
-            for i in range(len(word_list) - 1)
-            if word_list[i] == word_list[i + 1] and len(word_list[i]) > 2
-        )
+        repeated_count = 0
+        for i in range(len(word_list) - 1):
+            if word_list[i] == word_list[i + 1] and len(word_list[i]) > 2:
+                repeated_count += 1
+
         if repeated_count > 2:
-            quality_score -= 0.05
-            warnings.append("Audio may have stuttering")
+            quality_score -= 0.1
+            warnings.append("Audio may have stuttering or glitches")
 
-    quality_score = max(quality_score, 0.3)
+    # 3. Check sentence structure completeness
+    sentences = [s.strip() for s in re.split(r"[.!?]+", text) if s.strip()]
 
-    # NEW SCORING LOGIC
-    if is_fluent_speaker:
-        # FLUENT SPEAKER: Protected scoring
-        base_score = 1.5  # Start from 1.5/2
+    if len(sentences) > 0:
+        incomplete_count = 0
+        for sent in sentences:
+            sent_words = sent.lower().split()
+            # Very basic: sentence should have at least subject + verb pattern
+            has_pronoun = any(
+                w in sent_words
+                for w in ["i", "you", "he", "she", "we", "they", "it", "my", "there"]
+            )
+            has_verb = any(
+                w in sent_words
+                for w in [
+                    "is",
+                    "are",
+                    "am",
+                    "was",
+                    "were",
+                    "have",
+                    "has",
+                    "had",
+                    "do",
+                    "does",
+                    "did",
+                    "can",
+                    "will",
+                    "like",
+                    "love",
+                    "want",
+                    "go",
+                    "play",
+                    "make",
+                ]
+            )
 
-        # Minimal penalty for low confidence (natural for fast speech)
-        if quality_score < 0.4:
-            base_score -= 0.15  # Only -0.15 instead of -0.4
-        elif quality_score < 0.6:
-            base_score -= 0.05  # Only -0.05 instead of -0.2
+            if len(sent_words) > 4 and not (has_pronoun and has_verb):
+                incomplete_count += 1
 
-        # Bonus for very clear speech
-        if quality_score >= 0.85:
-            base_score += 0.15
+        if incomplete_count > len(sentences) // 2:
+            quality_score -= 0.15
+            warnings.append("Some sentences may be incomplete or unclear")
 
-        score = max(base_score, 1.2)  # Floor: 1.2/2 for fluent speakers
-        score = min(score, 2.0)
+    # 4. Check for excessive special characters (sign of recognition failure)
+    special_char_count = len(re.findall(r"[^a-zA-Z0-9\s\.,!?\'-]", text))
+    if special_char_count > word_count * 0.1:
+        quality_score -= 0.15
+        warnings.append("Audio contains unclear segments")
 
-    else:
-        # BEGINNER/INTERMEDIATE: Standard scoring
-        base_score = 1.0
+    quality_score = max(quality_score, 0.1)
 
-        if quality_score < 0.5:
-            base_score -= 0.3
-        elif quality_score < 0.7:
-            base_score -= 0.15
+    return quality_score, warnings
 
-        score = max(base_score, 0.8)  # Floor: 0.8/2 for beginners
-        score = min(score, 2.0)
 
-    # Determine level
-    if score >= 1.7:
-        level = "Excellent"
-    elif score >= 1.3:
+def check_pronunciation(text, whisper_confidence=1.0):
+    """
+    Check pronunciation quality based on:
+    1. Whisper confidence
+    2. General linguistic quality (NOT content-specific)
+    Returns score 0-2, level, adjusted confidence, and warnings
+    """
+    words = text.split()
+    word_count = len(words)
+
+    if word_count == 0:
+        return 0, "Needs practice", whisper_confidence, ["No speech detected"]
+
+    # Detect quality issues using general patterns
+    quality_score, warnings = detect_transcription_quality(text, whisper_confidence)
+
+    # Calculate pronunciation score
+    score = quality_score * 2.0  # Convert 0-1 to 0-2
+
+    # Cap score based on quality
+    if quality_score < 0.5:
+        score = min(score, 1.0)
+    elif quality_score < 0.7:
+        score = min(score, 1.5)
+
+    score = max(min(score, 2.0), 0.3)
+
+    # Feedback level
+    if quality_score < 0.6:
+        level = "Needs practice"
+    elif score >= 1.7:
         level = "Good"
-    elif score >= 1.0:
+    elif score >= 1.2:
         level = "Fair"
     else:
         level = "Needs practice"
@@ -299,64 +269,26 @@ def check_pronunciation(text, whisper_confidence, word_count, is_fluent_speaker)
     return round(score, 1), level, quality_score, warnings
 
 
-def check_fluency(text, word_count, speech_rate_wps, is_fluent_speaker):
+def check_fluency(text):
     """
-    NEW FLUENCY SCORING with bonuses
-
-    Scoring:
-    - 50+ words: 2.0/2 (perfect)
-    - 25-49 words: 1.8/2
-    - 15-24 words: 1.4/2
-    - 10-14 words: 1.0/2
-    - <10 words: 0.8/2
-
-    Bonuses:
-    - Has connectors: +0.2
-    - Fast speech (>2.5 wps): +0.2
-
-    Returns: score (0-2)
+    Check fluency based on response length
+    Returns score 0-2
     """
+    words = text.split()
+    word_count = len(words)
+
     if word_count == 0:
         return 0
 
-    # Base scoring by word count
-    if word_count >= 50:
-        score = 2.0
-    elif word_count >= 25:
-        score = 1.8
-    elif word_count >= 15:
-        score = 1.4
-    elif word_count >= 10:
-        score = 1.0
-    else:
+    # Simple scoring based on length
+    if word_count < 10:
         score = 0.8
+    elif 10 <= word_count < 25:
+        score = 1.5
+    else:
+        score = 2.0
 
-    # Bonus 1: Connectors (shows organized thinking)
-    connectors = [
-        "and",
-        "but",
-        "because",
-        "so",
-        "also",
-        "however",
-        "therefore",
-        "while",
-    ]
-    text_lower = text.lower()
-    has_connectors = sum(1 for conn in connectors if conn in text_lower)
-
-    if has_connectors >= 2:
-        score += 0.2
-    elif has_connectors >= 1:
-        score += 0.1
-
-    # Bonus 2: Fast speech rate
-    if speech_rate_wps >= 2.5:
-        score += 0.2
-    elif speech_rate_wps >= 2.0:
-        score += 0.1
-
-    return max(min(round(score, 1), 2.0), 0.5)
+    return round(score, 1)
 
 
 def check_grammar(text):
@@ -387,20 +319,7 @@ def check_grammar(text):
     # Check for basic sentence structure
     has_verb = any(
         word in words
-        for word in [
-            "is",
-            "am",
-            "are",
-            "have",
-            "has",
-            "like",
-            "love",
-            "play",
-            "go",
-            "do",
-            "can",
-            "will",
-        ]
+        for word in ["is", "am", "are", "have", "has", "like", "love", "play", "go"]
     )
 
     if not has_verb and len(words) > 3:
@@ -437,314 +356,245 @@ def check_vocabulary(text):
     return round(score, 1)
 
 
-def check_communication(text, topic, word_count, is_fluent_speaker):
+def check_communication(text, topic):
     """
-    Check communication effectiveness
-
-    Fluent speakers get bonus for complexity
+    Check if student answered the topic
     Returns score 0-2
     """
     words = text.lower().split()
+    word_count = len(words)
+
     score = 1.0
 
     # Length bonus
-    if word_count >= 30:
+    if word_count >= 20:
         score += 0.5
-    elif word_count >= 20:
-        score += 0.3
     elif word_count < 10:
         score -= 0.3
 
-    # Check for connectors (organized thinking)
-    connectors = ["because", "and", "so", "but", "also", "however"]
+    # Check for connectors (shows organized thinking)
+    connectors = ["because", "and", "so", "but", "also"]
     has_connector = any(conn in words for conn in connectors)
     if has_connector:
         score += 0.3
 
-    # Check for personal response
+    # Check for personal response markers
     personal_markers = ["i", "my", "me"]
     has_personal = any(marker in words for marker in personal_markers)
     if has_personal:
         score += 0.2
 
-    # Bonus for fluent speakers with details
-    if is_fluent_speaker and word_count >= 40:
-        score += 0.2
-
     return max(min(round(score, 1), 2.0), 0.5)
 
 
-def apply_quality_adjustment(scores, quality_score, word_count, is_fluent_speaker):
+def generate_feedback(transcribed_text, breakdown, topic, quality_score=1.0):
     """
-    NEW SMART QUALITY ADJUSTMENT
-
-    Logic:
-    - Fluent speakers (≥30 words): Minimal penalty
-    - Beginners (<30 words): Standard penalty
-
-    Only affects: Fluency, Grammar, Vocabulary, Communication
-    Does NOT affect: Pronunciation (already handled separately)
-    """
-    adjusted = scores.copy()
-
-    # Skip if quality is good
-    if quality_score >= 0.6:
-        return adjusted
-
-    if is_fluent_speaker:
-        # FLUENT SPEAKER: Protected from harsh penalties
-        if quality_score < 0.4:
-            multiplier = 0.85  # Only 15% reduction
-        elif quality_score < 0.6:
-            multiplier = 0.95  # Only 5% reduction
-        else:
-            multiplier = 1.0
-    else:
-        # BEGINNER: Standard penalties
-        if quality_score < 0.5:
-            multiplier = 0.70  # 30% reduction
-        elif quality_score < 0.7:
-            multiplier = 0.85  # 15% reduction
-        else:
-            multiplier = 1.0
-
-    # Apply to all except Pronunciation
-    adjusted["Fluency"] *= multiplier
-    adjusted["Grammar"] *= multiplier
-    adjusted["Vocabulary"] *= multiplier
-    adjusted["Communication"] *= multiplier
-
-    return adjusted
-
-
-def generate_feedback(
-    transcribed_text,
-    breakdown,
-    topic,
-    quality_score,
-    is_fluent_speaker,
-    speech_rate_info,
-):
-    """
-    Generate intelligent feedback based on student level
+    Generate encouraging English feedback for elementary students
+    Includes warnings about transcription quality when needed
     """
     feedback = []
 
+    # Add IMPORTANT notice if quality is questionable
+    if quality_score < 0.7:
+        feedback.append("### ⚠️ IMPORTANT: Please Read This First!\n")
+        feedback.append(f"**Audio Recognition Quality: {quality_score*100:.0f}%**\n")
+
+        if quality_score < 0.5:
+            feedback.append(
+                "❌ **The audio was very unclear.** The text below might be VERY DIFFERENT from what you actually said!\n"
+            )
+            feedback.append("**What to do:**")
+            feedback.append("1. ✅ Check if the text matches what you said")
+            feedback.append("2. 🔄 If it's wrong, please record again")
+            feedback.append("3. 🎤 Speak clearly and slowly")
+            feedback.append("4. 🤫 Record in a quiet room\n")
+        else:
+            feedback.append(
+                "⚠️ **Some words might not be recognized correctly.** Please check if the text below matches what you said.\n"
+            )
+            feedback.append("**Tips for better recognition:**")
+            feedback.append("- Speak clearly (not too fast)")
+            feedback.append("- Use a quiet room")
+            feedback.append("- Hold microphone close to your mouth\n")
+
+        feedback.append("---\n")
+
+    feedback.append("### 🌟 Your Feedback\n")
+
     word_count = len(transcribed_text.split())
-    wps, speed_category = speech_rate_info
 
-    # Quality warning (only if really bad)
-    if quality_score < 0.5 and not is_fluent_speaker:
-        feedback.append("### ⚠️ Audio Quality Notice\n")
-        feedback.append(f"**Recognition Quality: {quality_score*100:.0f}%**\n")
-        feedback.append("Some words may not be recognized correctly. Tips:")
-        feedback.append("- Speak clearly in a quiet room")
-        feedback.append("- Hold microphone close to your mouth")
-        feedback.append("- Try recording again if scores seem too low\n")
-        feedback.append("---\n")
-
-    # Fluent speaker notice (positive!)
-    if is_fluent_speaker:
-        feedback.append("### 🌟 Fluent Speaker Detected!\n")
+    # Adjust tone based on quality
+    if quality_score < 0.6:
         feedback.append(
-            f"**Amazing!** You spoke **{word_count} words** at **{wps} words/second**!"
+            "*Note: The scores below are based on what the system heard, which may not be accurate due to audio quality issues.*\n"
         )
-        feedback.append(
-            "You're a confident English speaker! Keep up the excellent work! 🎉\n"
-        )
-        feedback.append("---\n")
-
-    feedback.append("### 📊 Your Performance\n")
 
     # Fluency feedback
     feedback.append("**Fluency & Speaking:**")
-    if breakdown["Fluency"] >= 1.8:
-        feedback.append(
-            "🌟 Outstanding! You spoke smoothly and naturally. Perfect fluency!"
-        )
-    elif breakdown["Fluency"] >= 1.5:
-        feedback.append("Great job! Your speech flows well. Very good!")
+    if breakdown["Fluency"] >= 1.5:
+        feedback.append("Great job! You spoke clearly and smoothly. Keep it up!")
     elif breakdown["Fluency"] >= 1.0:
         feedback.append(
-            "Good effort! Try to speak a bit more to show your full ability."
+            "Good effort! Try to speak a little more next time. You can add more details about your ideas."
         )
     else:
-        feedback.append("Keep practicing! Try to speak in longer, complete sentences.")
-
-    if wps >= 2.5:
         feedback.append(
-            f"💨 **Speed Bonus!** You speak fast ({wps} words/sec) - sign of confidence!"
+            "Keep practicing! Try to speak in longer sentences. For example, instead of saying 'I like blue', you can say 'I like blue because it makes me feel happy.'"
         )
-
     feedback.append("")
 
     # Vocabulary feedback
     feedback.append("**Vocabulary:**")
     if breakdown["Vocabulary"] >= 1.5:
-        feedback.append("Wonderful! You used diverse and interesting words. Excellent!")
+        feedback.append(
+            "Wonderful! You used different words in your answer. That's excellent!"
+        )
     else:
         feedback.append(
-            "Good! Try to use more descriptive words like 'amazing', 'beautiful', 'exciting'."
+            "Good start! Next time, try to use more describing words like 'beautiful', 'exciting', 'delicious', or 'interesting'."
         )
     feedback.append("")
 
     # Grammar feedback
     feedback.append("**Grammar:**")
     if breakdown["Grammar"] >= 1.5:
-        feedback.append("Excellent! Your grammar is correct. Well done!")
+        feedback.append("Excellent! Your sentences were correct. Well done!")
     else:
         feedback.append(
-            "Nice try! Remember complete sentences: 'I like...' instead of 'Like...'."
+            "Nice try! Remember to use complete sentences. For example: 'I like playing soccer' instead of 'Like soccer'."
         )
     feedback.append("")
 
     # Pronunciation feedback
     feedback.append("**Pronunciation:**")
-    if is_fluent_speaker and quality_score < 0.7:
+    if quality_score < 0.5:
         feedback.append(
-            "✅ **Note:** Lower confidence is NORMAL when speaking fast and fluently!"
+            "I couldn't hear your pronunciation clearly because of audio quality. Please:"
         )
-        feedback.append(
-            "Your pronunciation is likely very good - the system just had trouble keeping up with your speed!"
-        )
+        feedback.append("- Record in a quiet room with no background noise")
+        feedback.append("- Speak directly into the microphone")
+        feedback.append("- Speak at a normal speed (not too fast or slow)")
+        feedback.append("- Make sure your device microphone works properly")
+    elif quality_score < 0.7:
+        feedback.append("Some parts were hard to hear. Try to:")
+        feedback.append("- Speak more clearly")
+        feedback.append("- Reduce background noise")
+        feedback.append("- Check your microphone")
     elif breakdown["Pronunciation"] >= 1.7:
-        feedback.append("Amazing! Crystal clear pronunciation. Keep it up!")
-    elif breakdown["Pronunciation"] >= 1.3:
-        feedback.append("Good! Your pronunciation is mostly clear.")
+        feedback.append(
+            "Amazing! Your pronunciation was clear and easy to understand. Keep speaking with confidence!"
+        )
+    elif breakdown["Pronunciation"] >= 1.2:
+        feedback.append(
+            "Good job! Your pronunciation was mostly clear. Keep practicing speaking slowly and clearly."
+        )
     else:
-        feedback.append("Keep practicing! Speak slowly and clearly.")
+        feedback.append(
+            "Keep practicing! Try to speak each word clearly. You're doing great, and practice will make you even better!"
+        )
     feedback.append("")
 
     # Communication feedback
     feedback.append("**Communication:**")
     if breakdown["Communication"] >= 1.5:
         feedback.append(
-            "Fantastic! You communicated your ideas clearly and effectively!"
+            "Fantastic! You answered the question well and shared your ideas clearly!"
         )
     else:
-        feedback.append("Good start! Add more details: What? Why? How? When?")
+        feedback.append(
+            "Good effort! Try to give more details when you answer. Think about: What? Why? How? When?"
+        )
     feedback.append("")
 
     # Overall suggestion
     total_score = breakdown["Total"]
     feedback.append("---")
-    feedback.append("### 💡 Next Steps:\n")
+    feedback.append("### 💡 Suggestion for next time:\n")
 
-    if is_fluent_speaker:
-        if total_score >= 8:
-            feedback.append(
-                "🏆 **You're excellent!** Challenge yourself with complex topics:"
-            )
-            feedback.append("- Debate topics (agree/disagree)")
-            feedback.append("- Story narration")
-            feedback.append("- Explain processes or ideas")
-        else:
-            feedback.append("You speak well! Focus on:")
-            feedback.append("- Expanding vocabulary")
-            feedback.append("- Using more complex sentence structures")
-            feedback.append("- Adding more details and examples")
+    if quality_score < 0.6:
+        feedback.append("**Most Important: Fix your audio quality first!**")
+        feedback.append(
+            "Your speaking might be good, but the system can't hear it properly."
+        )
+        feedback.append("Please follow the recording tips above, then try again. 🎤")
+    elif total_score >= 8:
+        feedback.append(
+            "You're doing excellent! Keep practicing and try speaking about different topics."
+        )
+    elif total_score >= 6:
+        feedback.append(
+            "You're doing well! Try to speak a bit longer and use more interesting words."
+        )
     else:
-        if total_score >= 7:
-            feedback.append("Great progress! To get even better:")
-            feedback.append("- Try speaking for longer (aim for 25+ words)")
-            feedback.append("- Use connecting words: 'and', 'but', 'because'")
-        elif total_score >= 5:
-            feedback.append("You're improving! Next time:")
-            feedback.append("- Speak at least 15-20 words")
-            feedback.append("- Use complete sentences")
-            feedback.append("- Don't worry about mistakes!")
-        else:
-            feedback.append("Good start! Keep practicing:")
-            feedback.append("- Speak in simple, complete sentences")
-            feedback.append("- Practice every day")
-            feedback.append("- Start with short topics you like")
+        feedback.append(
+            "Great start! Keep practicing every day. Try to speak at least 2-3 sentences about any topic you like."
+        )
 
-    feedback.append("\n**Remember:** Every practice makes you better! Keep going! 🌈")
+    feedback.append(
+        "\n**Remember:** Practice makes perfect! Don't be afraid to make mistakes. Every try makes you better! 🌈"
+    )
 
     return "\n".join(feedback)
 
 
-def analyze_speech(transcribed_text, topic, whisper_confidence, duration_seconds):
+def analyze_speech(transcribed_text, topic, whisper_confidence=1.0):
     """
-    MAIN ANALYSIS FUNCTION with fair scoring system
+    Analyze speech with simplified criteria for elementary students
+    Uses general linguistic patterns, NOT content-specific checks
+    Returns score, feedback, and breakdown
     """
     if not transcribed_text or len(transcribed_text.strip()) == 0:
-        return 0, "⚠️ No speech detected. Please try again.", {}
+        return 0, ["⚠️ No speech detected. Please try again."], {}
 
-    word_count = len(transcribed_text.split())
-
-    # Calculate speech rate
-    speech_rate_wps, speed_category = calculate_speech_rate(
-        word_count, duration_seconds
+    # Score each criterion (0-2 points each)
+    pronunciation_score, pronunciation_level, quality_score, detected_warnings = (
+        check_pronunciation(transcribed_text, whisper_confidence)
     )
-
-    # Detect if fluent speaker
-    is_fluent_speaker, speaker_level = detect_fluent_speaker(
-        transcribed_text, word_count, speech_rate_wps
-    )
-
-    # Score each criterion with new logic
-    pronunciation_score, pronunciation_level, quality_score, warnings = (
-        check_pronunciation(
-            transcribed_text, whisper_confidence, word_count, is_fluent_speaker
-        )
-    )
-
-    fluency_score = check_fluency(
-        transcribed_text, word_count, speech_rate_wps, is_fluent_speaker
-    )
-
+    fluency_score = check_fluency(transcribed_text)
     grammar_score = check_grammar(transcribed_text)
     vocabulary_score = check_vocabulary(transcribed_text)
-    communication_score = check_communication(
-        transcribed_text, topic, word_count, is_fluent_speaker
+    communication_score = check_communication(transcribed_text, topic)
+
+    # Apply quality penalty to all scores if recognition is questionable
+    quality_multiplier = 1.0
+    if quality_score < 0.5:
+        quality_multiplier = 0.6  # Reduce all scores by 40%
+    elif quality_score < 0.7:
+        quality_multiplier = 0.8  # Reduce all scores by 20%
+
+    # Apply multiplier to all scores except pronunciation (already considered)
+    fluency_score *= quality_multiplier
+    grammar_score *= quality_multiplier
+    vocabulary_score *= quality_multiplier
+    communication_score *= quality_multiplier
+
+    # Total score out of 10
+    total_score = (
+        pronunciation_score
+        + fluency_score
+        + grammar_score
+        + vocabulary_score
+        + communication_score
     )
 
-    # Collect scores
-    scores = {
-        "Pronunciation": pronunciation_score,
-        "Fluency": fluency_score,
-        "Grammar": grammar_score,
-        "Vocabulary": vocabulary_score,
-        "Communication": communication_score,
-    }
-
-    # Apply smart quality adjustment (protects fluent speakers)
-    adjusted_scores = apply_quality_adjustment(
-        scores, quality_score, word_count, is_fluent_speaker
-    )
-
-    # Calculate total
-    total_score = sum(adjusted_scores.values())
+    # Convert to 0-10 scale
     final_score_10 = round(total_score, 1)
 
     # Create breakdown
     breakdown = {
-        "Pronunciation": round(adjusted_scores["Pronunciation"], 1),
-        "Fluency": round(adjusted_scores["Fluency"], 1),
-        "Grammar": round(adjusted_scores["Grammar"], 1),
-        "Vocabulary": round(adjusted_scores["Vocabulary"], 1),
-        "Communication": round(adjusted_scores["Communication"], 1),
+        "Pronunciation": round(pronunciation_score, 1),
+        "Fluency": round(fluency_score, 1),
+        "Grammar": round(grammar_score, 1),
+        "Vocabulary": round(vocabulary_score, 1),
+        "Communication": round(communication_score, 1),
         "Total": final_score_10,
         "Confidence": round(quality_score * 100, 1),
         "RawConfidence": round(whisper_confidence * 100, 1),
-        "WordCount": word_count,
-        "SpeechRate": speech_rate_wps,
-        "SpeedCategory": speed_category,
-        "IsFluentSpeaker": is_fluent_speaker,
-        "SpeakerLevel": speaker_level,
-        "DetectedWarnings": warnings,
+        "DetectedWarnings": detected_warnings,
     }
 
-    # Generate feedback
-    feedback_text = generate_feedback(
-        transcribed_text,
-        breakdown,
-        topic,
-        quality_score,
-        is_fluent_speaker,
-        (speech_rate_wps, speed_category),
-    )
+    # Generate encouraging feedback
+    feedback_text = generate_feedback(transcribed_text, breakdown, topic, quality_score)
 
     return final_score_10, feedback_text, breakdown
 
@@ -1049,11 +899,9 @@ with tab1:
             with st.spinner("🔄 Processing your audio..."):
                 try:
                     audio_source = uploaded_file if uploaded_file else audio_recording
-                    result = convert_audio_to_wav(audio_source)
+                    wav_path = convert_audio_to_wav(audio_source)
 
-                    if result and result[0]:
-                        wav_path, duration_seconds = result
-
+                    if wav_path:
                         with st.spinner("🎧 Listening to your speaking..."):
                             transcription_result = transcribe_audio(
                                 wav_path, st.session_state.model
@@ -1074,11 +922,25 @@ with tab1:
 
                         if transcribed_text:
                             score, feedback, breakdown = analyze_speech(
-                                transcribed_text,
-                                topic_input,
-                                whisper_confidence,
-                                duration_seconds,
+                                transcribed_text, topic_input, whisper_confidence
                             )
+
+                            # Show confidence warning if issues detected
+                            if (
+                                "DetectedWarnings" in breakdown
+                                and breakdown["DetectedWarnings"]
+                            ):
+                                with st.expander(
+                                    "⚠️ Quality Warnings Detected - Click to see details"
+                                ):
+                                    st.warning(
+                                        "The system detected some potential audio quality issues:"
+                                    )
+                                    for warning in breakdown["DetectedWarnings"]:
+                                        st.write(f"• {warning}")
+                                    st.info(
+                                        "💡 These warnings don't mean your speaking is bad! They just mean the microphone might not have captured everything clearly. Try recording again for a better result."
+                                    )
 
                             save_result_to_history(
                                 topic_input,
@@ -1093,40 +955,12 @@ with tab1:
 
                             st.divider()
 
-                            # Show fluent speaker badge
-                            if breakdown.get("IsFluentSpeaker", False):
-                                st.markdown(
-                                    f"""
-                                    <div class="fluent-badge">
-                                        🌟 FLUENT SPEAKER DETECTED! 🌟<br>
-                                        {breakdown['WordCount']} words at {breakdown['SpeechRate']} words/second
-                                    </div>
-                                    """,
-                                    unsafe_allow_html=True,
-                                )
-
                             # Results
                             col_result1, col_result2 = st.columns(2)
 
                             with col_result1:
                                 st.markdown("**📌 Topic:**")
                                 st.info(topic_input)
-
-                                # Show speech stats
-                                st.markdown("**⚡ Speech Stats:**")
-                                st.metric("Word Count", breakdown.get("WordCount", 0))
-                                st.metric(
-                                    "Speed", f"{breakdown.get('SpeechRate', 0)} w/s"
-                                )
-
-                                speed_cat = breakdown.get("SpeedCategory", "unknown")
-                                speed_emoji = {
-                                    "fast": "🚀 Fast (Fluent!)",
-                                    "normal": "✅ Normal",
-                                    "slow": "🐢 Slow",
-                                    "very_slow": "🐌 Very Slow",
-                                }.get(speed_cat, "❓ Unknown")
-                                st.info(speed_emoji)
 
                             with col_result2:
                                 st.markdown("**🗣️ What you said:**")
@@ -1135,24 +969,21 @@ with tab1:
                                 # Show confidence indicator
                                 if "Confidence" in breakdown:
                                     conf_pct = breakdown["Confidence"]
-                                    if (
-                                        breakdown.get("IsFluentSpeaker", False)
-                                        and conf_pct < 70
-                                    ):
-                                        st.success(
-                                            f"🟢 Recognition: {conf_pct:.0f}% (Normal for fast speech!)"
-                                        )
-                                    elif conf_pct < 60:
+                                    if conf_pct < 60:
                                         st.error(
-                                            f"🔴 Recognition: {conf_pct:.0f}% - Low"
+                                            f"🔴 Recognition Confidence: {conf_pct:.0f}% - Very Low"
                                         )
                                     elif conf_pct < 70:
                                         st.warning(
-                                            f"🟠 Recognition: {conf_pct:.0f}% - Medium"
+                                            f"🟠 Recognition Confidence: {conf_pct:.0f}% - Low"
+                                        )
+                                    elif conf_pct < 85:
+                                        st.info(
+                                            f"🟡 Recognition Confidence: {conf_pct:.0f}% - Medium"
                                         )
                                     else:
                                         st.success(
-                                            f"🟢 Recognition: {conf_pct:.0f}% - Good"
+                                            f"🟢 Recognition Confidence: {conf_pct:.0f}% - Good"
                                         )
 
                             # Detailed scores
@@ -1265,10 +1096,6 @@ with tab1:
                     st.metric("Score", f"{item['score']}/10")
                     st.write(f"**👤 Student:** {item['user']}")
                     st.write(f"**📝 Words:** {item['word_count']}")
-
-                    # Show fluent badge in history
-                    if item.get("breakdown", {}).get("IsFluentSpeaker", False):
-                        st.success("🌟 Fluent Speaker!")
 
                 if "breakdown" in item and item["breakdown"]:
                     st.write("**📊 Detailed Scores:**")
@@ -1543,32 +1370,27 @@ with tab3:
 
     st.info(
         """
-    **🎤 English Speaking Practice - Fair Scoring Edition**
+    **🎤 English Speaking Practice for Elementary Students**
     
-    **Version:** 5.0 - Fair Scoring System
-    
-    **🆕 NEW: Fair Scoring for All Students!**
-    - ✅ Fluent speakers (30+ words) protected from unfair penalties
-    - ✅ Fast speech recognized as POSITIVE skill
-    - ✅ Speaking speed bonus system
-    - ✅ Smart quality detection
+    **Version:** 4.0 - Elementary Edition
     
     **Features:**
     - AI-powered speech recognition (Whisper)
-    - Fair scoring: Pronunciation, Fluency, Grammar, Vocabulary, Communication
-    - Intelligent feedback based on student level
-    - Speech rate analysis (words per second)
-    - Fluent speaker detection
+    - Simple scoring: Pronunciation, Fluency, Grammar, Vocabulary, Communication
+    - Encouraging English feedback
     - Progress tracking with fun charts
     - Daily goals and streak tracking
+    - Backup and restore your progress
     
-    **Scoring Logic:**
-    - **Fluent speakers (≥30 words):** Base 1.5/2, minimal penalties
-    - **Beginners (<30 words):** Standard scoring
-    - **Speed bonus:** +0.2 for fast speech (>2.5 w/s)
-    - **Connector bonus:** +0.2 for organized thinking
+    **How to Use:**
+    1. Choose a topic you want to talk about
+    2. Record your answer (or upload audio)
+    3. Get your score and helpful feedback
+    4. Practice every day to improve!
     
-    **Total Score:**
+    **Scoring System:**
+    - Each skill: 0-2 points
+    - Total: 0-10 points
     - 8-10: Excellent! 🟢
     - 6-7: Good Job! 🟡
     - 4-5: Keep Trying! 🟠
@@ -1579,7 +1401,7 @@ with tab3:
     - OpenAI Whisper (Speech Recognition)
     - Plotly (Charts)
     
-    **Remember:** This system now fairly rewards ALL students - whether you speak fast with many words OR speak slowly and clearly! 🌈
+    **Remember:** Practice makes perfect! Don't worry about mistakes - they help you learn! 🌈
     """
     )
 
@@ -1616,8 +1438,8 @@ st.markdown(
 </style>
 
 <div style='text-align: center; color: gray; padding: 16px 0; font-size: 14px;'>
-    <p><strong>🎤 English Speaking Practice - Fair Scoring Edition v5.0</strong></p>
-    <p>Fair • Intelligent • Encouraging</p>
+    <p><strong>🎤 English Speaking Practice for Elementary Students</strong></p>
+    <p>Free • Offline/Online • No API costs</p>
     <p>Powered by: Whisper (OpenAI) + Streamlit</p>
     <p style='margin-top:10px;'>© 2025 
         <a href='https://www.facebook.com/augusttrung1823/' target='_blank' class='footer-link'>
