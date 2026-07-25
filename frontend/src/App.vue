@@ -303,8 +303,9 @@
               </div>
             </div>
 
-            <div class="text-caption text-grey-darken-2 mb-4 bg-grey-lighten-4 pa-3 rounded border" style="line-height: 1.5;">
-              💡 Khi đăng xuất, thiết bị của em sẽ tạm ngưng giữ phiên làm việc hiện tại. Em có thể đăng nhập lại bất cứ lúc nào!
+            <div class="text-caption text-grey-darken-2 mb-4 bg-grey-lighten-4 pa-3 rounded border d-flex align-center ga-1.5" style="line-height: 1.5;">
+              <v-icon color="amber-darken-3" size="small" class="flex-shrink-0">mdi-lightbulb-on-outline</v-icon>
+              <span>Khi đăng xuất, thiết bị của em sẽ tạm ngưng giữ phiên làm việc hiện tại. Em có thể đăng nhập lại bất cứ lúc nào!</span>
             </div>
 
             <div class="d-flex align-center justify-end ga-2">

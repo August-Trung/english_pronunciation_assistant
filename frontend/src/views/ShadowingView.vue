@@ -496,22 +496,34 @@
 
         <div class="space-y-2 text-caption">
           <div class="bg-grey-lighten-4 pa-2.5 rounded border mb-2">
-            <span class="font-weight-black text-grey-darken-4 d-block mb-1">👄 1. Khẩu Hình Môi & Răng:</span>
+            <span class="font-weight-black text-grey-darken-4 d-block mb-1 d-flex align-center ga-1">
+              <v-icon color="pink" size="x-small">mdi-lips</v-icon>
+              <span>1. Khẩu Hình Môi & Răng:</span>
+            </span>
             <span class="text-grey-darken-3">{{ selectedArticulation.mouth_position }}</span>
           </div>
 
           <div class="bg-grey-lighten-4 pa-2.5 rounded border mb-2">
-            <span class="font-weight-black text-grey-darken-4 d-block mb-1">👅 2. Vị Trí Đầu Lưỡi:</span>
+            <span class="font-weight-black text-grey-darken-4 d-block mb-1 d-flex align-center ga-1">
+              <v-icon color="deep-orange" size="x-small">mdi-emoticon-tongue-outline</v-icon>
+              <span>2. Vị Trí Đầu Lưỡi:</span>
+            </span>
             <span class="text-grey-darken-3">{{ selectedArticulation.tongue_position }}</span>
           </div>
 
           <div class="bg-grey-lighten-4 pa-2.5 rounded border mb-2">
-            <span class="font-weight-black text-grey-darken-4 d-block mb-1">💨 3. Luồng Hơi & Thanh Quản:</span>
+            <span class="font-weight-black text-grey-darken-4 d-block mb-1 d-flex align-center ga-1">
+              <v-icon color="light-blue" size="x-small">mdi-weather-windy</v-icon>
+              <span>3. Luồng Hơi & Thanh Quản:</span>
+            </span>
             <span class="text-grey-darken-3">{{ selectedArticulation.airflow }}</span>
           </div>
 
           <div class="bg-amber-lighten-5 pa-2.5 rounded border border-amber">
-            <span class="font-weight-black text-amber-darken-4 d-block mb-1">💡 Mẹo Luyện Tập Nhanh:</span>
+            <span class="font-weight-black text-amber-darken-4 d-block mb-1 d-flex align-center ga-1">
+              <v-icon color="amber-darken-3" size="x-small">mdi-lightbulb-on-outline</v-icon>
+              <span>Mẹo Luyện Tập Nhanh:</span>
+            </span>
             <span class="text-amber-darken-4 font-weight-bold">{{ selectedArticulation.tip }}</span>
           </div>
         </div>

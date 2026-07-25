@@ -55,10 +55,12 @@
               </div>
               <div class="d-flex ga-1">
                 <v-chip label size="x-small" variant="tonal" color="teal">
-                  🔥 Streak {{ streak || 1 }} ngày
+                  <v-icon size="x-small" start color="deep-orange">mdi-fire</v-icon>
+                  Streak {{ streak || 1 }} ngày
                 </v-chip>
                 <v-chip label size="x-small" variant="tonal" color="amber-darken-4">
-                  ⭐ {{ stats.total_practices || 12 }} bài
+                  <v-icon size="x-small" start color="amber-darken-3">mdi-star</v-icon>
+                  {{ stats.total_practices || 12 }} bài
                 </v-chip>
               </div>
             </div>

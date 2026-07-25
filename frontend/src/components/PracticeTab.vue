@@ -496,8 +496,9 @@
                     <div class="text-subtitle-2 font-weight-black text-purple-darken-4 mb-0.5">
                       "{{ sug.text }}"
                     </div>
-                    <div class="text-caption text-grey-darken-2 font-weight-bold" style="font-size: 11px;">
-                      💡 {{ sug.meaning }}
+                    <div class="text-caption text-grey-darken-2 font-weight-bold d-flex align-center ga-1" style="font-size: 11px;">
+                      <v-icon size="x-small" color="amber-darken-3">mdi-lightbulb-on-outline</v-icon>
+                      <span>{{ sug.meaning }}</span>
                     </div>
                   </div>
 
@@ -665,7 +666,8 @@
                   <!-- Type Badge -->
                   <div class="d-flex align-center ga-2 mb-2">
                     <v-chip v-if="fix.type" color="orange-darken-3" size="x-small" variant="flat" class="font-weight-black" style="font-size: 10.5px; height: 20px;">
-                      🏷️ {{ fix.type }}
+                      <v-icon size="x-small" start>mdi-tag-outline</v-icon>
+                      {{ fix.type }}
                     </v-chip>
                   </div>
 
@@ -673,14 +675,16 @@
                   <div class="d-flex flex-column ga-2 mb-2 pl-1">
                     <div class="d-flex align-center ga-2 text-body-2 font-weight-bold text-error flex-wrap">
                       <v-chip color="error" size="x-small" variant="tonal" class="font-weight-black flex-shrink-0" style="font-size: 10px; height: 20px;">
-                        ❌ Chưa chuẩn
+                        <v-icon size="x-small" start>mdi-close-circle-outline</v-icon>
+                        Chưa chuẩn
                       </v-chip>
                       <span class="text-body-2 font-weight-bold text-error">"{{ fix.original }}"</span>
                     </div>
 
                     <div class="d-flex align-center ga-2 text-body-2 font-weight-bold text-success flex-wrap">
                       <v-chip color="success" size="x-small" variant="flat" class="font-weight-black flex-shrink-0" style="font-size: 10px; height: 20px;">
-                        ✅ Sửa lại
+                        <v-icon size="x-small" start>mdi-check-circle-outline</v-icon>
+                        Sửa lại
                       </v-chip>
                       <span class="text-body-2 font-weight-black text-success text-decoration-underline">"{{ fix.fixed }}"</span>
                     </div>
@@ -688,7 +692,8 @@
 
                   <!-- Reason explanation in Vietnamese -->
                   <div v-if="fix.reason" class="text-caption text-grey-darken-3 pl-1 pt-2 border-t mt-2" style="line-height: 1.5;">
-                    💡 <strong>Giải thích:</strong> {{ fix.reason }}
+                    <v-icon size="x-small" color="amber-darken-3" class="mr-1">mdi-lightbulb-on-outline</v-icon>
+                    <strong>Giải thích:</strong> {{ fix.reason }}
                   </div>
                 </div>
               </template>
@@ -853,22 +858,34 @@
 
         <div class="space-y-2 text-caption">
           <div class="bg-grey-lighten-4 pa-2.5 rounded border mb-2">
-            <span class="font-weight-black text-grey-darken-4 d-block mb-1">👄 1. Khẩu Hình Môi & Răng:</span>
+            <span class="font-weight-black text-grey-darken-4 d-block mb-1 d-flex align-center ga-1">
+              <v-icon color="pink" size="x-small">mdi-lips</v-icon>
+              <span>1. Khẩu Hình Môi & Răng:</span>
+            </span>
             <span class="text-grey-darken-3">{{ selectedArticulation.mouth_position }}</span>
           </div>
 
           <div class="bg-grey-lighten-4 pa-2.5 rounded border mb-2">
-            <span class="font-weight-black text-grey-darken-4 d-block mb-1">👅 2. Vị Trí Đầu Lưỡi:</span>
+            <span class="font-weight-black text-grey-darken-4 d-block mb-1 d-flex align-center ga-1">
+              <v-icon color="deep-orange" size="x-small">mdi-emoticon-tongue-outline</v-icon>
+              <span>2. Vị Trí Đầu Lưỡi:</span>
+            </span>
             <span class="text-grey-darken-3">{{ selectedArticulation.tongue_position }}</span>
           </div>
 
           <div class="bg-grey-lighten-4 pa-2.5 rounded border mb-2">
-            <span class="font-weight-black text-grey-darken-4 d-block mb-1">💨 3. Luồng Hơi & Thanh Quản:</span>
+            <span class="font-weight-black text-grey-darken-4 d-block mb-1 d-flex align-center ga-1">
+              <v-icon color="light-blue" size="x-small">mdi-weather-windy</v-icon>
+              <span>3. Luồng Hơi & Thanh Quản:</span>
+            </span>
             <span class="text-grey-darken-3">{{ selectedArticulation.airflow }}</span>
           </div>
 
           <div class="bg-amber-lighten-5 pa-2.5 rounded border border-amber">
-            <span class="font-weight-black text-amber-darken-4 d-block mb-1">💡 Mẹo Luyện Tập Nhanh:</span>
+            <span class="font-weight-black text-amber-darken-4 d-block mb-1 d-flex align-center ga-1">
+              <v-icon color="amber-darken-3" size="x-small">mdi-lightbulb-on-outline</v-icon>
+              <span>Mẹo Luyện Tập Nhanh:</span>
+            </span>
             <span class="text-amber-darken-4 font-weight-bold">{{ selectedArticulation.tip }}</span>
           </div>
         </div>
