@@ -210,7 +210,7 @@
         </v-card>
 
         <!-- THẺ CHẤM & ĐỐI CHIẾU PHIÊN ÂM IPA CHUẨN QUỐC TẾ -->
-        <v-card v-if="results.ipa_analysis" border flat rounded="lg" class="pa-3 mb-3 bg-teal-lighten-5 border-teal">
+        <v-card v-if="result.ipa_analysis" border flat rounded="lg" class="pa-3 mb-3 bg-teal-lighten-5 border-teal">
           <div class="d-flex align-center justify-space-between mb-2">
             <div class="text-subtitle-2 font-weight-black text-teal-darken-4 d-flex align-center ga-1">
               <v-icon color="teal-darken-2" size="small">mdi-bookmark-music-outline</v-icon>
@@ -233,16 +233,73 @@
             </div>
           </div>
 
+          <!-- Biểu đồ Đường Cong Ngữ Điệu (Pitch Intonation Chart F0) -->
+          <div v-if="result.ipa_analysis.pitch_analysis?.pitch_points?.length" class="bg-white pa-3 rounded border mb-3">
+            <div class="d-flex align-center justify-space-between mb-2">
+              <div class="text-caption font-weight-black text-indigo-darken-3 d-flex align-center ga-1">
+                <v-icon color="indigo" size="x-small">mdi-chart-bell-curve-cumulative</v-icon>
+                <span>Biểu Đồ Đường Cong Ngữ Điệu & Trầm Bổng (F0 Pitch Contour)</span>
+              </div>
+              <v-chip size="x-small" color="indigo" variant="tonal" class="font-weight-black">
+                Khớp ngữ điệu {{ result.ipa_analysis.pitch_analysis.pitch_accuracy }}%
+              </v-chip>
+            </div>
+            <div class="d-flex align-center justify-space-between text-caption text-grey mb-1" style="font-size: 10px;">
+              <span><v-icon size="x-small" color="primary">mdi-minus</v-icon> Giọng bản xứ (Native)</span>
+              <span><v-icon size="x-small" color="amber-darken-3">mdi-minus</v-icon> Giọng học sinh</span>
+            </div>
+            <!-- SVG Pitch Chart -->
+            <div class="w-100 bg-grey-lighten-4 rounded pa-2 d-flex align-end justify-space-between" style="height: 60px; position: relative;">
+              <div
+                v-for="(pt, p_idx) in result.ipa_analysis.pitch_analysis.pitch_points"
+                :key="p_idx"
+                class="d-flex flex-column align-center justify-end h-100"
+                style="flex: 1;"
+              >
+                <div
+                  v-if="pt.student_f0"
+                  class="bg-amber-darken-3 rounded-circle"
+                  :style="{ height: `${Math.min(48, Math.max(6, (pt.student_f0 - 70) / 4))}px`, width: '4px' }"
+                ></div>
+                <div
+                  class="bg-primary rounded-circle mt-1"
+                  :style="{ height: `${Math.min(48, Math.max(6, (pt.native_f0 - 70) / 4))}px`, width: '3px', opacity: 0.6 }"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Thẻ Nối Âm Tự Nhiên (Connected Speech & Liaisons) -->
+          <div v-if="result.ipa_analysis.linking_pairs?.length" class="bg-amber-lighten-5 pa-2.5 rounded border border-amber mb-3">
+            <div class="text-caption font-weight-black text-amber-darken-4 mb-1 d-flex align-center ga-1">
+              <v-icon color="amber-darken-4" size="x-small">mdi-link-variant</v-icon>
+              <span>Gợi Ý Nối Âm Tự Nhiên Bản Xứ (Connected Speech):</span>
+            </div>
+            <div class="d-flex flex-wrap ga-2 mt-1">
+              <v-chip
+                v-for="(pair, l_idx) in result.ipa_analysis.linking_pairs"
+                :key="l_idx"
+                size="x-small"
+                color="amber-darken-4"
+                variant="flat"
+                class="font-weight-black"
+              >
+                {{ pair.word1 }} 🔗 {{ pair.word2 }} ({{ pair.ipa_link }})
+              </v-chip>
+            </div>
+          </div>
+
           <!-- Word by word IPA breakdown chips -->
           <div class="d-flex flex-wrap ga-2">
             <div
               v-for="(w_ipa, idx) in (result.ipa_analysis.words_ipa || [])"
               :key="idx"
-              class="pa-2 bg-white rounded border d-flex flex-column align-center"
-              style="min-width: 85px;"
+              class="pa-2 bg-white rounded border d-flex flex-column align-center flex-grow-1"
+              style="min-width: 95px; position: relative;"
             >
-              <div class="text-caption font-weight-black text-grey-darken-3">
-                {{ w_ipa.word }}
+              <div class="text-caption font-weight-black text-grey-darken-3 d-flex align-center ga-0.5">
+                <span>{{ w_ipa.word }}</span>
+                <v-icon v-if="w_ipa.stress_note" size="x-small" color="deep-orange">mdi-fire</v-icon>
               </div>
               <v-chip
                 size="x-small"
@@ -259,6 +316,20 @@
               <div v-if="w_ipa.note" class="text-caption text-error font-weight-bold text-center mt-0.5" style="font-size: 9px; line-height: 1.1;">
                 ⚠️ {{ w_ipa.note }}
               </div>
+
+              <!-- Button Xem Khẩu Hình 2D/3D -->
+              <v-btn
+                density="compact"
+                size="x-small"
+                variant="tonal"
+                color="teal-darken-3"
+                class="mt-1 font-weight-bold text-none"
+                style="font-size: 8.5px; height: 18px;"
+                prepend-icon="mdi-lips"
+                @click="openArticulationGuide(w_ipa.word, w_ipa.target_ipa)"
+              >
+                Khẩu hình
+              </v-btn>
             </div>
           </div>
         </v-card>
@@ -393,6 +464,69 @@
             </v-col>
           </v-row>
         </v-card>
+    <!-- MODAL SƠ ĐỒ HƯỚNG DẪN KHẨU HÌNH RĂNG / LƯỠI / MÔI 2D/3D -->
+    <v-dialog v-model="showArticulationModal" max-width="500">
+      <v-card v-if="selectedArticulation" border rounded="lg" class="pa-4">
+        <div class="d-flex align-center justify-space-between mb-3 border-b pb-2">
+          <div class="d-flex align-center ga-2">
+            <v-avatar color="teal-lighten-5" size="40" class="text-teal-darken-3 border border-teal">
+              <v-icon size="medium">mdi-lips</v-icon>
+            </v-avatar>
+            <div>
+              <div class="text-subtitle-1 font-weight-black text-teal-darken-4">{{ selectedArticulation.title }}</div>
+              <div class="text-caption font-weight-bold text-primary font-mono">Phiên âm: {{ selectedArticulation.ipa }}</div>
+            </div>
+          </div>
+          <v-btn icon="mdi-close" variant="text" density="compact" @click="showArticulationModal = false" />
+        </div>
+
+        <!-- Sơ Đồ Khẩu Hình Đồ Họa 2D/3D -->
+        <div class="bg-teal-lighten-5 border border-teal pa-4 rounded-lg mb-3 text-center">
+          <div class="d-flex justify-center align-center ga-4 mb-2">
+            <div class="border pa-2 bg-white rounded-circle elevation-1" style="width: 70px; height: 70px;">
+              <v-icon size="40" color="teal-darken-3">mdi-emoticon-outline</v-icon>
+            </div>
+            <v-icon size="large" color="teal-darken-2">mdi-arrow-right-bold-outline</v-icon>
+            <div class="border pa-2 bg-white rounded-circle elevation-1" style="width: 70px; height: 70px;">
+              <v-icon size="40" color="deep-orange">mdi-account-voice</v-icon>
+            </div>
+          </div>
+          <div class="text-caption font-weight-black text-teal-darken-4">Sơ đồ chuyển động luồng hơi & đầu lưỡi</div>
+        </div>
+
+        <div class="space-y-2 text-caption">
+          <div class="bg-grey-lighten-4 pa-2.5 rounded border mb-2">
+            <span class="font-weight-black text-grey-darken-4 d-block mb-1">👄 1. Khẩu Hình Môi & Răng:</span>
+            <span class="text-grey-darken-3">{{ selectedArticulation.mouth_position }}</span>
+          </div>
+
+          <div class="bg-grey-lighten-4 pa-2.5 rounded border mb-2">
+            <span class="font-weight-black text-grey-darken-4 d-block mb-1">👅 2. Vị Trí Đầu Lưỡi:</span>
+            <span class="text-grey-darken-3">{{ selectedArticulation.tongue_position }}</span>
+          </div>
+
+          <div class="bg-grey-lighten-4 pa-2.5 rounded border mb-2">
+            <span class="font-weight-black text-grey-darken-4 d-block mb-1">💨 3. Luồng Hơi & Thanh Quản:</span>
+            <span class="text-grey-darken-3">{{ selectedArticulation.airflow }}</span>
+          </div>
+
+          <div class="bg-amber-lighten-5 pa-2.5 rounded border border-amber">
+            <span class="font-weight-black text-amber-darken-4 d-block mb-1">💡 Mẹo Luyện Tập Nhanh:</span>
+            <span class="text-amber-darken-4 font-weight-bold">{{ selectedArticulation.tip }}</span>
+          </div>
+        </div>
+
+        <v-card-actions class="px-0 pt-3 pb-0">
+          <v-spacer />
+          <v-btn color="primary" variant="flat" class="font-weight-black text-none" @click="speakText(selectedArticulation.ipa)">
+            <v-icon class="mr-1">mdi-volume-high</v-icon> Nghe Âm Mẫu
+          </v-btn>
+          <v-btn color="grey-darken-1" variant="outlined" class="font-weight-bold text-none" @click="showArticulationModal = false">
+            Đóng
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
       </div>
     </div>
   </v-container>
@@ -405,6 +539,87 @@ const props = defineProps({
   backendUrl: String,
   userId: Number
 })
+
+// State Modal Khẩu Hình 2D/3D
+const showArticulationModal = ref(false)
+const selectedArticulation = ref(null)
+
+const ARTICULATION_GUIDES = {
+  's': {
+    title: 'Phụ Âm Xì /s/ (Fricative)',
+    ipa: '/s/',
+    mouth_position: 'Hai hàm răng khép nhẹ, hai mép môi hơi kéo sang 2 bên như đang mỉm cười nhẹ.',
+    tongue_position: 'Đầu lưỡi nâng gần sát nướu răng cửa trên (không chạm vào răng), tạo khe hẹp.',
+    airflow: 'Đẩy luồng hơi xì xát liên tục qua khe giữa đầu lưỡi và nướu răng. Không rung dây thanh quản (Voiceless).',
+    tip: 'Hãy giữ luồng hơi kéo dài 1-2 giây để tạo tiếng xì giòn giã.'
+  },
+  'z': {
+    title: 'Phụ Âm Rung /z/ (Voiced Fricative)',
+    ipa: '/z/',
+    mouth_position: 'Khẩu hình môi và răng giống hệt âm /s/.',
+    tongue_position: 'Đầu lưỡi nâng gần sát nướu răng cửa trên.',
+    airflow: 'Khấu hình giống /s/ nhưng RUNG dây thanh quản (Voiced). Bạn cảm nhận cổ họng rung khi đọc.',
+    tip: 'Đặt ngón tay lên cổ họng, bạn phải thấy cổ họng rung khi xì ra âm /z/.'
+  },
+  't': {
+    title: 'Phụ Âm Bật /t/ (Plosive)',
+    ipa: '/t/',
+    mouth_position: 'Môi hơi mở tự nhiên.',
+    tongue_position: 'Đầu lưỡi áp chặt vào nướu răng cửa trên để chặn hoàn toàn luồng khí.',
+    airflow: 'Bật nhẹ đầu lưỡi xuống nhanh để giải phóng luồng khí nén tạo tiếng bật dứt khoát.',
+    tip: 'Đặt bàn tay trước miệng, bạn phải cảm nhận được một luồng hơi bật mạnh ra.'
+  },
+  'd': {
+    title: 'Phụ Âm Bật Rung /d/ (Voiced Plosive)',
+    ipa: '/d/',
+    mouth_position: 'Môi hơi mở tự nhiên.',
+    tongue_position: 'Đầu lưỡi áp chặt vào nướu răng cửa trên.',
+    airflow: 'Bật đầu lưỡi xuống đồng thời RUNG dây thanh quản.',
+    tip: 'Âm bật trầm hơn âm /t/ và có độ rung nhẹ ở cổ họng.'
+  },
+  'th': {
+    title: 'Phụ Âm Thè Lưỡi /θ/ & /ð/',
+    ipa: '/θ/ - /ð/',
+    mouth_position: 'Đặt đầu lưỡi thè ra giữa 2 hàm răng cửa (răng kẹp nhẹ lên lưỡi).',
+    tongue_position: 'Đầu lưỡi thả lỏng đặt nhẹ giữa 2 hàm răng.',
+    airflow: 'Đẩy luồng hơi xì qua khe giữa răng trên và mặt lưỡi.',
+    tip: 'Đừng rụt lưỡi vào trong quá nhanh! Hãy thè nhẹ đầu lưỡi ra ngoài 1-2 cm.'
+  },
+  'r': {
+    title: 'Phụ Âm Căng Lưỡi /r/',
+    ipa: '/r/',
+    mouth_position: 'Môi hơi chu tròn về phía trước.',
+    tongue_position: 'Đầu lưỡi uốn cong ngược về phía sau vòm miệng (không chạm vòm miệng).',
+    airflow: 'Luồng khí đi qua khe giữa vòm miệng và thân lưỡi căng.',
+    tip: 'Tưởng tượng lưỡi tạo thành hình cái thìa uốn cong về sau.'
+  },
+  'l': {
+    title: 'Phụ Âm Đầu Lưỡi /l/',
+    ipa: '/l/',
+    mouth_position: 'Miệng mở tự nhiên.',
+    tongue_position: 'Đầu lưỡi chạm chắc vào nướu sau răng cửa trên.',
+    airflow: 'Luồng khí thoát ra qua 2 bên mép lưỡi.',
+    tip: 'Giữ đầu lưỡi dính chặt vào nướu răng trên khi kết thúc âm.'
+  }
+}
+
+const openArticulationGuide = (word, ipaStr) => {
+  const w = (word || '').toLowerCase()
+  if (w.includes('th') || (ipaStr || '').includes('θ') || (ipaStr || '').includes('ð')) {
+    selectedArticulation.value = ARTICULATION_GUIDES['th']
+  } else if (w.endsWith('s') || w.endsWith('z') || (ipaStr || '').includes('s')) {
+    selectedArticulation.value = ARTICULATION_GUIDES['s']
+  } else if (w.endsWith('t') || (ipaStr || '').includes('t')) {
+    selectedArticulation.value = ARTICULATION_GUIDES['t']
+  } else if (w.includes('r') || (ipaStr || '').includes('r')) {
+    selectedArticulation.value = ARTICULATION_GUIDES['r']
+  } else if (w.includes('l') || (ipaStr || '').includes('l')) {
+    selectedArticulation.value = ARTICULATION_GUIDES['l']
+  } else {
+    selectedArticulation.value = ARTICULATION_GUIDES['s']
+  }
+  showArticulationModal.value = true
+}
 
 const selectedLevel = ref('easy')
 const isRecording = ref(false)
