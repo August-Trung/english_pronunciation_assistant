@@ -100,8 +100,8 @@
 
       <!-- Main Workspace after logging in (3-Column Educational Studio Shell) -->
       <template v-else>
-        <!-- Top App Bar -->
-        <v-app-bar color="white" flat border class="px-3 px-md-6">
+        <!-- Top App Bar with app prop for layout height offset -->
+        <v-app-bar app color="white" flat border class="px-3 px-md-6">
           <div class="d-flex align-center w-100">
             <!-- Mobile Navigation Drawer Toggle Button -->
             <v-btn
@@ -215,9 +215,9 @@
               </v-avatar>
               <div>
                 <div class="text-subtitle-2 font-weight-black text-teal-darken-4">{{ userName }}</div>
-                <v-chip size="x-small" color="primary" variant="flat" class="font-weight-black mt-0.5">
-                  <v-icon size="x-small" start>mdi-school</v-icon> Level A2
-                </v-chip>
+                <div class="text-caption font-weight-bold text-teal-darken-3" style="font-size: 11px;">
+                  {{ equippedBadgeTitle || 'Học viên Chăm chỉ' }}
+                </div>
               </div>
             </div>
           </div>
@@ -306,7 +306,7 @@
           </v-list>
         </v-navigation-drawer>
 
-        <!-- COLUMN 3: RIGHT AI CO-PILOT PANEL (Trợ Lý AI Đồng Hành) -->
+        <!-- COLUMN 3: RIGHT AI CO-PILOT PANEL (Trợ Lý AI Đồng Hành REAL DATA) -->
         <v-navigation-drawer
           v-model="rightDrawer"
           location="right"
@@ -323,31 +323,40 @@
           </div>
 
           <div class="pa-3">
+            <!-- Dynamic Real User Progress Stats Card -->
             <v-card border flat rounded="lg" class="pa-3 mb-3 bg-teal-lighten-5 border-teal">
-              <div class="text-caption font-weight-black text-teal-darken-4 mb-1 d-flex align-center ga-1">
-                <v-icon size="x-small" color="teal">mdi-check-decagram-outline</v-icon>
-                <span>Mục Tiêu Bài Tập Hôm Nay:</span>
+              <div class="text-caption font-weight-black text-teal-darken-4 mb-2 d-flex align-center ga-1">
+                <v-icon size="x-small" color="teal">mdi-chart-line</v-icon>
+                <span>Thống Kê Thực Tế Cá Nhân:</span>
               </div>
-              <div class="text-caption text-grey-darken-3 font-weight-bold">
-                Luyện nói 15 phút & hoàn thành 3 câu ngữ điệu để giữ Streak!
+              <div class="d-flex flex-column ga-1 text-caption text-grey-darken-3 font-weight-bold">
+                <div class="d-flex justify-space-between align-center">
+                  <span>Chuỗi ngày học (Streak):</span>
+                  <span class="text-deep-orange font-weight-black">{{ streak || 0 }} ngày</span>
+                </div>
+                <div class="d-flex justify-space-between align-center">
+                  <span>Tổng bài đã luyện tập:</span>
+                  <span class="text-primary font-weight-black">{{ history?.length || 0 }} bài</span>
+                </div>
               </div>
             </v-card>
 
+            <!-- Dynamic AI Learning Note -->
             <v-card border flat rounded="lg" class="pa-3 mb-3 bg-amber-lighten-5 border-amber">
               <div class="text-caption font-weight-black text-amber-darken-4 mb-1 d-flex align-center ga-1">
                 <v-icon size="x-small" color="amber-darken-3">mdi-lightbulb-on-outline</v-icon>
-                <span>Mẹo Phát Âm Chuẩn:</span>
+                <span>Mẹo Sư Phạm AI:</span>
               </div>
               <div class="text-caption text-amber-darken-4 font-weight-bold">
-                Chú ý bật âm đuôi (/s/, /t/, /d/) và thè đầu lưỡi nhẹ khi đọc âm /θ/!
+                {{ history?.length ? 'Hãy duy trì bài tập luyện nói hàng ngày để đạt phản xạ âm chuẩn bản xứ!' : 'Bạn chưa có bài luyện tập nào. Hãy thực hiện bài đọc hoặc nói đầu tiên để AI phân tích!' }}
               </div>
             </v-card>
           </div>
         </v-navigation-drawer>
 
         <!-- COLUMN 2: CENTER MAIN STAGE (Không Gian Học Trung Tâm) -->
-        <v-main class="bg-background pt-4 pb-8">
-          <v-container fluid class="px-3 px-sm-6 max-w-7xl mx-auto">
+        <v-main class="bg-background">
+          <v-container fluid class="px-3 px-sm-6 max-w-7xl mx-auto py-4">
             <router-view v-slot="{ Component }">
               <component
                 :is="Component"
