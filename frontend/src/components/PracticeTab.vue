@@ -16,6 +16,67 @@
       <!-- Left column: Input, Mode selection, Library and Recording -->
       <v-col cols="12" md="6" class="pa-1">
         <v-card border flat class="pa-4 bg-white" rounded="lg">
+          <!-- Quick Topic Category Cards Grid -->
+          <div class="mb-3">
+            <div class="text-caption font-weight-black text-grey-darken-1 mb-2 d-flex align-center">
+              <v-icon color="primary" size="small" class="mr-1">mdi-view-grid-outline</v-icon>
+              <span>Chủ đề đề xuất nhanh:</span>
+            </div>
+            <v-row class="ma-0 ga-2">
+              <v-col cols="6" sm="3" class="pa-0">
+                <v-card
+                  border flat rounded="lg"
+                  class="pa-2 text-center edtech-card-hover cursor-pointer bg-blue-lighten-5 border-blue"
+                  @click="topic = 'What is your favorite hobby and why do you like it?'"
+                >
+                  <v-avatar color="primary" size="28" class="mb-1 text-white">
+                    <v-icon size="x-small">mdi-palette-outline</v-icon>
+                  </v-avatar>
+                  <div class="text-caption font-weight-black text-primary">Đời Sống</div>
+                </v-card>
+              </v-col>
+
+              <v-col cols="6" sm="3" class="pa-0">
+                <v-card
+                  border flat rounded="lg"
+                  class="pa-2 text-center edtech-card-hover cursor-pointer bg-indigo-lighten-5 border-indigo"
+                  @click="topic = 'Could you describe your current job and responsibilities?'"
+                >
+                  <v-avatar color="indigo" size="28" class="mb-1 text-white">
+                    <v-icon size="x-small">mdi-briefcase-outline</v-icon>
+                  </v-avatar>
+                  <div class="text-caption font-weight-black text-indigo">Công Việc</div>
+                </v-card>
+              </v-col>
+
+              <v-col cols="6" sm="3" class="pa-0">
+                <v-card
+                  border flat rounded="lg"
+                  class="pa-2 text-center edtech-card-hover cursor-pointer bg-emerald-lighten-5 border-emerald"
+                  @click="topic = 'Where would you like to travel on your next vacation?'"
+                >
+                  <v-avatar color="emerald" size="28" class="mb-1 text-white">
+                    <v-icon size="x-small">mdi-airplane-takeoff</v-icon>
+                  </v-avatar>
+                  <div class="text-caption font-weight-black text-emerald-darken-3">Du Lịch</div>
+                </v-card>
+              </v-col>
+
+              <v-col cols="6" sm="3" class="pa-0">
+                <v-card
+                  border flat rounded="lg"
+                  class="pa-2 text-center edtech-card-hover cursor-pointer bg-amber-lighten-5 border-amber"
+                  @click="topic = 'How technology affects modern education and learning?'"
+                >
+                  <v-avatar color="amber-darken-3" size="28" class="mb-1 text-white">
+                    <v-icon size="x-small">mdi-school-outline</v-icon>
+                  </v-avatar>
+                  <div class="text-caption font-weight-black text-amber-darken-4">IELTS</div>
+                </v-card>
+              </v-col>
+            </v-row>
+          </div>
+
           <!-- Step 1 Header & Mode Toggle -->
           <div class="d-flex flex-column flex-sm-row align-start align-sm-center justify-space-between mb-3 ga-2">
             <div class="d-flex align-center ga-2">
@@ -379,11 +440,92 @@
             </v-btn>
           </v-card>
 
-          <!-- Empty state -->
-          <div v-else-if="!results && !isAnalyzing" class="d-flex flex-column align-center justify-center flex-grow-1 text-grey-darken-1 py-8">
-            <v-icon size="48" color="grey-lighten-2" class="mb-2">mdi-comment-text-voice-outline</v-icon>
-            <div class="text-subtitle-2 font-weight-bold text-grey">Chưa có kết quả phân tích</div>
-            <div class="text-caption text-center px-6">Hãy hoàn thành câu trả lời của em ở cột bên trái và nhấn nút để bắt đầu chấm điểm nhé!</div>
+          <!-- Interactive Demo State (Shown before first recording) -->
+          <div v-else-if="!results && !isAnalyzing" class="d-flex flex-column ga-3 py-1 flex-grow-1">
+            <!-- Hero Welcome Card -->
+            <v-card border flat class="pa-3 bg-gradient-to-r text-white rounded-lg" style="background: linear-gradient(135deg, #0284C7 0%, #4F46E5 100%);">
+              <div class="d-flex align-center ga-3">
+                <v-avatar color="white" size="40" class="elevation-2 text-primary flex-shrink-0">
+                  <v-icon size="default" color="primary">mdi-lightning-bolt</v-icon>
+                </v-avatar>
+                <div>
+                  <div class="text-subtitle-2 font-weight-black tracking-tight">AI ACOUSTIC ENGINE KHÓA HỌC</div>
+                  <div class="text-caption text-indigo-lighten-4 font-weight-bold">
+                    Hệ thống chấm điểm âm phổ $F_0$, phiên âm IPA & sơ đồ khẩu hình 2D/3D
+                  </div>
+                </div>
+              </div>
+            </v-card>
+
+            <!-- Demo Feature 1: Pitch Contour Preview -->
+            <v-card border flat rounded="lg" class="pa-3 bg-slate-50 border-slate">
+              <div class="d-flex align-center justify-space-between mb-2">
+                <div class="text-caption font-weight-black text-secondary d-flex align-center ga-1">
+                  <v-icon color="primary" size="small">mdi-chart-bell-curve-cumulative</v-icon>
+                  <span>1. Mô phỏng Ngữ điệu & Cao độ $F_0$ (Sample Pitch Contour)</span>
+                </div>
+                <v-chip color="primary" size="x-small" variant="flat" class="font-weight-black">
+                  Độ khớp: 94%
+                </v-chip>
+              </div>
+              <div class="pa-2 bg-white rounded border mb-1" style="height: 100px;">
+                <svg viewBox="0 0 400 80" class="w-100 h-100">
+                  <path d="M 10 50 Q 80 10, 160 50 T 320 30 T 390 60" fill="none" stroke="#0284C7" stroke-width="3" />
+                  <path d="M 10 55 Q 80 15, 160 52 T 320 35 T 390 65" fill="none" stroke="#F59E0B" stroke-width="2" stroke-dasharray="4,4" />
+                </svg>
+              </div>
+              <div class="d-flex align-center justify-space-between text-caption text-grey-darken-2 px-1" style="font-size: 10px;">
+                <span class="d-flex align-center"><span class="mr-1" style="display:inline-block; width:10px; height:3px; background:#0284C7;"></span> Giọng bản xứ</span>
+                <span class="d-flex align-center"><span class="mr-1" style="display:inline-block; width:10px; height:3px; background:#F59E0B;"></span> Giọng của em</span>
+              </div>
+            </v-card>
+
+            <!-- Demo Feature 2: Sample IPA Word Breakdown & Articulation Guide -->
+            <v-card border flat rounded="lg" class="pa-3 bg-slate-50 border-slate">
+              <div class="d-flex align-center justify-space-between mb-2">
+                <div class="text-caption font-weight-black text-secondary d-flex align-center ga-1">
+                  <v-icon color="success" size="small">mdi-phonetics</v-icon>
+                  <span>2. Thử nghiệm Sơ đồ Khẩu hình 2D/3D (Mouth Model)</span>
+                </div>
+                <v-btn
+                  color="primary"
+                  variant="flat"
+                  size="x-small"
+                  class="font-weight-bold text-none"
+                  prepend-icon="mdi-lips"
+                  @click="openArticulationModal({ word: 'fluent', ipa: '/ˈfluː.ənt/', type: 'Vowel /uː/' })"
+                >
+                  Thử xem 2D/3D
+                </v-btn>
+              </div>
+
+              <div class="d-flex flex-wrap ga-2">
+                <v-card border flat class="pa-2 bg-white rounded text-center flex-grow-1" style="min-width: 120px;">
+                  <div class="text-caption font-weight-black text-secondary">fluent</div>
+                  <div class="text-caption font-weight-bold text-primary">/ˈfluː.ənt/</div>
+                  <v-chip color="success" size="x-small" variant="tonal" class="mt-1 font-weight-bold">
+                    100% Chuẩn
+                  </v-chip>
+                </v-card>
+                <v-card border flat class="pa-2 bg-white rounded text-center flex-grow-1" style="min-width: 120px;">
+                  <div class="text-caption font-weight-black text-secondary">english</div>
+                  <div class="text-caption font-weight-bold text-primary">/ˈɪŋ.ɡlɪʃ/</div>
+                  <v-chip color="success" size="x-small" variant="tonal" class="mt-1 font-weight-bold">
+                    96% Chuẩn
+                  </v-chip>
+                </v-card>
+              </div>
+            </v-card>
+
+            <!-- Action Prompt -->
+            <div class="pa-3 bg-emerald-lighten-5 border border-emerald rounded-lg text-center">
+              <div class="text-caption font-weight-black text-emerald-darken-4 mb-1">
+                🚀 Sẵn sàng luyện tập chưa em?
+              </div>
+              <div class="text-caption text-grey-darken-2" style="font-size: 11px;">
+                Hãy chọn bài học ở cột bên trái và nhấn nút Micro để bắt đầu thu âm ngay!
+              </div>
+            </div>
           </div>
 
           <!-- Loading state -->
