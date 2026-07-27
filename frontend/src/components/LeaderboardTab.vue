@@ -36,26 +36,26 @@
       <v-row class="ma-0 mb-4 align-end justify-center ga-1 ga-sm-3">
         <!-- Top 2 (Silver) -->
         <v-col cols="4" sm="3" class="pa-1">
-          <v-card border flat class="pa-2 pa-sm-3 text-center rounded-lg silver-podium-card edtech-card-hover" :class="top2.isEmpty ? 'opacity-70 border-dashed' : ''">
+          <v-card border flat class="pa-2 pa-sm-3 text-center elevation-1 rounded-lg" :class="top2.isEmpty ? 'bg-grey-lighten-4 opacity-70 border-dashed' : 'bg-white'">
             <div class="d-flex align-center justify-center mb-1">
-              <v-chip label size="x-small" color="slate-700" variant="flat" class="px-2 font-weight-black">
-                <v-icon size="x-small" class="mr-1">mdi-medal</v-icon> Top 2
+              <v-chip label size="x-small" color="grey-darken-2" variant="tonal" class="px-2">
+                <v-icon size="x-small" class="mr-1">mdi-medal-outline</v-icon> Top 2
               </v-chip>
             </div>
             
-            <v-avatar color="grey-lighten-3" size="40" class="mb-1 border border-secondary border-2 elevation-1">
+            <v-avatar color="grey-lighten-3" size="38" class="mb-1 border">
               <v-img v-if="!top2.isEmpty" :src="getAvatarUrl(top2)" alt="Avatar" />
               <v-icon v-else color="grey-darken-1" size="small">mdi-account</v-icon>
             </v-avatar>
 
-            <div class="text-caption font-weight-black name-wrap mb-1 text-slate-900">
+            <div class="text-caption font-weight-black name-wrap mb-1" :class="top2.isEmpty ? 'text-grey' : 'text-grey-darken-3'">
               {{ top2.isEmpty ? 'Đang trống' : formatDisplayName(top2.name) }}
             </div>
 
-            <v-chip v-if="top2.badge_title" label size="x-small" color="secondary" variant="tonal" class="mb-1 px-1" style="font-size: 9px;">
+            <v-chip v-if="top2.badge_title" label size="x-small" color="grey-darken-2" variant="tonal" class="mb-1 px-1" style="font-size: 9px;">
               {{ top2.badge_title }}
             </v-chip>
-            <div class="text-caption font-weight-black text-primary">
+            <div class="text-caption font-weight-black" :class="top2.isEmpty ? 'text-grey' : 'text-primary'">
               {{ top2.isEmpty ? '--/10' : `${(top2.best_score ?? top2.avg_score ?? 0).toFixed(1).replace('.', ',')}/10` }}
             </div>
             <div class="text-caption text-grey font-weight-bold" style="font-size: 10px;">
@@ -66,57 +66,57 @@
 
         <!-- Top 1 (Gold Winner) -->
         <v-col cols="4" sm="4" class="pa-1">
-          <v-card border flat class="pa-2 pa-sm-4 text-center rounded-lg gold-podium-card edtech-card-hover" :class="top1.isEmpty ? 'opacity-70 border-dashed' : ''">
+          <v-card border flat class="pa-2 pa-sm-3 text-center elevation-2 rounded-lg" :class="top1.isEmpty ? 'bg-grey-lighten-4 opacity-70 border-dashed' : 'bg-amber-lighten-5 border-amber'">
             <div class="d-flex align-center justify-center mb-1">
-              <v-chip label size="x-small" color="amber-darken-3" variant="flat" class="px-2 font-weight-black text-white">
-                <v-icon size="x-small" class="mr-1">mdi-crown</v-icon> TOP 1 BẢNG VÀNG
+              <v-chip label size="x-small" color="amber-darken-3" variant="tonal" class="px-2">
+                <v-icon size="x-small" class="mr-1">mdi-crown</v-icon> Top 1
               </v-chip>
             </div>
 
-            <v-avatar color="amber" size="48" class="mb-1 border border-amber border-2 elevation-2">
+            <v-avatar color="amber" size="44" class="mb-1 border border-amber border-2 elevation-1">
               <v-img v-if="!top1.isEmpty" :src="getAvatarUrl(top1)" alt="Avatar" />
               <v-icon v-else color="white" size="medium">mdi-account</v-icon>
             </v-avatar>
             
-            <div class="text-caption font-weight-black name-wrap mb-1 text-amber-darken-4" style="font-size: 14px;">
+            <div class="text-caption font-weight-black name-wrap mb-1" :class="top1.isEmpty ? 'text-grey' : 'text-amber-darken-4'">
               {{ top1.isEmpty ? 'Đang trống' : formatDisplayName(top1.name) }}
             </div>
             
-            <v-chip v-if="top1.badge_title" label size="x-small" color="amber-darken-4" variant="tonal" class="mb-1 px-2 font-weight-black" style="font-size: 10px;">
-              🏆 {{ top1.badge_title }}
+            <v-chip v-if="top1.badge_title" label size="x-small" color="amber-darken-3" variant="tonal" class="mb-1 px-1" style="font-size: 9px;">
+              {{ top1.badge_title }}
             </v-chip>
             
-            <div class="text-subtitle-2 font-weight-black text-amber-darken-4">
-              {{ top1.isEmpty ? '--/10' : `${(top1.best_score ?? top1.avg_score ?? 0).toFixed(1).replace('.', ',')}/10 điểm` }}
+            <div class="text-caption font-weight-black" :class="top1.isEmpty ? 'text-grey' : 'text-amber-darken-4'">
+              {{ top1.isEmpty ? '--/10' : `${(top1.best_score ?? top1.avg_score ?? 0).toFixed(1).replace('.', ',')}/10` }}
             </div>
-            <div class="text-caption text-amber-darken-3 font-weight-bold" style="font-size: 11px;">
-              <v-icon size="x-small" color="deep-orange">mdi-fire</v-icon> {{ top1.streak_count || top1.streak || 1 }} ngày liên tiếp
+            <div class="text-caption text-amber-darken-3 font-weight-bold" style="font-size: 10px;">
+              <v-icon size="x-small" color="deep-orange">mdi-fire</v-icon> {{ top1.streak_count || top1.streak || 1 }} ngày
             </div>
           </v-card>
         </v-col>
 
         <!-- Top 3 (Bronze) -->
         <v-col cols="4" sm="3" class="pa-1">
-          <v-card border flat class="pa-2 pa-sm-3 text-center rounded-lg bronze-podium-card edtech-card-hover" :class="top3.isEmpty ? 'opacity-70 border-dashed' : ''">
+          <v-card border flat class="pa-2 pa-sm-3 text-center elevation-1 rounded-lg" :class="top3.isEmpty ? 'bg-grey-lighten-4 opacity-70 border-dashed' : 'bg-white'">
             <div class="d-flex align-center justify-center mb-1">
-              <v-chip label size="x-small" color="brown" variant="flat" class="px-2 font-weight-black text-white">
+              <v-chip label size="x-small" color="brown" variant="tonal" class="px-2">
                 <v-icon size="x-small" class="mr-1">mdi-medal-outline</v-icon> Top 3
               </v-chip>
             </div>
 
-            <v-avatar color="brown-lighten-4" size="40" class="mb-1 border border-brown elevation-1">
+            <v-avatar color="brown-lighten-4" size="38" class="mb-1 border border-brown">
               <v-img v-if="!top3.isEmpty" :src="getAvatarUrl(top3)" alt="Avatar" />
               <v-icon v-else color="brown-darken-2" size="small">mdi-account</v-icon>
             </v-avatar>
 
-            <div class="text-caption font-weight-black name-wrap mb-1 text-amber-darken-4">
+            <div class="text-caption font-weight-black name-wrap mb-1" :class="top3.isEmpty ? 'text-grey' : 'text-grey-darken-3'">
               {{ top3.isEmpty ? 'Đang trống' : formatDisplayName(top3.name) }}
             </div>
 
             <v-chip v-if="top3.badge_title" label size="x-small" color="brown" variant="tonal" class="mb-1 px-1" style="font-size: 9px;">
               {{ top3.badge_title }}
             </v-chip>
-            <div class="text-caption font-weight-black text-primary">
+            <div class="text-caption font-weight-black" :class="top3.isEmpty ? 'text-grey' : 'text-primary'">
               {{ top3.isEmpty ? '--/10' : `${(top3.best_score ?? top3.avg_score ?? 0).toFixed(1).replace('.', ',')}/10` }}
             </div>
             <div class="text-caption text-grey font-weight-bold" style="font-size: 10px;">

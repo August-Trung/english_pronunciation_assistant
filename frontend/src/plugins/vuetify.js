@@ -14,15 +14,14 @@ import 'vuetify/styles'
 const lightTheme = {
   dark: false,
   colors: {
-    background: '#F8FAFC',  // Slate 50 ultra-soft clean background
+    background: '#F4F6F9',
     surface: '#FFFFFF',
-    primary: '#0284C7',     // Sky Blue 600
-    secondary: '#0F172A',   // Slate 900
-    success: '#10B981',     // Emerald 500
-    warning: '#F59E0B',     // Amber 500
-    error: '#F43F5E',       // Rose 500
-    info: '#6366F1',        // Indigo 500
-    accent: '#8B5CF6',      // Purple 500
+    primary: '#03A9F4',     // Sky Blue for student friendly environment
+    secondary: '#1976D2',   // Trustworthy Deep Blue
+    success: '#4CAF50',     // Bright encouraging Green
+    warning: '#FF9800',     // Warm Amber/Orange
+    error: '#FF5252',       // Cheerful Coral/Red
+    info: '#9C27B0',        // Cheerful Purple
   },
 }
 
@@ -31,28 +30,6 @@ export default createVuetify({
     defaultTheme: 'lightTheme',
     themes: {
       lightTheme,
-    },
-  },
-  defaults: {
-    VCard: {
-      rounded: 'lg',
-      elevation: 0,
-    },
-    VBtn: {
-      rounded: 'lg',
-      elevation: 0,
-    },
-    VChip: {
-      rounded: 'md',
-    },
-    VTextField: {
-      rounded: 'lg',
-    },
-    VSelect: {
-      rounded: 'lg',
-    },
-    VDialog: {
-      rounded: 'lg',
     },
   },
 })
