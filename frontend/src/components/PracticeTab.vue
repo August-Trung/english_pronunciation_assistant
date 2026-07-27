@@ -12,17 +12,17 @@
       text="Trình duyệt yêu cầu kết nối bảo mật HTTPS để kích hoạt Microphone. Nếu bạn chạy trên tên miền chính thức, vui lòng cấu hình SSL."
     />
 
-    <v-row class="ma-0 ga-2">
+    <v-row class="ma-0 ga-3">
       <!-- Left column: Input, Mode selection, Library and Recording -->
       <v-col cols="12" md="6" class="pa-1">
-        <v-card border flat class="pa-4 bg-white" rounded="lg">
+        <v-card flat rounded="xl" class="pa-4 bg-white border border-primary-lighten-4 shadow-sm" style="box-shadow: 0 10px 30px -5px rgba(2, 136, 209, 0.08);">
           <!-- Step 1 Header & Mode Toggle -->
-          <div class="d-flex flex-column flex-sm-row align-start align-sm-center justify-space-between mb-3 ga-2">
+          <div class="d-flex flex-column flex-sm-row align-start align-sm-center justify-space-between mb-3 ga-2 pa-2 rounded-lg bg-light-blue-lighten-5 border">
             <div class="d-flex align-center ga-2">
-              <v-avatar color="blue-lighten-5" size="32" class="text-primary mr-1 border flex-shrink-0">
-                <v-icon size="small">mdi-text-box-search-outline</v-icon>
+              <v-avatar color="primary" size="32" class="text-white mr-1 elevation-1 flex-shrink-0">
+                <v-icon size="small">mdi-microphone-settings</v-icon>
               </v-avatar>
-              <div class="text-subtitle-2 text-sm-subtitle-1 font-weight-black text-secondary">
+              <div class="text-subtitle-2 text-sm-subtitle-1 font-weight-black text-primary">
                 Bước 1: {{ practiceMode === 'reading' ? 'Chọn câu mẫu luyện đọc' : 'Chọn chủ đề luyện nói' }}
               </div>
             </div>
@@ -32,8 +32,8 @@
               density="compact"
               mandatory
               rounded="pill"
-              variant="outlined"
-              class="w-100 w-sm-auto"
+              variant="flat"
+              class="w-100 w-sm-auto elevation-1"
             >
               <v-btn value="speaking" size="small" class="text-none font-weight-bold flex-grow-1 flex-sm-grow-0" prepend-icon="mdi-account-voice">
                 Nói tự do
@@ -145,11 +145,11 @@
           </v-text-field>
 
           <!-- Dynamic Preset Library Section -->
-          <div class="mb-3">
+          <div class="mb-3 pa-3 bg-grey-lighten-5 rounded-lg border">
             <div class="text-caption font-weight-bold text-grey-darken-1 mb-1 d-flex align-center justify-space-between ga-2 flex-nowrap">
               <span class="d-flex align-center text-truncate">
                 <v-icon color="primary" size="small" class="mr-1 flex-shrink-0">mdi-school-outline</v-icon>
-                <span class="text-truncate">{{ practiceMode === 'reading' ? 'Thư viện câu mẫu:' : 'Gợi ý chủ đề:' }}</span>
+                <span class="text-truncate font-weight-black text-primary">{{ practiceMode === 'reading' ? 'Thư viện câu mẫu:' : 'Gợi ý chủ đề:' }}</span>
               </span>
               <span class="text-caption text-primary font-weight-bold text-no-wrap flex-shrink-0">
                 {{ GRADE_LEVELS.find(g => g.id === selectedGrade)?.badge }}
@@ -183,9 +183,9 @@
                 v-for="item in SPEAKING_TOPICS[selectedGrade]"
                 :key="item"
                 size="small"
-                :color="topic === item ? 'primary' : 'secondary'"
-                :variant="topic === item ? 'elevated' : 'tonal'"
-                class="text-none"
+                :color="topic === item ? 'primary' : 'white'"
+                :variant="topic === item ? 'elevated' : 'flat'"
+                class="text-none border font-weight-bold"
                 @click="topic = item"
               >
                 <v-icon start size="x-small">mdi-comment-question-outline</v-icon>
@@ -205,9 +205,9 @@
                     v-for="sent in cat.sentences"
                     :key="sent"
                     size="small"
-                    :color="topic === sent ? 'primary' : 'grey-darken-3'"
-                    :variant="topic === sent ? 'elevated' : 'tonal'"
-                    class="text-none pr-1"
+                    :color="topic === sent ? 'primary' : 'white'"
+                    :variant="topic === sent ? 'elevated' : 'flat'"
+                    class="text-none pr-1 border font-weight-bold"
                     @click="topic = sent"
                   >
                     <span class="text-truncate" style="max-width: 200px;">{{ sent }}</span>
@@ -226,70 +226,52 @@
             </div>
           </div>
 
-          <v-divider class="my-2" />
+          <v-divider class="my-3" />
 
-          <!-- Step 2: Voice Studio Console -->
-          <div class="d-flex align-center ga-2 mb-2">
-            <v-avatar color="error-lighten-5" size="32" class="text-error mr-1 border">
-              <v-icon size="x-small">mdi-microphone-outline</v-icon>
+          <!-- Step 2: Voice Studio Console Header -->
+          <div class="d-flex align-center ga-2 mb-3 pa-2 rounded-lg bg-red-lighten-5 border-red">
+            <v-avatar color="error" size="32" class="text-white mr-1 elevation-1">
+              <v-icon size="x-small">mdi-microphone</v-icon>
             </v-avatar>
-            <div class="text-subtitle-2 font-weight-black text-secondary">
+            <div class="text-subtitle-2 font-weight-black text-error">
               Bước 2: {{ practiceMode === 'reading' ? 'Đọc lại câu mẫu bằng giọng nói' : 'Trả lời bằng giọng nói' }}
             </div>
           </div>
 
-          <!-- Console Controls -->
-          <div class="d-flex flex-column align-center justify-center py-1 w-100">
-            <v-row class="ma-0 w-100 align-center justify-center mb-1" style="max-width: 320px;">
-              <v-col cols="3" class="pa-0 d-flex justify-end"></v-col>
-              <v-col cols="6" class="pa-0 d-flex justify-center">
-                <div class="d-flex align-center justify-center position-relative" style="width: 76px; height: 76px;">
-                  <v-progress-circular
-                    v-if="isRecording"
-                    indeterminate
-                    color="error"
-                    size="76"
-                    width="3"
-                    class="position-absolute"
-                  />
-                  <v-btn
-                    :color="isRecording ? 'grey-darken-3' : 'error'"
-                    size="large"
-                    icon
-                    class="elevation-2"
-                    style="width: 60px; height: 60px; z-index: 2;"
-                    :disabled="(!isSecure && !isLocalhost) || !topic.trim() || isAnalyzing"
-                    @click="isRecording ? stopRecording() : startRecording()"
-                  >
-                    <v-icon size="medium">{{ isRecording ? 'mdi-stop' : 'mdi-microphone' }}</v-icon>
-                  </v-btn>
-                </div>
-              </v-col>
-
-              <v-col cols="3" class="pa-0 d-flex justify-start">
-                <v-btn
-                  v-if="!isRecording && audioUrl"
-                  icon="mdi-delete-outline"
-                  color="error"
-                  variant="outlined"
-                  density="comfortable"
-                  title="Xóa bản ghi hiện tại"
-                  :disabled="isAnalyzing"
-                  @click="clearAudio"
-                />
-              </v-col>
-            </v-row>
+          <!-- Studio Micro Recording Visualizer -->
+          <div class="d-flex flex-column align-center justify-center py-4 w-100 bg-grey-lighten-5 rounded-xl border">
+            <div class="d-flex align-center justify-center position-relative my-2" style="width: 90px; height: 90px;">
+              <!-- Pulse ring when recording -->
+              <div v-if="isRecording" class="position-absolute bg-red-lighten-4 rounded-circle animate-ping" style="width: 90px; height: 90px;"></div>
+              
+              <v-btn
+                :color="isRecording ? 'grey-darken-4' : 'error'"
+                size="x-large"
+                icon
+                class="elevation-4 text-white"
+                style="width: 72px; height: 72px; z-index: 2;"
+                :disabled="(!isSecure && !isLocalhost) || !topic.trim() || isAnalyzing"
+                @click="isRecording ? stopRecording() : startRecording()"
+              >
+                <v-icon size="32">{{ isRecording ? 'mdi-stop' : 'mdi-microphone' }}</v-icon>
+              </v-btn>
+            </div>
 
             <div class="text-center mb-2">
               <template v-if="isRecording">
-                <div class="d-flex align-center justify-center text-error font-weight-black text-caption animate-pulse">
-                  <v-icon color="error" class="mr-1 animate-pulse" size="x-small">mdi-record-rec</v-icon>
+                <div class="d-flex align-center justify-center text-error font-weight-black text-subtitle-2">
+                  <v-icon color="error" class="mr-1" size="small">mdi-record-rec</v-icon>
                   Đang ghi âm... ({{ formatTime(recordingDuration) }})
                 </div>
               </template>
               <template v-else-if="!topic.trim()">
-                <span class="text-caption font-weight-bold text-grey-darken-1" style="font-size: 11px;">
-                  Hãy chọn hoặc nhập một câu chủ đề trước
+                <span class="text-caption font-weight-bold text-grey-darken-1">
+                  Hãy chọn hoặc nhập một câu chủ đề ở Bước 1 trước
+                </span>
+              </template>
+              <template v-else>
+                <span class="text-caption font-weight-bold text-primary">
+                  Bấm nút Micro màu đỏ ở trên để bắt đầu đọc
                 </span>
               </template>
             </div>
@@ -308,8 +290,8 @@
               border
               flat
               rounded="pill"
-              class="pa-2 bg-grey-lighten-4 w-100 d-flex align-center ga-3 mb-2"
-              max-width="500"
+              class="pa-2 bg-white border w-100 d-flex align-center ga-3 mb-3 elevation-1"
+              max-width="450"
             >
               <v-btn
                 :icon="isPlaying ? 'mdi-pause' : 'mdi-play'"
@@ -344,14 +326,14 @@
               color="success"
               variant="flat"
               block
-              height="48"
-              class="font-weight-black"
+              height="50"
+              class="font-weight-black text-subtitle-2 rounded-lg elevation-2 max-w-md"
               prepend-icon="mdi-checkbox-marked-circle-outline"
               :disabled="!audioBlob || !topic.trim() || isAnalyzing"
               :loading="isAnalyzing"
               @click="analyzeSpeech"
             >
-              Chấm điểm phát âm
+              Chấm Điểm Phát Âm (AI Acoustic Engine)
             </v-btn>
           </div>
         </v-card>
@@ -359,12 +341,14 @@
 
       <!-- Right column: Analysis Results -->
       <v-col cols="12" md="6" class="pa-1">
-        <v-card border flat class="pa-4 bg-white min-h-100 d-flex flex-column" rounded="lg">
-          <div class="d-flex align-center ga-2 mb-3">
-            <v-avatar color="success-lighten-5" size="36" class="text-success mr-1 border">
+        <v-card flat rounded="xl" class="pa-4 bg-white border border-teal-lighten-4 min-h-100 d-flex flex-column" style="box-shadow: 0 10px 30px -5px rgba(46, 125, 50, 0.08);">
+          <div class="d-flex align-center ga-2 mb-3 pa-2 rounded-lg bg-teal-lighten-5 border-teal">
+            <v-avatar color="teal" size="32" class="text-white mr-1 elevation-1">
               <v-icon size="small">mdi-trophy-outline</v-icon>
             </v-avatar>
-            <div class="text-subtitle-1 font-weight-black text-secondary">Kết quả đánh giá</div>
+            <div class="text-subtitle-2 text-sm-subtitle-1 font-weight-black text-teal-darken-4">
+              Kết quả đánh giá AI Acoustic Engine
+            </div>
           </div>
 
           <!-- Error Alert Card -->
@@ -384,11 +368,32 @@
             </v-btn>
           </v-card>
 
-          <!-- Empty state -->
-          <div v-else-if="!results && !isAnalyzing" class="d-flex flex-column align-center justify-center flex-grow-1 text-grey-darken-1 py-8">
-            <v-icon size="48" color="grey-lighten-2" class="mb-2">mdi-comment-text-voice-outline</v-icon>
-            <div class="text-subtitle-2 font-weight-bold text-grey">Chưa có kết quả phân tích</div>
-            <div class="text-caption text-center px-6">Hãy hoàn thành câu trả lời của em ở cột bên trái và nhấn nút để bắt đầu chấm điểm nhé!</div>
+          <!-- WOW Rich Empty State -->
+          <div v-else-if="!results && !isAnalyzing" class="d-flex flex-column align-center justify-center flex-grow-1 text-grey-darken-1 py-10 px-4 bg-teal-lighten-5 rounded-xl border border-dashed border-teal text-center">
+            <v-avatar color="white" size="72" class="mb-3 border elevation-2">
+              <v-icon size="40" color="primary">mdi-microphone-pulse</v-icon>
+            </v-avatar>
+            
+            <div class="text-subtitle-1 font-weight-black text-teal-darken-4 mb-1">
+              Sẵn Sàng Chấm Điểm AI Acoustic
+            </div>
+            
+            <div class="text-caption font-weight-bold text-grey-darken-2 mb-4" style="max-width: 380px;">
+              Bấm thu âm giọng nói ở Bước 2 bên trái và nhấn <span class="text-success font-weight-black">"Chấm điểm phát âm"</span> để AI phân tích chi tiết phiên âm IPA, ngữ điệu F0 và từ nối!
+            </div>
+
+            <!-- Dynamic Acoustic Feature Pills -->
+            <div class="d-flex flex-wrap justify-center ga-2">
+              <v-chip size="small" color="primary" variant="flat" class="font-weight-bold">
+                <v-icon start size="x-small">mdi-bullseye-arrow</v-icon> Phân Tích IPA Real-Time
+              </v-chip>
+              <v-chip size="small" color="teal" variant="flat" class="font-weight-bold">
+                <v-icon start size="x-small">mdi-waveform</v-icon> Biểu Đồ Ngữ Điệu F0
+              </v-chip>
+              <v-chip size="small" color="amber-darken-3" variant="flat" class="font-weight-bold">
+                <v-icon start size="x-small">mdi-link-variant</v-icon> Nhận Diện Nối Âm 🔗
+              </v-chip>
+            </div>
           </div>
 
           <!-- Loading state -->
