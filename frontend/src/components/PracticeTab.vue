@@ -15,16 +15,14 @@
     <v-row class="ma-0 ga-3">
       <!-- Left column: Input, Mode selection, Library and Recording -->
       <v-col cols="12" md="6" class="pa-1">
-        <v-card flat rounded="xl" class="pa-4 bg-white border border-primary-lighten-4 shadow-sm" style="box-shadow: 0 10px 30px -5px rgba(2, 136, 209, 0.08);">
-          <!-- Step 1 Header & Mode Toggle -->
-          <div class="d-flex flex-column flex-sm-row align-start align-sm-center justify-space-between mb-3 ga-2 pa-2 rounded-lg bg-light-blue-lighten-5 border">
-            <div class="d-flex align-center ga-2">
-              <v-avatar color="primary" size="32" class="text-white mr-1 elevation-1 flex-shrink-0">
-                <v-icon size="small">mdi-microphone-settings</v-icon>
-              </v-avatar>
-              <div class="text-subtitle-2 text-sm-subtitle-1 font-weight-black text-primary">
-                Bước 1: {{ practiceMode === 'reading' ? 'Chọn câu mẫu luyện đọc' : 'Chọn chủ đề luyện nói' }}
-              </div>
+        <v-card flat rounded="xl" class="pa-4 bg-white border">
+          <!-- Step 1 Clean Header & Mode Toggle -->
+          <div class="d-flex align-center justify-space-between mb-3 ga-2">
+            <div class="d-flex align-center ga-1.5">
+              <v-icon size="small" color="primary">mdi-microphone-settings</v-icon>
+              <span class="text-caption font-weight-black text-grey-darken-2 text-uppercase" style="letter-spacing: 0.5px;">
+                BƯỚC 1: {{ practiceMode === 'reading' ? 'Chọn câu mẫu đọc' : 'Chọn chủ đề nói' }}
+              </span>
             </div>
             <v-btn-toggle
               v-model="practiceMode"
@@ -32,14 +30,14 @@
               density="compact"
               mandatory
               rounded="pill"
-              variant="flat"
-              class="w-100 w-sm-auto elevation-1"
+              variant="outlined"
+              style="height: 28px;"
             >
-              <v-btn value="speaking" size="small" class="text-none font-weight-bold flex-grow-1 flex-sm-grow-0" prepend-icon="mdi-account-voice">
+              <v-btn value="speaking" size="x-small" class="text-none font-weight-bold" prepend-icon="mdi-account-voice">
                 Nói tự do
               </v-btn>
-              <v-btn value="reading" size="small" class="text-none font-weight-bold flex-grow-1 flex-sm-grow-0" prepend-icon="mdi-book-open-variant">
-                Đọc theo mẫu
+              <v-btn value="reading" size="x-small" class="text-none font-weight-bold" prepend-icon="mdi-book-open-variant">
+                Đọc mẫu
               </v-btn>
             </v-btn-toggle>
           </div>
@@ -47,11 +45,11 @@
           <!-- Topic input with TTS button -->
           <v-text-field
             v-model="topic"
-            :placeholder="practiceMode === 'reading' ? 'Chọn hoặc nhập câu mẫu để luyện đọc...' : 'Nhập chủ đề hoặc câu hỏi (Ví dụ: What is your favorite color?)'"
+            :placeholder="practiceMode === 'reading' ? 'Chọn hoặc nhập câu mẫu...' : 'Nhập chủ đề/câu hỏi (VD: What is your favorite color?)'"
             variant="outlined"
-            density="comfortable"
+            density="compact"
             hide-details
-            class="mb-3"
+            class="mb-3 text-caption"
             color="primary"
           >
             <template #append-inner>
@@ -64,46 +62,48 @@
                   title="Cài đặt giọng đọc (Anh-Mỹ/Anh-Anh, Nam/Nữ)"
                 />
                 <v-menu activator="parent" location="bottom end" :close-on-content-click="false">
-                  <v-card class="pa-4 text-body-2" width="320" border elevation="4" rounded="lg">
-                    <div class="text-subtitle-1 font-weight-black text-secondary mb-3 d-flex align-center justify-space-between border-bottom pb-2">
+                  <v-card class="pa-3 text-caption" width="300" border elevation="4" rounded="lg">
+                    <div class="text-caption font-weight-black text-secondary mb-2 d-flex align-center justify-space-between border-bottom pb-1">
                       <span>Cài đặt giọng đọc (TTS)</span>
-                      <v-icon color="primary">mdi-account-voice</v-icon>
+                      <v-icon color="primary" size="small">mdi-account-voice</v-icon>
                     </div>
                     
-                    <div class="font-weight-bold text-grey-darken-3 mb-2 text-subtitle-2">1. Giọng phát âm (Accent):</div>
+                    <div class="font-weight-bold text-grey-darken-3 mb-1">1. Giọng phát âm (Accent):</div>
                     <v-btn-toggle
                       v-model="ttsAccent"
                       color="primary"
-                      density="comfortable"
+                      density="compact"
                       mandatory
                       block
-                      class="mb-3"
+                      class="mb-2"
                       variant="outlined"
+                      style="height: 28px;"
                       @update:model-value="saveTtsSettings"
                     >
-                      <v-btn value="en-US" size="small" class="text-none font-weight-bold flex-grow-1" prepend-icon="mdi-earth">
+                      <v-btn value="en-US" size="x-small" class="text-none font-weight-bold flex-grow-1" prepend-icon="mdi-earth">
                         Anh - Mỹ (US)
                       </v-btn>
-                      <v-btn value="en-GB" size="small" class="text-none font-weight-bold flex-grow-1" prepend-icon="mdi-earth">
+                      <v-btn value="en-GB" size="x-small" class="text-none font-weight-bold flex-grow-1" prepend-icon="mdi-earth">
                         Anh - Anh (UK)
                       </v-btn>
                     </v-btn-toggle>
 
-                    <div class="font-weight-bold text-grey-darken-3 mb-2 text-subtitle-2">2. Giới tính giọng đọc:</div>
+                    <div class="font-weight-bold text-grey-darken-3 mb-1">2. Giới tính giọng đọc:</div>
                     <v-btn-toggle
                       v-model="ttsGender"
                       color="primary"
-                      density="comfortable"
+                      density="compact"
                       mandatory
                       block
-                      class="mb-4"
+                      class="mb-3"
                       variant="outlined"
+                      style="height: 28px;"
                       @update:model-value="saveTtsSettings"
                     >
-                      <v-btn value="female" size="small" class="text-none font-weight-bold flex-grow-1" prepend-icon="mdi-gender-female">
+                      <v-btn value="female" size="x-small" class="text-none font-weight-bold flex-grow-1" prepend-icon="mdi-gender-female">
                         Giọng Nữ
                       </v-btn>
-                      <v-btn value="male" size="small" class="text-none font-weight-bold flex-grow-1" prepend-icon="mdi-gender-male">
+                      <v-btn value="male" size="x-small" class="text-none font-weight-bold flex-grow-1" prepend-icon="mdi-gender-male">
                         Giọng Nam
                       </v-btn>
                     </v-btn-toggle>
@@ -111,7 +111,7 @@
                     <v-btn
                       color="primary"
                       variant="tonal"
-                      size="comfortable"
+                      size="small"
                       block
                       prepend-icon="mdi-volume-high"
                       class="font-weight-bold text-none"
@@ -144,14 +144,14 @@
             </template>
           </v-text-field>
 
-          <!-- Dynamic Preset Library Section -->
-          <div class="mb-3 pa-3 bg-grey-lighten-5 rounded-lg border">
-            <div class="text-caption font-weight-bold text-grey-darken-1 mb-1 d-flex align-center justify-space-between ga-2 flex-nowrap">
+          <!-- Dynamic Preset Library Section (Flat Minimal Design) -->
+          <div class="mb-3">
+            <div class="text-caption font-weight-bold text-grey-darken-2 mb-1 d-flex align-center justify-space-between ga-2">
               <span class="d-flex align-center text-truncate">
-                <v-icon color="primary" size="small" class="mr-1 flex-shrink-0">mdi-school-outline</v-icon>
-                <span class="text-truncate font-weight-black text-primary">{{ practiceMode === 'reading' ? 'Thư viện câu mẫu:' : 'Gợi ý chủ đề:' }}</span>
+                <v-icon color="primary" size="x-small" class="mr-1">mdi-school-outline</v-icon>
+                <span class="font-weight-bold text-caption">{{ practiceMode === 'reading' ? 'Thư viện câu mẫu:' : 'Gợi ý chủ đề:' }}</span>
               </span>
-              <span class="text-caption text-primary font-weight-bold text-no-wrap flex-shrink-0">
+              <span class="text-caption text-grey-darken-1 font-weight-bold">
                 {{ GRADE_LEVELS.find(g => g.id === selectedGrade)?.badge }}
               </span>
             </div>
@@ -163,60 +163,59 @@
               density="compact"
               align-tabs="start"
               class="mb-2 border-bottom"
+              style="height: 32px;"
             >
               <v-tab
                 v-for="grade in GRADE_LEVELS"
                 :key="grade.id"
                 :value="grade.id"
-                class="text-none font-weight-bold text-caption px-2 py-1"
-                style="min-width: 0;"
+                class="text-none font-weight-bold text-caption px-2 py-0"
+                style="min-width: 0; font-size: 11px;"
               >
                 <v-icon size="x-small" class="mr-1" :color="grade.color">{{ grade.icon }}</v-icon>
-                <span class="d-none d-sm-inline">{{ grade.name }}</span>
-                <span class="d-inline d-sm-none">{{ grade.shortName }}</span>
+                <span>{{ grade.shortName }}</span>
               </v-tab>
             </v-tabs>
 
             <!-- Mode 1: Speaking Mode Topic Chips -->
-            <div v-if="practiceMode === 'speaking'" class="d-flex flex-wrap ga-1 my-2">
+            <div v-if="practiceMode === 'speaking'" class="d-flex flex-wrap ga-1 my-1">
               <v-chip
                 v-for="item in SPEAKING_TOPICS[selectedGrade]"
                 :key="item"
-                size="small"
-                :color="topic === item ? 'primary' : 'white'"
-                :variant="topic === item ? 'elevated' : 'flat'"
-                class="text-none border font-weight-bold"
+                size="x-small"
+                :color="topic === item ? 'primary' : 'grey-darken-3'"
+                :variant="topic === item ? 'flat' : 'outlined'"
+                class="text-none font-weight-medium"
                 @click="topic = item"
               >
-                <v-icon start size="x-small">mdi-comment-question-outline</v-icon>
-                <span class="text-truncate" style="max-width: 220px;">{{ item }}</span>
+                <span class="text-truncate" style="max-width: 200px;">{{ item }}</span>
               </v-chip>
             </div>
 
             <!-- Mode 2: Reading Mode Sentence Library -->
             <div v-else>
-              <div v-for="cat in READING_LIBRARY[selectedGrade]" :key="cat.topic" class="mb-2">
-                <div class="text-caption font-weight-black text-grey-darken-2 mb-1 d-flex align-center">
-                  <v-icon size="x-small" color="primary" class="mr-1">mdi-folder-text-outline</v-icon>
-                  {{ cat.topic }}
+              <div v-for="cat in READING_LIBRARY[selectedGrade]" :key="cat.topic" class="mb-1.5">
+                <div class="text-caption font-weight-bold text-grey-darken-1 mb-0.5" style="font-size: 10px;">
+                  • {{ cat.topic }}
                 </div>
                 <div class="d-flex flex-wrap ga-1">
                   <v-chip
                     v-for="sent in cat.sentences"
                     :key="sent"
-                    size="small"
-                    :color="topic === sent ? 'primary' : 'white'"
-                    :variant="topic === sent ? 'elevated' : 'flat'"
-                    class="text-none pr-1 border font-weight-bold"
+                    size="x-small"
+                    :color="topic === sent ? 'primary' : 'grey-darken-3'"
+                    :variant="topic === sent ? 'flat' : 'outlined'"
+                    class="text-none pr-1 font-weight-medium"
                     @click="topic = sent"
                   >
-                    <span class="text-truncate" style="max-width: 200px;">{{ sent }}</span>
+                    <span class="text-truncate" style="max-width: 180px;">{{ sent }}</span>
                     <v-btn
                       icon="mdi-volume-high"
                       size="x-small"
                       variant="text"
                       color="primary"
-                      class="ml-1"
+                      class="ml-0.5 pa-0"
+                      style="width: 14px; height: 14px;"
                       title="Nghe phát âm mẫu"
                       @click.stop="speakText(sent)"
                     />
@@ -226,52 +225,50 @@
             </div>
           </div>
 
-          <v-divider class="my-3" />
+          <v-divider class="my-2" />
 
-          <!-- Step 2: Voice Studio Console Header -->
-          <div class="d-flex align-center ga-2 mb-3 pa-2 rounded-lg bg-red-lighten-5 border-red">
-            <v-avatar color="error" size="32" class="text-white mr-1 elevation-1">
-              <v-icon size="x-small">mdi-microphone</v-icon>
-            </v-avatar>
-            <div class="text-subtitle-2 font-weight-black text-error">
-              Bước 2: {{ practiceMode === 'reading' ? 'Đọc lại câu mẫu bằng giọng nói' : 'Trả lời bằng giọng nói' }}
-            </div>
+          <!-- Step 2: Voice Studio Clean Header -->
+          <div class="d-flex align-center ga-1.5 mb-2">
+            <v-icon size="small" color="error">mdi-microphone</v-icon>
+            <span class="text-caption font-weight-black text-grey-darken-2 text-uppercase" style="letter-spacing: 0.5px;">
+              BƯỚC 2: {{ practiceMode === 'reading' ? 'Đọc câu mẫu bằng giọng nói' : 'Trả lời bằng giọng nói' }}
+            </span>
           </div>
 
-          <!-- Studio Micro Recording Visualizer -->
-          <div class="d-flex flex-column align-center justify-center py-4 w-100 bg-grey-lighten-5 rounded-xl border">
-            <div class="d-flex align-center justify-center position-relative my-2" style="width: 90px; height: 90px;">
+          <!-- Studio Micro Recording Visualizer (Clean & Compact) -->
+          <div class="d-flex flex-column align-center justify-center py-2 w-100">
+            <div class="d-flex align-center justify-center position-relative my-1" style="width: 64px; height: 64px;">
               <!-- Pulse ring when recording -->
-              <div v-if="isRecording" class="position-absolute bg-red-lighten-4 rounded-circle animate-ping" style="width: 90px; height: 90px;"></div>
+              <div v-if="isRecording" class="position-absolute bg-red-lighten-4 rounded-circle animate-ping" style="width: 64px; height: 64px;"></div>
               
               <v-btn
                 :color="isRecording ? 'grey-darken-4' : 'error'"
-                size="x-large"
+                size="medium"
                 icon
-                class="elevation-4 text-white"
-                style="width: 72px; height: 72px; z-index: 2;"
+                class="elevation-2 text-white"
+                style="width: 52px; height: 52px; z-index: 2;"
                 :disabled="(!isSecure && !isLocalhost) || !topic.trim() || isAnalyzing"
                 @click="isRecording ? stopRecording() : startRecording()"
               >
-                <v-icon size="32">{{ isRecording ? 'mdi-stop' : 'mdi-microphone' }}</v-icon>
+                <v-icon size="24">{{ isRecording ? 'mdi-stop' : 'mdi-microphone' }}</v-icon>
               </v-btn>
             </div>
 
             <div class="text-center mb-2">
               <template v-if="isRecording">
-                <div class="d-flex align-center justify-center text-error font-weight-black text-subtitle-2">
-                  <v-icon color="error" class="mr-1" size="small">mdi-record-rec</v-icon>
+                <div class="d-flex align-center justify-center text-error font-weight-black text-caption">
+                  <v-icon color="error" class="mr-1" size="x-small">mdi-record-rec</v-icon>
                   Đang ghi âm... ({{ formatTime(recordingDuration) }})
                 </div>
               </template>
               <template v-else-if="!topic.trim()">
-                <span class="text-caption font-weight-bold text-grey-darken-1">
-                  Hãy chọn hoặc nhập một câu chủ đề ở Bước 1 trước
+                <span class="text-caption text-grey-darken-1" style="font-size: 11px;">
+                  Hãy chọn/nhập câu chủ đề ở Bước 1 trước
                 </span>
               </template>
               <template v-else>
-                <span class="text-caption font-weight-bold text-primary">
-                  Bấm nút Micro màu đỏ ở trên để bắt đầu đọc
+                <span class="text-caption font-weight-bold text-primary" style="font-size: 11px;">
+                  Bấm nút Micro đỏ ở trên để bắt đầu đọc
                 </span>
               </template>
             </div>
@@ -290,14 +287,14 @@
               border
               flat
               rounded="pill"
-              class="pa-2 bg-white border w-100 d-flex align-center ga-3 mb-3 elevation-1"
-              max-width="450"
+              class="pa-1.5 bg-grey-lighten-4 w-100 d-flex align-center ga-2 mb-2"
+              max-width="400"
             >
               <v-btn
                 :icon="isPlaying ? 'mdi-pause' : 'mdi-play'"
                 color="primary"
                 variant="flat"
-                size="32"
+                size="28"
                 class="rounded-circle"
                 title="Phát / Tạm dừng"
                 @click="togglePlay"
@@ -311,12 +308,12 @@
                 track-color="grey-lighten-3"
                 hide-details
                 density="compact"
-                :thumb-size="6"
+                :thumb-size="5"
                 class="ma-0 flex-grow-1"
                 @update:model-value="seekAudio"
               />
               
-              <div class="text-caption font-weight-black text-grey-darken-2 text-no-wrap px-2">
+              <div class="text-caption font-weight-bold text-grey-darken-2 text-no-wrap px-1" style="font-size: 10px;">
                 {{ formatTime(currentTime) }} / {{ formatTime(audioDuration) }}
               </div>
             </v-card>
@@ -326,40 +323,38 @@
               color="success"
               variant="flat"
               block
-              height="50"
-              class="font-weight-black text-subtitle-2 rounded-lg elevation-2 max-w-md"
+              height="40"
+              class="font-weight-black text-caption rounded-lg elevation-1 max-w-sm"
               prepend-icon="mdi-checkbox-marked-circle-outline"
               :disabled="!audioBlob || !topic.trim() || isAnalyzing"
               :loading="isAnalyzing"
               @click="analyzeSpeech"
             >
-              Chấm Điểm Phát Âm (AI Acoustic Engine)
+              Chấm Điểm Phát Âm
             </v-btn>
           </div>
         </v-card>
       </v-col>
 
-      <!-- Right column: Analysis Results -->
+      <!-- Right column: Analysis Results (Clean Flat Design) -->
       <v-col cols="12" md="6" class="pa-1">
-        <v-card flat rounded="xl" class="pa-4 bg-white border border-teal-lighten-4 min-h-100 d-flex flex-column" style="box-shadow: 0 10px 30px -5px rgba(46, 125, 50, 0.08);">
-          <div class="d-flex align-center ga-2 mb-3 pa-2 rounded-lg bg-teal-lighten-5 border-teal">
-            <v-avatar color="teal" size="32" class="text-white mr-1 elevation-1">
-              <v-icon size="small">mdi-trophy-outline</v-icon>
-            </v-avatar>
-            <div class="text-subtitle-2 text-sm-subtitle-1 font-weight-black text-teal-darken-4">
-              Kết quả đánh giá AI Acoustic Engine
-            </div>
+        <v-card flat rounded="xl" class="pa-4 bg-white border min-h-100 d-flex flex-column">
+          <div class="d-flex align-center ga-1.5 mb-3 border-bottom pb-2">
+            <v-icon size="small" color="teal">mdi-trophy-outline</v-icon>
+            <span class="text-caption font-weight-black text-teal-darken-4 text-uppercase" style="letter-spacing: 0.5px;">
+              KẾT QUẢ ĐÁNH GIÁ PHÁT ÂM
+            </span>
           </div>
 
           <!-- Error Alert Card -->
-          <v-card v-if="errorMessage" border flat rounded="lg" class="pa-4 mb-3 bg-orange-lighten-5 text-center">
-            <v-icon color="warning" size="36" class="mb-2">mdi-alert-circle-outline</v-icon>
-            <div class="text-subtitle-2 font-weight-black text-warning-darken-3 mb-1">Không thể chấm điểm</div>
-            <div class="text-caption text-grey-darken-2 mb-3">{{ errorMessage }}</div>
+          <v-card v-if="errorMessage" border flat rounded="lg" class="pa-3 mb-3 bg-orange-lighten-5 text-center">
+            <v-icon color="warning" size="28" class="mb-1">mdi-alert-circle-outline</v-icon>
+            <div class="text-caption font-weight-black text-warning-darken-3 mb-0.5">Không thể chấm điểm</div>
+            <div class="text-caption text-grey-darken-2 mb-2" style="font-size: 11px;">{{ errorMessage }}</div>
             <v-btn
               color="warning"
               variant="outlined"
-              size="small"
+              size="x-small"
               class="font-weight-bold text-none"
               prepend-icon="mdi-refresh"
               @click="errorMessage = null"
@@ -368,30 +363,28 @@
             </v-btn>
           </v-card>
 
-          <!-- WOW Rich Empty State -->
-          <div v-else-if="!results && !isAnalyzing" class="d-flex flex-column align-center justify-center flex-grow-1 text-grey-darken-1 py-10 px-4 bg-teal-lighten-5 rounded-xl border border-dashed border-teal text-center">
-            <v-avatar color="white" size="72" class="mb-3 border elevation-2">
-              <v-icon size="40" color="primary">mdi-microphone-pulse</v-icon>
-            </v-avatar>
+          <!-- Sleek Clean Empty State (NO nested colored boxes) -->
+          <div v-else-if="!results && !isAnalyzing" class="d-flex flex-column align-center justify-center flex-grow-1 text-grey-darken-1 py-8 px-4 text-center">
+            <v-icon size="44" color="grey-lighten-1" class="mb-2">mdi-microphone-pulse</v-icon>
             
-            <div class="text-subtitle-1 font-weight-black text-teal-darken-4 mb-1">
-              Sẵn Sàng Chấm Điểm AI Acoustic
+            <div class="text-caption font-weight-black text-grey-darken-3 mb-1">
+              Chưa có kết quả chấm điểm
             </div>
             
-            <div class="text-caption font-weight-bold text-grey-darken-2 mb-4" style="max-width: 380px;">
-              Bấm thu âm giọng nói ở Bước 2 bên trái và nhấn <span class="text-success font-weight-black">"Chấm điểm phát âm"</span> để AI phân tích chi tiết phiên âm IPA, ngữ điệu F0 và từ nối!
+            <div class="text-caption text-grey-darken-1 mb-3" style="max-width: 320px; font-size: 11px;">
+              Hãy đọc câu bài tập ở Bước 2 bên trái và bấm nút <span class="text-success font-weight-bold">"Chấm Điểm Phát Âm"</span>!
             </div>
 
             <!-- Dynamic Acoustic Feature Pills -->
-            <div class="d-flex flex-wrap justify-center ga-2">
-              <v-chip size="small" color="primary" variant="flat" class="font-weight-bold">
-                <v-icon start size="x-small">mdi-bullseye-arrow</v-icon> Phân Tích IPA Real-Time
+            <div class="d-flex flex-wrap justify-center ga-1">
+              <v-chip size="x-small" color="grey-darken-2" variant="tonal" class="font-weight-medium">
+                <v-icon start size="x-small">mdi-bullseye-arrow</v-icon> Phiên Âm IPA
               </v-chip>
-              <v-chip size="small" color="teal" variant="flat" class="font-weight-bold">
-                <v-icon start size="x-small">mdi-waveform</v-icon> Biểu Đồ Ngữ Điệu F0
+              <v-chip size="x-small" color="grey-darken-2" variant="tonal" class="font-weight-medium">
+                <v-icon start size="x-small">mdi-waveform</v-icon> Ngữ Điệu F0
               </v-chip>
-              <v-chip size="small" color="amber-darken-3" variant="flat" class="font-weight-bold">
-                <v-icon start size="x-small">mdi-link-variant</v-icon> Nhận Diện Nối Âm 🔗
+              <v-chip size="x-small" color="grey-darken-2" variant="tonal" class="font-weight-medium">
+                <v-icon start size="x-small">mdi-link-variant</v-icon> Nối Âm 🔗
               </v-chip>
             </div>
           </div>
