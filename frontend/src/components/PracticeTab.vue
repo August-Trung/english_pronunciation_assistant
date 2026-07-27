@@ -31,7 +31,7 @@
               color="primary"
               density="compact"
               mandatory
-              rounded="pill"
+              rounded="lg"
               variant="outlined"
               class="w-100 w-sm-auto"
             >
@@ -302,12 +302,12 @@
               @ended="onAudioEnded"
             />
 
-            <!-- Custom Voice Pill Player -->
+            <!-- Custom Voice Player Card -->
             <v-card
               v-if="audioUrl"
               border
               flat
-              rounded="pill"
+              rounded="lg"
               class="pa-2 bg-grey-lighten-4 w-100 d-flex align-center ga-3 mb-2"
               max-width="500"
             >

@@ -114,24 +114,24 @@
               </div>
             </router-link>
 
-            <!-- Desktop Navigation Pills -->
-            <div class="d-none d-sm-flex align-center ga-1 ml-4">
-              <v-btn to="/" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-microphone" class="font-weight-bold text-none text-body-2">
+            <!-- Desktop Navigation Segmented Buttons -->
+            <div class="d-none d-sm-flex align-center ga-1 ml-4 bg-grey-lighten-4 pa-1 rounded-lg border">
+              <v-btn to="/" variant="text" rounded="lg" density="comfortable" active-color="primary" prepend-icon="mdi-microphone" class="font-weight-bold text-none text-caption text-sm-body-2">
                 Luyện nói
               </v-btn>
-              <v-btn to="/shadowing" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-waveform" class="font-weight-bold text-none text-body-2">
+              <v-btn to="/shadowing" variant="text" rounded="lg" density="comfortable" active-color="primary" prepend-icon="mdi-waveform" class="font-weight-bold text-none text-caption text-sm-body-2">
                 Luyện ngữ điệu
               </v-btn>
-              <v-btn to="/leaderboard" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-trophy-variant" class="font-weight-bold text-none text-body-2">
+              <v-btn to="/leaderboard" variant="text" rounded="lg" density="comfortable" active-color="primary" prepend-icon="mdi-trophy-variant" class="font-weight-bold text-none text-caption text-sm-body-2">
                 Đấu trường
               </v-btn>
-              <v-btn to="/stats" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-chart-bar" class="font-weight-bold text-none text-body-2">
+              <v-btn to="/stats" variant="text" rounded="lg" density="comfortable" active-color="primary" prepend-icon="mdi-chart-bar" class="font-weight-bold text-none text-caption text-sm-body-2">
                 Thống kê
               </v-btn>
-              <v-btn to="/profile" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-account-circle-outline" class="font-weight-bold text-none text-body-2">
+              <v-btn to="/profile" variant="text" rounded="lg" density="comfortable" active-color="primary" prepend-icon="mdi-account-circle-outline" class="font-weight-bold text-none text-caption text-sm-body-2">
                 Hồ sơ
               </v-btn>
-              <v-btn to="/settings" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-cog-outline" class="font-weight-bold text-none text-body-2">
+              <v-btn to="/settings" variant="text" rounded="lg" density="comfortable" active-color="primary" prepend-icon="mdi-cog-outline" class="font-weight-bold text-none text-caption text-sm-body-2">
                 Cài đặt
               </v-btn>
             </div>
