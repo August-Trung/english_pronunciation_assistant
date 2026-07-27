@@ -384,11 +384,42 @@
             </v-btn>
           </v-card>
 
-          <!-- Empty state -->
-          <div v-else-if="!results && !isAnalyzing" class="d-flex flex-column align-center justify-center flex-grow-1 text-grey-darken-1 py-8">
-            <v-icon size="48" color="grey-lighten-2" class="mb-2">mdi-comment-text-voice-outline</v-icon>
-            <div class="text-subtitle-2 font-weight-bold text-grey">Chưa có kết quả phân tích</div>
-            <div class="text-caption text-center px-6">Hãy hoàn thành câu trả lời của em ở cột bên trái và nhấn nút để bắt đầu chấm điểm nhé!</div>
+          <!-- Studio Welcome Canvas when no results yet -->
+          <div v-else-if="!results && !isAnalyzing" class="d-flex flex-column align-center justify-center flex-grow-1 py-6 text-center">
+            <v-avatar color="primary-lighten-5" size="64" class="mb-3 border border-primary border-dashed">
+              <v-icon size="36" color="primary">mdi-microphone-settings</v-icon>
+            </v-avatar>
+            <div class="text-subtitle-1 font-weight-black text-secondary mb-1">
+              STUDIO CHẤM ÂM TIẾT IPA & NGỮ ĐIỆU SẴN SÀNG!
+            </div>
+            <div class="text-caption text-grey-darken-1 mb-4" style="max-width: 440px; line-height: 1.5;">
+              Em hãy chọn chủ đề luyện nói ở cột bên trái, bấm nút Micro để thu âm và trải nghiệm công nghệ AI phân tích âm học nhé!
+            </div>
+
+            <!-- 3 Feature Highlight Cards -->
+            <v-row class="ma-0 w-100 ga-2">
+              <v-col cols="12" sm="4" class="pa-1">
+                <v-card border flat rounded="lg" class="pa-3 bg-blue-lighten-5 border-blue text-center">
+                  <v-icon color="primary" size="default" class="mb-1">mdi-chart-bell-curve-cumulative</v-icon>
+                  <div class="text-caption font-weight-black text-primary">Biểu Đồ Pitch F0</div>
+                  <div class="text-caption text-grey-darken-2" style="font-size: 10px;">Khớp ngữ điệu trầm bổng với giọng mẫu bản xứ</div>
+                </v-card>
+              </v-col>
+              <v-col cols="12" sm="4" class="pa-1">
+                <v-card border flat rounded="lg" class="pa-3 bg-teal-lighten-5 border-teal text-center">
+                  <v-icon color="teal-darken-3" size="default" class="mb-1">mdi-link-variant</v-icon>
+                  <div class="text-caption font-weight-black text-teal-darken-4">Vòm Cung Nối Âm 🔗</div>
+                  <div class="text-caption text-grey-darken-2" style="font-size: 10px;">Phát hiện cụm từ nối âm tự nhiên bản xứ</div>
+                </v-card>
+              </v-col>
+              <v-col cols="12" sm="4" class="pa-1">
+                <v-card border flat rounded="lg" class="pa-3 bg-purple-lighten-5 border-purple text-center">
+                  <v-icon color="purple" size="default" class="mb-1">mdi-lips</v-icon>
+                  <div class="text-caption font-weight-black text-purple-darken-3">Khẩu Hình 2D/3D</div>
+                  <div class="text-caption text-grey-darken-2" style="font-size: 10px;">Sơ đồ vị trí đầu lưỡi & luồng hơi chuẩn xác</div>
+                </v-card>
+              </v-col>
+            </v-row>
           </div>
 
           <!-- Loading state -->
