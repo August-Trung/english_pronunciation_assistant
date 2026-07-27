@@ -98,33 +98,47 @@
       <!-- Login Screen when not logged in -->
       <LoginPage v-else-if="!isLoggedIn" @login="handleLogin" />
 
-      <!-- Main Workspace after logging in (3-Column Educational Studio Shell) -->
+      <!-- Main Workspace after logging in -->
       <template v-else>
-        <!-- Top App Bar with app prop for layout height offset -->
-        <v-app-bar app color="white" flat border class="px-3 px-md-6">
+        <!-- Premium Modern App Bar -->
+        <v-app-bar color="white" flat border class="px-2 px-md-8 px-lg-12">
           <div class="d-flex align-center w-100">
-            <!-- Mobile Navigation Drawer Toggle Button -->
-            <v-btn
-              icon="mdi-menu"
-              variant="text"
-              class="d-lg-none mr-2"
-              @click="leftDrawer = !leftDrawer"
-            />
-
-            <!-- Logo & Brand Title -->
-            <router-link to="/" class="d-flex align-center ga-2 text-decoration-none text-grey-darken-4">
-              <img src="/logo-augusttrung.png" alt="August Trung Logo" height="34" class="d-block" />
+            <!-- Logo & Title Clickable Link to Home -->
+            <router-link to="/" class="d-flex align-center ga-1 ga-sm-2 text-decoration-none text-grey-darken-4" style="cursor: pointer;">
+              <img src="/logo-augusttrung.png" alt="August Trung Logo" height="34" class="mr-1 d-block" />
               <div>
-                <span class="text-subtitle-1 font-weight-black text-primary tracking-tight">FLUENT STUDIO</span>
-                <span class="d-none d-sm-inline text-caption font-weight-bold text-grey-darken-1 border-s ps-2 ml-2">
+                <span class="text-subtitle-1 font-weight-black text-primary tracking-tight">FLUENT</span>
+                <span class="d-none d-md-inline text-caption font-weight-bold text-grey-darken-1 border-s ps-2 ml-2">
                   Luyện Phát Âm Tiếng Anh Học Đường
                 </span>
               </div>
             </router-link>
 
+            <!-- Desktop Navigation Pills -->
+            <div class="d-none d-sm-flex align-center ga-1 ml-4">
+              <v-btn to="/" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-microphone" class="font-weight-bold text-none text-body-2">
+                Luyện nói
+              </v-btn>
+              <v-btn to="/shadowing" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-waveform" class="font-weight-bold text-none text-body-2">
+                Luyện ngữ điệu
+              </v-btn>
+              <v-btn to="/leaderboard" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-trophy-variant" class="font-weight-bold text-none text-body-2">
+                Đấu trường
+              </v-btn>
+              <v-btn to="/stats" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-chart-bar" class="font-weight-bold text-none text-body-2">
+                Thống kê
+              </v-btn>
+              <v-btn to="/profile" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-account-circle-outline" class="font-weight-bold text-none text-body-2">
+                Hồ sơ
+              </v-btn>
+              <v-btn to="/settings" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-cog-outline" class="font-weight-bold text-none text-body-2">
+                Cài đặt
+              </v-btn>
+            </div>
+
             <v-spacer />
 
-            <!-- Right Actions (Streak, AI Assistant Toggle & Profile) -->
+            <!-- Ultra Clean Right Actions (Streak + Avatar Dropdown Menu) -->
             <div class="d-flex align-center ga-2">
               <!-- Streak Badge -->
               <v-chip
@@ -132,36 +146,29 @@
                 color="warning"
                 variant="flat"
                 density="comfortable"
-                class="font-weight-black text-caption px-3"
+                class="font-weight-black text-caption text-sm-body-2 px-2 px-sm-3"
+                prepend-icon="mdi-fire"
               >
-                <template #prepend>
-                  <v-icon size="x-small" color="deep-orange" class="mr-1">mdi-fire</v-icon>
-                </template>
-                <span>{{ streak }} ngày liên tiếp</span>
+                <span class="d-none d-sm-inline">{{ streak }} ngày liên tiếp</span>
+                <span class="d-inline d-sm-none">{{ streak }}d</span>
               </v-chip>
-
-              <!-- AI Co-pilot Toggle Button -->
-              <v-btn
-                variant="tonal"
-                color="primary"
-                size="small"
-                class="font-weight-bold text-none d-none d-md-flex"
-                @click="rightDrawer = !rightDrawer"
-              >
-                <v-icon size="small" start>mdi-robot-outline</v-icon>
-                Trợ lý AI
-              </v-btn>
 
               <!-- Avatar Dropdown Menu -->
               <v-menu location="bottom end" transition="scale-transition">
                 <template #activator="{ props: menuProps }">
-                  <v-avatar v-bind="menuProps" size="36" color="primary-lighten-4" class="border cursor-pointer elevation-1">
+                  <v-avatar
+                    v-bind="menuProps"
+                    size="36"
+                    color="primary-lighten-4"
+                    class="border cursor-pointer elevation-1"
+                  >
                     <v-img v-if="userAvatar" :src="userAvatar" alt="Avatar" />
                     <v-icon v-else size="small" color="primary">mdi-account</v-icon>
                   </v-avatar>
                 </template>
 
                 <v-list class="pa-1 border rounded-lg shadow-lg" min-width="220">
+                  <!-- User Header in Menu -->
                   <v-list-item class="border-b mb-1 pb-2">
                     <template #prepend>
                       <v-avatar size="32" color="primary-lighten-4" class="mr-2">
@@ -169,29 +176,34 @@
                         <v-icon v-else size="x-small" color="primary">mdi-account</v-icon>
                       </v-avatar>
                     </template>
-                    <v-list-item-title class="font-weight-black text-caption text-sm-subtitle-2">{{ userName }}</v-list-item-title>
-                    <v-list-item-subtitle class="text-caption text-grey">{{ equippedBadgeTitle || 'Học viên Chăm chỉ' }}</v-list-item-subtitle>
+                    <v-list-item-title class="font-weight-black text-caption text-sm-subtitle-2">
+                      {{ userName }}
+                    </v-list-item-title>
+                    <v-list-item-subtitle class="text-caption text-grey">
+                      {{ equippedBadgeTitle || (userEmail ? 'Đã liên kết Cloud' : 'Học Sinh Khách') }}
+                    </v-list-item-subtitle>
                   </v-list-item>
 
-                  <v-list-item class="rounded mb-1" to="/profile">
-                    <template #prepend><v-icon size="small">mdi-account-circle-outline</v-icon></template>
+                  <!-- Menu Actions -->
+                  <v-list-item class="rounded mb-1" prepend-icon="mdi-account-circle-outline" to="/profile">
                     <v-list-item-title class="text-caption font-weight-bold">Hồ sơ cá nhân</v-list-item-title>
                   </v-list-item>
 
-                  <v-list-item class="rounded mb-1" to="/flashcards">
-                    <template #prepend><v-icon size="small" color="primary">mdi-cards-outline</v-icon></template>
-                    <v-list-item-title class="text-caption font-weight-bold">Ôn từ khó (Flashcard)</v-list-item-title>
+                  <v-list-item class="rounded mb-1" prepend-icon="mdi-cards-outline" color="error" to="/flashcards">
+                    <v-list-item-title class="text-caption font-weight-bold text-error">Ôn từ khó (Flashcard)</v-list-item-title>
                   </v-list-item>
 
-                  <v-list-item class="rounded mb-1" @click="showAchievements = true">
-                    <template #prepend><v-icon size="small" color="amber-darken-3">mdi-trophy-award</v-icon></template>
+                  <v-list-item class="rounded mb-1" prepend-icon="mdi-trophy-award" color="amber-darken-3" @click="showAchievements = true">
                     <v-list-item-title class="text-caption font-weight-bold text-amber-darken-4">Thành tựu & Danh hiệu</v-list-item-title>
+                  </v-list-item>
+
+                  <v-list-item class="rounded mb-1" prepend-icon="mdi-theme-light-dark" @click="cycleTheme">
+                    <v-list-item-title class="text-caption font-weight-bold">Đổi giao diện Sáng/Tối</v-list-item-title>
                   </v-list-item>
 
                   <v-divider class="my-1" />
 
-                  <v-list-item class="rounded" @click="confirmLogout">
-                    <template #prepend><v-icon size="small" color="error">mdi-logout</v-icon></template>
+                  <v-list-item class="rounded" prepend-icon="mdi-logout" color="error" @click="confirmLogout">
                     <v-list-item-title class="text-caption font-weight-bold text-error">Đăng xuất</v-list-item-title>
                   </v-list-item>
                 </v-list>
@@ -200,163 +212,9 @@
           </div>
         </v-app-bar>
 
-        <!-- COLUMN 1: LEFT NAVIGATION RAIL (Thanh Điều Hướng Dọc Studio) -->
-        <v-navigation-drawer
-          v-model="leftDrawer"
-          width="240"
-          class="bg-white border-e"
-          elevation="0"
-        >
-          <div class="pa-4 border-b bg-teal-lighten-5">
-            <div class="d-flex align-center ga-3">
-              <v-avatar size="44" color="white" class="border elevation-1">
-                <v-img v-if="userAvatar" :src="userAvatar" />
-                <v-icon v-else size="medium" color="primary">mdi-account</v-icon>
-              </v-avatar>
-              <div>
-                <div class="text-subtitle-2 font-weight-black text-teal-darken-4">{{ userName }}</div>
-                <div class="text-caption font-weight-bold text-teal-darken-3" style="font-size: 11px;">
-                  {{ equippedBadgeTitle || 'Học viên Chăm chỉ' }}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Studio Vertical Menu -->
-          <v-list class="pa-2 space-y-1">
-            <div class="text-caption font-weight-black text-grey-darken-1 px-3 py-1 text-uppercase" style="font-size: 10px; letter-spacing: 0.5px;">
-              Giao Diện Học Tập
-            </div>
-
-            <v-list-item
-              to="/"
-              rounded="lg"
-              active-color="primary"
-              class="font-weight-bold text-caption text-sm-body-2"
-            >
-              <template #prepend><v-icon size="small" color="primary">mdi-microphone</v-icon></template>
-              <v-list-item-title class="font-weight-bold">Luyện nói tự do</v-list-item-title>
-            </v-list-item>
-
-            <v-list-item
-              to="/shadowing"
-              rounded="lg"
-              active-color="primary"
-              class="font-weight-bold text-caption text-sm-body-2"
-            >
-              <template #prepend><v-icon size="small" color="teal">mdi-bookmark-music-outline</v-icon></template>
-              <v-list-item-title class="font-weight-bold">Luyện ngữ điệu</v-list-item-title>
-            </v-list-item>
-
-            <v-list-item
-              to="/flashcards"
-              rounded="lg"
-              active-color="primary"
-              class="font-weight-bold text-caption text-sm-body-2"
-            >
-              <template #prepend><v-icon size="small" color="purple">mdi-cards-outline</v-icon></template>
-              <v-list-item-title class="font-weight-bold">Thẻ từ vựng (3D)</v-list-item-title>
-            </v-list-item>
-
-            <v-list-item
-              to="/leaderboard"
-              rounded="lg"
-              active-color="primary"
-              class="font-weight-bold text-caption text-sm-body-2"
-            >
-              <template #prepend><v-icon size="small" color="amber-darken-3">mdi-trophy-variant-outline</v-icon></template>
-              <v-list-item-title class="font-weight-bold">Đấu trường xếp hạng</v-list-item-title>
-            </v-list-item>
-
-            <v-list-item
-              to="/stats"
-              rounded="lg"
-              active-color="primary"
-              class="font-weight-bold text-caption text-sm-body-2"
-            >
-              <template #prepend><v-icon size="small" color="indigo">mdi-chart-box-outline</v-icon></template>
-              <v-list-item-title class="font-weight-bold">Thống kê kỹ năng</v-list-item-title>
-            </v-list-item>
-
-            <v-divider class="my-2" />
-
-            <div class="text-caption font-weight-black text-grey-darken-1 px-3 py-1 text-uppercase" style="font-size: 10px; letter-spacing: 0.5px;">
-              Cá Nhân & Cài Đặt
-            </div>
-
-            <v-list-item
-              to="/profile"
-              rounded="lg"
-              active-color="primary"
-              class="font-weight-bold text-caption text-sm-body-2"
-            >
-              <template #prepend><v-icon size="small">mdi-account-circle-outline</v-icon></template>
-              <v-list-item-title class="font-weight-bold">Hồ sơ cá nhân</v-list-item-title>
-            </v-list-item>
-
-            <v-list-item
-              to="/settings"
-              rounded="lg"
-              active-color="primary"
-              class="font-weight-bold text-caption text-sm-body-2"
-            >
-              <template #prepend><v-icon size="small">mdi-cog-outline</v-icon></template>
-              <v-list-item-title class="font-weight-bold">Cài đặt hệ thống</v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </v-navigation-drawer>
-
-        <!-- COLUMN 3: RIGHT AI CO-PILOT PANEL (Trợ Lý AI Đồng Hành REAL DATA) -->
-        <v-navigation-drawer
-          v-model="rightDrawer"
-          location="right"
-          width="300"
-          class="bg-white border-s"
-          elevation="0"
-        >
-          <div class="pa-4 border-b bg-indigo-lighten-5 d-flex align-center justify-space-between">
-            <div class="d-flex align-center ga-2 text-indigo-darken-4 font-weight-black">
-              <v-icon color="indigo" size="medium">mdi-robot-excited-outline</v-icon>
-              <span>Trợ Lý AI Đồng Hành</span>
-            </div>
-            <v-chip size="x-small" color="indigo" variant="flat" class="font-weight-black">Online</v-chip>
-          </div>
-
-          <div class="pa-3">
-            <!-- Dynamic Real User Progress Stats Card -->
-            <v-card border flat rounded="lg" class="pa-3 mb-3 bg-teal-lighten-5 border-teal">
-              <div class="text-caption font-weight-black text-teal-darken-4 mb-2 d-flex align-center ga-1">
-                <v-icon size="x-small" color="teal">mdi-chart-line</v-icon>
-                <span>Thống Kê Thực Tế Cá Nhân:</span>
-              </div>
-              <div class="d-flex flex-column ga-1 text-caption text-grey-darken-3 font-weight-bold">
-                <div class="d-flex justify-space-between align-center">
-                  <span>Chuỗi ngày học (Streak):</span>
-                  <span class="text-deep-orange font-weight-black">{{ streak || 0 }} ngày</span>
-                </div>
-                <div class="d-flex justify-space-between align-center">
-                  <span>Tổng bài đã luyện tập:</span>
-                  <span class="text-primary font-weight-black">{{ history?.length || 0 }} bài</span>
-                </div>
-              </div>
-            </v-card>
-
-            <!-- Dynamic AI Learning Note -->
-            <v-card border flat rounded="lg" class="pa-3 mb-3 bg-amber-lighten-5 border-amber">
-              <div class="text-caption font-weight-black text-amber-darken-4 mb-1 d-flex align-center ga-1">
-                <v-icon size="x-small" color="amber-darken-3">mdi-lightbulb-on-outline</v-icon>
-                <span>Mẹo Sư Phạm AI:</span>
-              </div>
-              <div class="text-caption text-amber-darken-4 font-weight-bold">
-                {{ history?.length ? 'Hãy duy trì bài tập luyện nói hàng ngày để đạt phản xạ âm chuẩn bản xứ!' : 'Bạn chưa có bài luyện tập nào. Hãy thực hiện bài đọc hoặc nói đầu tiên để AI phân tích!' }}
-              </div>
-            </v-card>
-          </div>
-        </v-navigation-drawer>
-
-        <!-- COLUMN 2: CENTER MAIN STAGE (Không Gian Học Trung Tâm) -->
-        <v-main class="bg-background">
-          <v-container fluid class="px-3 px-sm-6 max-w-7xl mx-auto py-4">
+        <v-main class="pt-16 pb-16 pb-sm-4">
+          <v-container fluid class="px-2 px-sm-4 px-md-8 px-lg-12 py-3">
+            <!-- Dynamic Router View -->
             <router-view v-slot="{ Component }">
               <component
                 :is="Component"
@@ -513,10 +371,6 @@ const equippedBadgeTitle = ref('')
 const dailyGoal = ref(5)
 const streak = ref(0)
 const history = ref([])
-
-// Navigation Drawer states for 3-Column Studio Layout
-const leftDrawer = ref(true)
-const rightDrawer = ref(true)
 
 // Dialog states
 const showProfile = ref(false)
