@@ -238,61 +238,57 @@
             </div>
           </div>
 
-          <!-- Console Controls -->
-          <div class="d-flex flex-column align-center justify-center py-1 w-100">
-            <v-row class="ma-0 w-100 align-center justify-center mb-1" style="max-width: 320px;">
-              <v-col cols="3" class="pa-0 d-flex justify-end"></v-col>
-              <v-col cols="6" class="pa-0 d-flex justify-center">
-                <div class="d-flex align-center justify-center position-relative" style="width: 76px; height: 76px;">
-                  <v-progress-circular
-                    v-if="isRecording"
-                    indeterminate
-                    color="error"
-                    size="76"
-                    width="3"
-                    class="position-absolute"
-                  />
-                  <v-btn
-                    :color="isRecording ? 'grey-darken-3' : 'error'"
-                    size="large"
-                    icon
-                    class="elevation-2"
-                    style="width: 60px; height: 60px; z-index: 2;"
-                    :disabled="(!isSecure && !isLocalhost) || !topic.trim() || isAnalyzing"
-                    @click="isRecording ? stopRecording() : startRecording()"
-                  >
-                    <v-icon size="medium">{{ isRecording ? 'mdi-stop' : 'mdi-microphone' }}</v-icon>
-                  </v-btn>
-                </div>
-              </v-col>
+          <!-- Console Controls: AI Voice Studio -->
+          <div class="d-flex flex-column align-center justify-center py-4 bg-slate-50 border rounded-lg mb-3 position-relative overflow-hidden">
+            <!-- Glowing Animated Visualizer Ring -->
+            <div class="d-flex align-center justify-center position-relative mb-2" style="width: 84px; height: 84px;">
+              <div
+                v-if="isRecording"
+                class="position-absolute rounded-circle voice-orb-active"
+                style="width: 84px; height: 84px; border: 2px solid #F43F5E;"
+              ></div>
+              <v-btn
+                :color="isRecording ? 'error' : 'primary'"
+                size="x-large"
+                icon
+                class="elevation-3 edtech-card-hover"
+                style="width: 68px; height: 68px; z-index: 2;"
+                :disabled="(!isSecure && !isLocalhost) || !topic.trim() || isAnalyzing"
+                @click="isRecording ? stopRecording() : startRecording()"
+              >
+                <v-icon size="30" color="white">{{ isRecording ? 'mdi-stop' : 'mdi-microphone' }}</v-icon>
+              </v-btn>
+            </div>
 
-              <v-col cols="3" class="pa-0 d-flex justify-start">
-                <v-btn
-                  v-if="!isRecording && audioUrl"
-                  icon="mdi-delete-outline"
-                  color="error"
-                  variant="outlined"
-                  density="comfortable"
-                  title="Xóa bản ghi hiện tại"
-                  :disabled="isAnalyzing"
-                  @click="clearAudio"
-                />
-              </v-col>
-            </v-row>
+            <!-- Animated Sound Wave Visualizer Bars -->
+            <div v-if="isRecording" class="d-flex align-center justify-center ga-1 my-2" style="height: 32px;">
+              <div class="bg-rose rounded-pill wave-bar-1" style="width: 4px;"></div>
+              <div class="bg-rose rounded-pill wave-bar-2" style="width: 4px;"></div>
+              <div class="bg-rose rounded-pill wave-bar-3" style="width: 4px;"></div>
+              <div class="bg-rose rounded-pill wave-bar-4" style="width: 4px;"></div>
+              <div class="bg-rose rounded-pill wave-bar-5" style="width: 4px;"></div>
+            </div>
 
-            <div class="text-center mb-2">
+            <!-- Recording Timer & Notice -->
+            <div class="text-center">
               <template v-if="isRecording">
-                <div class="d-flex align-center justify-center text-error font-weight-black text-caption animate-pulse">
-                  <v-icon color="error" class="mr-1 animate-pulse" size="x-small">mdi-record-rec</v-icon>
-                  Đang ghi âm... ({{ formatTime(recordingDuration) }})
+                <div class="d-flex align-center justify-center text-error font-weight-black text-caption">
+                  <v-icon color="error" class="mr-1" size="x-small">mdi-record-circle-outline</v-icon>
+                  Đang thu âm Studio... ({{ formatTime(recordingDuration) }})
                 </div>
               </template>
               <template v-else-if="!topic.trim()">
                 <span class="text-caption font-weight-bold text-grey-darken-1" style="font-size: 11px;">
-                  Hãy chọn hoặc nhập một câu chủ đề trước
+                  Vui lòng chọn hoặc nhập câu luyện đọc ở Bước 1
+                </span>
+              </template>
+              <template v-else>
+                <span class="text-caption font-weight-bold text-primary" style="font-size: 11px;">
+                  Nhấn nút Micro ở trên để bắt đầu phát âm
                 </span>
               </template>
             </div>
+          </div>
 
             <audio
               ref="audioPlayer"
@@ -353,9 +349,8 @@
             >
               Chấm điểm phát âm
             </v-btn>
-          </div>
-        </v-card>
-      </v-col>
+          </v-card>
+        </v-col>
 
       <!-- Right column: Analysis Results -->
       <v-col cols="12" md="6" class="pa-1">
