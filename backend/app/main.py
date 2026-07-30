@@ -1295,17 +1295,49 @@ def save_weak_words_from_analysis(user_id_val: int, words_ipa: list):
         print(f"Error saving weak words from analysis: {e}")
 
 
+TOPIC_ANCHORS = [
+    "Animals & Pets", "Food & Cooking", "Weather & Seasons", "Space & Astronomy", "Ocean & Sea Life",
+    "Sports & Exercise", "Hobbies & Crafts", "Travel & Vacation", "Music & Dancing", "School & Education",
+    "Nature & Forests", "Technology & Gadgets", "Daily Routine", "Superheroes & Comics", "Movies & Cartoons",
+    "Family & Friends", "Clothing & Fashion", "Colors & Art", "Time & Schedule", "Shopping & Market",
+    "Health & Fitness", "Jobs & Professions", "Transportation & Vehicles", "Buildings & Cities", "Parties & Holidays",
+    "Gardening & Plants", "Inventions & Science", "History & Culture", "Magical Worlds", "Museums & History",
+    "Camping & Outdoor", "Photography & Art", "Instruments & Beats", "Reading & Literature", "Environment & Recycling"
+]
+
+
 @app.get("/api/generate-sentence")
-def generate_sentence(level: str = "easy", exclude: str = ""):
-    """Dynamically generate unique practice sentence via Groq AI or fallback AI templates"""
+@app.post("/api/generate-sentence")
+def generate_sentence(level: str = "easy", exclude: str = "", exclude_history: str = ""):
+    """Dynamically generate unique practice sentence via Groq AI with Topic Anchors and History Exclusion"""
     import random
     import json
     import requests
     
+    random_topic = random.choice(TOPIC_ANCHORS)
+    
+    excluded_set = set()
+    if exclude:
+        excluded_set.add(exclude.strip().lower())
+    if exclude_history:
+        try:
+            parsed_list = json.loads(exclude_history)
+            if isinstance(parsed_list, list):
+                for item in parsed_list:
+                    if isinstance(item, str) and item.strip():
+                        excluded_set.add(item.strip().lower())
+        except:
+            pass
+    
     if GROQ_API_KEY:
         try:
-            exclude_prompt = f" DO NOT generate this exact sentence: '{exclude}'." if exclude else ""
-            prompt = f"Generate ONE natural English sentence for Shadowing pronunciation practice at '{level}' level (easy: short 4-6 words, medium: 8-12 words, hard: 14-20 words).{exclude_prompt} Return ONLY JSON in this exact format without extra text: {{\"text\": \"sentence\", \"ipa\": \"IPA transcription\", \"meaning\": \"Vietnamese translation\"}}"
+            exclude_str = ""
+            if excluded_set:
+                excluded_items = list(excluded_set)[:25]
+                exclude_str = f" MUST NOT BE any of these previously generated sentences: {json.dumps(excluded_items)}."
+            
+            prompt = f"Generate ONE natural, creative English sentence for Shadowing pronunciation practice at '{level}' level (easy: short 4-6 words, medium: 8-12 words, hard: 14-20 words) focused on the topic '{random_topic}'.{exclude_str} Return ONLY JSON in this exact format without extra text: {{\"text\": \"sentence\", \"ipa\": \"IPA transcription\", \"meaning\": \"Vietnamese translation\"}}"
+            
             response = requests.post(
                 "https://api.groq.com/openai/v1/chat/completions",
                 headers={
@@ -1315,7 +1347,8 @@ def generate_sentence(level: str = "easy", exclude: str = ""):
                 json={
                     "model": "llama-3.3-70b-versatile",
                     "messages": [{"role": "user", "content": prompt}],
-                    "temperature": 0.9,
+                    "temperature": 1.15,
+                    "top_p": 0.95,
                     "response_format": {"type": "json_object"}
                 },
                 timeout=6
@@ -1324,7 +1357,9 @@ def generate_sentence(level: str = "easy", exclude: str = ""):
                 data = response.json()["choices"][0]["message"]["content"]
                 parsed = json.loads(data)
                 if "text" in parsed and "ipa" in parsed and "meaning" in parsed:
-                    return parsed
+                    gen_text = parsed["text"].strip()
+                    if gen_text.lower() not in excluded_set:
+                        return parsed
         except Exception as e:
             print(f"Groq sentence generation error: {e}")
 
@@ -1335,7 +1370,11 @@ def generate_sentence(level: str = "easy", exclude: str = ""):
             {"text": "Where is the nearest coffee shop?", "ipa": "weər ɪz ðə ˈnɪərɪst ˈkɒfi ʃɒp", "meaning": "Quán cà phê gần nhất ở đâu?"},
             {"text": "What time does the train leave?", "ipa": "wɒt taɪm dʌz ðə treɪn liːv", "meaning": "Mấy giờ chuyến tàu khởi hành?"},
             {"text": "I really love learning English!", "ipa": "aɪ ˈrɪəli lʌv ˈlɜːnɪŋ ˈɪŋɡlɪʃ", "meaning": "Tôi rất thích học tiếng Anh!"},
-            {"text": "Thank you for your warm welcome!", "ipa": "θæŋk juː fɔː jɔː wɔːm ˈwɛlkəm", "meaning": "Cảm ơn sự đón tiếp nồng hậu của bạn!"}
+            {"text": "Thank you for your warm welcome!", "ipa": "θæŋk juː fɔː jɔː wɔːm ˈwɛlkəm", "meaning": "Cảm ơn sự đón tiếp nồng hậu của bạn!"},
+            {"text": "The weather is very beautiful today.", "ipa": "ðə ˈwɛðər ɪz ˈvɛri ˈbjuːtəfʊl təˈdeɪ", "meaning": "Thời tiết hôm nay rất đẹp."},
+            {"text": "My dog loves playing in the park.", "ipa": "maɪ dɒɡ lʌvz ˈpleɪɪŋ ɪn ðə pɑːk", "meaning": "Chú chó của tôi thích chơi trong công viên."},
+            {"text": "She brews a fresh cup of tea.", "ipa": "ʃiː bruːz ə frɛʃ kʌp ɒv tiː", "meaning": "Cô ấy pha một tách trà tươi."},
+            {"text": "Listen to the birds singing sweetly.", "ipa": "ˈlɪsn tuː ðə bɜːdz ˈsɪŋɪŋ ˈswiːtli", "meaning": "Hãy nghe tiếng chim hót ngọt ngào."}
         ],
         "medium": [
             {"text": "Practice makes progress, not perfection.", "ipa": "ˈpræktɪs meɪks ˈprəʊɡrɛs nɒt pəˈfɛkʃən", "meaning": "Luyện tập tạo nên sự tiến bộ, không phải sự hoàn hảo"},
@@ -1350,7 +1389,10 @@ def generate_sentence(level: str = "easy", exclude: str = ""):
         ]
     }
     pool = sentence_pools.get(level, sentence_pools["easy"])
-    return random.choice(pool)
+    filtered_pool = [s for s in pool if s["text"].strip().lower() not in excluded_set]
+    if not filtered_pool:
+        filtered_pool = pool
+    return random.choice(filtered_pool)
 
 # SQLite Database for persistent weak words storage
 import sqlite3

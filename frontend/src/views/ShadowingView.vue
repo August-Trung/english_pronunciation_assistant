@@ -45,8 +45,14 @@
         <div class="text-subtitle-1 font-weight-black text-grey-darken-4 mb-1">
           "{{ currentSentence.text }}"
         </div>
-        <div class="text-caption text-grey-darken-3 font-italic mb-3" style="font-size: 11px;">
-          IPA: /{{ currentSentence.ipa }}/ • Nghĩa: {{ currentSentence.meaning }}
+        <div class="d-flex flex-column align-center ga-1 mb-3">
+          <span class="text-subtitle-2 text-teal-darken-3 font-weight-bold font-italic">
+            /{{ currentSentence.ipa }}/
+          </span>
+          <span class="text-caption text-grey-darken-2 d-flex align-center ga-1">
+            <v-icon color="primary" size="x-small">mdi-translate</v-icon>
+            <span>{{ currentSentence.meaning }}</span>
+          </span>
         </div>
 
         <!-- Audio Accent Setting -->
@@ -714,6 +720,8 @@ const currentSentence = computed(() => {
   return sampleSentences[selectedLevel.value][currentIndex.value] || sampleSentences.easy[0]
 })
 
+const sessionSentenceHistory = ref(new Set())
+
 const generateAISentence = async () => {
   isGeneratingAI.value = true
   result.value = null
@@ -721,32 +729,44 @@ const generateAISentence = async () => {
   audioBlob.value = null
   
   const currentText = currentSentence.value?.text || ''
+  if (currentText) {
+    sessionSentenceHistory.value.add(currentText.trim().toLowerCase())
+  }
   
-  try {
-    const url = `${props.backendUrl}/api/generate-sentence?level=${selectedLevel.value}&exclude=${encodeURIComponent(currentText)}`
-    const res = await fetch(url)
-    if (res.ok) {
-      const data = await res.json()
-      if (data && data.text && data.text !== currentText) {
-        dynamicSentence.value = data
-        return
+  const historyArray = Array.from(sessionSentenceHistory.value)
+  
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const url = `${props.backendUrl}/api/generate-sentence?level=${selectedLevel.value}&exclude=${encodeURIComponent(currentText)}&exclude_history=${encodeURIComponent(JSON.stringify(historyArray))}`
+      const res = await fetch(url)
+      if (res.ok) {
+        const data = await res.json()
+        if (data && data.text) {
+          const newTextLower = data.text.trim().toLowerCase()
+          if (!sessionSentenceHistory.value.has(newTextLower)) {
+            sessionSentenceHistory.value.add(newTextLower)
+            dynamicSentence.value = data
+            isGeneratingAI.value = false
+            return
+          }
+        }
       }
+    } catch (err) {
+      console.warn('Groq AI sentence fetch failed, falling back to local pool:', err)
     }
-  } catch (err) {
-    console.warn('Groq AI sentence fetch failed, falling back to local pool:', err)
-  } finally {
-    isGeneratingAI.value = false
   }
 
   // Fallback to pool with de-duplication loop
   const pool = aiSentencePool[selectedLevel.value] || aiSentencePool.easy
   let randomPick = pool[Math.floor(Math.random() * pool.length)]
   let attempts = 0
-  while (randomPick.text === currentText && pool.length > 1 && attempts < 10) {
+  while (sessionSentenceHistory.value.has(randomPick.text.trim().toLowerCase()) && pool.length > 1 && attempts < 10) {
     randomPick = pool[Math.floor(Math.random() * pool.length)]
     attempts++
   }
+  sessionSentenceHistory.value.add(randomPick.text.trim().toLowerCase())
   dynamicSentence.value = randomPick
+  isGeneratingAI.value = false
 }
 
 const nextSentence = () => {
