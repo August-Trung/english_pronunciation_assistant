@@ -114,7 +114,7 @@
               </div>
             </router-link>
 
-            <!-- Desktop Navigation Pills -->
+            <!-- Desktop Navigation Pills (Dynamic by Role) -->
             <div class="d-none d-sm-flex align-center ga-1 ml-4">
               <v-btn to="/" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-microphone" class="font-weight-bold text-none text-body-2">
                 Speaking
@@ -122,20 +122,45 @@
               <v-btn to="/shadowing" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-waveform" class="font-weight-bold text-none text-body-2">
                 Shadowing
               </v-btn>
-              <v-btn to="/teacher" variant="flat" color="indigo-lighten-5" rounded="pill" density="comfortable" active-color="indigo-darken-3" prepend-icon="mdi-school" class="font-weight-bold text-none text-body-2 text-indigo-darken-3">
+
+              <!-- Homework Pill for Students -->
+              <v-btn to="/homework" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-clipboard-text-outline" class="font-weight-bold text-none text-body-2">
+                Homework
+              </v-btn>
+
+              <!-- Teacher Hub Pill (Visible to Teacher / Admin) -->
+              <v-btn
+                v-if="['teacher', 'admin', 'super_admin'].includes(userRole)"
+                to="/teacher"
+                variant="text"
+                color="indigo"
+                rounded="pill"
+                density="comfortable"
+                active-color="indigo-darken-3"
+                prepend-icon="mdi-school"
+                class="font-weight-bold text-none text-body-2"
+              >
                 Teacher Hub
               </v-btn>
-              <v-btn to="/leaderboard" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-trophy-outline" class="font-weight-bold text-none text-body-2">
-                Leaderboard
+
+              <!-- Admin Console Pill (Visible to Admin / Super Admin) -->
+              <v-btn
+                v-if="['admin', 'super_admin'].includes(userRole)"
+                to="/admin"
+                variant="text"
+                color="grey-darken-4"
+                rounded="pill"
+                density="comfortable"
+                active-color="black"
+                prepend-icon="mdi-shield-crown"
+                class="font-weight-bold text-none text-body-2"
+              >
+                Admin Console
               </v-btn>
-              <v-btn to="/stats" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-chart-bar" class="font-weight-bold text-none text-body-2">
-                Analytics
-              </v-btn>
-              <v-btn to="/profile" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-account-circle-outline" class="font-weight-bold text-none text-body-2">
-                Profile
-              </v-btn>
-              <v-btn to="/settings" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-cog-outline" class="font-weight-bold text-none text-body-2">
-                Settings
+
+              <!-- Parent Portal Pill -->
+              <v-btn to="/parent" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-human-female-boy" class="font-weight-bold text-none text-body-2">
+                Phụ Huynh
               </v-btn>
             </div>
 
@@ -183,9 +208,20 @@
                       {{ userName }}
                     </v-list-item-title>
                     <v-list-item-subtitle class="text-caption text-grey">
-                      {{ equippedBadgeTitle || (userEmail ? 'Cloud Linked Account' : 'Guest Learner') }}
+                      Role: {{ userRole.toUpperCase() }}
                     </v-list-item-subtitle>
                   </v-list-item>
+
+                  <!-- Role Switch & Login Actions -->
+                  <v-list-item v-if="userRole === 'student'" class="rounded mb-1" prepend-icon="mdi-school" @click="switchToTeacherRole">
+                    <v-list-item-title class="text-caption font-weight-bold text-indigo">Chuyển Sang Giảng Viên (/teacher)</v-list-item-title>
+                  </v-list-item>
+
+                  <v-list-item v-if="!['admin', 'super_admin'].includes(userRole)" class="rounded mb-1" prepend-icon="mdi-shield-lock" @click="showAdminLoginModal = true">
+                    <v-list-item-title class="text-caption font-weight-bold text-grey-darken-3">Đăng Nhập Admin (/admin)</v-list-item-title>
+                  </v-list-item>
+
+                  <v-divider class="my-1" />
 
                   <!-- Menu Actions -->
                   <v-list-item class="rounded mb-1" prepend-icon="mdi-account-circle-outline" to="/profile">
@@ -332,6 +368,52 @@
             </div>
           </v-card>
         </v-dialog>
+
+        <!-- Admin Secure Login Modal -->
+        <v-dialog v-model="showAdminLoginModal" max-width="420">
+          <v-card border flat class="pa-4 bg-white" rounded="lg">
+            <div class="d-flex align-center ga-3 mb-3">
+              <v-avatar color="grey-darken-4" size="40" class="text-white">
+                <v-icon size="default">mdi-shield-lock-outline</v-icon>
+              </v-avatar>
+              <div>
+                <div class="text-subtitle-1 font-weight-black text-secondary">Đăng Nhập Cổng Quản Trị (/admin)</div>
+                <div class="text-caption text-grey-darken-1">Chỉ dành cho tài khoản đã được cấp bởi Super Admin</div>
+              </div>
+            </div>
+
+            <v-text-field
+              v-model="adminEmailInput"
+              label="Email Admin:"
+              placeholder="superadmin@fluent.edu.vn"
+              variant="outlined"
+              density="comfortable"
+              class="mb-2"
+              prepend-inner-icon="mdi-email-outline"
+            />
+
+            <v-text-field
+              v-model="adminPassInput"
+              label="Mật khẩu Admin:"
+              type="password"
+              placeholder="••••••••"
+              variant="outlined"
+              density="comfortable"
+              class="mb-3"
+              prepend-inner-icon="mdi-lock-outline"
+              @keyup.enter="handleAdminLogin"
+            />
+
+            <div class="d-flex align-center justify-end ga-2">
+              <v-btn variant="outlined" color="grey" class="font-weight-bold text-none" @click="showAdminLoginModal = false">
+                Hủy
+              </v-btn>
+              <v-btn color="grey-darken-4" variant="flat" class="font-weight-bold text-none" :loading="isAdminLoggingIn" @click="handleAdminLogin">
+                Đăng Nhập Admin
+              </v-btn>
+            </div>
+          </v-card>
+        </v-dialog>
       </template>
     </template>
   </v-app>
@@ -370,6 +452,7 @@ const currentUserId = ref(null)
 const userEmail = ref('')
 const userName = ref('')
 const userAvatar = ref('')
+const userRole = ref(localStorage.getItem('user_role') || 'student')
 const equippedBadgeTitle = ref('')
 const dailyGoal = ref(5)
 const streak = ref(0)
@@ -380,6 +463,47 @@ const showProfile = ref(false)
 const showAchievements = ref(false)
 const showWeakWords = ref(false)
 const showLogoutDialog = ref(false)
+const showAdminLoginModal = ref(false)
+
+const adminEmailInput = ref('')
+const adminPassInput = ref('')
+const isAdminLoggingIn = ref(false)
+
+const switchToTeacherRole = () => {
+  userRole.value = 'teacher'
+  localStorage.setItem('user_role', 'teacher')
+  alert('Đã chuyển sang vai trò Giảng viên (Teacher Mode). Nút Teacher Hub đã xuất hiện trên thanh điều hướng!')
+}
+
+const handleAdminLogin = async () => {
+  if (!adminEmailInput.value.trim() || !adminPassInput.value.trim()) return
+  isAdminLoggingIn.value = true
+  try {
+    const res = await fetch(`${backendUrl.value}/api/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: adminEmailInput.value.trim(),
+        password: adminPassInput.value.trim()
+      })
+    })
+    if (res.ok) {
+      const data = await res.json()
+      userRole.value = data.user.role
+      localStorage.setItem('user_role', data.user.role)
+      showAdminLoginModal.value = false
+      alert(`Thành công! Đã đăng nhập với tư cách ${data.user.role.toUpperCase()}`)
+      window.location.href = '/admin'
+    } else {
+      const err = await res.json()
+      alert(err.detail || 'Sai tài khoản hoặc mật khẩu Admin.')
+    }
+  } catch (e) {
+    alert('Lỗi đăng nhập Admin: ' + e.message)
+  } finally {
+    isAdminLoggingIn.value = false
+  }
+}
 
 // Dev configurations
 const backendUrl = ref('https://agrse-fluent-english-backend.hf.space')
