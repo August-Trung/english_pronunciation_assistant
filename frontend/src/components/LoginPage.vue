@@ -101,11 +101,16 @@ const submitGuestLogin = () => {
 }
 
 const handleGoogleSignIn = () => {
-  const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '917273250250-9tldfcfues1nhdphcobs4p56i0ge8tvt.apps.googleusercontent.com'
+  const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
   const REDIRECT_URI = window.location.origin
   const SCOPE = 'openid email profile'
   const RESPONSE_TYPE = 'token'
   
+  if (!CLIENT_ID) {
+    console.error('Missing VITE_GOOGLE_CLIENT_ID environment variable.')
+    return
+  }
+
   const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=${RESPONSE_TYPE}&scope=${encodeURIComponent(SCOPE)}&prompt=select_account`
   
   window.location.href = authUrl
