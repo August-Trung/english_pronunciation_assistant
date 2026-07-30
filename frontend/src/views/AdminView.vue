@@ -315,7 +315,7 @@ const props = defineProps({
 })
 
 const activeUserRole = ref(localStorage.getItem('user_role') || 'student')
-const loginEmail = ref('superadmin@fluent.edu.vn')
+const loginEmail = ref('')
 const loginPassword = ref('')
 const isLoggingIn = ref(false)
 const loginError = ref('')

@@ -57,23 +57,11 @@
           variant="flat"
           block
           size="large"
-          class="font-weight-black text-none mb-3"
+          class="font-weight-black text-none"
           :loading="isLoggingIn"
           @click="handleTeacherSignIn"
         >
           Sign In to Teacher Hub
-        </v-btn>
-
-        <v-btn
-          color="indigo"
-          variant="tonal"
-          block
-          size="small"
-          class="font-weight-bold text-none"
-          prepend-icon="mdi-account-key"
-          @click="loginEmail = 'teacher@fluent.edu.vn'; loginPassword = 'teacher123'; handleTeacherSignIn();"
-        >
-          Quick Demo Educator Login
         </v-btn>
       </v-card>
     </div>
@@ -552,8 +540,8 @@ const props = defineProps({
 })
 
 const activeUserRole = ref(localStorage.getItem('user_role') || 'student')
-const loginEmail = ref('teacher@fluent.edu.vn')
-const loginPassword = ref('teacher123')
+const loginEmail = ref('')
+const loginPassword = ref('')
 const isLoggingIn = ref(false)
 const loginError = ref('')
 
