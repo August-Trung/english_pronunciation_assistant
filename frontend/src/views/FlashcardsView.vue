@@ -1,133 +1,204 @@
 <template>
-  <div class="space-y-4">
-    <!-- HERO FLASHCARD HEADER -->
-    <v-card flat border rounded="2xl" class="pa-4 pa-md-5 bg-white border-slate-200/80 shadow-sm">
-      <div class="d-flex align-center justify-space-between flex-wrap ga-3">
-        <div class="d-flex align-center ga-2.5">
-          <v-avatar color="amber-lighten-5" size="40" class="border border-amber-200">
-            <v-icon color="amber-darken-3" size="22">mdi-cards-outline</v-icon>
+  <v-container fluid class="pa-0 max-width-700">
+    <!-- Header Banner -->
+    <v-card border flat class="pa-3 pa-sm-4 mb-4 text-white rounded-lg" style="background: linear-gradient(135deg, #FF6F00 0%, #E65100 100%);">
+      <div class="d-flex align-center justify-space-between flex-wrap ga-2">
+        <div class="d-flex align-center ga-2 ga-sm-3">
+          <v-avatar color="amber-lighten-4" size="40" class="flex-shrink-0">
+            <v-icon color="deep-orange-darken-4" size="default">mdi-cards-outline</v-icon>
           </v-avatar>
           <div>
-            <div class="text-subtitle-1 font-weight-black text-slate-800">Bộ Thẻ Bài Từ Vựng 3D Studio</div>
-            <div class="text-caption font-weight-medium text-slate-500" style="font-size: 11px;">Lật thẻ và ôn tập phát âm từ vựng</div>
+            <div class="text-subtitle-1 text-sm-h6 font-weight-black tracking-tight leading-tight">ÔN TỪ KHÓ (FLASHCARD SRS)</div>
+            <div class="text-caption text-amber-lighten-4">Luyện tập các từ phát âm thiếu hoặc sai để ghi nhớ lâu dài</div>
           </div>
         </div>
 
-        <div class="d-flex align-center ga-2">
-          <v-chip color="amber-darken-3" size="small" variant="flat" class="font-weight-black">
-            <v-icon start size="x-small">mdi-cards-sharp</v-icon>
-            {{ currentIndex + 1 }}/{{ cards.length }} Thẻ
-          </v-chip>
-        </div>
+        <v-chip label variant="tonal" color="amber-lighten-4" size="small">
+          {{ weakWords.length }} từ cần ôn
+        </v-chip>
       </div>
     </v-card>
 
-    <!-- 3D FLIP CARD STUDIO STAGE -->
-    <v-card flat border rounded="2xl" class="pa-6 text-center bg-white border-slate-200/80 shadow-sm relative overflow-hidden">
-      <div class="max-w-sm mx-auto">
-        <!-- 3D Card Container -->
-        <div
-          class="relative w-100 cursor-pointer perspective-1000 my-4"
-          style="min-height: 280px;"
-          @click="isFlipped = !isFlipped"
-        >
-          <!-- CARD FRONT -->
-          <div
-            v-if="!isFlipped"
-            class="pa-6 bg-slate-50 rounded-2xl border-2 border-sky-200 shadow-md d-flex flex-column align-center justify-center h-100 transition-all hover:scale-102"
-          >
-            <v-chip size="x-small" color="sky-darken-2" variant="tonal" class="font-weight-black mb-3">
-              {{ currentCard.type || 'Noun' }}
-            </v-chip>
-            <div class="text-h4 font-weight-black text-slate-800 mb-2">
-              {{ currentCard.word }}
-            </div>
-            <div class="text-subtitle-2 font-weight-bold text-sky-darken-3 font-mono mb-4">
-              {{ currentCard.ipa }}
-            </div>
-            <div class="text-caption text-slate-400 font-weight-bold d-flex align-center ga-1" style="font-size: 10.5px;">
-              <v-icon size="x-small" color="slate-400">mdi-gesture-tap</v-icon>
-              Chạm để lật mặt sau
-            </div>
-          </div>
+    <!-- Empty State -->
+    <div v-if="weakWords.length === 0" class="text-center py-8 border rounded-lg bg-white pa-4">
+      <v-avatar color="green-lighten-5" size="64" class="mb-3">
+        <v-icon size="large" color="success">mdi-checkbox-marked-circle-outline</v-icon>
+      </v-avatar>
+      <div class="text-subtitle-1 font-weight-black text-grey-darken-4 mb-1">Tuyệt vời! Em chưa có từ phát âm sai nào!</div>
+      <div class="text-caption text-grey mb-4">Hãy tiếp tục duy trì phong độ qua các bài luyện đọc và phát âm nhé.</div>
+      <v-btn to="/" color="primary" variant="flat" class="text-none">
+        Đến trang Luyện nói ngay
+      </v-btn>
+    </div>
 
-          <!-- CARD BACK -->
-          <div
-            v-else
-            class="pa-6 bg-sky-lighten-5 rounded-2xl border-2 border-sky-300 shadow-md d-flex flex-column align-center justify-center h-100 transition-all"
-          >
-            <div class="text-caption font-weight-black text-sky-darken-4 uppercase tracking-wider mb-1">Nghĩa Tiếng Việt:</div>
-            <div class="text-h5 font-weight-black text-sky-darken-4 mb-3">
-              {{ currentCard.meaning }}
-            </div>
-            <div class="text-caption font-weight-medium text-slate-700 pa-2 bg-white rounded-lg border border-sky-100 mb-4" style="font-size: 11.5px;">
-              "{{ currentCard.example }}"
-            </div>
-            <v-btn size="small" color="sky-darken-2" variant="flat" class="font-weight-black text-none rounded-lg" prepend-icon="mdi-volume-high" @click.stop="speakWord(currentCard.word)">
-              Nghe phát âm
-            </v-btn>
+    <!-- Active Flashcard Studio -->
+    <div v-else>
+      <div class="d-flex align-center justify-space-between mb-2">
+        <span class="text-caption text-grey-darken-2">Thẻ {{ currentCardIndex + 1 }} / {{ weakWords.length }}</span>
+        <v-btn size="x-small" variant="text" color="grey-darken-2" prepend-icon="mdi-refresh" @click="resetIndex">
+          Bắt đầu lại
+        </v-btn>
+      </div>
+
+      <!-- Flashcard Item (Flip Effect) -->
+      <div
+        class="flashcard-box pa-6 rounded-lg text-center cursor-pointer border mb-4 position-relative"
+        :class="isFlipped ? 'bg-amber-lighten-5 border-amber' : 'bg-white'"
+        @click="isFlipped = !isFlipped"
+      >
+        <div class="text-caption text-grey-darken-1 mb-2">
+          {{ isFlipped ? 'MẶT SAU (CHI TIẾT & PHÁT ÂM)' : 'MẶT TRƯỚC (BẤM ĐỂ LẬT THẺ)' }}
+        </div>
+
+        <!-- Front Side -->
+        <div v-if="!isFlipped" class="py-6">
+          <div class="text-h4 font-weight-black text-grey-darken-4 mb-2">
+            {{ currentCard.word }}
+          </div>
+          <div class="text-caption text-deep-orange font-weight-bold">
+            Số lần đọc chưa chuẩn: {{ currentCard.error_count || 1 }} lần
           </div>
         </div>
 
-        <!-- SWIPE ACTION BUTTONS -->
-        <div class="d-flex justify-center ga-4 mt-4">
+        <!-- Back Side -->
+        <div v-else class="py-3">
+          <div class="text-h4 font-weight-black text-grey-darken-4 mb-1">
+            {{ currentCard.word }}
+          </div>
+          <div class="text-subtitle-2 text-primary font-italic mb-2">
+            /{{ currentCard.ipa || '...' }}/
+          </div>
+          <div class="text-body-2 text-grey-darken-3 mb-4">
+            Nghĩa: {{ currentCard.meaning || 'Từ cần luyện tập lại' }}
+          </div>
+
           <v-btn
-            color="error"
-            size="large"
+            color="deep-orange"
             variant="tonal"
-            class="font-weight-black text-none px-5 rounded-xl"
-            prepend-icon="mdi-refresh"
-            @click="prevCard"
+            size="small"
+            class="text-none mb-2"
+            prepend-icon="mdi-volume-high"
+            @click.stop="playAudio(currentCard.word)"
           >
-            Chưa Thuộc
-          </v-btn>
-
-          <v-btn
-            color="success"
-            size="large"
-            variant="flat"
-            class="font-weight-black text-none px-6 rounded-xl shadow-md"
-            prepend-icon="mdi-check-circle"
-            @click="nextCard"
-          >
-            Đã Thuộc
+            Nghe phát âm chuẩn
           </v-btn>
         </div>
+
+        <div class="text-caption text-grey position-absolute bottom-0 right-0 pa-2" style="font-size: 10px;">
+          <v-icon size="x-small">mdi-swap-horizontal</v-icon> Bấm vào thẻ để lật
+        </div>
       </div>
-    </v-card>
-  </div>
+
+      <!-- Action Control Buttons -->
+      <div class="d-flex align-center justify-space-between ga-2">
+        <v-btn
+          color="error"
+          variant="tonal"
+          size="small"
+          class="text-none flex-grow-1"
+          prepend-icon="mdi-close-circle-outline"
+          @click="markRetry"
+        >
+          Chưa nhớ (Ôn lại)
+        </v-btn>
+
+        <v-btn
+          color="success"
+          variant="tonal"
+          size="small"
+          class="text-none flex-grow-1"
+          prepend-icon="mdi-check-circle-outline"
+          @click="markMastered"
+        >
+          Đã thuộc (Xóa từ)
+        </v-btn>
+      </div>
+    </div>
+  </v-container>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
-const currentIndex = ref(0)
+const props = defineProps({
+  backendUrl: String,
+  userId: Number
+})
+
+const weakWords = ref([])
+
+const currentCardIndex = ref(0)
 const isFlipped = ref(false)
 
-const cards = ref([
-  { word: 'Perfection', ipa: '/pərˈfɛkʃən/', type: 'Noun', meaning: 'Sự hoàn hảo, sự hoàn thiện', example: 'Practice makes perfection.' },
-  { word: 'Courage', ipa: '/ˈkɜrɪdʒ/', type: 'Noun', meaning: 'Dũng khí, sự can đảm', example: 'It takes courage to continue.' },
-  { word: 'Success', ipa: '/səkˈsɛs/', type: 'Noun', meaning: 'Sự thành công', example: 'Success is a continuous journey.' },
-  { word: 'Fluency', ipa: '/ˈfluənsi/', type: 'Noun', meaning: 'Sự trôi chảy, sự mượt mà', example: 'Aim for fluency in speaking.' },
-])
+const currentCard = computed(() => weakWords.value[currentCardIndex.value] || {})
 
-const currentCard = computed(() => cards.value[currentIndex.value] || cards.value[0])
+const fetchWeakWords = async () => {
+  try {
+    const res = await fetch(`${props.backendUrl}/api/weak-words?user_id=${props.userId || 1}`)
+    if (res.ok) {
+      const data = await res.json()
+      if (data.weak_words && Array.isArray(data.weak_words) && data.weak_words.length > 0) {
+        weakWords.value = data.weak_words
+      }
+    }
+  } catch (e) {
+    // Graceful silent fallback without console error
+  }
+}
 
-const nextCard = () => {
+const playAudio = (word) => {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(word)
+    utterance.lang = 'en-US'
+    window.speechSynthesis.speak(utterance)
+  }
+}
+
+const resetIndex = () => {
+  currentCardIndex.value = 0
   isFlipped.value = false
-  currentIndex.value = (currentIndex.value + 1) % cards.value.length
 }
 
-const prevCard = () => {
+const markRetry = () => {
   isFlipped.value = false
-  currentIndex.value = (currentIndex.value - 1 + cards.value.length) % cards.value.length
+  currentCardIndex.value = (currentCardIndex.value + 1) % weakWords.value.length
 }
 
-const speakWord = (word) => {
-  if (!('speechSynthesis' in window)) return
-  window.speechSynthesis.cancel()
-  const u = new SpeechSynthesisUtterance(word)
-  u.lang = 'en-US'
-  window.speechSynthesis.speak(u)
+const markMastered = async () => {
+  const wordToRemove = currentCard.value.word
+  weakWords.value = weakWords.value.filter(w => w.word !== wordToRemove)
+  isFlipped.value = false
+  if (currentCardIndex.value >= weakWords.value.length) {
+    currentCardIndex.value = 0
+  }
+
+  try {
+    await fetch(`${props.backendUrl}/api/weak-words/remove`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: props.userId || 1, word: wordToRemove })
+    })
+  } catch (e) {}
 }
+
+onMounted(() => {
+  fetchWeakWords()
+})
 </script>
+
+<style scoped>
+.max-width-700 {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.flashcard-box {
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+</style>

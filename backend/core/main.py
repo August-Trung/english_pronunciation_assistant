@@ -1228,6 +1228,13 @@ async def analyze_audio(
         target_ref = target_text if (mode == "reading" and target_text.strip()) else (topic or transcribed_text)
         ipa_analysis = evaluate_ipa_phonetics(target_ref, transcribed_text, wav_path=wav_path)
 
+        # Tự động lưu các từ phát âm sai (partial), đọc thiếu (missing) hoặc rụng phụ âm vào SQLite DB weak_words
+        if ipa_analysis and "words_ipa" in ipa_analysis:
+            try:
+                save_weak_words_from_analysis(uid_val, ipa_analysis["words_ipa"])
+            except Exception as w_err:
+                print(f"Error auto saving weak words: {w_err}")
+
         return {
             "success": True,
             "topic": topic,
@@ -1250,8 +1257,46 @@ async def analyze_audio(
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
 
+def save_weak_words_from_analysis(user_id_val: int, words_ipa: list):
+    """Helper function to auto save/increment missing, partial, or dropped words into SQLite weak_words table"""
+    if not words_ipa or not isinstance(words_ipa, list):
+        return
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=10.0)
+        cursor = conn.cursor()
+        for w in words_ipa:
+            if not isinstance(w, dict):
+                continue
+            status = w.get("status", "")
+            is_dropped = w.get("acoustic_dropped", False)
+            word_str = w.get("word", "").strip()
+            if not word_str or len(word_str) <= 1:
+                continue
+            ipa_str = w.get("target_ipa", "") or w.get("spoken_ipa", "") or ""
+            
+            if status in ["missing", "partial"] or is_dropped:
+                cursor.execute(
+                    "SELECT id, error_count FROM weak_words WHERE user_id = ? AND LOWER(word) = LOWER(?) AND (IsXoa IS NULL OR IsXoa = 0)",
+                    (user_id_val, word_str)
+                )
+                row = cursor.fetchone()
+                if row:
+                    cursor.execute("UPDATE weak_words SET error_count = error_count + 1 WHERE id = ?", (row[0],))
+                else:
+                    meaning_str = "Từ cần luyện tập lại"
+                    cursor.execute(
+                        "INSERT INTO weak_words (user_id, word, ipa, meaning, error_count) VALUES (?, ?, ?, ?, ?)",
+                        (user_id_val, word_str, ipa_str, meaning_str, 1)
+                    )
+        conn.commit()
+        conn.close()
+        export_db_to_json()
+    except Exception as e:
+        print(f"Error saving weak words from analysis: {e}")
+
+
 @app.get("/api/generate-sentence")
-def generate_sentence(level: str = "easy"):
+def generate_sentence(level: str = "easy", exclude: str = ""):
     """Dynamically generate unique practice sentence via Groq AI or fallback AI templates"""
     import random
     import json
@@ -1259,7 +1304,8 @@ def generate_sentence(level: str = "easy"):
     
     if GROQ_API_KEY:
         try:
-            prompt = f"Generate ONE natural English sentence for Shadowing pronunciation practice at '{level}' level (easy: short 4-6 words, medium: 8-12 words, hard: 14-20 words). Return ONLY JSON in this exact format without extra text: {{\"text\": \"sentence\", \"ipa\": \"IPA transcription\", \"meaning\": \"Vietnamese translation\"}}"
+            exclude_prompt = f" DO NOT generate this exact sentence: '{exclude}'." if exclude else ""
+            prompt = f"Generate ONE natural English sentence for Shadowing pronunciation practice at '{level}' level (easy: short 4-6 words, medium: 8-12 words, hard: 14-20 words).{exclude_prompt} Return ONLY JSON in this exact format without extra text: {{\"text\": \"sentence\", \"ipa\": \"IPA transcription\", \"meaning\": \"Vietnamese translation\"}}"
             response = requests.post(
                 "https://api.groq.com/openai/v1/chat/completions",
                 headers={
@@ -1269,10 +1315,10 @@ def generate_sentence(level: str = "easy"):
                 json={
                     "model": "llama-3.3-70b-versatile",
                     "messages": [{"role": "user", "content": prompt}],
-                    "temperature": 0.8,
+                    "temperature": 0.9,
                     "response_format": {"type": "json_object"}
                 },
-                timeout=5
+                timeout=6
             )
             if response.status_code == 200:
                 data = response.json()["choices"][0]["message"]["content"]
@@ -1807,18 +1853,7 @@ def get_weak_words(user_id: int = 1):
         conn.close()
         
         if not rows:
-            sample = [
-                ("Schedule", "ˈʃɛdjuːl", "Lịch trình, thời khóa biểu", 3),
-                ("Comfortable", "ˈkʌmfətəbl", "Thoải mái, dễ chịu", 2),
-                ("Pronunciation", "prəˌnʌnsiˈeɪʃn", "Sự phát âm", 4)
-            ]
-            conn = sqlite3.connect(DB_PATH)
-            c = conn.cursor()
-            for w, ipa, m, err in sample:
-                c.execute("INSERT OR IGNORE INTO weak_words (user_id, word, ipa, meaning, error_count) VALUES (?, ?, ?, ?, ?)", (user_id, w, ipa, m, err))
-            conn.commit()
-            conn.close()
-            return {"weak_words": [{"word": w, "ipa": ipa, "meaning": m, "error_count": err} for w, ipa, m, err in sample]}
+            return {"weak_words": []}
             
         return {"weak_words": [{"word": r[0], "ipa": r[1], "meaning": r[2], "error_count": r[3]} for r in rows]}
     except Exception as e:
