@@ -122,6 +122,9 @@
               <v-btn to="/shadowing" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-waveform" class="font-weight-bold text-none text-body-2">
                 Shadowing
               </v-btn>
+              <v-btn to="/teacher" variant="flat" color="indigo-lighten-5" rounded="pill" density="comfortable" active-color="indigo-darken-3" prepend-icon="mdi-school" class="font-weight-bold text-none text-body-2 text-indigo-darken-3">
+                Teacher Hub
+              </v-btn>
               <v-btn to="/leaderboard" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-trophy-outline" class="font-weight-bold text-none text-body-2">
                 Leaderboard
               </v-btn>

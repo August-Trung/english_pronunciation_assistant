@@ -40,9 +40,52 @@ model = None
 MODEL_SIZE = os.getenv("WHISPER_MODEL_SIZE", "base")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
 
+SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip()
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "").strip()
+SUPABASE_SECRET_KEY = os.getenv("SUPABASE_SECRET_KEY", "").strip()
+
+def ensure_supabase_bucket():
+    """Ensure Supabase storage bucket 'student-audio' exists and is public"""
+    if not SUPABASE_URL or not SUPABASE_SECRET_KEY:
+        return
+    url = f"{SUPABASE_URL}/storage/v1/bucket"
+    headers = {
+        "Authorization": f"Bearer {SUPABASE_SECRET_KEY}",
+        "apiKey": SUPABASE_SECRET_KEY,
+        "Content-Type": "application/json"
+    }
+    try:
+        requests.post(url, headers=headers, json={"id": "student-audio", "name": "student-audio", "public": True}, timeout=10)
+    except Exception as e:
+        print(f"Supabase bucket setup note: {e}")
+
+def upload_audio_to_supabase(file_bytes: bytes, filename: str) -> str:
+    """Upload compressed student audio file to Supabase Storage and return public URL"""
+    ensure_supabase_bucket()
+    if not SUPABASE_URL or not SUPABASE_SECRET_KEY:
+        return None
+    url = f"{SUPABASE_URL}/storage/v1/object/student-audio/{filename}"
+    headers = {
+        "Authorization": f"Bearer {SUPABASE_SECRET_KEY}",
+        "apiKey": SUPABASE_SECRET_KEY,
+        "Content-Type": "audio/webm",
+        "x-upsert": "true"
+    }
+    try:
+        res = requests.post(url, headers=headers, data=file_bytes, timeout=15)
+        if res.status_code in [200, 201]:
+            public_url = f"{SUPABASE_URL}/storage/v1/object/public/student-audio/{filename}"
+            print(f"Uploaded student audio successfully to Supabase: {public_url}")
+            return public_url
+        print(f"Supabase upload status: {res.status_code} - {res.text}")
+    except Exception as e:
+        print(f"Supabase upload error: {e}")
+    return None
+
 @app.on_event("startup")
 def startup_event():
     global model
+    ensure_supabase_bucket()
     if GROQ_API_KEY:
         print("GROQ_API_KEY detected. Skipping local Whisper model loading to optimize RAM and Cold Start!")
         return
@@ -1532,9 +1575,59 @@ def init_db():
                 UNIQUE(user_id, badge_id)
             )
         ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS classrooms (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                teacher_id INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                grade_level TEXT,
+                join_code TEXT UNIQUE NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                IsXoa INTEGER DEFAULT 0
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS class_enrollments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                class_id INTEGER NOT NULL,
+                student_id INTEGER NOT NULL,
+                joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                IsXoa INTEGER DEFAULT 0,
+                UNIQUE(class_id, student_id)
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS assignments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                class_id INTEGER NOT NULL,
+                teacher_id INTEGER NOT NULL,
+                title TEXT NOT NULL,
+                topic_sentence TEXT NOT NULL,
+                target_ipa TEXT,
+                due_date TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                IsXoa INTEGER DEFAULT 0
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS submissions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                assignment_id INTEGER NOT NULL,
+                student_id INTEGER NOT NULL,
+                student_name TEXT,
+                audio_url TEXT,
+                transcribed_text TEXT,
+                score REAL,
+                ipa_json TEXT,
+                teacher_feedback TEXT,
+                score_override REAL,
+                submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                IsXoa INTEGER DEFAULT 0
+            )
+        ''')
         
         # Migration: Thêm cột IsXoa nếu bảng đã tồn tại từ trước
-        tables = ["weak_words", "users", "history", "achievements", "user_settings"]
+        tables = ["weak_words", "users", "history", "achievements", "user_settings", "classrooms", "class_enrollments", "assignments", "submissions"]
         for t in tables:
             try:
                 cursor.execute(f"ALTER TABLE {t} ADD COLUMN IsXoa INTEGER DEFAULT 0")
@@ -1915,3 +2008,295 @@ def remove_weak_word(req: WeakWordRemoveRequest):
         return {"status": "success", "removed": req.word}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+# ==========================================
+# PHASE 1: TEACHER PORTAL & CLASSROOM ENDPOINTS
+# ==========================================
+
+class CreateClassRequest(BaseModel):
+    teacher_id: int
+    name: str
+    grade_level: str = "Elementary (Grades 1 - 5)"
+
+@app.post("/api/classes/create")
+def create_class(req: CreateClassRequest):
+    try:
+        join_code = f"CLS-{random.randint(100, 999)}-{random.randint(10, 99)}"
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO classrooms (teacher_id, name, grade_level, join_code) VALUES (?, ?, ?, ?)",
+            (req.teacher_id, req.name, req.grade_level, join_code)
+        )
+        conn.commit()
+        class_id = cursor.lastrowid
+        conn.close()
+        export_db_to_json()
+        return {"status": "success", "class_id": class_id, "join_code": join_code, "name": req.name}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+class JoinClassRequest(BaseModel):
+    student_id: int
+    join_code: str
+
+@app.post("/api/classes/join")
+def join_class(req: JoinClassRequest):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        code_clean = req.join_code.strip().upper()
+        cursor.execute("SELECT id, name FROM classrooms WHERE UPPER(join_code) = ? AND (IsXoa IS NULL OR IsXoa = 0)", (code_clean,))
+        cls = cursor.fetchone()
+        if not cls:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Invalid Class Join Code. Please verify with your teacher.")
+        
+        class_id, class_name = cls[0], cls[1]
+        cursor.execute(
+            "INSERT OR IGNORE INTO class_enrollments (class_id, student_id) VALUES (?, ?)",
+            (class_id, req.student_id)
+        )
+        conn.commit()
+        conn.close()
+        export_db_to_json()
+        return {"status": "success", "class_id": class_id, "class_name": class_name}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/api/classes/teacher/{teacher_id}")
+def get_teacher_classes(teacher_id: int):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT c.id, c.name, c.grade_level, c.join_code, c.created_at,
+                   COUNT(DISTINCT e.student_id) as student_count
+            FROM classrooms c
+            LEFT JOIN class_enrollments e ON c.id = e.class_id AND (e.IsXoa IS NULL OR e.IsXoa = 0)
+            WHERE c.teacher_id = ? AND (c.IsXoa IS NULL OR c.IsXoa = 0)
+            GROUP BY c.id
+            ORDER BY c.id DESC
+        """, (teacher_id,))
+        rows = cursor.fetchall()
+        conn.close()
+        
+        classes = []
+        for r in rows:
+            classes.append({
+                "id": r[0],
+                "name": r[1],
+                "grade_level": r[2],
+                "join_code": r[3],
+                "created_at": r[4],
+                "student_count": r[5]
+            })
+        return {"classes": classes}
+    except Exception as e:
+        return {"classes": [], "error": str(e)}
+
+@app.get("/api/classes/{class_id}/gradebook")
+def get_class_gradebook(class_id: int):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT id, name, grade_level, join_code FROM classrooms WHERE id = ?", (class_id,))
+        cls_row = cursor.fetchone()
+        if not cls_row:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Classroom not found")
+            
+        cursor.execute("""
+            SELECT u.id, u.name, u.email, u.avatar
+            FROM class_enrollments e
+            JOIN users u ON e.student_id = u.id
+            WHERE e.class_id = ? AND (e.IsXoa IS NULL OR e.IsXoa = 0)
+        """, (class_id,))
+        students_rows = cursor.fetchall()
+        
+        cursor.execute("""
+            SELECT id, title, topic_sentence, target_ipa, due_date, created_at
+            FROM assignments
+            WHERE class_id = ? AND (IsXoa IS NULL OR IsXoa = 0)
+            ORDER BY id DESC
+        """, (class_id,))
+        assignment_rows = cursor.fetchall()
+        
+        cursor.execute("""
+            SELECT s.id, s.assignment_id, s.student_id, s.student_name, s.audio_url,
+                   s.transcribed_text, s.score, s.ipa_json, s.teacher_feedback, s.score_override, s.submitted_at
+            FROM submissions s
+            JOIN assignments a ON s.assignment_id = a.id
+            WHERE a.class_id = ? AND (s.IsXoa IS NULL OR s.IsXoa = 0)
+        """, (class_id,))
+        sub_rows = cursor.fetchall()
+        conn.close()
+        
+        students = [{"id": r[0], "name": r[1] or f"Learner #{r[0]}", "email": r[2], "avatar": r[3]} for r in students_rows]
+        assignments = [{"id": r[0], "title": r[1], "topic_sentence": r[2], "target_ipa": r[3], "due_date": r[4], "created_at": r[5]} for r in assignment_rows]
+        submissions = [{
+            "id": r[0], "assignment_id": r[1], "student_id": r[2], "student_name": r[3],
+            "audio_url": r[4], "transcribed_text": r[5], "score": r[6], "ipa_json": r[7],
+            "teacher_feedback": r[8], "score_override": r[9], "submitted_at": r[10]
+        } for r in sub_rows]
+        
+        return {
+            "classroom": {"id": cls_row[0], "name": cls_row[1], "grade_level": cls_row[2], "join_code": cls_row[3]},
+            "students": students,
+            "assignments": assignments,
+            "submissions": submissions
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+class CreateAssignmentRequest(BaseModel):
+    class_id: int
+    teacher_id: int
+    title: str
+    topic_sentence: str
+    target_ipa: str = ""
+    due_date: str = ""
+
+@app.post("/api/assignments/create")
+def create_assignment(req: CreateAssignmentRequest):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO assignments (class_id, teacher_id, title, topic_sentence, target_ipa, due_date) VALUES (?, ?, ?, ?, ?, ?)",
+            (req.class_id, req.teacher_id, req.title, req.topic_sentence, req.target_ipa, req.due_date)
+        )
+        conn.commit()
+        assignment_id = cursor.lastrowid
+        conn.close()
+        export_db_to_json()
+        return {"status": "success", "assignment_id": assignment_id}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/api/assignments/student/{student_id}")
+def get_student_assignments(student_id: int):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT a.id, a.class_id, c.name as class_name, a.title, a.topic_sentence, a.target_ipa, a.due_date,
+                   s.id as submission_id, s.score, s.audio_url, s.teacher_feedback
+            FROM class_enrollments e
+            JOIN classrooms c ON e.class_id = c.id
+            JOIN assignments a ON a.class_id = c.id
+            LEFT JOIN submissions s ON s.assignment_id = a.id AND s.student_id = ?
+            WHERE e.student_id = ? AND (a.IsXoa IS NULL OR a.IsXoa = 0)
+            ORDER BY a.id DESC
+        """, (student_id, student_id))
+        rows = cursor.fetchall()
+        conn.close()
+        
+        assignments = []
+        for r in rows:
+            assignments.append({
+                "assignment_id": r[0],
+                "class_id": r[1],
+                "class_name": r[2],
+                "title": r[3],
+                "topic_sentence": r[4],
+                "target_ipa": r[5],
+                "due_date": r[6],
+                "is_submitted": bool(r[7]),
+                "submission_id": r[7],
+                "score": r[8],
+                "audio_url": r[9],
+                "teacher_feedback": r[10]
+            })
+        return {"assignments": assignments}
+    except Exception as e:
+        return {"assignments": [], "error": str(e)}
+
+@app.post("/api/assignments/submit")
+async def submit_assignment(
+    assignment_id: int = Form(...),
+    student_id: int = Form(...),
+    student_name: str = Form("Learner"),
+    audio: UploadFile = File(...)
+):
+    try:
+        audio_bytes = await audio.read()
+        filename = f"sub_{assignment_id}_std_{student_id}_{int(datetime.now().timestamp())}.webm"
+        
+        # Upload compressed audio to Supabase Storage
+        supabase_url = upload_audio_to_supabase(audio_bytes, filename)
+        
+        # Save temp file for Whisper transcription & analysis
+        temp_audio_path = os.path.join(tempfile.gettempdir(), filename)
+        with open(temp_audio_path, "wb") as f:
+            f.write(audio_bytes)
+            
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute("SELECT topic_sentence FROM assignments WHERE id = ?", (assignment_id,))
+        asg_row = cursor.fetchone()
+        target_sentence = asg_row[0] if asg_row else "Practice English pronunciation"
+        
+        # Transcribe & analyze audio
+        transcription, whisper_conf = transcribe_audio(temp_audio_path)
+        if not transcription:
+            transcription = target_sentence
+            
+        word_count = len(transcription.split())
+        wps, speech_cat = calculate_speech_rate(word_count, 10.0)
+        is_fluent, confidence_level = detect_fluent_speaker(transcription, word_count, wps)
+        pron_score, pron_level, quality_score, warnings = check_pronunciation(transcription, whisper_conf, word_count, is_fluent)
+        score_val = pron_score * 5.0 # Scale to 10
+        
+        cursor.execute("""
+            INSERT INTO submissions (assignment_id, student_id, student_name, audio_url, transcribed_text, score, ipa_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (assignment_id, student_id, student_name, supabase_url or "", transcription, score_val, json.dumps({"confidence": whisper_conf})))
+        conn.commit()
+        sub_id = cursor.lastrowid
+        conn.close()
+        
+        try:
+            if os.path.exists(temp_audio_path):
+                os.remove(temp_audio_path)
+        except Exception:
+            pass
+            
+        export_db_to_json()
+        return {
+            "status": "success",
+            "submission_id": sub_id,
+            "score": score_val,
+            "audio_url": supabase_url,
+            "transcribed_text": transcription
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class TeacherFeedbackRequest(BaseModel):
+    submission_id: int
+    feedback: str = ""
+    score_override: float = None
+
+@app.post("/api/submissions/feedback")
+def submit_teacher_feedback(req: TeacherFeedbackRequest):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE submissions
+            SET teacher_feedback = ?, score_override = ?
+            WHERE id = ?
+        """, (req.feedback, req.score_override, req.submission_id))
+        conn.commit()
+        conn.close()
+        export_db_to_json()
+        return {"status": "success", "submission_id": req.submission_id}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
