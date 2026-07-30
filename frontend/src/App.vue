@@ -5,23 +5,47 @@
       <v-progress-circular indeterminate color="teal" size="48" />
     </div>
 
-    <!-- Login Screen when not logged in (Excluding Admin Route which renders Admin Portal directly) -->
-    <LoginPage v-else-if="!isLoggedIn && !isAdminRoute" @login="handleLogin" />
+    <!-- Standalone Portal Routes (/teacher, /admin, /parent): Render router-view directly! -->
+    <template v-else-if="isStandalonePortalRoute">
+      <v-app-bar color="white" flat border class="px-4 px-md-8 px-lg-12">
+        <div class="d-flex align-center w-100">
+          <router-link to="/" class="d-flex align-center ga-1 ga-sm-2 text-decoration-none text-grey-darken-4" style="cursor: pointer;">
+            <img src="/logo-augusttrung.png" alt="August Trung Logo" height="34" class="mr-1 d-block" />
+            <div>
+              <span class="text-subtitle-1 font-weight-black text-primary tracking-tight">FLUENT</span>
+              <span class="d-none d-md-inline text-caption font-weight-bold text-grey-darken-1 border-s ps-2 ml-2">
+                Academic English Pronunciation Studio
+              </span>
+            </div>
+          </router-link>
+          <v-spacer />
+          <v-btn color="primary" variant="outlined" size="small" class="text-none font-weight-bold" prepend-icon="mdi-home" to="/">
+            Return to Learning Studio
+          </v-btn>
+        </div>
+      </v-app-bar>
 
-    <!-- Main Workspace after logging in or viewing Admin Portal -->
+      <v-main class="pt-16">
+        <v-container fluid class="px-2 px-sm-4 px-md-8 px-lg-12 py-3">
+          <router-view v-slot="{ Component }">
+            <component
+              :is="Component"
+              :backend-url="backendUrl"
+              :user-id="currentUserId"
+              :user-role="userRole"
+            />
+          </router-view>
+        </v-container>
+      </v-main>
+    </template>
+
+    <!-- Normal Student Flow: Login Screen when not logged in -->
+    <LoginPage v-else-if="!isLoggedIn" @login="handleLogin" />
+
+    <!-- Main Workspace for logged in students -->
     <template v-else>
-      <!-- Full Screen Loader while verifying login session -->
-      <div v-if="isCheckingAuth" class="fill-height d-flex align-center justify-center bg-white" style="min-height: 100vh;">
-        <v-progress-circular indeterminate color="teal" size="48" />
-      </div>
-
-      <!-- Login Screen when not logged in -->
-      <LoginPage v-else-if="!isLoggedIn" @login="handleLogin" />
-
-      <!-- Main Workspace after logging in -->
-      <template v-else>
-        <!-- Premium Modern App Bar -->
-        <v-app-bar color="white" flat border class="px-2 px-md-8 px-lg-12">
+      <!-- Premium Modern App Bar -->
+      <v-app-bar color="white" flat border class="px-2 px-md-8 px-lg-12">
           <div class="d-flex align-center w-100">
             <!-- Logo & Title Clickable Link to Home -->
             <router-link to="/" class="d-flex align-center ga-1 ga-sm-2 text-decoration-none text-grey-darken-4" style="cursor: pointer;">
@@ -324,7 +348,6 @@
           </v-card>
         </v-dialog>
       </template>
-    </template>
   </v-app>
 </template>
 
@@ -344,6 +367,11 @@ const theme = useTheme()
 
 // Routing
 const isAdminRoute = ref(false)
+
+const isStandalonePortalRoute = computed(() => {
+  const path = window.location.pathname
+  return ['/teacher', '/admin', '/parent'].includes(path)
+})
 
 const checkRoute = () => {
   isAdminRoute.value = window.location.pathname === '/admin'
