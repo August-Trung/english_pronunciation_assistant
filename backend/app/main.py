@@ -1636,6 +1636,7 @@ def init_db():
                 tenant_id TEXT,
                 student_name TEXT,
                 audio_url TEXT,
+                audio_size_bytes INTEGER DEFAULT 0,
                 transcribed_text TEXT,
                 score REAL,
                 ipa_json TEXT,
@@ -1665,6 +1666,11 @@ def init_db():
                 cursor.execute(f"ALTER TABLE users ADD COLUMN {col} {col_type}")
             except Exception:
                 pass
+
+        try:
+            cursor.execute("ALTER TABLE submissions ADD COLUMN audio_size_bytes INTEGER DEFAULT 0")
+        except Exception:
+            pass
 
         # Super Admin Default Initialization (Owner Account)
         cursor.execute("SELECT id FROM users WHERE role = 'super_admin'")
@@ -2294,10 +2300,11 @@ async def submit_assignment(
         pron_score, pron_level, quality_score, warnings = check_pronunciation(transcription, whisper_conf, word_count, is_fluent)
         score_val = pron_score * 5.0 # Scale to 10
         
+        audio_size_bytes = len(audio_bytes)
         cursor.execute("""
-            INSERT INTO submissions (assignment_id, student_id, student_name, audio_url, transcribed_text, score, ipa_json)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (assignment_id, student_id, student_name, supabase_url or "", transcription, score_val, json.dumps({"confidence": whisper_conf})))
+            INSERT INTO submissions (assignment_id, student_id, student_name, audio_url, audio_size_bytes, transcribed_text, score, ipa_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (assignment_id, student_id, student_name, supabase_url or "", audio_size_bytes, transcription, score_val, json.dumps({"confidence": whisper_conf})))
         conn.commit()
         sub_id = cursor.lastrowid
         conn.close()
@@ -2446,13 +2453,16 @@ def get_admin_overview():
         cursor.execute("SELECT COUNT(*) FROM submissions WHERE (IsXoa IS NULL OR IsXoa = 0)")
         total_submissions = cursor.fetchone()[0]
         
+        cursor.execute("SELECT COALESCE(SUM(audio_size_bytes), 0) FROM submissions WHERE (IsXoa IS NULL OR IsXoa = 0)")
+        total_bytes = cursor.fetchone()[0] or 0
+        used_mb = round(total_bytes / (1024.0 * 1024.0), 3)
+        
         cursor.execute("SELECT id, name, license_seats, license_expiry, created_at FROM tenants WHERE (IsXoa IS NULL OR IsXoa = 0)")
         tenants_rows = cursor.fetchall()
         conn.close()
         
         tenants = [{"id": r[0], "name": r[1], "license_seats": r[2], "license_expiry": r[3], "created_at": r[4]} for r in tenants_rows]
         
-        used_mb = round(total_submissions * 0.05, 2)
         return {
             "total_tenants": total_tenants,
             "total_teachers": total_teachers,
