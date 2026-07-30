@@ -7,7 +7,7 @@
           <img src="/logo-augusttrung.png" alt="August Trung Logo" height="42" class="d-inline-block" />
         </v-avatar>
         <h1 class="text-h5 font-weight-black text-teal-darken-4 tracking-tight">FLUENT</h1>
-        <p class="text-caption text-grey-darken-1 font-weight-bold">Trợ Lý Luyện Phát Âm Tiếng Anh Học Đường</p>
+        <p class="text-caption text-grey-darken-1 font-weight-bold">Academic English Pronunciation Studio</p>
       </div>
 
       <!-- Google Sign-In Button -->
@@ -22,13 +22,13 @@
           :loading="isGoogleLoading"
           @click="handleGoogleSignIn"
         >
-          Đăng nhập bằng Google
+          Sign in with Google
         </v-btn>
       </div>
 
       <div class="d-flex align-center my-4 ga-2">
         <v-divider />
-        <span class="text-caption text-grey font-weight-bold text-no-wrap" style="font-size: 11px;">HOẶC HỌC THỬ</span>
+        <span class="text-caption text-grey font-weight-bold text-no-wrap" style="font-size: 11px;">OR TRY AS GUEST</span>
         <v-divider />
       </div>
 
@@ -36,8 +36,8 @@
       <v-form @submit.prevent="submitGuestLogin">
         <v-text-field
           v-model="studentName"
-          label="Họ và tên của em:"
-          placeholder="Nhập họ và tên..."
+          label="Full Name:"
+          placeholder="Enter your name..."
           variant="outlined"
           color="teal"
           density="comfortable"
@@ -56,13 +56,13 @@
           prepend-icon="mdi-rocket-launch-outline"
           :loading="isLoading"
         >
-          Vào Học Thử Ngay
+          Start Guest Session
         </v-btn>
       </v-form>
 
       <!-- Footer Attribution -->
       <div class="mt-8 border-t pt-4 text-caption text-grey">
-        Được phát triển bởi <strong>August Trung</strong>
+        Developed by <strong>August Trung</strong>
       </div>
     </div>
   </v-container>

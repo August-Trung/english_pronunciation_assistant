@@ -4,7 +4,7 @@
       <v-card-title class="d-flex align-center justify-space-between flex-nowrap bg-primary text-white py-2 px-3">
         <div class="d-flex align-center ga-2 text-truncate mr-2">
           <v-icon color="white" size="small">mdi-account-circle-outline</v-icon>
-          <span class="text-subtitle-2 text-sm-subtitle-1 font-weight-black text-truncate">HỒ SƠ CÁ NHÂN HỌC SINH</span>
+          <span class="text-subtitle-2 text-sm-subtitle-1 font-weight-black text-truncate">USER PROFILE</span>
         </div>
         <v-btn icon="mdi-close" variant="text" size="small" color="white" class="flex-shrink-0" @click="dialog = false" />
       </v-card-title>
@@ -25,28 +25,28 @@
           </div>
 
           <div class="text-caption text-grey-darken-1 font-weight-bold">
-            <v-icon size="x-small" color="primary">mdi-email-outline</v-icon> {{ userEmail || 'Tài khoản Học Sinh Khách' }}
+            <v-icon size="x-small" color="primary">mdi-email-outline</v-icon> {{ userEmail || 'Guest Learner Account' }}
           </div>
         </div>
 
         <!-- Metric Badges Row -->
         <v-row class="ma-0 mb-4 ga-2 text-center">
           <v-col class="pa-2 bg-blue-lighten-5 border rounded-lg">
-            <div class="text-subtitle-1 font-weight-black text-primary">{{ streak }} ngày</div>
-            <div class="text-caption text-grey-darken-1">Chuỗi Streak</div>
+            <div class="text-subtitle-1 font-weight-black text-primary">{{ streak }}d</div>
+            <div class="text-caption text-grey-darken-1">Learning Streak</div>
           </v-col>
           <v-col class="pa-2 bg-amber-lighten-5 border rounded-lg">
-            <div class="text-subtitle-1 font-weight-black text-amber-darken-4">{{ dailyGoal }} bài/ngày</div>
-            <div class="text-caption text-grey-darken-1">Mục tiêu</div>
+            <div class="text-subtitle-1 font-weight-black text-amber-darken-4">{{ dailyGoal }} / day</div>
+            <div class="text-caption text-grey-darken-1">Daily Target</div>
           </v-col>
         </v-row>
 
         <!-- Form Edit User Settings -->
         <v-card border flat class="pa-3 bg-grey-lighten-5 rounded-lg mb-3">
-          <div class="text-subtitle-2 font-weight-black text-secondary mb-2">Chỉnh sửa thông tin cá nhân:</div>
+          <div class="text-subtitle-2 font-weight-black text-secondary mb-2">Edit Profile Details:</div>
           <v-text-field
             v-model="editName"
-            label="Họ và tên của em:"
+            label="Full Name:"
             variant="outlined"
             density="comfortable"
             hide-details
@@ -55,8 +55,8 @@
           />
 
           <div class="d-flex align-center justify-space-between mb-1">
-            <span class="text-caption font-weight-bold text-grey-darken-2">Mục tiêu phát âm mỗi ngày:</span>
-            <span class="text-subtitle-2 font-weight-black text-primary">{{ editGoal }} bài</span>
+            <span class="text-caption font-weight-bold text-grey-darken-2">Daily Practice Goal:</span>
+            <span class="text-subtitle-2 font-weight-black text-primary">{{ editGoal }} practices</span>
           </div>
 
           <v-slider
@@ -80,7 +80,7 @@
           :loading="isSaving"
           @click="saveProfile"
         >
-          Lưu thay đổi
+          Save Changes
         </v-btn>
       </v-card-text>
     </v-card>

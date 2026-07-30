@@ -8,14 +8,14 @@
             <v-avatar color="blue-lighten-5" size="36" class="text-primary mr-1 border">
               <v-icon size="small">mdi-account-outline</v-icon>
             </v-avatar>
-            <div class="text-subtitle-1 font-weight-black text-secondary">Thông tin học sinh</div>
+            <div class="text-subtitle-1 font-weight-black text-secondary">Learner Profile Settings</div>
           </div>
           
           <v-row class="ma-0 align-center ga-2">
             <v-col cols="12" md="6" class="pa-1">
               <v-text-field
                 v-model="localUserName"
-                label="Họ và tên của em:"
+                label="Full Name:"
                 variant="outlined"
                 density="comfortable"
                 hide-details
@@ -26,9 +26,9 @@
             </v-col>
             <v-col cols="12" md="6" class="pa-1">
               <div class="d-flex align-center justify-space-between mb-1 px-1 flex-nowrap ga-2">
-                <span class="text-caption font-weight-bold text-grey-darken-2 text-truncate">Mục tiêu luyện nói:</span>
+                <span class="text-caption font-weight-bold text-grey-darken-2 text-truncate">Daily Practice Target:</span>
                 <span class="text-caption font-weight-black text-primary bg-blue-lighten-5 px-2 py-0.5 rounded-pill text-no-wrap flex-shrink-0">
-                  {{ localDailyGoal }} lần/ngày
+                  {{ localDailyGoal }} / day
                 </span>
               </div>
               <v-slider
@@ -56,15 +56,15 @@
               <v-avatar color="indigo-lighten-5" size="36" class="text-indigo mr-1 border">
                 <v-icon size="small">mdi-server-network</v-icon>
               </v-avatar>
-              <div class="text-subtitle-1 font-weight-black text-secondary">[Dev] Kết nối Máy chủ (API)</div>
+              <div class="text-subtitle-1 font-weight-black text-secondary">[Dev] API Server Connection</div>
             </div>
 
             <v-row class="ma-0 align-center ga-2">
               <v-col cols="12" sm="8" class="pa-1">
                 <v-text-field
                   v-model="localBackendUrl"
-                  label="Đường dẫn API máy chủ:"
-                  placeholder="Ví dụ: http://localhost:8000"
+                  label="Backend API Endpoint URL:"
+                  placeholder="Example: http://localhost:8000"
                   variant="outlined"
                   density="comfortable"
                   hide-details
@@ -83,7 +83,7 @@
                   :loading="isTestingConnection"
                   @click="testConnection"
                 >
-                  Kiểm tra kết nối
+                  Test Connection
                 </v-btn>
               </v-col>
             </v-row>
@@ -108,16 +108,16 @@
               <v-avatar color="purple-lighten-5" size="36" class="text-purple mr-1 border">
                 <v-icon size="small">mdi-database-refresh-outline</v-icon>
               </v-avatar>
-              <div class="text-subtitle-1 font-weight-black text-secondary">[Dev] Phục hồi dữ liệu (Restore)</div>
+              <div class="text-subtitle-1 font-weight-black text-secondary">[Dev] Data Restore</div>
             </div>
             <div class="text-caption text-grey-darken-1 mb-3 pl-1">
-              Chọn tệp tin backup `.json` từ máy để tải lại toàn bộ lịch sử luyện tập của em trước đó.
+              Upload a `.json` backup file to restore your historical practice records.
             </div>
             
             <v-row class="ma-0 align-center ga-2">
               <v-col cols="12" sm="8" class="pa-1">
                 <v-file-input
-                  label="Chọn tệp sao lưu (.json)"
+                  label="Select Backup File (.json)"
                   accept="application/json"
                   density="comfortable"
                   variant="outlined"
@@ -138,7 +138,7 @@
                   :disabled="!backupFile"
                   @click="restoreBackup"
                 >
-                  Khôi phục lịch sử
+                  Restore Data
                 </v-btn>
               </v-col>
             </v-row>
@@ -151,15 +151,15 @@
         <v-card border flat class="pa-3 bg-blue-lighten-5" rounded="lg">
           <div class="d-flex align-center ga-2 mb-2">
             <v-icon color="primary">mdi-information-outline</v-icon>
-            <div class="text-subtitle-2 font-weight-bold text-primary">Về ứng dụng FLUENT</div>
+            <div class="text-subtitle-2 font-weight-bold text-primary">About FLUENT Pronunciation Studio</div>
           </div>
           
           <div class="text-caption text-grey-darken-3 pl-1" style="line-height: 1.6;">
-            <strong>FLUENT - Trợ lý luyện nói Tiếng Anh Học đường</strong><br>
-            Ứng dụng giúp học sinh đánh giá chính xác khả năng phát âm, rèn luyện sự tự tin thông qua AI.
-            Mọi xử lý đều được bảo mật tối đa và lưu dữ liệu trực tiếp trong thiết bị của em.<br>
-            • <strong>Phiên bản</strong>: 5.0 (Vite + Vue 3 + Vuetify 3 + FastAPI)<br>
-            • <strong>Phát triển bởi</strong>: August Trung • <strong>Tên miền ứng dụng</strong>: <a href="https://fluent.augusttrung.com" target="_blank" class="text-primary font-weight-bold text-decoration-none">fluent.augusttrung.com</a>
+            <strong>FLUENT - Academic English Pronunciation Assistant</strong><br>
+            Empowering students to master native English phonetics and build confident speaking skills through AI evaluation.
+            All audio processing is privacy-first and secured.<br>
+            • <strong>Version</strong>: 5.0 (Vite + Vue 3 + Vuetify 3 + FastAPI)<br>
+            • <strong>Developed by</strong>: August Trung • <strong>Live Web App</strong>: <a href="https://fluent.augusttrung.com" target="_blank" class="text-primary font-weight-bold text-decoration-none">fluent.augusttrung.com</a>
           </div>
         </v-card>
       </v-col>
@@ -172,8 +172,8 @@
               <v-icon size="small">mdi-help-circle-outline</v-icon>
             </v-avatar>
             <div>
-              <div class="text-subtitle-1 font-weight-black text-secondary">Các câu hỏi thường gặp (FAQ)</div>
-              <div class="text-caption text-grey-darken-1">Giải đáp thắc mắc về AI chấm điểm, bảo mật và phương pháp học tập</div>
+              <div class="text-subtitle-1 font-weight-black text-secondary">Frequently Asked Questions (FAQ)</div>
+              <div class="text-caption text-grey-darken-1">Pedagogical AI evaluation, data privacy, and learning methodology guide</div>
             </div>
           </div>
 
@@ -201,32 +201,32 @@ import { ref, watch } from 'vue'
 
 const faqs = ref([
   {
-    question: "AI có tự động sửa phát âm sai thành đúng nếu bài nói quá trôi chảy không?",
-    answer: "<strong>Không.</strong> FLUENT áp dụng cơ chế đánh giá 3 lớp nghiêm ngặt: (1) Bóc tách chính xác từng âm tiết thực tế thu âm được; (2) Thuật toán Fuzzy Matching kiểm tra đối chiếu từng từ với bản mẫu; (3) AI đánh giá 6 kỹ năng độc lập. Bất kỳ từ nào phát âm thiếu âm cuối (như <code>-s</code>, <code>-ed</code>), đọc chệch nguyên âm hay bỏ từ đều bị phát hiện và cảnh báo màu Đỏ/Vàng rõ ràng."
+    question: "How does AI detect dropped ending consonants and mispronounced phonetics?",
+    answer: "<strong>Strict 3-Tier Evaluation Architecture:</strong> (1) Precise phoneme segmentation extracting spoken audio; (2) Phonetic Levenshtein Alignment comparing target vs spoken IPA; (3) AI scoring engine. Any dropped ending consonants (e.g. <code>-s</code>, <code>-ed</code>, <code>-t</code>) or vowel shifts are instantly flagged in red/amber cards."
   },
   {
-    question: "Điểm số 6 kỹ năng (Phát âm, Trọng âm, Ngữ điệu...) được AI chấm theo tiêu chuẩn nào?",
-    answer: "Điểm số được đánh giá dựa trên khung tham chiếu phát âm Tiếng Anh chuẩn quốc tế (bảng phiên âm IPA) kết hợp mô hình AI Llama-3.3-70B / Gemini Flash. AI phân tích độ chính xác từ vựng, nhịp điệu bài nói, độ trôi chảy (Fluency), trọng âm câu (Stress) và ngữ điệu (Intonation) để quy đổi ra thang điểm 10 chuẩn mực sư phạm."
+    question: "What standards are used to evaluate the 6 pedagogical speaking skills?",
+    answer: "Skills are evaluated according to international English phonetic standards (IPA chart) combined with Llama 3.3 70B AI engine. The engine analyzes vocabulary precision, speaking rhythm, fluency, sentence stress, and intonation to produce a 10-point academic score."
   },
   {
-    question: "Dữ liệu giọng nói và thông tin cá nhân của học sinh có được bảo mật không?",
-    answer: "<strong>Hoàn toàn bảo mật.</strong> File ghi âm giọng nói chỉ được xử lý tức thì trong bộ nhớ đệm để trích xuất văn bản và phân tích điểm, không lưu trữ vĩnh viễn trên máy chủ công cộng. Lịch sử bài tập và mục tiêu luyện tập được mã hóa và lưu trực tiếp theo tài khoản cá nhân của em."
+    question: "Is student voice recording data private and secure?",
+    answer: "<strong>100% Private & Secure.</strong> Audio recordings are processed transiently in buffer memory for text extraction and scoring analysis. Records are stored securely under your private cloud account."
   },
   {
-    question: "Làm thế nào để đạt điểm 9 - 10 trong phần 'Luyện nói tự do theo chủ đề'?",
-    answer: "Để đạt điểm cao, em cần đáp ứng 3 yếu tố cốt lõi:<br>1. <strong>Phát âm tròn chữ</strong>: Đọc rõ ràng các phụ âm cuối và trọng âm từ.<br>2. <strong>Độ khớp chủ đề cao</strong>: Trả lời đúng trọng tâm câu hỏi gợi ý của bài tập.<br>3. <strong>Cấu trúc câu tự nhiên</strong>: Áp dụng các từ vựng linh hoạt. Em có thể tham khảo thẻ <strong>'Gợi ý câu bản xứ chuẩn'</strong> ở kết quả đánh giá để học cách diễn đạt hay nhất."
+    question: "How can I achieve 9.0 - 10.0 scores in Topic Speaking Practice?",
+    answer: "To achieve top scores: (1) <strong>Articulate clearly</strong> with distinct ending consonants and word stress; (2) <strong>Stay relevant</strong> to topic prompts; (3) <strong>Use natural sentence structures</strong>. Check the <strong>'Native Expressions'</strong> cards for authentic phrasing."
   },
   {
-    question: "Chế độ 'Luyện ngữ điệu (Shadowing)' khác gì với 'Luyện nói tự do'?",
-    answer: "• <strong>Luyện ngữ điệu (Shadowing)</strong>: Giúp em tập trung rèn luyện cơ miệng, phát âm chuẩn từng từ và bắt chước nhịp điệu, ngắt nghỉ theo câu mẫu của người bản xứ.<br>• <strong>Luyện nói tự do (Topic Practice)</strong>: Rèn luyện khả năng phản xạ, tư duy Tiếng Anh và xây dựng câu nói độc lập theo chủ đề bài học."
+    question: "What is the difference between Shadowing Studio and Free Topic Practice?",
+    answer: "• <strong>Shadowing Studio:</strong> Focuses on mouth muscle articulation, precise phonetic alignment, and mimicking native rhythm.<br>• <strong>Topic Practice:</strong> Focuses on spontaneous English expression, vocabulary choice, and dynamic response creation."
   },
   {
-    question: "Nếu em phát âm sai một số từ thì làm sao để rèn luyện lại?",
-    answer: "Tất cả các từ em phát âm chưa chuẩn sẽ tự động được AI tổng hợp vào <strong>'Bộ từ vựng cần cải thiện' (Weak Words)</strong> trong mục Hồ sơ. Em có thể mở phần này ra bất cứ lúc nào để nghe phát âm mẫu IPA và luyện lại từng từ cho đến khi đạt điểm tuyệt đối."
+    question: "How do I review and master words I mispronounced?",
+    answer: "All mispronounced or dropped consonant words are automatically saved to your <strong>'Weak Words Flashcards'</strong>. You can open flashcards anytime to listen to native audio and practice until mastered."
   },
   {
-    question: "Hệ thống phân tích và chấm điểm âm tiết IPA (International Phonetic Alphabet) như thế nào?",
-    answer: "Hệ thống sử dụng bộ chuyển đổi G2P (Grapheme-to-Phoneme) <code>eng_to_ipa</code> kết hợp thuật toán căn chỉnh âm tiết <strong>Phonetic Levenshtein Alignment</strong> theo chuẩn công nghiệp quốc tế. Mỗi câu nói của em được phân tách thành từng âm IPA để phát hiện chính xác các lỗi nuốt âm đuôi (như /s/, /t/, /d/), lệch nguyên âm hay phát âm ngắt ngữ, từ đó hỗ trợ điều chỉnh khẩu hình miệng chuẩn bản xứ."
+    question: "How does the IPA Phonetic Evaluation Engine function?",
+    answer: "The engine uses G2P (Grapheme-to-Phoneme) <code>g2p_en</code> mapping combined with <strong>Phonetic Levenshtein Alignment</strong>. Each spoken sentence is decomposed into individual IPA symbols to pinpoint exact articulation errors."
   }
 ])
 

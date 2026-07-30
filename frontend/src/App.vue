@@ -109,7 +109,7 @@
               <div>
                 <span class="text-subtitle-1 font-weight-black text-primary tracking-tight">FLUENT</span>
                 <span class="d-none d-md-inline text-caption font-weight-bold text-grey-darken-1 border-s ps-2 ml-2">
-                  Luyện Phát Âm Tiếng Anh Học Đường
+                  Academic English Pronunciation Studio
                 </span>
               </div>
             </router-link>
@@ -117,22 +117,22 @@
             <!-- Desktop Navigation Pills -->
             <div class="d-none d-sm-flex align-center ga-1 ml-4">
               <v-btn to="/" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-microphone" class="font-weight-bold text-none text-body-2">
-                Luyện nói
+                Speaking
               </v-btn>
               <v-btn to="/shadowing" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-waveform" class="font-weight-bold text-none text-body-2">
-                Luyện ngữ điệu
+                Shadowing
               </v-btn>
-              <v-btn to="/leaderboard" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-trophy-variant" class="font-weight-bold text-none text-body-2">
-                Đấu trường
+              <v-btn to="/leaderboard" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-trophy-outline" class="font-weight-bold text-none text-body-2">
+                Leaderboard
               </v-btn>
               <v-btn to="/stats" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-chart-bar" class="font-weight-bold text-none text-body-2">
-                Thống kê
+                Analytics
               </v-btn>
               <v-btn to="/profile" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-account-circle-outline" class="font-weight-bold text-none text-body-2">
-                Hồ sơ
+                Profile
               </v-btn>
               <v-btn to="/settings" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-cog-outline" class="font-weight-bold text-none text-body-2">
-                Cài đặt
+                Settings
               </v-btn>
             </div>
 
@@ -149,7 +149,7 @@
                 class="font-weight-black text-caption text-sm-body-2 px-2 px-sm-3"
                 prepend-icon="mdi-fire"
               >
-                <span class="d-none d-sm-inline">{{ streak }} ngày liên tiếp</span>
+                <span class="d-none d-sm-inline">{{ streak }}-Day Streak</span>
                 <span class="d-inline d-sm-none">{{ streak }}d</span>
               </v-chip>
 
@@ -180,31 +180,31 @@
                       {{ userName }}
                     </v-list-item-title>
                     <v-list-item-subtitle class="text-caption text-grey">
-                      {{ equippedBadgeTitle || (userEmail ? 'Đã liên kết Cloud' : 'Học Sinh Khách') }}
+                      {{ equippedBadgeTitle || (userEmail ? 'Cloud Linked Account' : 'Guest Learner') }}
                     </v-list-item-subtitle>
                   </v-list-item>
 
                   <!-- Menu Actions -->
                   <v-list-item class="rounded mb-1" prepend-icon="mdi-account-circle-outline" to="/profile">
-                    <v-list-item-title class="text-caption font-weight-bold">Hồ sơ cá nhân</v-list-item-title>
+                    <v-list-item-title class="text-caption font-weight-bold">User Profile</v-list-item-title>
                   </v-list-item>
 
                   <v-list-item class="rounded mb-1" prepend-icon="mdi-cards-outline" color="error" to="/flashcards">
-                    <v-list-item-title class="text-caption font-weight-bold text-error">Ôn từ khó (Flashcard)</v-list-item-title>
+                    <v-list-item-title class="text-caption font-weight-bold text-error">Weak Words Flashcards</v-list-item-title>
                   </v-list-item>
 
                   <v-list-item class="rounded mb-1" prepend-icon="mdi-trophy-award" color="amber-darken-3" @click="showAchievements = true">
-                    <v-list-item-title class="text-caption font-weight-bold text-amber-darken-4">Thành tựu & Danh hiệu</v-list-item-title>
+                    <v-list-item-title class="text-caption font-weight-bold text-amber-darken-4">Achievements & Badges</v-list-item-title>
                   </v-list-item>
 
                   <v-list-item class="rounded mb-1" prepend-icon="mdi-theme-light-dark" @click="cycleTheme">
-                    <v-list-item-title class="text-caption font-weight-bold">Đổi giao diện Sáng/Tối</v-list-item-title>
+                    <v-list-item-title class="text-caption font-weight-bold">Toggle Theme Mode</v-list-item-title>
                   </v-list-item>
 
                   <v-divider class="my-1" />
 
                   <v-list-item class="rounded" prepend-icon="mdi-logout" color="error" @click="confirmLogout">
-                    <v-list-item-title class="text-caption font-weight-bold text-error">Đăng xuất</v-list-item-title>
+                    <v-list-item-title class="text-caption font-weight-bold text-error">Sign Out</v-list-item-title>
                   </v-list-item>
                 </v-list>
               </v-menu>
@@ -239,27 +239,27 @@
         <nav class="custom-bottom-nav d-flex d-sm-none border-t bg-white elevation-4">
           <router-link to="/" class="nav-item" exact-active-class="nav-item-active">
             <v-icon size="18">mdi-microphone</v-icon>
-            <span class="nav-label">Luyện nói</span>
+            <span class="nav-label">Speaking</span>
           </router-link>
 
           <router-link to="/shadowing" class="nav-item" active-class="nav-item-active">
             <v-icon size="18">mdi-waveform</v-icon>
-            <span class="nav-label">Ngữ điệu</span>
+            <span class="nav-label">Shadowing</span>
           </router-link>
 
           <router-link to="/leaderboard" class="nav-item" active-class="nav-item-active">
-            <v-icon size="18">mdi-trophy-variant</v-icon>
-            <span class="nav-label">Đấu trường</span>
+            <v-icon size="18">mdi-trophy-outline</v-icon>
+            <span class="nav-label">Arena</span>
           </router-link>
 
           <router-link to="/stats" class="nav-item" active-class="nav-item-active">
             <v-icon size="18">mdi-chart-bar</v-icon>
-            <span class="nav-label">Thống kê</span>
+            <span class="nav-label">Analytics</span>
           </router-link>
 
           <router-link to="/profile" class="nav-item" active-class="nav-item-active">
             <v-icon size="18">mdi-account-circle-outline</v-icon>
-            <span class="nav-label">Hồ sơ</span>
+            <span class="nav-label">Profile</span>
           </router-link>
         </nav>
 
@@ -298,14 +298,14 @@
                 <v-icon size="default">mdi-logout-variant</v-icon>
               </v-avatar>
               <div>
-                <div class="text-subtitle-1 font-weight-black text-secondary">Xác nhận đăng xuất</div>
-                <div class="text-caption text-grey-darken-1">Em có chắc chắn muốn đăng xuất không?</div>
+                <div class="text-subtitle-1 font-weight-black text-secondary">Confirm Sign Out</div>
+                <div class="text-caption text-grey-darken-1">Are you sure you want to sign out?</div>
               </div>
             </div>
 
             <div class="text-caption text-grey-darken-2 mb-4 bg-grey-lighten-4 pa-3 rounded border d-flex align-center ga-1.5" style="line-height: 1.5;">
               <v-icon color="amber-darken-3" size="small" class="flex-shrink-0">mdi-lightbulb-on-outline</v-icon>
-              <span>Khi đăng xuất, thiết bị của em sẽ tạm ngưng giữ phiên làm việc hiện tại. Em có thể đăng nhập lại bất cứ lúc nào!</span>
+              <span>Signing out will pause your current session on this device. You can sign back in anytime!</span>
             </div>
 
             <div class="d-flex align-center justify-end ga-2">
@@ -315,7 +315,7 @@
                 class="font-weight-bold text-none"
                 @click="showLogoutDialog = false"
               >
-                Hủy bỏ
+                Cancel
               </v-btn>
               <v-btn
                 color="error"
@@ -324,7 +324,7 @@
                 prepend-icon="mdi-logout"
                 @click="handleLogout"
               >
-                Đăng xuất ngay
+                Sign Out
               </v-btn>
             </div>
           </v-card>

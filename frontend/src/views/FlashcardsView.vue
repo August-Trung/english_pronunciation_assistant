@@ -8,13 +8,13 @@
             <v-icon color="deep-orange-darken-4" size="default">mdi-cards-outline</v-icon>
           </v-avatar>
           <div>
-            <div class="text-subtitle-1 text-sm-h6 font-weight-black tracking-tight leading-tight">ÔN TỪ KHÓ (FLASHCARD SRS)</div>
-            <div class="text-caption text-amber-lighten-4">Luyện tập các từ phát âm thiếu hoặc sai để ghi nhớ lâu dài</div>
+            <div class="text-subtitle-1 text-sm-h6 font-weight-black tracking-tight leading-tight">WEAK WORDS FLASHCARDS</div>
+            <div class="text-caption text-amber-lighten-4">Review words with dropped consonants or mispronounced phonetics for SRS retention</div>
           </div>
         </div>
 
         <v-chip label variant="tonal" color="amber-lighten-4" size="small">
-          {{ weakWords.length }} từ cần ôn
+          {{ weakWords.length }} Review Words
         </v-chip>
       </div>
     </v-card>
@@ -24,19 +24,19 @@
       <v-avatar color="green-lighten-5" size="64" class="mb-3">
         <v-icon size="large" color="success">mdi-checkbox-marked-circle-outline</v-icon>
       </v-avatar>
-      <div class="text-subtitle-1 font-weight-black text-grey-darken-4 mb-1">Tuyệt vời! Em chưa có từ phát âm sai nào!</div>
-      <div class="text-caption text-grey mb-4">Hãy tiếp tục duy trì phong độ qua các bài luyện đọc và phát âm nhé.</div>
-      <v-btn to="/" color="primary" variant="flat" class="text-none">
-        Đến trang Luyện nói ngay
+      <div class="text-subtitle-1 font-weight-black text-grey-darken-4 mb-1">Excellent! No Weak Words Found!</div>
+      <div class="text-caption text-grey mb-4">Keep up your outstanding pronunciation practice across all speaking lessons.</div>
+      <v-btn to="/" color="primary" variant="flat" class="text-none" prepend-icon="mdi-microphone">
+        Go to Speaking Studio
       </v-btn>
     </div>
 
     <!-- Active Flashcard Studio -->
     <div v-else>
       <div class="d-flex align-center justify-space-between mb-2">
-        <span class="text-caption text-grey-darken-2">Thẻ {{ currentCardIndex + 1 }} / {{ weakWords.length }}</span>
+        <span class="text-caption text-grey-darken-2">Card {{ currentCardIndex + 1 }} / {{ weakWords.length }}</span>
         <v-btn size="x-small" variant="text" color="grey-darken-2" prepend-icon="mdi-refresh" @click="resetIndex">
-          Bắt đầu lại
+          Restart Deck
         </v-btn>
       </div>
 
@@ -47,7 +47,7 @@
         @click="isFlipped = !isFlipped"
       >
         <div class="text-caption text-grey-darken-1 mb-2">
-          {{ isFlipped ? 'MẶT SAU (CHI TIẾT & PHÁT ÂM)' : 'MẶT TRƯỚC (BẤM ĐỂ LẬT THẺ)' }}
+          {{ isFlipped ? 'BACK SIDE (IPA & NATIVE AUDIO)' : 'FRONT SIDE (CLICK CARD TO FLIP)' }}
         </div>
 
         <!-- Front Side -->
@@ -56,7 +56,7 @@
             {{ currentCard.word }}
           </div>
           <div class="text-caption text-deep-orange font-weight-bold">
-            Số lần đọc chưa chuẩn: {{ currentCard.error_count || 1 }} lần
+            Imperfect Attempts: {{ currentCard.error_count || 1 }} times
           </div>
         </div>
 
@@ -69,7 +69,7 @@
             /{{ currentCard.ipa || '...' }}/
           </div>
           <div class="text-body-2 text-grey-darken-3 mb-4">
-            Nghĩa: {{ currentCard.meaning || 'Từ cần luyện tập lại' }}
+            Meaning: {{ currentCard.meaning || 'Practice target word' }}
           </div>
 
           <v-btn
@@ -80,12 +80,12 @@
             prepend-icon="mdi-volume-high"
             @click.stop="playAudio(currentCard.word)"
           >
-            Nghe phát âm chuẩn
+            Listen Native Pronunciation
           </v-btn>
         </div>
 
         <div class="text-caption text-grey position-absolute bottom-0 right-0 pa-2" style="font-size: 10px;">
-          <v-icon size="x-small">mdi-swap-horizontal</v-icon> Bấm vào thẻ để lật
+          <v-icon size="x-small">mdi-swap-horizontal</v-icon> Click card to flip
         </div>
       </div>
 
@@ -99,7 +99,7 @@
           prepend-icon="mdi-close-circle-outline"
           @click="markRetry"
         >
-          Chưa nhớ (Ôn lại)
+          Need Practice (Keep)
         </v-btn>
 
         <v-btn
@@ -110,7 +110,7 @@
           prepend-icon="mdi-check-circle-outline"
           @click="markMastered"
         >
-          Đã thuộc (Xóa từ)
+          Mastered (Remove)
         </v-btn>
       </div>
     </div>

@@ -1,14 +1,14 @@
 <template>
   <v-container fluid class="pa-0 max-width-700">
-    <!-- Rich Teal Gradient Banner Card (Sang trọng, bắt mắt) -->
+    <!-- Rich Teal Gradient Banner Card -->
     <v-card border flat class="pa-3 pa-sm-4 mb-4 text-white rounded-lg" style="background: linear-gradient(135deg, #009688 0%, #004D40 100%);">
       <div class="d-flex align-center ga-2 ga-sm-3">
         <v-avatar color="teal-lighten-4" size="40" class="flex-shrink-0">
           <v-icon color="teal-darken-4" size="default">mdi-waveform</v-icon>
         </v-avatar>
         <div>
-          <div class="text-subtitle-1 text-sm-h6 font-weight-black tracking-tight leading-tight">LUYỆN NGỮ ĐIỆU (SHADOWING)</div>
-          <div class="text-caption text-teal-lighten-4">Luyện nói theo ngữ điệu câu mẫu để phát âm tự nhiên như người bản xứ</div>
+          <div class="text-subtitle-1 text-sm-h6 font-weight-black tracking-tight leading-tight">SHADOWING STUDIO</div>
+          <div class="text-caption text-teal-lighten-4">Master natural native rhythm and intonation by speaking along with AI models</div>
         </div>
       </div>
     </v-card>
@@ -19,7 +19,7 @@
       <div class="d-flex align-center justify-space-between mb-3 flex-wrap ga-2">
         <div class="text-subtitle-2 font-weight-black text-grey-darken-3 d-flex align-center ga-1">
           <v-icon color="teal" size="small">mdi-text-box-search-outline</v-icon>
-          <span>Chọn cấp độ luyện tập:</span>
+          <span>Select Practice Level:</span>
         </div>
 
         <v-btn-toggle
@@ -30,16 +30,16 @@
           variant="outlined"
           rounded="pill"
         >
-          <v-btn value="easy" size="x-small">Cơ bản</v-btn>
-          <v-btn value="medium" size="x-small">Giao tiếp</v-btn>
-          <v-btn value="hard" size="x-small">Nâng cao</v-btn>
+          <v-btn value="easy" size="x-small">Easy</v-btn>
+          <v-btn value="medium" size="x-small">Medium</v-btn>
+          <v-btn value="hard" size="x-small">Hard</v-btn>
         </v-btn-toggle>
       </div>
 
       <!-- Active Sample Sentence Box -->
       <div class="pa-4 rounded-lg mb-4 text-center border" style="background: linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 100%);">
         <div class="text-caption text-teal-darken-4 font-weight-bold mb-1">
-          Câu mẫu AI đề xuất:
+          AI Suggested Model:
         </div>
 
         <div class="text-subtitle-1 font-weight-black text-grey-darken-4 mb-1">
@@ -58,8 +58,8 @@
         <!-- Audio Accent Setting -->
         <div class="d-flex align-center justify-center ga-2 mb-2">
           <v-chip-group v-model="ttsAccent" mandatory density="compact" color="teal">
-            <v-chip value="en-US" size="x-small" label variant="tonal">🇺🇸 Giọng Mỹ (US)</v-chip>
-            <v-chip value="en-GB" size="x-small" label variant="tonal">🇬🇧 Giọng Anh (UK)</v-chip>
+            <v-chip value="en-US" size="x-small" label variant="tonal">US Accent</v-chip>
+            <v-chip value="en-GB" size="x-small" label variant="tonal">UK Accent</v-chip>
           </v-chip-group>
         </div>
 
@@ -72,7 +72,7 @@
             prepend-icon="mdi-volume-high"
             @click="playSampleTTS"
           >
-            Nghe đọc mẫu
+            Listen Sample
           </v-btn>
           <v-btn
             color="teal"
@@ -83,7 +83,7 @@
             :loading="isGeneratingAI"
             @click="generateAISentence"
           >
-            AI tạo câu mới
+            Generate New AI Sentence
           </v-btn>
         </div>
       </div>
@@ -91,7 +91,7 @@
       <!-- Micro Studio Section -->
       <div class="text-center my-1 py-1">
         <div class="text-caption text-grey-darken-2 mb-1">
-          {{ isRecording ? 'Đang thu âm... Bấm nút để dừng:' : 'Bấm nút dưới, đọc theo ngữ điệu câu mẫu:' }}
+          {{ isRecording ? 'Recording in progress... Click button to stop:' : 'Click microphone button below to record:' }}
         </div>
 
         <div class="d-flex align-center justify-center position-relative mx-auto mb-1" style="width: 56px; height: 56px;">
@@ -116,11 +116,11 @@
         </div>
 
         <div v-if="isRecording" class="text-caption text-teal-darken-2 mb-1 font-weight-bold">
-          Đang thu âm... ({{ recordingDuration }}s)
+          Recording... ({{ recordingDuration }}s)
         </div>
 
         <div v-if="isAnalyzing" class="text-caption text-teal-darken-3 animate-pulse py-1">
-          AI đang phân tích ngữ điệu...
+          AI is analyzing intonation & rhythm...
         </div>
       </div>
 

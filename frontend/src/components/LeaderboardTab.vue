@@ -8,8 +8,8 @@
             <v-icon size="default" color="white">mdi-trophy-variant</v-icon>
           </v-avatar>
           <div>
-            <div class="text-subtitle-1 text-sm-h6 font-weight-black tracking-tight leading-tight">ĐẤU TRƯỜNG PHÁT ÂM</div>
-            <div class="text-caption text-indigo-lighten-4 font-weight-bold">Vinh danh Top 10 Học Sinh Xuất Sắc Nhất</div>
+            <div class="text-subtitle-1 text-sm-h6 font-weight-black tracking-tight leading-tight">PRONUNCIATION ARENA</div>
+            <div class="text-caption text-indigo-lighten-4 font-weight-bold">Honoring Top 10 Outstanding Learners</div>
           </div>
         </div>
         <v-btn
@@ -21,14 +21,14 @@
           :loading="isLoading"
           @click="fetchLeaderboard"
         >
-          Cập nhật thứ hạng
+          Refresh Leaderboard
         </v-btn>
       </div>
     </v-card>
 
     <div v-if="isLoading" class="d-flex flex-column align-center justify-center py-12">
       <v-progress-circular indeterminate color="primary" size="48" width="4" class="mb-3" />
-      <div class="text-caption font-weight-bold text-grey-darken-1">Đang tải Bảng Xếp Hạng...</div>
+      <div class="text-caption font-weight-bold text-grey-darken-1">Loading Arena Standings...</div>
     </div>
 
     <div v-else>
@@ -49,7 +49,7 @@
             </v-avatar>
 
             <div class="text-caption font-weight-black name-wrap mb-1" :class="top2.isEmpty ? 'text-grey' : 'text-grey-darken-3'">
-              {{ top2.isEmpty ? 'Đang trống' : formatDisplayName(top2.name) }}
+              {{ top2.isEmpty ? 'Vacant' : formatDisplayName(top2.name) }}
             </div>
 
             <v-chip v-if="top2.badge_title" label size="x-small" color="grey-darken-2" variant="tonal" class="mb-1 px-1" style="font-size: 9px;">
@@ -59,7 +59,7 @@
               {{ top2.isEmpty ? '--/10' : `${(top2.best_score ?? top2.avg_score ?? 0).toFixed(1).replace('.', ',')}/10` }}
             </div>
             <div class="text-caption text-grey font-weight-bold" style="font-size: 10px;">
-              <v-icon size="x-small" color="deep-orange">mdi-fire</v-icon> {{ top2.streak_count || top2.streak || 1 }} ngày
+              <v-icon size="x-small" color="deep-orange">mdi-fire</v-icon> {{ top2.streak_count || top2.streak || 1 }}d
             </div>
           </v-card>
         </v-col>
@@ -79,7 +79,7 @@
             </v-avatar>
             
             <div class="text-caption font-weight-black name-wrap mb-1" :class="top1.isEmpty ? 'text-grey' : 'text-amber-darken-4'">
-              {{ top1.isEmpty ? 'Đang trống' : formatDisplayName(top1.name) }}
+              {{ top1.isEmpty ? 'Vacant' : formatDisplayName(top1.name) }}
             </div>
             
             <v-chip v-if="top1.badge_title" label size="x-small" color="amber-darken-3" variant="tonal" class="mb-1 px-1" style="font-size: 9px;">
@@ -90,7 +90,7 @@
               {{ top1.isEmpty ? '--/10' : `${(top1.best_score ?? top1.avg_score ?? 0).toFixed(1).replace('.', ',')}/10` }}
             </div>
             <div class="text-caption text-amber-darken-3 font-weight-bold" style="font-size: 10px;">
-              <v-icon size="x-small" color="deep-orange">mdi-fire</v-icon> {{ top1.streak_count || top1.streak || 1 }} ngày
+              <v-icon size="x-small" color="deep-orange">mdi-fire</v-icon> {{ top1.streak_count || top1.streak || 1 }}d
             </div>
           </v-card>
         </v-col>
@@ -110,7 +110,7 @@
             </v-avatar>
 
             <div class="text-caption font-weight-black name-wrap mb-1" :class="top3.isEmpty ? 'text-grey' : 'text-grey-darken-3'">
-              {{ top3.isEmpty ? 'Đang trống' : formatDisplayName(top3.name) }}
+              {{ top3.isEmpty ? 'Vacant' : formatDisplayName(top3.name) }}
             </div>
 
             <v-chip v-if="top3.badge_title" label size="x-small" color="brown" variant="tonal" class="mb-1 px-1" style="font-size: 9px;">
@@ -120,7 +120,7 @@
               {{ top3.isEmpty ? '--/10' : `${(top3.best_score ?? top3.avg_score ?? 0).toFixed(1).replace('.', ',')}/10` }}
             </div>
             <div class="text-caption text-grey font-weight-bold" style="font-size: 10px;">
-              <v-icon size="x-small" color="deep-orange">mdi-fire</v-icon> {{ top3.streak_count || top3.streak || 1 }} ngày
+              <v-icon size="x-small" color="deep-orange">mdi-fire</v-icon> {{ top3.streak_count || top3.streak || 1 }}d
             </div>
           </v-card>
         </v-col>
@@ -130,7 +130,7 @@
       <v-card border flat class="pa-2 pa-sm-3 bg-white" rounded="lg">
         <div class="text-subtitle-2 font-weight-black text-secondary mb-2 d-flex align-center ga-1">
           <v-icon color="secondary" size="small">mdi-format-list-numbered</v-icon>
-          <span>Danh sách Bảng Vàng (Top 10)</span>
+          <span>Hall of Fame (Top 10)</span>
         </div>
 
         <v-card v-if="leaderboard.length === 0" border flat class="pa-6 pa-sm-8 text-center bg-white" rounded="lg">
@@ -138,13 +138,13 @@
             <v-icon size="large">mdi-trophy-award</v-icon>
           </v-avatar>
           <div class="text-subtitle-1 font-weight-black text-secondary mb-1">
-            Đấu Trường Chưa Có Bài Luyện Tập Nào!
+            No Arena Entries Yet!
           </div>
           <div class="text-caption text-grey-darken-1 mb-4" style="max-width: 480px; margin: 0 auto; line-height: 1.5;">
-            Em hãy hoàn thành bài luyện nói đầu tiên để vinh danh tên mình đứng vị trí Top 1 Bảng Vàng nhé!
+            Complete your first speaking practice to claim your spot on the Hall of Fame Leaderboard!
           </div>
           <v-btn color="primary" variant="flat" to="/" prepend-icon="mdi-microphone" class="font-weight-black text-none">
-            Bắt đầu Luyện Nói Ngay
+            Start Speaking Practice Now
           </v-btn>
         </v-card>
 
@@ -174,14 +174,14 @@
 
             <v-list-item-subtitle class="text-caption text-grey d-flex align-center flex-wrap ga-1 mt-1" style="font-size: 11px;">
               <v-chip v-if="user.user_id === currentUserId" label size="x-small" color="success" variant="flat" class="mr-1 font-weight-bold" style="font-size: 9px; height: 18px;">
-                Bạn
+                You
               </v-chip>
               <v-chip v-if="user.badge_title" label size="x-small" color="primary" variant="tonal" style="font-size: 9px; height: 18px;">
                 {{ user.badge_title }}
               </v-chip>
-              <span class="font-weight-bold text-grey-darken-2">{{ user.total_sessions || user.total_practices || 0 }} bài tập</span>
+              <span class="font-weight-bold text-grey-darken-2">{{ user.total_sessions || user.total_practices || 0 }} practices</span>
               <span>•</span>
-              <span class="font-weight-bold text-deep-orange"><v-icon size="x-small" color="deep-orange">mdi-fire</v-icon>{{ user.streak_count || user.streak || 1 }} ngày</span>
+              <span class="font-weight-bold text-deep-orange"><v-icon size="x-small" color="deep-orange">mdi-fire</v-icon>{{ user.streak_count || user.streak || 1 }}d</span>
             </v-list-item-subtitle>
 
             <template #append>
@@ -190,7 +190,7 @@
                   {{ (user.best_score || user.avg_score || 0).toFixed(1).replace('.', ',') }}/10
                 </div>
                 <div class="text-caption text-grey font-weight-bold" style="font-size: 10px;">
-                  TB: {{ (user.avg_score || 0).toFixed(1).replace('.', ',') }}
+                  Avg: {{ (user.avg_score || 0).toFixed(1).replace('.', ',') }}
                 </div>
               </div>
             </template>

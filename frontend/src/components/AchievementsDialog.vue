@@ -4,14 +4,14 @@
       <v-card-title class="d-flex align-center justify-space-between flex-nowrap bg-primary text-white py-2 px-3">
         <div class="d-flex align-center ga-2 text-truncate mr-2">
           <v-icon color="amber" size="small">mdi-trophy-award</v-icon>
-          <span class="text-subtitle-2 text-sm-subtitle-1 font-weight-black text-truncate">KHO THÀNH TỰU & DANH HIỆU</span>
+          <span class="text-subtitle-2 text-sm-subtitle-1 font-weight-black text-truncate">ACHIEVEMENTS & BADGES</span>
         </div>
         <v-btn icon="mdi-close" variant="text" size="small" color="white" class="flex-shrink-0" @click="dialog = false" />
       </v-card-title>
 
       <v-card-text class="pa-4">
         <div class="text-caption text-grey-darken-1 mb-3">
-          Mở khóa các danh hiệu bằng cách luyện tập đều đặn. Em có thể <strong>Gắn danh hiệu</strong> để hiển thị bên cạnh tên trên Bảng Xếp Hạng!
+          Unlock badges by practicing consistently. You can <strong>Equip</strong> a badge title to display next to your name on the Leaderboard!
         </div>
 
         <div v-if="isLoading" class="text-center py-6">
@@ -34,7 +34,7 @@
                   <div class="text-caption text-sm-subtitle-2 font-weight-black d-flex align-center flex-wrap ga-1">
                     <span :class="item.unlocked ? 'text-grey-darken-4' : 'text-grey'">{{ item.title }}</span>
                     <v-chip v-if="item.equipped" size="x-small" color="success" variant="flat" class="font-weight-black" style="font-size: 9px;">
-                      Đang Gắn
+                      Equipped
                     </v-chip>
                   </div>
                   <div class="text-caption text-grey-darken-1" style="font-size: 11px; line-height: 1.25;">{{ item.description }}</div>
@@ -51,7 +51,7 @@
                   class="font-weight-bold text-none"
                   @click="toggleEquip('')"
                 >
-                  Tháo
+                  Unequip
                 </v-btn>
                 <v-btn
                   v-else
@@ -61,11 +61,11 @@
                   class="font-weight-bold text-none"
                   @click="toggleEquip(item.code)"
                 >
-                  Gắn
+                  Equip
                 </v-btn>
               </div>
-              <div v-else class="text-caption text-grey font-weight-bold flex-shrink-0">
-                🔒 Chưa mở
+              <div v-else class="text-caption text-grey font-weight-bold flex-shrink-0 d-flex align-center ga-1">
+                <v-icon size="x-small">mdi-lock-outline</v-icon> Locked
               </div>
             </v-card>
           </v-col>

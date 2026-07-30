@@ -2,13 +2,13 @@
   <v-container fluid class="pa-0">
     <div v-if="!history || history.length === 0" class="d-flex flex-column align-center justify-center py-12 text-grey-darken-1">
       <v-icon size="48" color="grey-lighten-2" class="mb-2">mdi-chart-box-outline</v-icon>
-      <div class="text-subtitle-2 font-weight-bold text-grey">Chưa có dữ liệu thống kê</div>
-      <div class="text-caption text-center px-6">Em hãy luyện nói vài chủ đề trước để tích lũy dữ liệu nhé!</div>
+      <div class="text-subtitle-2 font-weight-bold text-grey">No Analytics Data Available Yet</div>
+      <div class="text-caption text-center px-6">Complete a few speaking practices to accumulate your progress data!</div>
     </div>
 
     <div v-else>
       <div class="d-flex align-center justify-space-between mb-3 flex-wrap ga-2">
-        <div class="text-subtitle-1 font-weight-black text-teal-darken-4">Báo Cáo Tiến Bộ AI</div>
+        <div class="text-subtitle-1 font-weight-black text-teal-darken-4">AI Progress Analytics Report</div>
         <v-btn
           color="teal"
           variant="tonal"
@@ -17,7 +17,7 @@
           prepend-icon="mdi-file-pdf-box"
           @click="showPdfReport = true"
         >
-          Xuất Báo Cáo PDF
+          Export Progress PDF
         </v-btn>
       </div>
 
@@ -25,7 +25,7 @@
       <v-card v-if="streak > 0" border flat class="mb-4 pa-3 text-center bg-info text-white" rounded="lg">
         <div class="text-subtitle-2 font-weight-black d-flex align-center justify-center ga-1">
           <v-icon color="amber">mdi-fire</v-icon>
-          Tuyệt vời! Em đã duy trì chuỗi học tập liên tục {{ streak }} ngày!
+          Outstanding! You have maintained a {{ streak }}-day learning streak!
         </div>
       </v-card>
 
@@ -47,7 +47,7 @@
           <v-card border flat class="pa-3 bg-white" rounded="lg">
             <div class="text-subtitle-2 font-weight-black text-secondary mb-2 d-flex align-center ga-1">
               <v-icon color="secondary" size="small">mdi-chart-line</v-icon>
-              <span>Biểu đồ tiến trình điểm số gần đây</span>
+              <span>Recent Pronunciation Performance Line</span>
             </div>
             
             <div style="height: 180px;" class="position-relative">
@@ -69,7 +69,7 @@
                 <text x="30" y="170" font-size="10" fill="#757575" text-anchor="end">0</text>
 
                 <line x1="40" y1="53" x2="480" y2="53" stroke="#4CAF50" stroke-width="1" stroke-dasharray="4,4" opacity="0.7" />
-                <text x="475" y="48" font-size="8" fill="#4CAF50" font-weight="bold" text-anchor="end">Đạt mục tiêu (8.0)</text>
+                <text x="475" y="48" font-size="8" fill="#4CAF50" font-weight="bold" text-anchor="end">Target Goal (8.0)</text>
 
                 <path :d="linePathD" fill="url(#lineGrad)" />
                 <path :d="linePathLineD" fill="none" stroke="#03A9F4" stroke-width="3" stroke-linecap="round" />
@@ -87,11 +87,11 @@
                   onmouseover="this.setAttribute('r', '7'); this.setAttribute('fill', '#FF9800');"
                   onmouseout="this.setAttribute('r', '5'); this.setAttribute('fill', '#FFFFFF');"
                 >
-                  <title>Lần {{ idx + 1 }}: {{ pt.score.toFixed(1) }} điểm ({{ pt.date }})</title>
+                  <title>Attempt {{ idx + 1 }}: {{ pt.score.toFixed(1) }} pts ({{ pt.date }})</title>
                 </circle>
               </svg>
             </div>
-            <div class="text-caption text-center text-grey mt-1">Các bài nói của em từ cũ nhất đến mới nhất</div>
+            <div class="text-caption text-center text-grey mt-1">Your speaking performances ordered from oldest to latest</div>
           </v-card>
         </v-col>
 
@@ -100,7 +100,7 @@
           <v-card border flat class="pa-3 bg-white" rounded="lg">
             <div class="text-subtitle-2 font-weight-black text-secondary mb-2 d-flex align-center ga-1">
               <v-icon color="secondary" size="small">mdi-calendar-range</v-icon>
-              <span>Tần suất luyện tập 7 ngày qua</span>
+              <span>7-Day Practice Frequency</span>
             </div>
 
             <div style="height: 180px;" class="position-relative">
@@ -130,14 +130,14 @@
                     onmouseover="this.setAttribute('fill', '#81C784');"
                     onmouseout="this.setAttribute('fill', '#4CAF50');"
                   >
-                    <title>{{ bar.fullDate }}: Luyện tập {{ bar.value }} lần</title>
+                    <title>{{ bar.fullDate }}: Practiced {{ bar.value }} times</title>
                   </rect>
                   <text :x="bar.x" y="182" font-size="9" fill="#757575" text-anchor="middle">{{ bar.label }}</text>
                   <text v-if="bar.value > 0" :x="bar.x" :y="bar.y - 5" font-size="9" font-weight="bold" fill="#388E3C" text-anchor="middle">{{ bar.value }}</text>
                 </g>
               </svg>
             </div>
-            <div class="text-caption text-center text-grey mt-1">Số lượt ghi âm luyện nói hàng ngày</div>
+            <div class="text-caption text-center text-grey mt-1">Daily recorded speaking practice sessions</div>
           </v-card>
         </v-col>
       </v-row>
@@ -145,7 +145,7 @@
       <!-- Score Distribution -->
       <div class="text-subtitle-2 font-weight-black text-secondary mb-2 d-flex align-center ga-1">
         <v-icon color="secondary" size="small">mdi-chart-pie</v-icon>
-        <span>Phân bố kết quả</span>
+        <span>Score Distribution Breakdown</span>
       </div>
       <v-row class="ma-0 mb-4 ga-2">
         <v-col v-for="dist in scoreDistributions" :key="dist.title" cols="6" sm="3" class="pa-1">
@@ -166,7 +166,7 @@
             </div>
             <div class="d-flex align-baseline ga-1">
               <span class="text-h5 font-weight-black" :style="{ color: dist.color }">{{ dist.count }}</span>
-              <span class="text-caption font-weight-bold text-grey-darken-1">lần</span>
+              <span class="text-caption font-weight-bold text-grey-darken-1">times</span>
               <span class="text-caption text-grey font-weight-bold ml-auto">({{ dist.percent }}%)</span>
             </div>
           </v-card>
@@ -176,7 +176,7 @@
       <!-- History List -->
       <div class="text-subtitle-2 font-weight-black text-secondary mb-2 d-flex align-center ga-1">
         <v-icon color="secondary" size="small">mdi-history</v-icon>
-        <span>Lịch sử luyện tập gần đây (tối đa 10 lần)</span>
+        <span>Recent Speaking History (Top 10)</span>
       </div>
       <v-expansion-panels variant="accordion" class="border elevation-0 mb-4" rounded="lg">
         <v-expansion-panel
@@ -346,10 +346,10 @@ const overviewStats = computed(() => {
   const todayCount = list.filter(item => item.date === todayStr).length
   
   return [
-    { title: 'Số lần luyện nói', value: `${total} lần`, icon: 'mdi-microphone-outline', color: 'primary' },
-    { title: 'Điểm trung bình', value: `${avg.toFixed(1)}/10`, icon: 'mdi-star-outline', color: 'success' },
-    { title: 'Điểm cao nhất', value: `${best.toFixed(1)}/10`, icon: 'mdi-trophy-outline', color: 'warning' },
-    { title: 'Đạt hôm nay', value: `${todayCount}/${props.dailyGoal}`, icon: 'mdi-calendar-check-outline', color: 'info' }
+    { title: 'Total Practices', value: `${total} sessions`, icon: 'mdi-microphone-outline', color: 'primary' },
+    { title: 'Average Score', value: `${avg.toFixed(1)}/10`, icon: 'mdi-star-outline', color: 'success' },
+    { title: 'Highest Score', value: `${best.toFixed(1)}/10`, icon: 'mdi-trophy-outline', color: 'warning' },
+    { title: 'Today Goal', value: `${todayCount}/${props.dailyGoal}`, icon: 'mdi-calendar-check-outline', color: 'info' }
   ]
 })
 
@@ -370,10 +370,10 @@ const scoreDistributions = computed(() => {
   const pct = (val) => total > 0 ? Math.round((val / total) * 100) : 0
   
   return [
-    { title: 'Xuất sắc', range: '≥ 8.0', count: counts.excellent, percent: pct(counts.excellent), color: '#4CAF50', icon: 'mdi-emoticon-excited-outline', iconColor: 'success' },
-    { title: 'Khá', range: '6.0-7.9', count: counts.good, percent: pct(counts.good), color: '#FFB300', icon: 'mdi-emoticon-happy-outline', iconColor: 'warning' },
-    { title: 'Đạt', range: '4.0-5.9', count: counts.ok, percent: pct(counts.ok), color: '#FF9800', icon: 'mdi-emoticon-neutral-outline', iconColor: 'orange' },
-    { title: 'Cố gắng', range: '< 4.0', count: counts.poor, percent: pct(counts.poor), color: '#F44336', icon: 'mdi-emoticon-sad-outline', iconColor: 'error' }
+    { title: 'Excellent', range: '≥ 8.0', count: counts.excellent, percent: pct(counts.excellent), color: '#4CAF50', icon: 'mdi-emoticon-excited-outline', iconColor: 'success' },
+    { title: 'Proficient', range: '6.0-7.9', count: counts.good, percent: pct(counts.good), color: '#FFB300', icon: 'mdi-emoticon-happy-outline', iconColor: 'warning' },
+    { title: 'Developing', range: '4.0-5.9', count: counts.ok, percent: pct(counts.ok), color: '#FF9800', icon: 'mdi-emoticon-neutral-outline', iconColor: 'orange' },
+    { title: 'Needs Practice', range: '< 4.0', count: counts.poor, percent: pct(counts.poor), color: '#F44336', icon: 'mdi-emoticon-sad-outline', iconColor: 'error' }
   ]
 })
 

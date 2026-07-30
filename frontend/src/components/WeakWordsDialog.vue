@@ -4,14 +4,14 @@
       <v-card-title class="d-flex align-center justify-space-between flex-nowrap bg-error text-white py-2 px-3">
         <div class="d-flex align-center ga-2 text-truncate mr-2">
           <v-icon color="white" size="small">mdi-target-variant</v-icon>
-          <span class="text-subtitle-2 text-sm-subtitle-1 font-weight-black text-truncate">KHO TỪ CẦN CẢI THIỆN</span>
+          <span class="text-subtitle-2 text-sm-subtitle-1 font-weight-black text-truncate">WEAK WORDS REVIEW DIALOG</span>
         </div>
         <v-btn icon="mdi-close" variant="text" size="small" color="white" class="flex-shrink-0" @click="dialog = false" />
       </v-card-title>
 
       <v-card-text class="pa-4">
         <div class="text-caption text-grey-darken-1 mb-3">
-          Đây là các từ em đã đọc sai hoặc phát âm thiếu trong các bài trước. Bấm vào icon loa để nghe lại mẫu chuẩn và luyện phát âm nhé!
+          These are target words with mispronounced phonetics or dropped consonants. Click speaker icon to listen to native pronunciation!
         </div>
 
         <div v-if="isLoading" class="text-center py-6">
@@ -20,8 +20,8 @@
 
         <div v-else-if="weakWords.length === 0" class="text-center py-8 text-grey">
           <v-icon size="48" color="success" class="mb-2">mdi-check-circle-outline</v-icon>
-          <div class="text-subtitle-2 font-weight-bold text-success">Tuyệt vời! Em không có từ phát âm sai nào!</div>
-          <div class="text-caption">Hãy tiếp tục duy trì phong độ nhé!</div>
+          <div class="text-subtitle-2 font-weight-bold text-success">Outstanding! No Weak Words Found!</div>
+          <div class="text-caption">Keep up your excellent pronunciation practice!</div>
         </div>
 
         <v-list v-else class="pa-0 border rounded-lg">
@@ -32,7 +32,7 @@
           >
             <div>
               <div class="text-subtitle-2 font-weight-black text-error text-capitalize">{{ item.word }}</div>
-              <div class="text-caption text-grey">Đã sai: {{ item.mistake_count }} lần • Ngày gần nhất: {{ item.last_practiced }}</div>
+              <div class="text-caption text-grey">Imperfect attempts: {{ item.mistake_count }} times • Last practice: {{ item.last_practiced }}</div>
             </div>
 
             <template #append>
@@ -41,7 +41,7 @@
                 color="primary"
                 variant="tonal"
                 size="small"
-                title="Nghe phát âm chuẩn"
+                title="Listen Native Pronunciation"
                 @click="speak(item.word)"
               />
             </template>
