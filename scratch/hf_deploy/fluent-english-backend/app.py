@@ -2109,6 +2109,42 @@ def join_class(req: JoinClassRequest):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+class LeaveClassRequest(BaseModel):
+    student_id: int
+    class_id: int = None
+    join_code: str = ""
+
+@app.post("/api/classes/leave")
+def leave_class(req: LeaveClassRequest):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        
+        target_class_id = req.class_id
+        if not target_class_id and req.join_code:
+            code_clean = req.join_code.strip().upper()
+            cursor.execute("SELECT id FROM classrooms WHERE UPPER(join_code) = ?", (code_clean,))
+            row = cursor.fetchone()
+            if row:
+                target_class_id = row[0]
+                
+        if not target_class_id:
+            conn.close()
+            raise HTTPException(status_code=400, detail="Classroom ID or Join Code is required.")
+            
+        cursor.execute(
+            "DELETE FROM class_enrollments WHERE class_id = ? AND student_id = ?",
+            (target_class_id, req.student_id)
+        )
+        conn.commit()
+        conn.close()
+        export_db_to_json()
+        return {"status": "success", "message": "Successfully left the classroom."}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @app.get("/api/classes/teacher/{teacher_id}")
 def get_teacher_classes(teacher_id: int):
     try:

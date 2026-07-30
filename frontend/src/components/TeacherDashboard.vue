@@ -133,12 +133,20 @@
                   {{ selectedClass.grade_level }}
                 </v-chip>
               </div>
-              <div class="text-caption text-grey-darken-2 font-weight-bold d-flex align-center ga-2 mt-1">
+              <div class="text-caption text-grey-darken-2 font-weight-bold d-flex align-center flex-wrap ga-2 mt-1">
                 <span>Student Join Code:</span>
                 <v-chip color="primary" size="small" variant="tonal" class="font-weight-mono font-weight-black" prepend-icon="mdi-key-variant">
                   {{ selectedClass.join_code }}
                 </v-chip>
-                <v-btn size="x-small" variant="text" icon="mdi-content-copy" title="Copy Join Code" @click="copyJoinCode(selectedClass.join_code)" />
+
+                <!-- Full Domain Link & QR Code Buttons -->
+                <v-btn size="small" color="primary" variant="outlined" class="font-weight-bold text-none" prepend-icon="mdi-link-variant" @click="copyFullClassLink(selectedClass.join_code)">
+                  Copy Full Link
+                </v-btn>
+
+                <v-btn size="small" color="indigo-darken-2" variant="flat" class="font-weight-bold text-none" prepend-icon="mdi-qrcode" @click="openQrPosterModal(selectedClass)">
+                  Show Class QR Code
+                </v-btn>
               </div>
             </div>
 
@@ -429,6 +437,43 @@
         </div>
       </v-card>
     </v-dialog>
+
+    <!-- Modal: Class QR Code Projection Poster -->
+    <v-dialog v-model="showQrModal" max-width="480">
+      <v-card v-if="qrClass" border rounded="lg" class="pa-6 text-center bg-white" id="qr-poster-card">
+        <div class="d-flex align-center justify-space-between mb-2 border-b pb-2">
+          <div class="d-flex align-center ga-2">
+            <v-avatar color="indigo-lighten-5" size="36" class="text-indigo">
+              <v-icon size="small">mdi-qrcode-scan</v-icon>
+            </v-avatar>
+            <div class="text-subtitle-1 font-weight-black text-primary text-left">CLASSROOM QR CODE POSTER</div>
+          </div>
+          <v-btn icon="mdi-close" variant="text" density="compact" @click="showQrModal = false" />
+        </div>
+
+        <div class="text-h6 font-weight-black text-indigo-darken-3 mb-1">{{ qrClass.name }}</div>
+        <div class="text-caption text-grey font-weight-bold mb-3">{{ qrClass.grade_level }} • Join Code: <strong>{{ qrClass.join_code }}</strong></div>
+
+        <div class="d-flex justify-center mb-3">
+          <v-card border flat class="pa-3 bg-white rounded-lg elevation-2">
+            <v-img :src="getQrCodeUrl(qrClass.join_code)" width="240" height="240" alt="Classroom QR Code" />
+          </v-card>
+        </div>
+
+        <div class="text-caption font-weight-bold text-grey-darken-2 mb-4 bg-indigo-lighten-5 pa-2 rounded border border-indigo" style="word-break: break-all;">
+          🔗 {{ getFullClassLink(qrClass.join_code) }}
+        </div>
+
+        <div class="d-flex align-center justify-center ga-2">
+          <v-btn color="indigo" variant="flat" class="font-weight-bold text-none" prepend-icon="mdi-content-copy" @click="copyFullClassLink(qrClass.join_code)">
+            Copy Full Link
+          </v-btn>
+          <v-btn color="teal" variant="tonal" class="font-weight-bold text-none" prepend-icon="mdi-printer" @click="printQrPoster">
+            Print Poster
+          </v-btn>
+        </div>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -454,6 +499,34 @@ const showCreateClassModal = ref(false)
 const newClassName = ref('')
 const newClassGrade = ref('Elementary (Grades 1 - 5)')
 const isCreatingClass = ref(false)
+
+const showQrModal = ref(false)
+const qrClass = ref(null)
+
+const getFullClassLink = (joinCode) => {
+  const origin = window.location.origin || 'https://fluent.augusttrung.com'
+  return `${origin}/homework?join_code=${joinCode}`
+}
+
+const getQrCodeUrl = (joinCode) => {
+  const fullLink = getFullClassLink(joinCode)
+  return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(fullLink)}`
+}
+
+const openQrPosterModal = (cls) => {
+  qrClass.value = cls
+  showQrModal.value = true
+}
+
+const copyFullClassLink = (joinCode) => {
+  const fullLink = getFullClassLink(joinCode)
+  navigator.clipboard.writeText(fullLink)
+  notify(`Full domain link copied: ${fullLink}`, 'success', 'mdi-content-copy')
+}
+
+const printQrPoster = () => {
+  window.print()
+}
 
 const showCreateAssignmentModal = ref(false)
 const newAsgTitle = ref('')

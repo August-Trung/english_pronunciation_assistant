@@ -5,7 +5,7 @@
       v-model="toast.show"
       :color="toast.color"
       location="top"
-      timeout="3500"
+      timeout="4000"
       rounded="lg"
       elevation="4"
     >
@@ -39,6 +39,38 @@
         >
           Enter Class Join Code
         </v-btn>
+      </div>
+    </v-card>
+
+    <!-- Enrolled Classes Roster Bar & Leave Class Action -->
+    <v-card v-if="enrolledClasses.length" border flat class="pa-3 mb-4 bg-white rounded-lg">
+      <div class="text-caption font-weight-black text-secondary mb-2 d-flex align-center justify-space-between">
+        <span>MY ENROLLED CLASSROOMS ({{ enrolledClasses.length }})</span>
+        <span class="text-grey font-weight-regular">Click badge to view options</span>
+      </div>
+      <div class="d-flex align-center flex-wrap ga-2">
+        <v-chip
+          v-for="cls in enrolledClasses"
+          :key="cls.class_id"
+          color="indigo"
+          variant="tonal"
+          size="medium"
+          class="font-weight-bold"
+          prepend-icon="mdi-google-classroom"
+        >
+          {{ cls.class_name }} ({{ cls.join_code || 'Enrolled' }})
+          <template #append>
+            <v-btn
+              icon="mdi-exit-to-app"
+              variant="text"
+              size="x-small"
+              color="error"
+              class="ml-1"
+              title="Leave Class"
+              @click.stop="openLeaveClassModal(cls)"
+            />
+          </template>
+        </v-chip>
       </div>
     </v-card>
 
@@ -122,7 +154,7 @@
       </div>
     </div>
 
-    <!-- Modal: Join Class Dialog -->
+    <!-- Modal 1: Join Class Dialog -->
     <v-dialog v-model="showJoinClassModal" max-width="450">
       <v-card border rounded="lg" class="pa-4">
         <div class="text-subtitle-1 font-weight-black text-primary mb-2 d-flex align-center ga-2">
@@ -149,11 +181,60 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Modal 2: Git-Style Safety Confirmation for Leaving Classroom -->
+    <v-dialog v-model="showLeaveModal" max-width="480">
+      <v-card v-if="targetLeaveClass" border rounded="lg" class="pa-5 bg-white">
+        <div class="text-subtitle-1 font-weight-black text-error mb-2 d-flex align-center ga-2 border-b pb-2">
+          <v-icon color="error">mdi-shield-alert-outline</v-icon>
+          <span>SAFE UNENROLLMENT CONFIRMATION</span>
+        </div>
+
+        <div class="text-body-2 font-weight-bold text-grey-darken-3 mb-2">
+          You are about to leave <strong>{{ targetLeaveClass.class_name }}</strong>.
+        </div>
+
+        <div class="bg-red-lighten-5 pa-3 rounded border border-red text-caption text-red-darken-4 font-weight-bold mb-3">
+          To prevent accidental unenrollment, please type the exact Join Code of this class below:
+          <div class="text-subtitle-2 font-weight-mono font-weight-black mt-1 text-center bg-white py-1 rounded border">
+            {{ targetLeaveClass.join_code }}
+          </div>
+        </div>
+
+        <v-text-field
+          v-model="leaveInput"
+          label="Type Join Code to confirm:"
+          :placeholder="targetLeaveClass.join_code"
+          variant="outlined"
+          density="comfortable"
+          class="mb-2"
+          prepend-inner-icon="mdi-shield-check"
+          hide-details
+        />
+
+        <v-card-actions class="px-0 pt-4 pb-0">
+          <v-spacer />
+          <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showLeaveModal = false">
+            Cancel
+          </v-btn>
+          <v-btn
+            color="error"
+            variant="flat"
+            class="text-none font-weight-bold"
+            :disabled="leaveInput.trim().toUpperCase() !== targetLeaveClass.join_code.toUpperCase()"
+            :loading="isLeaving"
+            @click="confirmLeaveClass"
+          >
+            Confirm Leave Classroom
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 const props = defineProps({
   backendUrl: String,
@@ -170,9 +251,28 @@ const showJoinClassModal = ref(false)
 const joinCodeInput = ref('')
 const isJoining = ref(false)
 
+const showLeaveModal = ref(false)
+const targetLeaveClass = ref(null)
+const leaveInput = ref('')
+const isLeaving = ref(false)
+
 const isRecording = ref(false)
 let mediaRecorder = null
 let audioChunks = []
+
+const enrolledClasses = computed(() => {
+  const map = {}
+  assignments.value.forEach(a => {
+    if (a.class_id && !map[a.class_id]) {
+      map[a.class_id] = {
+        class_id: a.class_id,
+        class_name: a.class_name,
+        join_code: a.join_code || `CLS-${a.class_id}`
+      }
+    }
+  })
+  return Object.values(map)
+})
 
 const fetchStudentAssignments = async () => {
   try {
@@ -186,8 +286,9 @@ const fetchStudentAssignments = async () => {
   }
 }
 
-const submitJoinClass = async () => {
-  if (!joinCodeInput.value.trim()) return
+const submitJoinClass = async (codeToJoin = null) => {
+  const code = (codeToJoin || joinCodeInput.value || '').trim()
+  if (!code) return
   isJoining.value = true
   try {
     const res = await fetch(`${props.backendUrl}/api/classes/join`, {
@@ -195,7 +296,7 @@ const submitJoinClass = async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         student_id: props.userId || 1,
-        join_code: joinCodeInput.value.trim()
+        join_code: code
       })
     })
     if (res.ok) {
@@ -203,6 +304,7 @@ const submitJoinClass = async () => {
       notify(`Success! You joined ${data.class_name}`, 'success', 'mdi-google-classroom')
       showJoinClassModal.value = false
       joinCodeInput.value = ''
+      localStorage.removeItem('pending_join_code')
       await fetchStudentAssignments()
     } else {
       const err = await res.json()
@@ -212,6 +314,59 @@ const submitJoinClass = async () => {
     notify('Failed to join class: ' + e.message, 'error', 'mdi-alert-circle')
   } finally {
     isJoining.value = false
+  }
+}
+
+const openLeaveClassModal = (cls) => {
+  targetLeaveClass.value = cls
+  leaveInput.value = ''
+  showLeaveModal.value = true
+}
+
+const confirmLeaveClass = async () => {
+  if (!targetLeaveClass.value) return
+  isLeaving.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/classes/leave`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        student_id: props.userId || 1,
+        class_id: targetLeaveClass.value.class_id
+      })
+    })
+    if (res.ok) {
+      notify(`Successfully left ${targetLeaveClass.value.class_name}`, 'success', 'mdi-exit-to-app')
+      showLeaveModal.value = false
+      targetLeaveClass.value = null
+      leaveInput.value = ''
+      await fetchStudentAssignments()
+    } else {
+      const err = await res.json()
+      notify(err.detail || 'Failed to leave class.', 'error', 'mdi-alert-circle')
+    }
+  } catch (e) {
+    notify('Error leaving class: ' + e.message, 'error', 'mdi-alert-circle')
+  } finally {
+    isLeaving.value = false
+  }
+}
+
+const handleUrlJoinCode = async () => {
+  const urlParams = new URLSearchParams(window.location.search)
+  let code = urlParams.get('join_code') || localStorage.getItem('pending_join_code')
+  
+  if (code && code.trim()) {
+    code = code.trim()
+    const activeUser = props.userId || localStorage.getItem('user_id')
+    if (!activeUser) {
+      localStorage.setItem('pending_join_code', code)
+      notify('QR Code detected! Please Sign In or Register to auto-join class.', 'info', 'mdi-qrcode-scan')
+    } else {
+      await submitJoinClass(code)
+      // Clean query parameter from address bar
+      window.history.replaceState({}, document.title, window.location.pathname)
+    }
   }
 }
 
@@ -258,8 +413,9 @@ const uploadSubmission = async (asg) => {
   }
 }
 
-onMounted(() => {
-  fetchStudentAssignments()
+onMounted(async () => {
+  await fetchStudentAssignments()
+  await handleUrlJoinCode()
 })
 </script>
 
