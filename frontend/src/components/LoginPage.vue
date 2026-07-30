@@ -101,7 +101,7 @@ const submitGuestLogin = () => {
 }
 
 const handleGoogleSignIn = () => {
-  const CLIENT_ID = '937517173268-l34kbh3mknk02kkhh9r2i67h3s7g8j7j.apps.googleusercontent.com'
+  const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '917273250250-9tldfcfues1nhdphcobs4p56i0ge8tvt.apps.googleusercontent.com'
   const REDIRECT_URI = window.location.origin
   const SCOPE = 'openid email profile'
   const RESPONSE_TYPE = 'token'
