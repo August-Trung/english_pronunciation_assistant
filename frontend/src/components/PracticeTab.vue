@@ -835,7 +835,7 @@
             </v-avatar>
             <div>
               <div class="text-subtitle-1 font-weight-black text-teal-darken-4">{{ selectedArticulation.title }}</div>
-              <div class="text-caption font-weight-bold text-primary font-mono">Phiên âm: {{ selectedArticulation.ipa }}</div>
+              <div class="text-caption font-weight-bold text-primary font-mono">Phonetic IPA: {{ selectedArticulation.ipa }}</div>
             </div>
           </div>
           <v-btn icon="mdi-close" variant="text" density="compact" @click="showArticulationModal = false" />
