@@ -132,15 +132,15 @@
 
       <!-- Analysis Result -->
       <div v-if="result && !isAnalyzing" class="d-flex flex-column ga-3 mt-3">
-        <!-- 1. CÂU EM ĐÃ PHÁT ÂM & THỦ THỬ NGHE LẠI -->
+        <!-- 1. TRANSCRIBED SPOKEN TEXT -->
         <div class="pa-3 bg-blue-lighten-5 rounded-lg border">
           <div class="text-body-2 font-weight-bold text-primary mb-2 d-flex align-center ga-1">
             <v-icon color="primary" size="small">mdi-message-text-outline</v-icon>
-            <span>Câu em đã phát âm:</span>
+            <span>Transcribed Spoken Text:</span>
             <span class="font-weight-black text-primary-darken-2 ml-1">"{{ result.transcribed_text }}"</span>
           </div>
 
-          <!-- AUDIO PLAYER NGHE LẠI ĐOẠN THU ÂM -->
+          <!-- AUDIO PLAYER PLAYBACK -->
           <div v-if="audioUrl" class="d-flex align-center ga-2 bg-white pa-2 rounded border mt-2">
             <v-btn
               :color="isPlaying ? 'warning' : 'primary'"
@@ -152,48 +152,48 @@
               <v-icon size="small">{{ isPlaying ? 'mdi-pause' : 'mdi-play' }}</v-icon>
             </v-btn>
             <div class="text-caption font-weight-bold text-grey-darken-2">
-              {{ isPlaying ? 'Đang phát...' : 'Nghe lại giọng vừa thu âm' }}
+              {{ isPlaying ? 'Playing audio...' : 'Play back recorded voice' }}
             </div>
             <audio ref="audioPlayer" :src="audioUrl" @ended="isPlaying = false" class="d-none" />
           </div>
         </div>
 
-        <!-- 2. THẺ TỔNG QUAN -->
+        <!-- 2. OVERVIEW CARD -->
         <v-card border flat rounded="lg" class="pa-3" :class="result.score >= 6 ? 'bg-teal-lighten-5 border-teal' : 'bg-orange-lighten-5 border-orange'">
           <div class="d-flex align-center justify-space-between mb-1">
             <div class="d-flex align-center ga-2">
               <v-chip :color="result.score >= 6 ? 'teal' : 'orange-darken-3'" font-weight-bold size="small" variant="flat">
                 <v-icon size="x-small" start>mdi-target</v-icon>
-                Độ Chính Xác {{ result.reading_result ? result.reading_result.accuracy.toFixed(0) : 0 }}%
+                Accuracy {{ result.reading_result ? result.reading_result.accuracy.toFixed(0) : 0 }}%
               </v-chip>
               <span class="text-subtitle-2 font-weight-black" :class="result.score >= 8 ? 'text-teal-darken-4' : result.score >= 6 ? 'text-teal-darken-3' : 'text-orange-darken-4'">
-                {{ result.score >= 8 ? 'Xuất Sắc!' : result.score >= 6 ? 'Rất Tốt!' : 'Cần Cải Thiện!' }}
+                {{ result.score >= 8 ? 'Outstanding!' : result.score >= 6 ? 'Great Job!' : 'Needs Practice!' }}
               </span>
             </div>
             <div class="text-h5 font-weight-black" :class="result.score >= 6 ? 'text-teal-darken-4' : 'text-orange-darken-4'">
-              {{ result.score.toFixed(1).replace('.', ',') }}/10
+              {{ result.score.toFixed(1) }}/10
             </div>
           </div>
           <div class="text-caption font-weight-bold" :class="result.score >= 6 ? 'text-teal-darken-4' : 'text-orange-darken-4'">
             <v-icon size="x-small" class="mr-1">mdi-information-outline</v-icon>
-            {{ result.score < 5 ? 'Em chưa đọc khớp câu mẫu, hãy đọc to và rõ ràng từng từ hơn nhé!' : (result.ai_analysis?.topic_comment || 'Em đã hoàn thành đọc nhại ngữ điệu câu mẫu rất tốt!') }}
+            {{ result.score < 5 ? 'Word alignment low. Speak louder and articulate each word clearly!' : (result.ai_analysis?.topic_comment || 'You completed Shadowing intonation practice successfully!') }}
           </div>
         </v-card>
 
-        <!-- 3. THẺ ĐỐI CHIẾU TỪNG TỪ BÀI ĐỌC MẪU -->
+        <!-- 3. WORD ALIGNMENT CARD -->
         <v-card v-if="result.reading_result" border flat rounded="lg" class="pa-3 bg-light-blue-lighten-5 border-blue">
           <div class="d-flex align-center justify-space-between mb-2">
             <div class="text-subtitle-2 font-weight-black text-primary d-flex align-center ga-1">
               <v-icon color="primary" size="small">mdi-bullseye-arrow</v-icon>
-              Đối Chiếu Từng Từ Bài Đọc Mẫu
+              Model Sentence Word Alignment
             </div>
             <v-chip color="primary" font-weight-bold size="small" variant="flat">
-              {{ result.reading_result.spoken_words_count }}/{{ result.reading_result.target_words_count }} từ
+              {{ result.reading_result.spoken_words_count }}/{{ result.reading_result.target_words_count }} words
             </v-chip>
           </div>
 
           <div class="text-caption text-grey-darken-2 mb-2 font-weight-bold">
-            Chi tiết từng từ (Xanh = Đọc chuẩn, Vàng = Đọc ngắt/sai nhẹ, Đỏ = Đọc thiếu/sai):
+            Word details (Green = Correct, Yellow = Partial, Red = Missing/Incorrect):
           </div>
 
           <div class="d-flex flex-wrap ga-1 bg-white pa-2 rounded border">
@@ -215,12 +215,12 @@
           </div>
         </v-card>
 
-        <!-- THẺ CHẤM & ĐỐI CHIẾU PHIÊN ÂM IPA CHUẨN QUỐC TẾ -->
+        <!-- IPA PHONETIC EVALUATION -->
         <v-card v-if="result.ipa_analysis" border flat rounded="lg" class="pa-3 mb-3 bg-teal-lighten-5 border-teal">
           <div class="d-flex align-center justify-space-between mb-2">
             <div class="text-subtitle-2 font-weight-black text-teal-darken-4 d-flex align-center ga-1">
               <v-icon color="teal-darken-2" size="small">mdi-bookmark-music-outline</v-icon>
-              <span>Phân Tích & Chấm Âm Tiết IPA (Chuẩn Quốc Tế)</span>
+              <span>IPA Phonetic Evaluation (International Standard)</span>
             </div>
             <v-chip color="teal-darken-3" font-weight-bold size="small" variant="flat">
               IPA {{ result.ipa_analysis.ipa_accuracy }}%
@@ -230,29 +230,29 @@
           <!-- Full IPA sentence comparison -->
           <div class="bg-white pa-2 rounded border mb-2 text-caption">
             <div class="d-flex align-center ga-2 mb-1">
-              <span class="font-weight-black text-primary">IPA Câu Mẫu:</span>
+              <span class="font-weight-black text-primary">Target IPA:</span>
               <span class="font-weight-bold text-teal-darken-4 font-mono">{{ result.ipa_analysis.target_full_ipa }}</span>
             </div>
             <div class="d-flex align-center ga-2">
-              <span class="font-weight-black text-secondary">IPA Em Đọc:</span>
+              <span class="font-weight-black text-secondary">Spoken IPA:</span>
               <span class="font-weight-bold text-indigo-darken-3 font-mono">{{ result.ipa_analysis.spoken_full_ipa }}</span>
             </div>
           </div>
 
-          <!-- Biểu đồ Đường Cong Ngữ Điệu (Pitch Intonation Chart F0) -->
+          <!-- Pitch Intonation Chart F0 -->
           <div v-if="result.ipa_analysis.pitch_analysis?.pitch_points?.length" class="bg-white pa-3 rounded border mb-3">
             <div class="d-flex align-center justify-space-between mb-2">
               <div class="text-caption font-weight-black text-indigo-darken-3 d-flex align-center ga-1">
                 <v-icon color="indigo" size="x-small">mdi-chart-bell-curve-cumulative</v-icon>
-                <span>Biểu Đồ Đường Cong Ngữ Điệu & Trầm Bổng (F0 Pitch Contour)</span>
+                <span>Pitch Contour & Intonation Chart (F0)</span>
               </div>
               <v-chip size="x-small" color="indigo" variant="tonal" class="font-weight-black">
-                Khớp ngữ điệu {{ result.ipa_analysis.pitch_analysis.pitch_accuracy }}%
+                Intonation Match {{ result.ipa_analysis.pitch_analysis.pitch_accuracy }}%
               </v-chip>
             </div>
             <div class="d-flex align-center justify-space-between text-caption text-grey mb-1" style="font-size: 10px;">
-              <span><v-icon size="x-small" color="primary">mdi-minus</v-icon> Giọng bản xứ (Native)</span>
-              <span><v-icon size="x-small" color="amber-darken-3">mdi-minus</v-icon> Giọng học sinh</span>
+              <span><v-icon size="x-small" color="primary">mdi-minus</v-icon> Native Speaker</span>
+              <span><v-icon size="x-small" color="amber-darken-3">mdi-minus</v-icon> Learner Voice</span>
             </div>
             <!-- SVG Pitch Chart -->
             <div class="w-100 bg-grey-lighten-4 rounded pa-2 d-flex align-end justify-space-between" style="height: 60px; position: relative;">
@@ -275,11 +275,11 @@
             </div>
           </div>
 
-          <!-- Thẻ Nối Âm Tự Nhiên (Connected Speech & Liaisons) -->
+          <!-- Connected Speech & Liaisons -->
           <div v-if="result.ipa_analysis.linking_pairs?.length" class="bg-amber-lighten-5 pa-2.5 rounded border border-amber mb-3">
             <div class="text-caption font-weight-black text-amber-darken-4 mb-1 d-flex align-center ga-1">
               <v-icon color="amber-darken-4" size="x-small">mdi-link-variant</v-icon>
-              <span>Gợi Ý Nối Âm Tự Nhiên Bản Xứ (Connected Speech):</span>
+              <span>Connected Speech & Liaisons:</span>
             </div>
             <div class="d-flex flex-wrap ga-2 mt-1">
               <v-chip
@@ -290,7 +290,7 @@
                 variant="flat"
                 class="font-weight-black"
               >
-                {{ pair.word1 }} 🔗 {{ pair.word2 }} ({{ pair.ipa_link }})
+                {{ pair.word1 }} <v-icon size="x-small" class="mx-0.5">mdi-link-variant</v-icon> {{ pair.word2 }} ({{ pair.ipa_link }})
               </v-chip>
             </div>
           </div>
@@ -317,10 +317,11 @@
                 {{ w_ipa.target_ipa }}
               </v-chip>
               <div v-if="w_ipa.spoken_ipa && w_ipa.status !== 'correct'" class="text-caption font-weight-bold text-error mt-0.5" style="font-size: 9px;">
-                Đọc: {{ w_ipa.spoken_ipa }}
+                Spoken: {{ w_ipa.spoken_ipa }}
               </div>
-              <div v-if="w_ipa.note" class="text-caption text-error font-weight-bold text-center mt-0.5" style="font-size: 9px; line-height: 1.1;">
-                ⚠️ {{ w_ipa.note }}
+              <div v-if="w_ipa.note" class="text-caption text-error font-weight-bold text-center mt-1 d-flex align-center ga-0.5" style="font-size: 9px; line-height: 1.1;">
+                <v-icon size="x-small" color="error">mdi-alert-circle-outline</v-icon>
+                <span>{{ w_ipa.note }}</span>
               </div>
 
               <!-- Button Xem Khẩu Hình 2D/3D -->
@@ -334,7 +335,7 @@
                 prepend-icon="mdi-lips"
                 @click="openArticulationGuide(w_ipa.word, w_ipa.target_ipa)"
               >
-                Khẩu hình
+                Articulation
               </v-btn>
             </div>
           </div>
@@ -344,7 +345,7 @@
         <v-card v-if="result.ai_analysis?.native_suggestions?.length" border flat rounded="lg" class="pa-3 bg-purple-lighten-5 border-purple">
           <div class="text-subtitle-2 font-weight-black text-purple-darken-3 mb-2 d-flex align-center ga-1">
             <v-icon color="purple" size="small">mdi-star-face</v-icon>
-            Gợi Ý Câu Bản Xứ Chuẩn (Native Expressions)
+            Native Expressions (3 Levels)
           </div>
 
           <div class="d-flex flex-column ga-2">
@@ -380,19 +381,19 @@
                 prepend-icon="mdi-volume-high"
                 @click="speakText(sug.text)"
               >
-                Nghe mẫu
+                Listen Audio
               </v-btn>
             </div>
           </div>
         </v-card>
 
-        <!-- 5. THẺ SỬA LỖI NGỮ PHÁP & TỪ VỰNG TRỰC QUAN -->
+        <!-- 5. GRAMMAR & VOCABULARY VISUAL FIXES -->
         <v-card border flat rounded="lg" class="pa-3" :class="validGrammarFixes.length ? 'bg-orange-lighten-5 border-orange' : 'bg-green-lighten-5 border-green'">
           <div class="text-subtitle-2 font-weight-black mb-2 d-flex align-center ga-1" :class="validGrammarFixes.length ? 'text-orange-darken-4' : 'text-success'">
             <v-icon :color="validGrammarFixes.length ? 'orange-darken-3' : 'success'" size="small">
               {{ validGrammarFixes.length ? 'mdi-auto-fix' : 'mdi-check-decagram-outline' }}
             </v-icon>
-            Sửa Lỗi Ngữ Pháp & Từ Vựng Trực Quan
+            Grammar & Vocabulary Visual Fixes
           </div>
 
           <template v-if="validGrammarFixes.length > 0">
@@ -408,7 +409,7 @@
                 <div class="d-flex align-center ga-2 text-body-2 font-weight-bold text-error flex-wrap">
                   <v-chip color="error" size="x-small" variant="tonal" class="font-weight-black flex-shrink-0" style="font-size: 10px; height: 20px;">
                     <v-icon size="x-small" start>mdi-close-circle-outline</v-icon>
-                    Chưa chuẩn
+                    Needs Fix
                   </v-chip>
                   <span class="text-body-2 font-weight-bold text-error">"{{ fix.original }}"</span>
                 </div>
@@ -416,7 +417,7 @@
                 <div class="d-flex align-center ga-2 text-body-2 font-weight-bold text-success flex-wrap">
                   <v-chip color="success" size="x-small" variant="flat" class="font-weight-black flex-shrink-0" style="font-size: 10px; height: 20px;">
                     <v-icon size="x-small" start>mdi-check-circle-outline</v-icon>
-                    Sửa lại
+                    Corrected
                   </v-chip>
                   <span class="text-body-2 font-weight-black text-success text-decoration-underline">"{{ fix.fixed }}"</span>
                 </div>
@@ -424,7 +425,7 @@
 
               <div v-if="fix.reason" class="text-caption text-grey-darken-3 pl-1 pt-2 border-t mt-2" style="line-height: 1.5;">
                 <v-icon size="x-small" color="amber-darken-3" class="mr-1">mdi-lightbulb-on-outline</v-icon>
-                <strong>Giải thích:</strong> {{ fix.reason }}
+                <strong>Explanation:</strong> {{ fix.reason }}
               </div>
             </div>
           </template>
@@ -432,40 +433,40 @@
           <template v-else>
             <div class="d-flex align-center ga-2 text-caption text-success font-weight-bold bg-white pa-2 rounded border">
               <v-icon color="success" size="small">mdi-check-circle-outline</v-icon>
-              <span>Cấu trúc câu ngữ pháp và từ vựng chuẩn xác, không có lỗi sai!</span>
+              <span>Perfect grammar and vocabulary structure with zero errors!</span>
             </div>
           </template>
         </v-card>
 
-        <!-- 6. BẢNG ĐIỂM 5 KỸ NĂNG -->
+        <!-- 6. DETAILED SKILL SCORES TABLE -->
         <v-card v-if="result.ai_analysis?.scores" border flat rounded="lg" class="pa-3 bg-grey-lighten-5">
           <div class="text-caption font-weight-bold text-grey-darken-1 mb-2 d-flex align-center ga-1">
             <v-icon size="x-small" color="grey-darken-2">mdi-chart-box-outline</v-icon>
-            <span>Điểm chi tiết từng kỹ năng:</span>
+            <span>Detailed Skill Scores:</span>
           </div>
           <v-row density="compact">
             <v-col cols="4" sm="2" class="text-center">
-              <div class="text-caption text-grey font-weight-bold">Phát âm</div>
+              <div class="text-caption text-grey font-weight-bold">Pronunciation</div>
               <div class="text-subtitle-2 font-weight-black text-primary">{{ result.ai_analysis.scores.pronunciation }}/2</div>
             </v-col>
             <v-col cols="4" sm="2" class="text-center">
-              <div class="text-caption text-grey font-weight-bold">Trôi chảy</div>
+              <div class="text-caption text-grey font-weight-bold">Fluency</div>
               <div class="text-subtitle-2 font-weight-black text-primary">{{ result.ai_analysis.scores.fluency }}/2</div>
             </v-col>
             <v-col cols="4" sm="2" class="text-center">
-              <div class="text-caption text-grey font-weight-bold">Ngữ pháp</div>
+              <div class="text-caption text-grey font-weight-bold">Grammar</div>
               <div class="text-subtitle-2 font-weight-black text-primary">{{ result.ai_analysis.scores.grammar }}/2</div>
             </v-col>
             <v-col cols="4" sm="2" class="text-center">
-              <div class="text-caption text-grey font-weight-bold">Từ vựng</div>
+              <div class="text-caption text-grey font-weight-bold">Vocabulary</div>
               <div class="text-subtitle-2 font-weight-black text-primary">{{ result.ai_analysis.scores.vocabulary }}/2</div>
             </v-col>
             <v-col cols="4" sm="2" class="text-center">
-              <div class="text-caption text-grey font-weight-bold">Giao tiếp</div>
+              <div class="text-caption text-grey font-weight-bold">Communication</div>
               <div class="text-subtitle-2 font-weight-black text-primary">{{ result.ai_analysis.scores.communication }}/2</div>
             </v-col>
             <v-col cols="4" sm="2" class="text-center">
-              <div class="text-caption text-grey font-weight-bold">Độ rõ tiếng</div>
+              <div class="text-caption text-grey font-weight-bold">Clarity Rate</div>
               <div class="text-subtitle-2 font-weight-black text-teal-darken-2">{{ result.ai_analysis.scores.clarity_percent }}%</div>
             </v-col>
           </v-row>
@@ -480,7 +481,7 @@
             </v-avatar>
             <div>
               <div class="text-subtitle-1 font-weight-black text-teal-darken-4">{{ selectedArticulation.title }}</div>
-              <div class="text-caption font-weight-bold text-primary font-mono">Phiên âm: {{ selectedArticulation.ipa }}</div>
+              <div class="text-caption font-weight-bold text-primary font-mono">Phonetics: {{ selectedArticulation.ipa }}</div>
             </div>
           </div>
           <v-btn icon="mdi-close" variant="text" density="compact" @click="showArticulationModal = false" />
@@ -497,14 +498,14 @@
               <v-icon size="40" color="deep-orange">mdi-account-voice</v-icon>
             </div>
           </div>
-          <div class="text-caption font-weight-black text-teal-darken-4">Sơ đồ chuyển động luồng hơi & đầu lưỡi</div>
+          <div class="text-caption font-weight-black text-teal-darken-4">3-Step Articulation Flow: Lips & Teeth ➔ Airflow ➔ Sound Release</div>
         </div>
 
         <div class="space-y-2 text-caption">
           <div class="bg-grey-lighten-4 pa-2.5 rounded border mb-2">
             <span class="font-weight-black text-grey-darken-4 d-block mb-1 d-flex align-center ga-1">
               <v-icon color="pink" size="x-small">mdi-lips</v-icon>
-              <span>1. Khẩu Hình Môi & Răng:</span>
+              <span>1. Lips & Teeth Position:</span>
             </span>
             <span class="text-grey-darken-3">{{ selectedArticulation.mouth_position }}</span>
           </div>
@@ -512,7 +513,7 @@
           <div class="bg-grey-lighten-4 pa-2.5 rounded border mb-2">
             <span class="font-weight-black text-grey-darken-4 d-block mb-1 d-flex align-center ga-1">
               <v-icon color="deep-orange" size="x-small">mdi-emoticon-tongue-outline</v-icon>
-              <span>2. Vị Trí Đầu Lưỡi:</span>
+              <span>2. Tongue Placement:</span>
             </span>
             <span class="text-grey-darken-3">{{ selectedArticulation.tongue_position }}</span>
           </div>
@@ -520,7 +521,7 @@
           <div class="bg-grey-lighten-4 pa-2.5 rounded border mb-2">
             <span class="font-weight-black text-grey-darken-4 d-block mb-1 d-flex align-center ga-1">
               <v-icon color="light-blue" size="x-small">mdi-weather-windy</v-icon>
-              <span>3. Luồng Hơi & Thanh Quản:</span>
+              <span>3. Airflow & Vocal Cords:</span>
             </span>
             <span class="text-grey-darken-3">{{ selectedArticulation.airflow }}</span>
           </div>
@@ -528,7 +529,7 @@
           <div class="bg-amber-lighten-5 pa-2.5 rounded border border-amber">
             <span class="font-weight-black text-amber-darken-4 d-block mb-1 d-flex align-center ga-1">
               <v-icon color="amber-darken-3" size="x-small">mdi-lightbulb-on-outline</v-icon>
-              <span>Mẹo Luyện Tập Nhanh:</span>
+              <span>Quick Practice Tip:</span>
             </span>
             <span class="text-amber-darken-4 font-weight-bold">{{ selectedArticulation.tip }}</span>
           </div>
@@ -537,10 +538,10 @@
         <v-card-actions class="px-0 pt-3 pb-0">
           <v-spacer />
           <v-btn color="primary" variant="flat" class="font-weight-black text-none" @click="speakText(selectedArticulation.ipa)">
-            <v-icon class="mr-1">mdi-volume-high</v-icon> Nghe Âm Mẫu
+            <v-icon class="mr-1">mdi-volume-high</v-icon> Listen Sample Sound
           </v-btn>
           <v-btn color="grey-darken-1" variant="outlined" class="font-weight-bold text-none" @click="showArticulationModal = false">
-            Đóng
+            Close
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -564,60 +565,60 @@ const selectedArticulation = ref(null)
 
 const ARTICULATION_GUIDES = {
   's': {
-    title: 'Phụ Âm Xì /s/ (Fricative)',
+    title: 'Fricative Consonant /s/',
     ipa: '/s/',
-    mouth_position: 'Hai hàm răng khép nhẹ, hai mép môi hơi kéo sang 2 bên như đang mỉm cười nhẹ.',
-    tongue_position: 'Đầu lưỡi nâng gần sát nướu răng cửa trên (không chạm vào răng), tạo khe hẹp.',
-    airflow: 'Đẩy luồng hơi xì xát liên tục qua khe giữa đầu lưỡi và nướu răng. Không rung dây thanh quản (Voiceless).',
-    tip: 'Hãy giữ luồng hơi kéo dài 1-2 giây để tạo tiếng xì giòn giã.'
+    mouth_position: 'Slightly close teeth, pull lip corners sideways in a gentle smile.',
+    tongue_position: 'Raise tongue tip close to upper alveolar ridge without touching, forming a narrow gap.',
+    airflow: 'Continuous unvoiced airflow pushed through the gap between tongue tip and ridge (Voiceless).',
+    tip: 'Sustain the airflow for 1-2 seconds to produce a crisp sibilant sound.'
   },
   'z': {
-    title: 'Phụ Âm Rung /z/ (Voiced Fricative)',
+    title: 'Voiced Fricative Consonant /z/',
     ipa: '/z/',
-    mouth_position: 'Khẩu hình môi và răng giống hệt âm /s/.',
-    tongue_position: 'Đầu lưỡi nâng gần sát nướu răng cửa trên.',
-    airflow: 'Khấu hình giống /s/ nhưng RUNG dây thanh quản (Voiced). Bạn cảm nhận cổ họng rung khi đọc.',
-    tip: 'Đặt ngón tay lên cổ họng, bạn phải thấy cổ họng rung khi xì ra âm /z/.'
+    mouth_position: 'Same mouth and teeth position as /s/.',
+    tongue_position: 'Raise tongue tip near upper alveolar ridge.',
+    airflow: 'Identical mouth shape to /s/ but with vocal cord vibration (Voiced). Feel throat vibration.',
+    tip: 'Place fingers on your throat; you must feel vocal cord vibration while producing /z/.'
   },
   't': {
-    title: 'Phụ Âm Bật /t/ (Plosive)',
+    title: 'Plosive Consonant /t/',
     ipa: '/t/',
-    mouth_position: 'Môi hơi mở tự nhiên.',
-    tongue_position: 'Đầu lưỡi áp chặt vào nướu răng cửa trên để chặn hoàn toàn luồng khí.',
-    airflow: 'Bật nhẹ đầu lưỡi xuống nhanh để giải phóng luồng khí nén tạo tiếng bật dứt khoát.',
-    tip: 'Đặt bàn tay trước miệng, bạn phải cảm nhận được một luồng hơi bật mạnh ra.'
+    mouth_position: 'Slightly open lips naturally.',
+    tongue_position: 'Press tongue tip firmly against upper alveolar ridge to block airflow completely.',
+    airflow: 'Release tongue tip downward rapidly to burst trapped air with a sharp sound.',
+    tip: 'Place hand in front of mouth; feel a sharp burst of air on release.'
   },
   'd': {
-    title: 'Phụ Âm Bật Rung /d/ (Voiced Plosive)',
+    title: 'Voiced Plosive Consonant /d/',
     ipa: '/d/',
-    mouth_position: 'Môi hơi mở tự nhiên.',
-    tongue_position: 'Đầu lưỡi áp chặt vào nướu răng cửa trên.',
-    airflow: 'Bật đầu lưỡi xuống đồng thời RUNG dây thanh quản.',
-    tip: 'Âm bật trầm hơn âm /t/ và có độ rung nhẹ ở cổ họng.'
+    mouth_position: 'Slightly open lips naturally.',
+    tongue_position: 'Press tongue tip firmly against upper alveolar ridge.',
+    airflow: 'Release tongue tip downward while vibrating vocal cords.',
+    tip: 'Deeper resonant burst than /t/ with gentle throat vibration.'
   },
   'th': {
-    title: 'Phụ Âm Thè Lưỡi /θ/ & /ð/',
+    title: 'Dental Consonants /θ/ & /ð/',
     ipa: '/θ/ - /ð/',
-    mouth_position: 'Đặt đầu lưỡi thè ra giữa 2 hàm răng cửa (răng kẹp nhẹ lên lưỡi).',
-    tongue_position: 'Đầu lưỡi thả lỏng đặt nhẹ giữa 2 hàm răng.',
-    airflow: 'Đẩy luồng hơi xì qua khe giữa răng trên và mặt lưỡi.',
-    tip: 'Đừng rụt lưỡi vào trong quá nhanh! Hãy thè nhẹ đầu lưỡi ra ngoài 1-2 cm.'
+    mouth_position: 'Place tongue tip gently between upper and lower front teeth.',
+    tongue_position: 'Relaxed tongue tip resting lightly between teeth.',
+    airflow: 'Push air out between upper teeth and tongue surface.',
+    tip: 'Do not retract tongue inside too quickly! Extend tongue tip outward 1-2 cm.'
   },
   'r': {
-    title: 'Phụ Âm Căng Lưỡi /r/',
+    title: 'Retroflex Consonant /r/',
     ipa: '/r/',
-    mouth_position: 'Môi hơi chu tròn về phía trước.',
-    tongue_position: 'Đầu lưỡi uốn cong ngược về phía sau vòm miệng (không chạm vòm miệng).',
-    airflow: 'Luồng khí đi qua khe giữa vòm miệng và thân lưỡi căng.',
-    tip: 'Tưởng tượng lưỡi tạo thành hình cái thìa uốn cong về sau.'
+    mouth_position: 'Slightly round lips forward.',
+    tongue_position: 'Curl tongue tip backward toward roof of mouth (without touching).',
+    airflow: 'Airflow passes through space between palate and tense curved tongue.',
+    tip: 'Imagine your tongue spooning upward and curving backward.'
   },
   'l': {
-    title: 'Phụ Âm Đầu Lưỡi /l/',
+    title: 'Lateral Consonant /l/',
     ipa: '/l/',
-    mouth_position: 'Miệng mở tự nhiên.',
-    tongue_position: 'Đầu lưỡi chạm chắc vào nướu sau răng cửa trên.',
-    airflow: 'Luồng khí thoát ra qua 2 bên mép lưỡi.',
-    tip: 'Giữ đầu lưỡi dính chặt vào nướu răng trên khi kết thúc âm.'
+    mouth_position: 'Open mouth naturally.',
+    tongue_position: 'Press tongue tip firmly against upper alveolar ridge behind front teeth.',
+    airflow: 'Airflow escapes laterally around the sides of the tongue.',
+    tip: 'Keep tongue tip anchored against upper ridge upon sound completion.'
   }
 }
 
@@ -673,41 +674,41 @@ const togglePlayAudio = () => {
 
 const sampleSentences = {
   easy: [
-    { text: "Practice makes perfect!", ipa: "ˈpræktɪs meɪks ˈpɜːfɪkt", meaning: "Có công mài sắt có ngày nên kim" },
-    { text: "How are you doing today?", ipa: "haʊ ɑː juː ˈduːɪŋ təˈdeɪ", meaning: "Hôm nay bạn thế nào?" },
-    { text: "Have a nice day!", ipa: "hæv ə naɪs deɪ", meaning: "Chúc bạn một ngày tốt lành!" },
-    { text: "Nice to meet you!", ipa: "naɪs tuː miːt juː", meaning: "Rất vui được gặp bạn!" },
-    { text: "Where are you from?", ipa: "weər ɑː juː frɒm", meaning: "Bạn đến từ đâu?" }
+    { text: "Practice makes perfect!", ipa: "ˈpræktɪs meɪks ˈpɜːfɪkt", meaning: "Consistent practice builds mastery" },
+    { text: "How are you doing today?", ipa: "haʊ ɑː juː ˈduːɪŋ təˈdeɪ", meaning: "Asking about someone's current well-being" },
+    { text: "Have a nice day!", ipa: "hæv ə naɪs deɪ", meaning: "Wishing someone a pleasant day ahead" },
+    { text: "Nice to meet you!", ipa: "naɪs tuː miːt juː", meaning: "Polite greeting upon meeting someone new" },
+    { text: "Where are you from?", ipa: "weər ɑː juː frɒm", meaning: "Inquiring about someone's origin or hometown" }
   ],
   medium: [
-    { text: "Never put off until tomorrow what you can do today.", ipa: "ˈnɛvər pʊt ɒf ənˈtɪl təˈmɒrəʊ wɒt juː kæn duː təˈdeɪ", meaning: "Đừng để việc hôm nay đến ngày mai" },
-    { text: "I really appreciate your help with this project.", ipa: "aɪ ˈrɪəli əˈpriːʃieɪt jɔː hɛlp wɪð ðɪs ˈprɒʤɛkt", meaning: "Tôi rất trân trọng sự giúp đỡ của bạn" },
-    { text: "Learning a new language opens up a world of opportunities.", ipa: "ˈlɜːnɪŋ ə njuː ˈlæŋɡwɪʤ ˈəʊpənz ʌp ə wɜːld ɒv ˌɒpəˈtjuːnɪtiz", meaning: "Học một ngôn ngữ mới mở ra vô vàn cơ hội" },
-    { text: "Could you please speak a little slower?", ipa: "kʊd juː pliːz spiːk ə ˈlɪtl ˈsləʊər", meaning: "Bạn có thể nói chậm lại một chút không?" }
+    { text: "Never put off until tomorrow what you can do today.", ipa: "ˈnɛvər pʊt ɒf ənˈtɪl təˈmɒrəʊ wɒt juː kæn duː təˈdeɪ", meaning: "Avoid procrastination and act promptly" },
+    { text: "I really appreciate your help with this project.", ipa: "aɪ ˈrɪəli əˈpriːʃieɪt jɔː hɛlp wɪð ðɪs ˈprɒʤɛkt", meaning: "Expressing genuine gratitude for assistance" },
+    { text: "Learning a new language opens up a world of opportunities.", ipa: "ˈlɜːnɪŋ ə njuː ˈlæŋɡwɪʤ ˈəʊpənz ʌp ə wɜːld ɒv ˌɒpəˈtjuːnɪtiz", meaning: "Language acquisition expands life horizons" },
+    { text: "Could you please speak a little slower?", ipa: "kʊd juː pliːz spiːk ə ˈlɪtl ˈsləʊər", meaning: "Requesting a slower speaking pace" }
   ],
   hard: [
-    { text: "Success is not final, failure is not fatal: it is the courage to continue that counts.", ipa: "səkˈsɛs ɪz nɒt ˈfaɪnl ˈfeɪljər ɪz nɒt ˈfeɪtl", meaning: "Thành công không phải là vĩnh cửu, thất bại không phải là tận cùng" },
-    { text: "The future belongs to those who believe in the beauty of their dreams.", ipa: "ðə ˈfjuːtʃər bɪˈlɒŋz tuː ðəʊz huː bɪˈliːv ɪn ðə ˈbjuːti ɒv ðeər driːmz", meaning: "Tương lai thuộc về những ai tin vào vẻ đẹp của giấc mơ" },
-    { text: "In the middle of every difficulty lies opportunity.", ipa: "ɪn ðə ˈmɪdl ɒv ˈɛvri ˈdɪfɪkəlti laɪz ˌɒpəˈtjuːnɪti", meaning: "Trong trung tâm của mỗi khó khăn luôn ẩn chứa cơ hội" }
+    { text: "Success is not final, failure is not fatal: it is the courage to continue that counts.", ipa: "səkˈsɛs ɪz nɒt ˈfaɪnl ˈfeɪljər ɪz nɒt ˈfeɪtl", meaning: "Perseverance defines true achievement" },
+    { text: "The future belongs to those who believe in the beauty of their dreams.", ipa: "ðə ˈfjuːtʃər bɪˈlɒŋz tuː ðəʊz huː bɪˈliːv ɪn ðə ˈbjuːti ɒv ðeər driːmz", meaning: "Belief in dreams shapes future success" },
+    { text: "In the middle of every difficulty lies opportunity.", ipa: "ɪn ðə ˈmɪdl ɒv ˈɛvri ˈdɪfɪkəlti laɪz ˌɒpəˈtjuːnɪti", meaning: "Challenges contain hidden possibilities" }
   ]
 }
 
 const aiSentencePool = {
   easy: [
-    { text: "Keep up the great work!", ipa: "kiːp ʌp ðə ɡreɪt wɜːk", meaning: "Tiếp tục phát huy phong độ tốt nhé!" },
-    { text: "Where is the nearest coffee shop?", ipa: "weər ɪz ðə ˈnɪərɪst ˈkɒfi ʃɒp", meaning: "Quán cà phê gần nhất ở đâu?" },
-    { text: "What time does the train leave?", ipa: "wɒt taɪm dʌz ðə treɪn liːv", meaning: "Mấy giờ chuyến tàu khởi hành?" },
-    { text: "I really love learning English!", ipa: "aɪ ˈrɪəli lʌv ˈlɜːnɪŋ ˈɪŋɡlɪʃ", meaning: "Tôi rất thích học tiếng Anh!" },
-    { text: "Thank you for your warm welcome!", ipa: "θæŋk juː fɔː jɔː wɔːm ˈwɛlkəm", meaning: "Cảm ơn sự đón tiếp nồng hậu của bạn!" }
+    { text: "Keep up the great work!", ipa: "kiːp ʌp ðə ɡreɪt wɜːk", meaning: "Encouraging continued effort" },
+    { text: "Where is the nearest coffee shop?", ipa: "weər ɪz ðə ˈnɪərɪst ˈkɒfi ʃɒp", meaning: "Asking for directions to local coffee shop" },
+    { text: "What time does the train leave?", ipa: "wɒt taɪm dʌz ðə treɪn liːv", meaning: "Inquiring about train departure schedule" },
+    { text: "I really love learning English!", ipa: "aɪ ˈrɪəli lʌv ˈlɜːnɪŋ ˈɪŋɡlɪʃ", meaning: "Expressing passion for English learning" },
+    { text: "Thank you for your warm welcome!", ipa: "θæŋk juː fɔː jɔː wɔːm ˈwɛlkəm", meaning: "Expressing thanks for hospitable greeting" }
   ],
   medium: [
-    { text: "Practice makes progress, not perfection.", ipa: "ˈpræktɪs meɪks ˈprəʊɡrɛs nɒt pəˈfɛkʃən", meaning: "Luyện tập tạo nên sự tiến bộ, không phải sự hoàn hảo." },
-    { text: "Could you please give me a hand with this bag?", ipa: "kʊd juː pliːz ɡɪv miː ə hænd wɪð ðɪs bæɡ", meaning: "Bạn có thể giúp tôi một tay với chiếc túi này không?" },
-    { text: "I will call you back as soon as I finish my work.", ipa: "aɪ wɪl kɔːl juː bæk æz suːn æz aɪ ˈfɪnɪʃ maɪ wɜːk", meaning: "Tôi sẽ gọi lại cho bạn ngay khi hoàn thành công việc." }
+    { text: "Practice makes progress, not perfection.", ipa: "ˈpræktɪs meɪks ˈprəʊɡrɛs nɒt pəˈfɛkʃən", meaning: "Focus on continuous growth rather than perfection" },
+    { text: "Could you please give me a hand with this bag?", ipa: "kʊd juː pliːz ɡɪv miː ə hænd wɪð ðɪs bæɡ", meaning: "Asking for help carrying luggage" },
+    { text: "I will call you back as soon as I finish my work.", ipa: "aɪ wɪl kɔːl juː bæk æz suːn æz aɪ ˈfɪnɪʃ maɪ wɜːk", meaning: "Promising a return phone call after work" }
   ],
   hard: [
-    { text: "The secret of getting ahead is getting started.", ipa: "ðə ˈsiːkrɪt ɒv ˈɡɛtɪŋ əˈhɛd ɪz ˈɡɛtɪŋ ˈstɑːtɪd", meaning: "Bí mật của việc vươn lên dẫn đầu là hãy bắt đầu ngay." },
-    { text: "Great things are done by a series of small things brought together.", ipa: "ɡreɪt θɪŋz ɑː dʌn baɪ ə ˈsɪəriːz ɒv smɔːl θɪŋz brɔːt təˈɡɛðər", meaning: "Những điều vĩ đại được tạo nên từ chuỗi những việc nhỏ cộng lại." }
+    { text: "The secret of getting ahead is getting started.", ipa: "ðə ˈsiːkrɪt ɒv ˈɡɛtɪŋ əˈhɛd ɪz ˈɡɛtɪŋ ˈstɑːtɪd", meaning: "Initiating action is the key to progress" },
+    { text: "Great things are done by a series of small things brought together.", ipa: "ɡreɪt θɪŋz ɑː dʌn baɪ ə ˈsɪəriːz ɒv smɔːl θɪŋz brɔːt təˈɡɛðər", meaning: "Cumulative small efforts achieve greatness" }
   ]
 }
 
@@ -717,7 +718,8 @@ const currentIndex = ref(0)
 
 const currentSentence = computed(() => {
   if (dynamicSentence.value) return dynamicSentence.value
-  return sampleSentences[selectedLevel.value][currentIndex.value] || sampleSentences.easy[0]
+  const list = sampleSentences[selectedLevel.value] || sampleSentences.easy
+  return list[currentIndex.value % list.length]
 })
 
 const sessionSentenceHistory = ref(new Set())
@@ -822,7 +824,7 @@ const startRecording = async () => {
     recordingDuration.value = 0
     timer.value = setInterval(() => recordingDuration.value++, 1000)
   } catch (err) {
-    errorMessage.value = 'Không thể mở micro! Hãy cấp quyền micro trên trình duyệt.'
+    errorMessage.value = 'Microphone access denied! Please allow microphone permissions in browser.'
   }
 }
 
@@ -855,7 +857,7 @@ const analyzeShadowing = async () => {
 
     if (!res.ok) {
       const errData = await res.json()
-      throw new Error(errData.detail || 'Không thể nhận diện giọng nói. Em hãy phát âm to và rõ ràng hơn nhé!')
+      throw new Error(errData.detail || 'Unable to analyze speech audio. Please speak louder and clearly!')
     }
 
     const data = await res.json()

@@ -297,18 +297,18 @@ const testConnection = async () => {
     if (data.status === 'healthy') {
       connectionStatus.value = {
         success: true,
-        message: `🟢 Kết nối thành công! Máy chủ AI đang hoạt động tốt (Model: ${data.model_size}).`
+        message: `🟢 Connection successful! AI Server is healthy (Model: ${data.model_size}).`
       }
     } else {
       connectionStatus.value = {
         success: true,
-        message: '🟡 Kết nối thành công! Máy chủ AI đang khởi động mô hình trong giây lát.'
+        message: '🟡 Connection successful! AI Server is warming up model momentarily.'
       }
     }
   } catch (err) {
     connectionStatus.value = {
       success: false,
-      message: '🔴 Không thể kết nối tới máy chủ. Vui lòng kiểm tra lại đường dẫn API hoặc kiểm tra xem máy chủ đã bật chưa.'
+      message: '🔴 Unable to reach server. Please check the API URL or ensure backend server is active.'
     }
   } finally {
     isTestingConnection.value = false
@@ -333,13 +333,13 @@ const restoreBackup = () => {
       const data = JSON.parse(e.target.result)
       if (data && Array.isArray(data.history)) {
         emit('restore-history', data.history)
-        alert(`🎉 Phục hồi thành công! Đã khôi phục ${data.history.length} bản ghi lịch sử vào ứng dụng.`)
+        alert(`🎉 Restore successful! Restored ${data.history.length} history records into the app.`)
         backupFile.value = null
       } else {
-        throw new Error('Sai định dạng.')
+        throw new Error('Invalid schema format.')
       }
     } catch (err) {
-      alert('Không thể khôi phục. Tệp tin không đúng định dạng sao lưu của ứng dụng.')
+      alert('Restore failed. File format does not match application backup schema.')
       console.error(err)
     }
   }

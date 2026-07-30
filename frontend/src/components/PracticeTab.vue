@@ -399,51 +399,51 @@
 
           <!-- Score details -->
           <div v-if="results && !isAnalyzing" class="flex-grow-1">
-            <!-- 1. CÂU EM ĐÃ PHÁT ÂM (Hiển thị đầu tiên) -->
+            <!-- 1. TRANSCRIBED SPOKEN TEXT -->
             <div class="mb-3">
               <div class="text-caption font-weight-bold text-grey-darken-2 mb-1 d-flex align-center">
                 <v-icon size="small" color="primary" class="mr-1">mdi-message-text-outline</v-icon>
-                Câu em đã phát âm:
+                Transcribed Spoken Text:
               </div>
               <div class="pa-3 bg-blue-lighten-5 rounded-lg text-body-2 font-weight-bold text-primary border">
                 "{{ results.transcribed_text }}"
               </div>
             </div>
 
-            <!-- 2. THẺ TỔNG QUAN & ĐỘ KHỚP CHỦ ĐỀ -->
+            <!-- 2. OVERVIEW CARD & RELEVANCE -->
             <v-card border flat rounded="lg" class="pa-3 mb-3 bg-teal-lighten-5 border-teal">
               <div class="d-flex align-center justify-space-between mb-2">
                 <div class="d-flex align-center ga-2">
                   <v-chip color="teal" font-weight-bold size="small" variant="flat">
-                    🎯 {{ practiceMode === 'reading' ? 'Độ Chính Xác' : 'Khớp Chủ Đề' }} {{ results.reading_result ? results.reading_result.accuracy.toFixed(0) : (results.ai_analysis?.topic_relevance_score || 92) }}%
+                    🎯 {{ practiceMode === 'reading' ? 'Accuracy' : 'Topic Relevance' }} {{ results.reading_result ? results.reading_result.accuracy.toFixed(0) : (results.ai_analysis?.topic_relevance_score || 92) }}%
                   </v-chip>
                   <span class="text-subtitle-2 font-weight-black text-teal-darken-4">
-                    {{ results.score >= 8 ? 'Xuất Sắc!' : results.score >= 6 ? 'Rất Tốt!' : 'Cố Lên Em!' }}
+                    {{ results.score >= 8 ? 'Outstanding!' : results.score >= 6 ? 'Great Job!' : 'Keep Trying!' }}
                   </span>
                 </div>
                 <div :class="getScoreColorClass(results.score)" class="text-h5 font-weight-black">
-                  {{ results.score.toFixed(1).replace('.', ',') }}/10
+                  {{ results.score.toFixed(1) }}/10
                 </div>
               </div>
               <div class="text-caption text-teal-darken-4 font-weight-bold">
-                {{ results.ai_analysis?.topic_comment || (practiceMode === 'reading' ? 'Em đã hoàn thành đọc nhại câu mẫu rất tốt!' : 'Em đã trả lời bám sát chủ đề được giao!') }}
+                {{ results.ai_analysis?.topic_comment || (practiceMode === 'reading' ? 'You completed reading the model sentence successfully!' : 'Your response stayed well on topic!') }}
               </div>
             </v-card>
 
-            <!-- 2.1 THẺ ĐỐI CHIẾU TỪNG TỪ BÀI ĐỌC (Dành riêng cho Đọc theo mẫu) -->
+            <!-- 2.1 WORD-BY-WORD READING ALIGNMENT CARD -->
             <v-card v-if="results.reading_result" border flat rounded="lg" class="pa-3 mb-3 bg-light-blue-lighten-5 border-blue">
               <div class="d-flex align-center justify-space-between mb-2">
                 <div class="text-subtitle-2 font-weight-black text-primary d-flex align-center ga-1">
                   <v-icon color="primary" size="small">mdi-bullseye-arrow</v-icon>
-                  Đối Chiếu Từng Từ Bài Đọc Mẫu
+                  Model Sentence Word Alignment
                 </div>
                 <v-chip color="primary" font-weight-bold size="small" variant="flat">
-                  {{ results.reading_result.spoken_words_count }}/{{ results.reading_result.target_words_count }} từ
+                  {{ results.reading_result.spoken_words_count }}/{{ results.reading_result.target_words_count }} words
                 </v-chip>
               </div>
 
               <div class="text-caption text-grey-darken-2 mb-2 font-weight-bold">
-                Chi tiết từng từ (Xanh = Đọc chuẩn, Vàng = Đọc ngắt/sai nhẹ, Đỏ = Đọc thiếu/sai):
+                Word details (Green = Correct, Yellow = Partial, Red = Missing/Incorrect):
               </div>
 
               <div class="d-flex flex-wrap ga-1 bg-white pa-2 rounded border">
@@ -465,12 +465,12 @@
               </div>
             </v-card>
 
-            <!-- 3. THẺ GỢI Ý CÂU BẢN XỨ CHUẨN (NATIVE EXPRESSIONS 3 CẤP ĐỘ) -->
+            <!-- 3. NATIVE EXPRESSIONS (3 LEVELS) -->
             <v-card v-if="results.ai_analysis?.native_suggestion || results.ai_analysis?.native_suggestions" border flat rounded="lg" class="pa-3 mb-3 bg-purple-lighten-5 border-purple">
               <div class="d-flex align-center justify-space-between mb-2">
                 <div class="text-subtitle-2 font-weight-black text-purple-darken-3 d-flex align-center ga-1">
                   <v-icon color="purple" size="small">mdi-star-face</v-icon>
-                  Gợi Ý Câu Bản Xứ Chuẩn (Native Expressions)
+                  Native Expressions (3 Levels)
                 </div>
               </div>
 
@@ -510,7 +510,7 @@
                     prepend-icon="mdi-volume-high"
                     @click="speakText(sug.text)"
                   >
-                    Nghe mẫu
+                    Listen Audio
                   </v-btn>
                 </div>
               </div>
@@ -524,16 +524,17 @@
                   size="small"
                   class="text-none font-weight-bold"
                   prepend-icon="mdi-volume-high"
-                </v-btn>
+                  @click="speakText(results.ai_analysis.native_suggestion)"
+                />
               </div>
             </v-card>
 
-            <!-- THẺ CHẤM & ĐỐI CHIẾU PHIÊN ÂM IPA CHUẨN QUỐC TẾ -->
+            <!-- IPA PHONETIC EVALUATION (INTERNATIONAL STANDARD) -->
             <v-card v-if="results.ipa_analysis" border flat rounded="lg" class="pa-3 mb-3 bg-teal-lighten-5 border-teal">
               <div class="d-flex align-center justify-space-between mb-2">
                 <div class="text-subtitle-2 font-weight-black text-teal-darken-4 d-flex align-center ga-1">
                   <v-icon color="teal-darken-3" size="small">mdi-phonetics</v-icon>
-                  <span>Phân Tích & Chấm Âm Tiết IPA (Chuẩn Quốc Tế)</span>
+                  <span>IPA Phonetic Evaluation (International Standard)</span>
                 </div>
                 <v-chip color="teal-darken-3" font-weight-bold size="small" variant="flat">
                   IPA {{ results.ipa_analysis.ipa_accuracy }}%
@@ -543,29 +544,29 @@
               <!-- Full IPA sentence comparison -->
               <div class="bg-white pa-2 rounded border mb-2 text-caption">
                 <div class="d-flex align-center ga-2 mb-1">
-                  <span class="font-weight-black text-primary">IPA Câu Mẫu:</span>
+                  <span class="font-weight-black text-primary">Target IPA:</span>
                   <span class="font-weight-bold text-teal-darken-4 font-mono">{{ results.ipa_analysis.target_full_ipa }}</span>
                 </div>
                 <div class="d-flex align-center ga-2">
-                  <span class="font-weight-black text-secondary">IPA Em Đọc:</span>
+                  <span class="font-weight-black text-secondary">Spoken IPA:</span>
                   <span class="font-weight-bold text-indigo-darken-3 font-mono">{{ results.ipa_analysis.spoken_full_ipa }}</span>
                 </div>
               </div>
 
-              <!-- Biểu đồ Đường Cong Ngữ Điệu (Pitch Intonation Chart F0) -->
+              <!-- Pitch Intonation Chart F0 -->
               <div v-if="results.ipa_analysis.pitch_analysis?.pitch_points?.length" class="bg-white pa-3 rounded border mb-3">
                 <div class="d-flex align-center justify-space-between mb-2">
                   <div class="text-caption font-weight-black text-indigo-darken-3 d-flex align-center ga-1">
                     <v-icon color="indigo" size="x-small">mdi-chart-bell-curve-cumulative</v-icon>
-                    <span>Biểu Đồ Đường Cong Ngữ Điệu & Trầm Bổng (F0 Pitch Contour)</span>
+                    <span>Pitch Contour & Intonation Chart (F0)</span>
                   </div>
                   <v-chip size="x-small" color="indigo" variant="tonal" class="font-weight-black">
-                    Khớp ngữ điệu {{ results.ipa_analysis.pitch_analysis.pitch_accuracy }}%
+                    Intonation Match {{ results.ipa_analysis.pitch_analysis.pitch_accuracy }}%
                   </v-chip>
                 </div>
                 <div class="d-flex align-center justify-space-between text-caption text-grey mb-1" style="font-size: 10px;">
-                  <span><v-icon size="x-small" color="primary">mdi-minus</v-icon> Giọng bản xứ (Native)</span>
-                  <span><v-icon size="x-small" color="amber-darken-3">mdi-minus</v-icon> Giọng học sinh</span>
+                  <span><v-icon size="x-small" color="primary">mdi-minus</v-icon> Native Speaker</span>
+                  <span><v-icon size="x-small" color="amber-darken-3">mdi-minus</v-icon> Learner Voice</span>
                 </div>
                 <!-- SVG Pitch Chart -->
                 <div class="w-100 bg-grey-lighten-4 rounded pa-2 d-flex align-end justify-space-between" style="height: 60px; position: relative;">
@@ -588,11 +589,11 @@
                 </div>
               </div>
 
-              <!-- Thẻ Nối Âm Tự Nhiên (Connected Speech & Liaisons) -->
+              <!-- Connected Speech & Liaisons -->
               <div v-if="results.ipa_analysis.linking_pairs?.length" class="bg-amber-lighten-5 pa-2.5 rounded border border-amber mb-3">
                 <div class="text-caption font-weight-black text-amber-darken-4 mb-1 d-flex align-center ga-1">
                   <v-icon color="amber-darken-4" size="x-small">mdi-link-variant</v-icon>
-                  <span>Gợi Ý Nối Âm Tự Nhiên Bản Xứ (Connected Speech):</span>
+                  <span>Connected Speech & Liaisons:</span>
                 </div>
                 <div class="d-flex flex-wrap ga-2 mt-1">
                   <v-chip
@@ -645,19 +646,19 @@
                     prepend-icon="mdi-lips"
                     @click="openArticulationGuide(w_ipa.word, w_ipa.target_ipa)"
                   >
-                    Khẩu hình
+                    Articulation
                   </v-btn>
                 </div>
               </div>
             </v-card>
 
-            <!-- 4. THẺ SỬA LỖI NGỮ PHÁP & TỪ VỰNG TRỰC QUAN -->
+            <!-- 4. GRAMMAR & VOCABULARY VISUAL FIXES -->
             <v-card border flat rounded="lg" class="pa-3 mb-3" :class="validGrammarFixes.length ? 'bg-orange-lighten-5 border-orange' : 'bg-green-lighten-5 border-green'">
               <div class="text-subtitle-2 font-weight-black mb-2 d-flex align-center ga-1" :class="validGrammarFixes.length ? 'text-orange-darken-4' : 'text-success'">
                 <v-icon :color="validGrammarFixes.length ? 'orange-darken-3' : 'success'" size="small">
                   {{ validGrammarFixes.length ? 'mdi-auto-fix' : 'mdi-check-decagram-outline' }}
                 </v-icon>
-                Sửa Lỗi Ngữ Pháp & Từ Vựng Trực Quan
+                Grammar & Vocabulary Visual Fixes
               </div>
               <template v-if="validGrammarFixes.length > 0">
                 <div v-for="(fix, idx) in validGrammarFixes" :key="idx" class="mb-2 pa-3 bg-white rounded-lg border">
@@ -674,7 +675,7 @@
                     <div class="d-flex align-center ga-2 text-body-2 font-weight-bold text-error flex-wrap">
                       <v-chip color="error" size="x-small" variant="tonal" class="font-weight-black flex-shrink-0" style="font-size: 10px; height: 20px;">
                         <v-icon size="x-small" start>mdi-close-circle-outline</v-icon>
-                        Chưa chuẩn
+                        Needs Fix
                       </v-chip>
                       <span class="text-body-2 font-weight-bold text-error">"{{ fix.original }}"</span>
                     </div>
@@ -682,32 +683,32 @@
                     <div class="d-flex align-center ga-2 text-body-2 font-weight-bold text-success flex-wrap">
                       <v-chip color="success" size="x-small" variant="flat" class="font-weight-black flex-shrink-0" style="font-size: 10px; height: 20px;">
                         <v-icon size="x-small" start>mdi-check-circle-outline</v-icon>
-                        Sửa lại
+                        Corrected
                       </v-chip>
                       <span class="text-body-2 font-weight-black text-success text-decoration-underline">"{{ fix.fixed }}"</span>
                     </div>
                   </div>
 
-                  <!-- Reason explanation in Vietnamese -->
+                  <!-- Reason explanation -->
                   <div v-if="fix.reason" class="text-caption text-grey-darken-3 pl-1 pt-2 border-t mt-2" style="line-height: 1.5;">
                     <v-icon size="x-small" color="amber-darken-3" class="mr-1">mdi-lightbulb-on-outline</v-icon>
-                    <strong>Giải thích:</strong> {{ fix.reason }}
+                    <strong>Explanation:</strong> {{ fix.reason }}
                   </div>
                 </div>
               </template>
               <template v-else>
                 <div class="d-flex align-center ga-2 text-caption text-success font-weight-bold bg-white pa-2 rounded border">
                   <v-icon color="success" size="small">mdi-check-circle-outline</v-icon>
-                  <span>Cấu trúc câu ngữ pháp và từ vựng chuẩn xác, không có lỗi sai!</span>
+                  <span>Perfect grammar and vocabulary structure with zero errors!</span>
                 </div>
               </template>
             </v-card>
 
-            <!-- 5. BẢNG ĐIỂM CHI TIẾT 6 KỸ NĂNG -->
+            <!-- 5. DETAILED SKILL SCORES TABLE -->
             <div class="mb-3">
               <div class="text-caption font-weight-bold text-grey-darken-1 mb-2">
                 <v-icon size="small" color="primary" class="mr-1">mdi-chart-bar</v-icon>
-                Điểm chi tiết từng kỹ năng:
+                Detailed Skill Scores:
               </div>
               
               <v-row class="ma-0 bg-grey-lighten-5 rounded-lg border pa-2 align-center justify-space-between" no-gutters>
@@ -732,19 +733,19 @@
                     </span>
                   </div>
                   <div class="text-subtitle-2 font-weight-black text-primary mt-1">
-                    {{ (results.ai_analysis?.scores?.[item.key.toLowerCase()] || results.breakdown[item.key]).toFixed(1).replace('.', ',') }}/2
+                    {{ (results.ai_analysis?.scores?.[item.key.toLowerCase()] || results.breakdown[item.key]).toFixed(1) }}/2
                   </div>
                 </v-col>
                 <v-col cols="4" sm="2" class="pa-1 d-flex flex-column justify-center align-center">
                   <div class="text-caption text-grey-darken-2 font-weight-bold d-flex align-center justify-center">
-                    <span>Độ rõ tiếng</span>
+                    <span>Clarity Rate</span>
                     <span class="d-inline-flex align-center cursor-pointer ml-1">
                       <v-icon size="x-small" color="grey-darken-1" style="font-size: 14px;">
                         mdi-help-circle-outline
                       </v-icon>
                       <v-menu activator="parent" location="top center" transition="scale-transition">
                         <v-card class="pa-2 text-caption text-left text-grey-darken-3" max-width="240" border elevation="2" rounded="md">
-                          Đo độ to rõ của giọng nói và mức độ sạch nhiễu môi trường của micro (giúp AI nhận diện chính xác 100%).
+                          Measures voice clarity and microphone ambient noise level for 100% accurate AI recognition.
                         </v-card>
                       </v-menu>
                     </span>
@@ -916,60 +917,60 @@ const selectedArticulation = ref(null)
 
 const ARTICULATION_GUIDES = {
   's': {
-    title: 'Phụ Âm Xì /s/ (Fricative)',
+    title: 'Fricative Consonant /s/',
     ipa: '/s/',
-    mouth_position: 'Hai hàm răng khép nhẹ, hai mép môi hơi kéo sang 2 bên như đang mỉm cười nhẹ.',
-    tongue_position: 'Đầu lưỡi nâng gần sát nướu răng cửa trên (không chạm vào răng), tạo khe hẹp.',
-    airflow: 'Đẩy luồng hơi xì xát liên tục qua khe giữa đầu lưỡi và nướu răng. Không rung dây thanh quản (Voiceless).',
-    tip: 'Hãy giữ luồng hơi kéo dài 1-2 giây để tạo tiếng xì giòn giã.'
+    mouth_position: 'Slightly close teeth, pull lip corners sideways in a gentle smile.',
+    tongue_position: 'Raise tongue tip close to upper alveolar ridge without touching, forming a narrow gap.',
+    airflow: 'Continuous unvoiced airflow pushed through the gap between tongue tip and ridge (Voiceless).',
+    tip: 'Sustain the airflow for 1-2 seconds to produce a crisp sibilant sound.'
   },
   'z': {
-    title: 'Phụ Âm Rung /z/ (Voiced Fricative)',
+    title: 'Voiced Fricative Consonant /z/',
     ipa: '/z/',
-    mouth_position: 'Khẩu hình môi và răng giống hệt âm /s/.',
-    tongue_position: 'Đầu lưỡi nâng gần sát nướu răng cửa trên.',
-    airflow: 'Khấu hình giống /s/ nhưng RUNG dây thanh quản (Voiced). Bạn cảm nhận cổ họng rung khi đọc.',
-    tip: 'Đặt ngón tay lên cổ họng, bạn phải thấy cổ họng rung khi xì ra âm /z/.'
+    mouth_position: 'Same mouth and teeth position as /s/.',
+    tongue_position: 'Raise tongue tip near upper alveolar ridge.',
+    airflow: 'Identical mouth shape to /s/ but with vocal cord vibration (Voiced). Feel throat vibration.',
+    tip: 'Place fingers on your throat; you must feel vocal cord vibration while producing /z/.'
   },
   't': {
-    title: 'Phụ Âm Bật /t/ (Plosive)',
+    title: 'Plosive Consonant /t/',
     ipa: '/t/',
-    mouth_position: 'Môi hơi mở tự nhiên.',
-    tongue_position: 'Đầu lưỡi áp chặt vào nướu răng cửa trên để chặn hoàn toàn luồng khí.',
-    airflow: 'Bật nhẹ đầu lưỡi xuống nhanh để giải phóng luồng khí nén tạo tiếng bật dứt khoát.',
-    tip: 'Đặt bàn tay trước miệng, bạn phải cảm nhận được một luồng hơi bật mạnh ra.'
+    mouth_position: 'Slightly open lips naturally.',
+    tongue_position: 'Press tongue tip firmly against upper alveolar ridge to block airflow completely.',
+    airflow: 'Release tongue tip downward rapidly to burst trapped air with a sharp sound.',
+    tip: 'Place hand in front of mouth; feel a sharp burst of air on release.'
   },
   'd': {
-    title: 'Phụ Âm Bật Rung /d/ (Voiced Plosive)',
+    title: 'Voiced Plosive Consonant /d/',
     ipa: '/d/',
-    mouth_position: 'Môi hơi mở tự nhiên.',
-    tongue_position: 'Đầu lưỡi áp chặt vào nướu răng cửa trên.',
-    airflow: 'Bật đầu lưỡi xuống đồng thời RUNG dây thanh quản.',
-    tip: 'Âm bật trầm hơn âm /t/ và có độ rung nhẹ ở cổ họng.'
+    mouth_position: 'Slightly open lips naturally.',
+    tongue_position: 'Press tongue tip firmly against upper alveolar ridge.',
+    airflow: 'Release tongue tip downward while vibrating vocal cords.',
+    tip: 'Deeper resonant burst than /t/ with gentle throat vibration.'
   },
   'th': {
-    title: 'Phụ Âm Thè Lưỡi /θ/ & /ð/',
+    title: 'Dental Consonants /θ/ & /ð/',
     ipa: '/θ/ - /ð/',
-    mouth_position: 'Đặt đầu lưỡi thè ra giữa 2 hàm răng cửa (răng kẹp nhẹ lên lưỡi).',
-    tongue_position: 'Đầu lưỡi thả lỏng đặt nhẹ giữa 2 hàm răng.',
-    airflow: 'Đẩy luồng hơi xì qua khe giữa răng trên và mặt lưỡi.',
-    tip: 'Đừng rụt lưỡi vào trong quá nhanh! Hãy thè nhẹ đầu lưỡi ra ngoài 1-2 cm.'
+    mouth_position: 'Place tongue tip gently between upper and lower front teeth.',
+    tongue_position: 'Relaxed tongue tip resting lightly between teeth.',
+    airflow: 'Push air out between upper teeth and tongue surface.',
+    tip: 'Do not retract tongue inside too quickly! Extend tongue tip outward 1-2 cm.'
   },
   'r': {
-    title: 'Phụ Âm Căng Lưỡi /r/',
+    title: 'Retroflex Consonant /r/',
     ipa: '/r/',
-    mouth_position: 'Môi hơi chu tròn về phía trước.',
-    tongue_position: 'Đầu lưỡi uốn cong ngược về phía sau vòm miệng (không chạm vòm miệng).',
-    airflow: 'Luồng khí đi qua khe giữa vòm miệng và thân lưỡi căng.',
-    tip: 'Tưởng tượng lưỡi tạo thành hình cái thìa uốn cong về sau.'
+    mouth_position: 'Slightly round lips forward.',
+    tongue_position: 'Curl tongue tip backward toward roof of mouth (without touching).',
+    airflow: 'Airflow passes through space between palate and tense curved tongue.',
+    tip: 'Imagine your tongue spooning upward and curving backward.'
   },
   'l': {
-    title: 'Phụ Âm Đầu Lưỡi /l/',
+    title: 'Lateral Consonant /l/',
     ipa: '/l/',
-    mouth_position: 'Miệng mở tự nhiên.',
-    tongue_position: 'Đầu lưỡi chạm chắc vào nướu sau răng cửa trên.',
-    airflow: 'Luồng khí thoát ra qua 2 bên mép lưỡi.',
-    tip: 'Giữ đầu lưỡi dính chặt vào nướu răng trên khi kết thúc âm.'
+    mouth_position: 'Open mouth naturally.',
+    tongue_position: 'Press tongue tip firmly against upper alveolar ridge behind front teeth.',
+    airflow: 'Airflow escapes laterally around the sides of the tongue.',
+    tip: 'Keep tongue tip anchored against upper ridge upon sound completion.'
   }
 }
 
@@ -1027,7 +1028,7 @@ const isPlaying = ref(false)
 const currentTime = ref(0)
 const audioPlayer = ref(null)
 const isAnalyzing = ref(false)
-const loadingText = ref('Đang xử lý âm thanh...')
+const loadingText = ref('Processing speech audio...')
 const results = ref(null)
 const errorMessage = ref(null)
 
@@ -1040,18 +1041,18 @@ let durationTimer = null
 let animationFrameId = null
 
 const scoreCriteria = [
-  { key: 'Pronunciation', name: 'Phát âm', desc: 'Đánh giá độ chuẩn xác khi phát âm từng từ và âm tiết IPA. Nói tròn vành rõ chữ, bật âm đuôi (/s/, /t/) đầy đủ để đạt điểm tối đa.' },
-  { key: 'Fluency', name: 'Trôi chảy', desc: 'Đo tốc độ nói và nhịp điệu tự nhiên. Nói mượt mà, hạn chế ngập ngừng "ờ, ừ" và duy trì câu dài trên 15 từ để đạt điểm cao.' },
-  { key: 'Grammar', name: 'Ngữ pháp', desc: 'Đánh giá tính chính xác của cấu trúc câu. Chia đúng thì động từ, câu có đầy đủ chủ ngữ - vị ngữ và không sai ngữ pháp cơ bản.' },
-  { key: 'Vocabulary', name: 'Từ vựng', desc: 'Đo mức độ phong phú và độ hợp lý của từ vựng. Sử dụng từ vựng đúng chủ đề và tránh lặp lại một từ đơn giản quá nhiều lần.' },
-  { key: 'Communication', name: 'Giao tiếp', desc: 'Đánh giá khả năng diễn đạt và độ bám sát chủ đề. Trả lời đúng trọng tâm câu hỏi và đưa ra lý do giải thích chi tiết ý tưởng.' }
+  { key: 'Pronunciation', name: 'Pronunciation', desc: 'Evaluates accuracy of individual words and IPA phonetics. Articulate clearly and pronounce ending consonants (/s/, /t/) for max score.' },
+  { key: 'Fluency', name: 'Fluency', desc: 'Measures speaking pace and natural rhythm. Speak smoothly with minimal hesitations and maintain sentences over 15 words for higher score.' },
+  { key: 'Grammar', name: 'Grammar', desc: 'Evaluates structural correctness. Use proper verb tenses, complete subject-verb clauses, and avoid basic grammatical errors.' },
+  { key: 'Vocabulary', name: 'Vocabulary', desc: 'Measures lexical diversity and context appropriateness. Use topic-relevant vocabulary and avoid repeating simple words.' },
+  { key: 'Communication', name: 'Communication', desc: 'Evaluates expressiveness and topic relevance. Address prompt directly and elaborate your thoughts with detailed reasoning.' }
 ]
 
 const loadingTexts = [
-  'Đang nhận diện giọng nói thành văn bản...',
-  'Đang phân tích độ chuẩn xác của phát âm...',
-  'Đang đánh giá các lỗi ngữ pháp...',
-  'Đang tạo phản hồi sư phạm chuyên môn...'
+  'Transcribing spoken audio to text...',
+  'Analyzing IPA phonetic accuracy...',
+  'Evaluating grammar & vocabulary structure...',
+  'Generating academic pedagogical feedback...'
 ]
 
 let loadingInterval = null
@@ -1163,7 +1164,7 @@ const startRecording = async () => {
       recordingDuration.value += 1
     }, 1000)
   } catch (err) {
-    errorMessage.value = "Không thể truy cập Microphone. Vui lòng cho phép quyền truy cập micro trên trình duyệt."
+    errorMessage.value = "Microphone access denied. Please allow microphone permissions in your browser."
     console.error(err)
   }
 }
@@ -1281,7 +1282,7 @@ const analyzeSpeech = async () => {
     
     if (!response.ok) {
       const errData = await response.json()
-      throw new Error(errData.detail || 'Không thể chấm điểm âm thanh.')
+      throw new Error(errData.detail || 'Failed to evaluate speech audio.')
     }
     
     const data = await response.json()
@@ -1322,10 +1323,10 @@ const cleanFeedback = (text) => {
 }
 
 const getGradeMessage = (score) => {
-  if (score >= 8) return 'Xuất sắc! Em phát âm rất chuẩn!'
-  if (score >= 6) return 'Khá tốt! Luyện tập thêm để giỏi hơn nữa nhé!'
-  if (score >= 4) return 'Đạt yêu cầu! Đọc thêm phần nhận xét bên dưới nha!'
-  return 'Cần cố gắng! Em luyện nói mỗi ngày để phát triển kỹ năng nhé!'
+  if (score >= 8) return 'Outstanding! Your pronunciation is exceptionally accurate!'
+  if (score >= 6) return 'Great job! Keep practicing to achieve native fluency!'
+  if (score >= 4) return 'Satisfactory! Check the detailed feedback below to improve!'
+  return 'Keep trying! Daily practice will rapidly build your speaking skills!'
 }
 
 onUnmounted(() => {

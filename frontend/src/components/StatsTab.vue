@@ -202,7 +202,7 @@
               <v-col cols="12" class="pa-1">
                 <span class="text-caption font-weight-bold text-secondary d-flex align-center ga-1 mb-1">
                   <v-icon size="x-small">mdi-comment-text-outline</v-icon>
-                  <span>Câu em đã nói:</span>
+                  <span>Transcribed Spoken Text:</span>
                 </span>
                 <div class="pa-2 bg-white rounded border text-body-2 font-italic">
                   "{{ item.transcribed }}"
@@ -211,7 +211,7 @@
               <v-col cols="12" class="pa-1">
                 <span class="text-caption font-weight-bold text-secondary d-flex align-center ga-1 mb-1">
                   <v-icon size="x-small">mdi-message-text-outline</v-icon>
-                  <span>Nhận xét:</span>
+                  <span>Pedagogical Feedback:</span>
                 </span>
                 <div class="text-caption text-grey-darken-3 bg-white pa-2 rounded border" v-html="renderHistoryFeedback(item.feedback)" />
               </v-col>
@@ -224,7 +224,7 @@
       <v-card border flat class="pa-3 bg-white" rounded="lg">
         <div class="text-subtitle-2 font-weight-bold text-secondary mb-2 d-flex align-center ga-1">
           <v-icon color="secondary" size="small">mdi-database-outline</v-icon>
-          <span>Quản lý dữ liệu học tập</span>
+          <span>Learning Data Management</span>
         </div>
         <v-row class="ma-0 ga-2">
           <v-col cols="12" sm="4" class="pa-1">
@@ -237,7 +237,7 @@
               class="font-weight-bold text-caption text-sm-body-2"
               @click="downloadCSV"
             >
-              Tải lịch sử (CSV)
+              Export History (CSV)
             </v-btn>
           </v-col>
           <v-col cols="12" sm="4" class="pa-1">
@@ -250,7 +250,7 @@
               class="font-weight-bold text-caption text-sm-body-2"
               @click="downloadJSON"
             >
-              Sao lưu (JSON)
+              Backup Data (JSON)
             </v-btn>
           </v-col>
           <v-col cols="12" sm="4" class="pa-1">
@@ -263,7 +263,7 @@
               class="font-weight-bold text-caption text-sm-body-2"
               @click="confirmClearHistory"
             >
-              {{ isConfirmingClear ? 'Bấm lại để xác nhận xóa!' : 'Xóa lịch sử học' }}
+              {{ isConfirmingClear ? 'Click again to confirm!' : 'Clear Practice History' }}
             </v-btn>
           </v-col>
         </v-row>

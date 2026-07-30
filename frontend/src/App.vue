@@ -11,7 +11,7 @@
             <div>
               <span class="text-subtitle-1 font-weight-black text-indigo tracking-tight">FLUENT ADMIN</span>
               <span class="text-caption font-weight-bold text-grey-darken-1 border-s ps-2 ml-2">
-                Trang cấu hình nhà phát triển
+                Developer Admin Console
               </span>
             </div>
           </div>
@@ -24,7 +24,7 @@
             prepend-icon="mdi-home"
             @click="goToHome"
           >
-            Quay lại trang học
+            Return to Learning Studio
           </v-btn>
         </div>
       </v-app-bar>
@@ -39,15 +39,15 @@
                   <v-avatar color="indigo-lighten-5" size="36" class="text-indigo border">
                     <v-icon size="small">mdi-server-network</v-icon>
                   </v-avatar>
-                  <div class="text-subtitle-1 font-weight-black text-secondary">Kết nối Máy chủ (API)</div>
+                  <div class="text-subtitle-1 font-weight-black text-secondary">API Server Connection</div>
                 </div>
 
                 <v-row class="ma-0 align-center ga-2">
                   <v-col cols="12" sm="8" class="pa-1">
                     <v-text-field
                       v-model="backendUrl"
-                      label="Đường dẫn API máy chủ:"
-                      placeholder="Ví dụ: https://agrse-fluent-english-backend.hf.space"
+                      label="API Server Endpoint URL:"
+                      placeholder="Example: https://agrse-fluent-english-backend.hf.space"
                       variant="outlined"
                       density="comfortable"
                       hide-details
@@ -66,7 +66,7 @@
                       :loading="isTestingConnection"
                       @click="testConnection"
                     >
-                      Kiểm tra kết nối
+                      Test Connection
                     </v-btn>
                   </v-col>
                 </v-row>
@@ -584,18 +584,18 @@ const testConnection = async () => {
       const data = await res.json()
       connectionStatus.value = {
         success: true,
-        message: `Kết nối thành công! Trạng thái: ${data.status}`
+        message: `API Connection successful! Status: ${data.status}`
       }
     } else {
       connectionStatus.value = {
         success: false,
-        message: `Lỗi kết nối máy chủ! Mã phản hồi: ${res.status}`
+        message: `Server connection error! Response code: ${res.status}`
       }
     }
   } catch (e) {
     connectionStatus.value = {
       success: false,
-      message: `Không thể truy cập đường dẫn API! ${e.message}`
+      message: `Unable to access API URL! ${e.message}`
     }
   } finally {
     isTestingConnection.value = false

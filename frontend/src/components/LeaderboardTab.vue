@@ -218,16 +218,20 @@ const props = defineProps({
 const leaderboard = ref([])
 const isLoading = ref(false)
 
-const top1 = computed(() => leaderboard.value[0] || { name: 'Đang trống', best_score: '--', streak_count: 0, isEmpty: true })
-const top2 = computed(() => leaderboard.value[1] || { name: 'Đang trống', best_score: '--', streak_count: 0, isEmpty: true })
-const top3 = computed(() => leaderboard.value[2] || { name: 'Đang trống', best_score: '--', streak_count: 0, isEmpty: true })
+const top1 = computed(() => leaderboard.value[0] || { name: 'Empty Slot', best_score: '--', streak_count: 0, isEmpty: true })
+const top2 = computed(() => leaderboard.value[1] || { name: 'Empty Slot', best_score: '--', streak_count: 0, isEmpty: true })
+const top3 = computed(() => leaderboard.value[2] || { name: 'Empty Slot', best_score: '--', streak_count: 0, isEmpty: true })
 
 const formatDisplayName = (nameStr) => {
-  if (!nameStr) return 'Học sinh'
+  if (!nameStr) return 'Learner'
+  if (nameStr.startsWith('Học Sinh Khách #')) {
+    const subId = nameStr.split('#')[1]
+    return `Guest Learner #${subId}`
+  }
   if (nameStr.startsWith('guest_')) {
     const parts = nameStr.split('@')[0].split('_')
     const subId = parts[1] ? parts[1].slice(-4) : ''
-    return `Học Sinh Khách #${subId}`
+    return `Guest Learner #${subId}`
   }
   return nameStr
 }
@@ -238,7 +242,7 @@ const getAvatarUrl = (user) => {
   if (avatar && typeof avatar === 'string' && avatar.trim() !== '') {
     return avatar
   }
-  const name = user.name || 'Học Sinh'
+  const name = user.name || 'Learner'
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=673AB7&color=fff&bold=true`
 }
 

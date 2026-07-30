@@ -121,10 +121,10 @@ const editGoal = ref(props.dailyGoal)
 const isSaving = ref(false)
 
 const formatDisplayName = (name) => {
-  if (!name) return 'Học Sinh'
+  if (!name) return 'Learner'
   if (name.startsWith('guest_')) {
     const num = name.replace('guest_', '')
-    return `Học Sinh Khách #${num.slice(-5)}`
+    return `Guest Learner #${num.slice(-5)}`
   }
   return name
 }
