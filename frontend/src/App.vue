@@ -123,6 +123,11 @@
                 Shadowing
               </v-btn>
 
+              <!-- Leaderboard Pill -->
+              <v-btn to="/leaderboard" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-trophy-outline" class="font-weight-bold text-none text-body-2">
+                Leaderboard
+              </v-btn>
+
               <!-- Homework Pill for Students -->
               <v-btn to="/homework" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-clipboard-text-outline" class="font-weight-bold text-none text-body-2">
                 Homework
