@@ -8,9 +8,9 @@
             <v-icon color="purple-darken-3" size="large">mdi-clipboard-text-outline</v-icon>
           </v-avatar>
           <div>
-            <div class="text-h6 font-weight-black tracking-tight">BÀI TẬP VỀ NHÀ ĐƯỢC GIAO</div>
+            <div class="text-h6 font-weight-black tracking-tight">CLASSROOM ASSIGNED HOMEWORK</div>
             <div class="text-caption opacity-90 font-weight-medium">
-              Hoàn thành các bài luyện phát âm do Giáo viên Lớp 5A giao để tích lũy điểm số
+              Complete pronunciation reading exercises assigned by your teacher
             </div>
           </div>
         </div>
@@ -22,7 +22,7 @@
           prepend-icon="mdi-key-variant"
           @click="showJoinClassModal = true"
         >
-          Nhập Mã Vào Lớp Mới
+          Enter Class Join Code
         </v-btn>
       </div>
     </v-card>
@@ -44,7 +44,7 @@
                 {{ asg.class_name }}
               </v-chip>
             </div>
-            <div class="text-caption text-grey">Hạn nộp: {{ asg.due_date || 'Không có hạn' }}</div>
+            <div class="text-caption text-grey">Due Date: {{ asg.due_date || 'No Deadline' }}</div>
           </div>
 
           <v-chip
@@ -53,13 +53,13 @@
             size="small"
             class="font-weight-black"
           >
-            {{ asg.is_submitted ? `Đã Nộp (${asg.score?.toFixed(1)}/10)` : 'Chưa Nộp' }}
+            {{ asg.is_submitted ? `Submitted (${asg.score?.toFixed(1)}/10)` : 'Pending' }}
           </v-chip>
         </div>
 
         <!-- Target Sentence Card -->
         <div class="pa-3 bg-purple-lighten-5 rounded border border-purple mb-3">
-          <div class="text-caption font-weight-bold text-purple-darken-3 mb-1">Mẫu Bài Đọc Cần Thu Âm:</div>
+          <div class="text-caption font-weight-bold text-purple-darken-3 mb-1">Assigned Model Reading Sentence:</div>
           <div class="text-body-1 font-weight-black text-secondary">"{{ asg.topic_sentence }}"</div>
         </div>
 
@@ -72,20 +72,20 @@
             :prepend-icon="isRecording ? 'mdi-stop' : 'mdi-microphone'"
             @click="toggleRecording(asg)"
           >
-            {{ isRecording ? 'Dừng & Nộp Bài' : 'Bắt Đầu Ghi Âm Bài Đọc' }}
+            {{ isRecording ? 'Stop & Submit Recording' : 'Start Voice Recording' }}
           </v-btn>
           <span v-if="isRecording" class="text-caption text-error font-weight-bold animate-pulse">
-            🔴 Đang ghi âm bài nộp...
+            🔴 Recording voice submission...
           </span>
         </div>
 
         <div v-else class="bg-grey-lighten-5 pa-3 rounded border">
-          <div class="text-caption font-weight-bold text-grey-darken-3 mb-1">Âm thanh đã nộp lên Supabase Storage:</div>
+          <div class="text-caption font-weight-bold text-grey-darken-3 mb-1">Submitted Audio on Supabase Storage:</div>
           <div v-if="asg.audio_url" class="d-flex align-center ga-2 mb-2">
             <audio controls :src="asg.audio_url" class="w-100" style="height: 32px;" />
           </div>
           <div v-if="asg.teacher_feedback" class="text-caption text-indigo font-weight-bold">
-            Lời nhận xét của Giáo viên: {{ asg.teacher_feedback }}
+            Teacher Feedback: {{ asg.teacher_feedback }}
           </div>
         </div>
       </v-card>
@@ -93,7 +93,7 @@
       <div v-if="!assignments.length" class="text-center pa-8 bg-white border rounded-lg">
         <v-icon size="48" color="grey-lighten-1">mdi-clipboard-check-outline</v-icon>
         <div class="text-subtitle-2 font-weight-bold text-grey mt-2">
-          Bạn chưa gia nhập lớp học nào hoặc chưa có bài tập mới.
+          You are not enrolled in any class yet or have no assigned homework.
         </div>
         <v-btn
           color="primary"
@@ -102,7 +102,7 @@
           prepend-icon="mdi-key-variant"
           @click="showJoinClassModal = true"
         >
-          Nhập Mã Vào Lớp (Ví dụ: CLS-5A-89)
+          Enter Join Code (Example: CLS-524-89)
         </v-btn>
       </div>
     </div>
@@ -112,13 +112,13 @@
       <v-card border rounded="lg" class="pa-4">
         <div class="text-subtitle-1 font-weight-black text-primary mb-2 d-flex align-center ga-2">
           <v-icon color="primary">mdi-key-variant</v-icon>
-          <span>Gia Nhập Lớp Học Mới</span>
+          <span>Join New Classroom</span>
         </div>
 
         <v-text-field
           v-model="joinCodeInput"
-          label="Mã Vào Lớp (6 Ký tự từ Giáo viên):"
-          placeholder="Ví dụ: CLS-524-89"
+          label="6-Digit Join Code:"
+          placeholder="Example: CLS-524-89"
           variant="outlined"
           density="comfortable"
           class="mb-3"
@@ -127,9 +127,9 @@
 
         <v-card-actions class="px-0 pb-0">
           <v-spacer />
-          <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showJoinClassModal = false">Hủy</v-btn>
+          <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showJoinClassModal = false">Cancel</v-btn>
           <v-btn color="primary" variant="flat" class="text-none font-weight-bold" :loading="isJoining" @click="submitJoinClass">
-            Gia Nhập Lớp
+            Join Class
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -180,16 +180,16 @@ const submitJoinClass = async () => {
     })
     if (res.ok) {
       const data = await res.json()
-      alert(`Thành công! Bạn đã gia nhập ${data.class_name}`)
+      alert(`Success! You joined ${data.class_name}`)
       showJoinClassModal.value = false
       joinCodeInput.value = ''
       await fetchStudentAssignments()
     } else {
       const err = await res.json()
-      alert(err.detail || 'Mã lớp không hợp lệ.')
+      alert(err.detail || 'Invalid Class Join Code.')
     }
   } catch (e) {
-    alert('Lỗi gia nhập lớp: ' + e.message)
+    alert('Failed to join class: ' + e.message)
   } finally {
     isJoining.value = false
   }
@@ -197,7 +197,6 @@ const submitJoinClass = async () => {
 
 const toggleRecording = async (asg) => {
   if (!isRecording.value) {
-    // Start recording
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       mediaRecorder = new MediaRecorder(stream)
@@ -207,10 +206,9 @@ const toggleRecording = async (asg) => {
       mediaRecorder.start()
       isRecording.value = true
     } catch (e) {
-      alert('Không thể mở micro: ' + e.message)
+      alert('Microphone access denied: ' + e.message)
     }
   } else {
-    // Stop recording and upload
     if (mediaRecorder) {
       mediaRecorder.stop()
       isRecording.value = false
@@ -223,7 +221,7 @@ const uploadSubmission = async (asg) => {
   const formData = new FormData()
   formData.append('assignment_id', asg.assignment_id)
   formData.append('student_id', props.userId || 1)
-  formData.append('student_name', 'Học sinh')
+  formData.append('student_name', 'Student')
   formData.append('audio', blob, 'submission.webm')
 
   try {
@@ -232,11 +230,11 @@ const uploadSubmission = async (asg) => {
       body: formData
     })
     if (res.ok) {
-      alert('Nộp bài thành công! File âm thanh đã lưu lên Supabase Storage.')
+      alert('Submission successful! Audio file stored on Supabase Storage.')
       await fetchStudentAssignments()
     }
   } catch (e) {
-    alert('Lỗi nộp bài: ' + e.message)
+    alert('Submission error: ' + e.message)
   }
 }
 

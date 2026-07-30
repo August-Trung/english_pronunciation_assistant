@@ -7,9 +7,9 @@
           <v-icon color="teal-darken-3" size="large">mdi-human-female-boy</v-icon>
         </v-avatar>
         <div>
-          <div class="text-h6 font-weight-black tracking-tight">CỔNG PHỤ HUYNH & TIẾN ĐỘ HỌC TẬP</div>
+          <div class="text-h6 font-weight-black tracking-tight">PARENT PORTAL & LEARNING PROGRESS</div>
           <div class="text-caption opacity-90 font-weight-medium">
-            Theo dõi điểm số phát âm IPA, nghe lại bài thu âm và xem nhận xét từ Giáo viên dành cho con
+            Monitor IPA pronunciation scores, stream voice audio recordings, & view teacher feedback
           </div>
         </div>
       </div>
@@ -17,11 +17,11 @@
 
     <!-- Tracking Code Input Form -->
     <v-card border flat class="pa-4 mb-4 bg-white rounded-lg">
-      <div class="text-subtitle-2 font-weight-black text-secondary mb-2">NHẬP MÃ THEO DÕI CỦA CON</div>
+      <div class="text-subtitle-2 font-weight-black text-secondary mb-2">ENTER STUDENT TRACKING CODE</div>
       <div class="d-flex align-center ga-2">
         <v-text-field
           v-model="parentCode"
-          placeholder="Ví dụ: PA-9842 (Xem mã trong Hồ sơ cá nhân của con)"
+          placeholder="Example: PA-9842 (Find code in Student Profile)"
           variant="outlined"
           density="comfortable"
           hide-details
@@ -38,7 +38,7 @@
           :loading="isLoading"
           @click="fetchReport"
         >
-          Tra Cứu Tiến Độ
+          Track Progress
         </v-btn>
       </div>
     </v-card>
@@ -53,21 +53,21 @@
             </v-avatar>
             <div>
               <div class="text-h6 font-weight-black text-primary">{{ report.student.name }}</div>
-              <div class="text-caption text-grey">Mã Phụ Huynh: <strong>{{ report.student.parent_code }}</strong></div>
+              <div class="text-caption text-grey">Parent Tracking Code: <strong>{{ report.student.parent_code }}</strong></div>
             </div>
           </div>
 
           <div class="d-flex align-center ga-3">
             <v-chip color="teal" variant="flat" size="large" class="font-weight-black">
-              Điểm Trung Bình: {{ report.avg_score }}/10
+              Average Score: {{ report.avg_score }}/10
             </v-chip>
             <v-chip color="indigo" variant="tonal" size="large" class="font-weight-black">
-              Đã Hoàn Thành: {{ report.total_completed }} Bài
+              Completed: {{ report.total_completed }} Homeworks
             </v-chip>
           </div>
         </div>
 
-        <div class="text-subtitle-2 font-weight-black text-secondary mb-3">DANH SÁCH BÀI ĐỌC THU ÂM CỦA CON</div>
+        <div class="text-subtitle-2 font-weight-black text-secondary mb-3">STUDENT VOICE RECORDINGS & FEEDBACK</div>
 
         <div class="d-flex flex-column ga-3">
           <v-card
@@ -80,7 +80,7 @@
             <div class="d-flex align-center justify-space-between flex-wrap ga-2 mb-2">
               <span class="text-subtitle-2 font-weight-black text-indigo">{{ sub.title }}</span>
               <v-chip color="success" size="small" variant="flat" class="font-weight-black">
-                Điểm bài đọc: {{ sub.score.toFixed(1) }}/10
+                Score: {{ sub.score.toFixed(1) }}/10
               </v-chip>
             </div>
 
@@ -96,12 +96,12 @@
 
             <!-- Teacher Feedback -->
             <div v-if="sub.teacher_feedback" class="bg-indigo-lighten-5 pa-2 rounded border border-indigo text-caption">
-              <strong class="text-indigo-darken-3">Lời nhận xét của Giáo viên:</strong> {{ sub.teacher_feedback }}
+              <strong class="text-indigo-darken-3">Teacher Pedagogical Feedback:</strong> {{ sub.teacher_feedback }}
             </div>
           </v-card>
 
           <div v-if="!report.submissions?.length" class="text-center pa-6 text-caption text-grey border rounded-lg">
-            Con chưa nộp bài đọc nào. Vui lòng nhắc con hoàn thành bài tập về nhà trên ứng dụng!
+            No homework submissions found. Please remind your child to complete assigned reading exercises.
           </div>
         </div>
       </v-card>
@@ -129,11 +129,11 @@ const fetchReport = async () => {
       report.value = await res.json()
     } else {
       const err = await res.json()
-      alert(err.detail || 'Không tìm thấy thông tin của con.')
+      alert(err.detail || 'Invalid tracking code.')
       report.value = null
     }
   } catch (e) {
-    alert('Lỗi tra cứu: ' + e.message)
+    alert('Failed to fetch progress report: ' + e.message)
   } finally {
     isLoading.value = false
   }

@@ -8,9 +8,9 @@
             <v-icon color="grey-darken-4" size="large">mdi-shield-crown-outline</v-icon>
           </v-avatar>
           <div>
-            <div class="text-h6 font-weight-black tracking-tight">CỔNG QUẢN TRỊ VIÊN HỆ THỐNG (ADMIN CONSOLE)</div>
+            <div class="text-h6 font-weight-black tracking-tight">ENTERPRISE SYSTEM ADMIN CONSOLE</div>
             <div class="text-caption opacity-90 font-weight-medium">
-              Quản lý Đa Trường Học (Tenants), Cấp tài khoản Giảng viên, Hạn mức Seat License & Auto-Cleanup Supabase
+              Manage multi-tenant school organizations, provision educator accounts, seat licenses, & Supabase 60-day auto-cleanup
             </div>
           </div>
         </div>
@@ -31,7 +31,7 @@
             <v-icon size="default">mdi-domain</v-icon>
           </v-avatar>
           <div>
-            <div class="text-caption font-weight-bold text-grey">Tổng Trường Học / Chi Nhánh</div>
+            <div class="text-caption font-weight-bold text-grey">School Organizations</div>
             <div class="text-h6 font-weight-black text-secondary">{{ overview.total_tenants }}</div>
           </div>
         </v-card>
@@ -42,7 +42,7 @@
             <v-icon size="default">mdi-account-tie</v-icon>
           </v-avatar>
           <div>
-            <div class="text-caption font-weight-bold text-grey">Tổng Số Giảng Viên</div>
+            <div class="text-caption font-weight-bold text-grey">Enrolled Educators</div>
             <div class="text-h6 font-weight-black text-teal-darken-3">{{ overview.total_teachers }}</div>
           </div>
         </v-card>
@@ -53,7 +53,7 @@
             <v-icon size="default">mdi-account-school-outline</v-icon>
           </v-avatar>
           <div>
-            <div class="text-caption font-weight-bold text-grey">Tổng Học Sinh Active</div>
+            <div class="text-caption font-weight-bold text-grey">Active Student Seats</div>
             <div class="text-h6 font-weight-black text-purple-darken-3">{{ overview.total_students }}</div>
           </div>
         </v-card>
@@ -64,7 +64,7 @@
             <v-icon size="default">mdi-cloud-outline</v-icon>
           </v-avatar>
           <div>
-            <div class="text-caption font-weight-bold text-grey">Dung Lượng Supabase (0đ)</div>
+            <div class="text-caption font-weight-bold text-grey">Supabase Storage (0 VND)</div>
             <div class="text-h6 font-weight-black text-blue-darken-3">
               {{ overview.supabase_storage_used_mb }} MB / {{ overview.supabase_storage_limit_mb }} MB
             </div>
@@ -77,13 +77,13 @@
     <v-card border flat class="pa-4 bg-white rounded-lg">
       <v-tabs v-model="activeTab" color="primary" density="compact" class="mb-4">
         <v-tab value="tenants" class="font-weight-black text-none" prepend-icon="mdi-domain">
-          Quản Lý Trường Học (Tenants)
+          School Organizations (Tenants)
         </v-tab>
         <v-tab value="provision" class="font-weight-black text-none" prepend-icon="mdi-account-plus-outline">
-          Cấp Tài Khoản (Provisioning)
+          Account Provisioning
         </v-tab>
         <v-tab value="cleanup" class="font-weight-black text-none" prepend-icon="mdi-broom">
-          Auto-Cleanup Worker 60 Ngày
+          Auto-Cleanup Worker (60 Days)
         </v-tab>
       </v-tabs>
 
@@ -91,20 +91,20 @@
         <!-- Sub-Tab 1: Tenants List & Create -->
         <v-window-item value="tenants">
           <div class="d-flex align-center justify-space-between mb-3">
-            <span class="text-subtitle-2 font-weight-black text-secondary">DANH SÁCH TRƯỜNG HỌC / TRUNG TÂM B2B</span>
+            <span class="text-subtitle-2 font-weight-black text-secondary">B2B SCHOOL TENANTS DIRECTORY</span>
             <v-btn color="primary" size="small" variant="flat" class="font-weight-bold text-none" prepend-icon="mdi-plus" @click="showCreateTenantModal = true">
-              Tạo Trường Mới
+              Create New School Tenant
             </v-btn>
           </div>
 
           <v-table density="comfortable" hover class="border rounded-lg">
             <thead>
               <tr class="bg-grey-lighten-4">
-                <th class="font-weight-black text-caption text-secondary">MÃ TRƯỜNG</th>
-                <th class="font-weight-black text-caption text-secondary">TÊN TRƯỜNG HỌC</th>
-                <th class="font-weight-black text-caption text-secondary text-center">SEAT LICENSE</th>
-                <th class="font-weight-black text-caption text-secondary text-center">HẠN HỢP ĐỒNG</th>
-                <th class="font-weight-black text-caption text-secondary text-center">TRẠNG THÁI</th>
+                <th class="font-weight-black text-caption text-secondary">TENANT ID</th>
+                <th class="font-weight-black text-caption text-secondary">SCHOOL NAME</th>
+                <th class="font-weight-black text-caption text-secondary text-center">SEAT LICENSES</th>
+                <th class="font-weight-black text-caption text-secondary text-center">EXPIRY DATE</th>
+                <th class="font-weight-black text-caption text-secondary text-center">STATUS</th>
               </tr>
             </thead>
             <tbody>
@@ -119,7 +119,7 @@
               </tr>
               <tr v-if="!overview.tenants?.length">
                 <td colspan="5" class="text-center pa-6 text-caption text-grey">
-                  Chưa có Trường học nào. Bấm "Tạo Trường Mới" ở trên!
+                  No school organizations created yet. Click "Create New School Tenant" above!
                 </td>
               </tr>
             </tbody>
@@ -131,53 +131,53 @@
           <v-row density="comfortable">
             <v-col cols="12" md="6">
               <v-card border flat class="pa-4 bg-grey-lighten-5 rounded-lg">
-                <div class="text-subtitle-2 font-weight-black text-primary mb-3">CẤP TÀI KHOẢN MỚI (PROVISION ACCOUNT)</div>
+                <div class="text-subtitle-2 font-weight-black text-primary mb-3">PROVISION EDUCATOR / ADMIN ACCOUNT</div>
                 <v-text-field
                   v-model="newProvEmail"
-                  label="Email Đăng Nhập:"
-                  placeholder="teacher@truongabc.edu.vn"
+                  label="Login Email:"
+                  placeholder="teacher@school.edu.vn"
                   variant="outlined"
                   density="comfortable"
                   class="mb-2"
                 />
                 <v-text-field
                   v-model="newProvName"
-                  label="Họ Và Tên:"
-                  placeholder="Thầy Nguyễn Văn A"
+                  label="Full Name:"
+                  placeholder="Prof. Alex Smith"
                   variant="outlined"
                   density="comfortable"
                   class="mb-2"
                 />
                 <v-select
                   v-model="newProvRole"
-                  :items="[{ title: 'Giảng viên / Giáo viên', value: 'teacher' }, { title: 'School Admin (Trưởng bộ môn)', value: 'admin' }]"
-                  label="Cấp Độ Phân Quyền (Role):"
+                  :items="[{ title: 'Educator / Teacher', value: 'teacher' }, { title: 'School Admin (Department Head)', value: 'admin' }]"
+                  label="Permission Level (Role):"
                   variant="outlined"
                   density="comfortable"
                   class="mb-2"
                 />
                 <v-text-field
                   v-model="newProvPassword"
-                  label="Mật Khẩu Mặc Định:"
+                  label="Default Password:"
                   placeholder="password123"
                   variant="outlined"
                   density="comfortable"
                   class="mb-3"
                 />
                 <v-btn color="primary" variant="flat" block class="font-weight-black text-none" :loading="isProvisioning" @click="submitProvisioning">
-                  Cấp Tài Khoản & Tạo Mã Phụ Huynh
+                  Provision Account & Parent Code
                 </v-btn>
               </v-card>
             </v-col>
 
             <v-col cols="12" md="6">
               <v-card border flat class="pa-4 bg-indigo-lighten-5 rounded-lg border-indigo">
-                <div class="text-subtitle-2 font-weight-black text-indigo-darken-3 mb-2">QUY TẮC BẢO MẬT PHÂN QUYỀN (RBAC RULES)</div>
+                <div class="text-subtitle-2 font-weight-black text-indigo-darken-3 mb-2">ROLE-BASED ACCESS CONTROL (RBAC RULES)</div>
                 <div class="text-caption text-grey-darken-3">
                   <ul class="pl-4">
-                    <li class="mb-1">Tài khoản Admin tuyệt đối <strong>không mở đăng ký công khai</strong>. Chỉ do Super Admin cấp.</li>
-                    <li class="mb-1">Giáo viên có thể tự đăng ký trên `/teacher` hoặc được Admin cấp tài khoản.</li>
-                    <li class="mb-1">Mỗi tài khoản khởi tạo sẽ tự động được cấp 1 <strong>Mã Phụ Huynh (`PA-xxxx`)</strong> để phụ huynh tra cứu tiến độ.</li>
+                    <li class="mb-1">Admin accounts <strong>cannot self-register</strong>. Strictly provisioned by Super Admin.</li>
+                    <li class="mb-1">Educators can self-register at `/teacher` or receive provisioned credentials.</li>
+                    <li class="mb-1">Provisioned accounts auto-generate a unique <strong>Parent Tracking Code (`PA-xxxx`)</strong>.</li>
                   </ul>
                 </div>
               </v-card>
@@ -190,13 +190,13 @@
           <v-card border flat class="pa-4 bg-teal-lighten-5 rounded-lg border-teal">
             <div class="d-flex align-center justify-space-between flex-wrap ga-2 mb-2">
               <div>
-                <div class="text-subtitle-1 font-weight-black text-teal-darken-3">BẢO TRÌ LƯU TRỮ 0 ĐỒNG (SUPABASE AUTO-CLEANUP WORKER)</div>
+                <div class="text-subtitle-1 font-weight-black text-teal-darken-3">ZERO-COST STORAGE MAINTENANCE (SUPABASE AUTO-CLEANUP WORKER)</div>
                 <div class="text-caption text-teal-darken-4">
-                  Tự động dọn dẹp các file âm thanh cũ hơn 60 ngày trên Supabase Storage trong khi vẫn giữ nguyên kết quả điểm số trong CSDL.
+                  Purges audio recordings older than 60 days from Supabase Storage while preserving gradebook score records in Database.
                 </div>
               </div>
               <v-btn color="teal-darken-2" variant="flat" class="font-weight-black text-none" prepend-icon="mdi-broom" @click="runAutoCleanup">
-                Chạy Dọn Dẹp Ngay
+                Trigger Storage Purge Worker
               </v-btn>
             </div>
           </v-card>
@@ -207,18 +207,18 @@
     <!-- Modal: Create New Tenant -->
     <v-dialog v-model="showCreateTenantModal" max-width="450">
       <v-card border rounded="lg" class="pa-4">
-        <div class="text-subtitle-1 font-weight-black text-primary mb-3">Tạo Trường Học / Chi Nhánh B2B Mới</div>
+        <div class="text-subtitle-1 font-weight-black text-primary mb-3">Create New B2B School Organization</div>
         <v-text-field
           v-model="newTenantName"
-          label="Tên Trường Học:"
-          placeholder="Trường THCS ABC"
+          label="School Organization Name:"
+          placeholder="ABC Academy School"
           variant="outlined"
           density="comfortable"
           class="mb-2"
         />
         <v-text-field
           v-model="newTenantSeats"
-          label="Số Lượng Seats Mua (Học sinh):"
+          label="Purchased Seat Licenses:"
           type="number"
           variant="outlined"
           density="comfortable"
@@ -226,8 +226,8 @@
         />
         <v-card-actions class="px-0 pb-0">
           <v-spacer />
-          <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showCreateTenantModal = false">Hủy</v-btn>
-          <v-btn color="primary" variant="flat" class="text-none font-weight-bold" @click="submitCreateTenant">Kích Hoạt Trường</v-btn>
+          <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showCreateTenantModal = false">Cancel</v-btn>
+          <v-btn color="primary" variant="flat" class="text-none font-weight-bold" @click="submitCreateTenant">Activate Organization</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -284,7 +284,7 @@ const submitCreateTenant = async () => {
       await fetchOverview()
     }
   } catch (e) {
-    alert('Lỗi tạo trường: ' + e.message)
+    alert('Failed to create tenant: ' + e.message)
   }
 }
 
@@ -303,13 +303,13 @@ const submitProvisioning = async () => {
       })
     })
     if (res.ok) {
-      alert('Đã cấp tài khoản thành công!')
+      alert('Account provisioned successfully!')
       newProvEmail.value = ''
       newProvName.value = ''
       await fetchOverview()
     }
   } catch (e) {
-    alert('Lỗi cấp tài khoản: ' + e.message)
+    alert('Provisioning error: ' + e.message)
   } finally {
     isProvisioning.value = false
   }
@@ -323,7 +323,7 @@ const runAutoCleanup = async () => {
       alert(data.message)
     }
   } catch (e) {
-    alert('Lỗi auto-cleanup: ' + e.message)
+    alert('Auto-cleanup error: ' + e.message)
   }
 }
 

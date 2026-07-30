@@ -157,11 +157,6 @@
               >
                 Admin Console
               </v-btn>
-
-              <!-- Parent Portal Pill -->
-              <v-btn to="/parent" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-human-female-boy" class="font-weight-bold text-none text-body-2">
-                Phụ Huynh
-              </v-btn>
             </div>
 
             <v-spacer />
@@ -214,11 +209,11 @@
 
                   <!-- Role Switch & Login Actions -->
                   <v-list-item v-if="userRole === 'student'" class="rounded mb-1" prepend-icon="mdi-school" @click="switchToTeacherRole">
-                    <v-list-item-title class="text-caption font-weight-bold text-indigo">Chuyển Sang Giảng Viên (/teacher)</v-list-item-title>
+                    <v-list-item-title class="text-caption font-weight-bold text-indigo">Switch to Educator Mode (/teacher)</v-list-item-title>
                   </v-list-item>
 
                   <v-list-item v-if="!['admin', 'super_admin'].includes(userRole)" class="rounded mb-1" prepend-icon="mdi-shield-lock" @click="showAdminLoginModal = true">
-                    <v-list-item-title class="text-caption font-weight-bold text-grey-darken-3">Đăng Nhập Admin (/admin)</v-list-item-title>
+                    <v-list-item-title class="text-caption font-weight-bold text-grey-darken-3">Admin Portal Sign In (/admin)</v-list-item-title>
                   </v-list-item>
 
                   <v-divider class="my-1" />
@@ -377,14 +372,14 @@
                 <v-icon size="default">mdi-shield-lock-outline</v-icon>
               </v-avatar>
               <div>
-                <div class="text-subtitle-1 font-weight-black text-secondary">Đăng Nhập Cổng Quản Trị (/admin)</div>
-                <div class="text-caption text-grey-darken-1">Chỉ dành cho tài khoản đã được cấp bởi Super Admin</div>
+                <div class="text-subtitle-1 font-weight-black text-secondary">System Admin Portal Sign In (/admin)</div>
+                <div class="text-caption text-grey-darken-1">Authorized provisioned accounts only</div>
               </div>
             </div>
 
             <v-text-field
               v-model="adminEmailInput"
-              label="Email Admin:"
+              label="Admin Email:"
               placeholder="superadmin@fluent.edu.vn"
               variant="outlined"
               density="comfortable"
@@ -394,7 +389,7 @@
 
             <v-text-field
               v-model="adminPassInput"
-              label="Mật khẩu Admin:"
+              label="Admin Password:"
               type="password"
               placeholder="••••••••"
               variant="outlined"
@@ -406,10 +401,10 @@
 
             <div class="d-flex align-center justify-end ga-2">
               <v-btn variant="outlined" color="grey" class="font-weight-bold text-none" @click="showAdminLoginModal = false">
-                Hủy
+                Cancel
               </v-btn>
               <v-btn color="grey-darken-4" variant="flat" class="font-weight-bold text-none" :loading="isAdminLoggingIn" @click="handleAdminLogin">
-                Đăng Nhập Admin
+                Sign In
               </v-btn>
             </div>
           </v-card>
@@ -472,7 +467,7 @@ const isAdminLoggingIn = ref(false)
 const switchToTeacherRole = () => {
   userRole.value = 'teacher'
   localStorage.setItem('user_role', 'teacher')
-  alert('Đã chuyển sang vai trò Giảng viên (Teacher Mode). Nút Teacher Hub đã xuất hiện trên thanh điều hướng!')
+  alert('Switched to Educator Mode! Teacher Hub is now unlocked in navigation menu.')
 }
 
 const handleAdminLogin = async () => {
@@ -492,14 +487,14 @@ const handleAdminLogin = async () => {
       userRole.value = data.user.role
       localStorage.setItem('user_role', data.user.role)
       showAdminLoginModal.value = false
-      alert(`Thành công! Đã đăng nhập với tư cách ${data.user.role.toUpperCase()}`)
+      alert(`Sign in successful! Access granted as ${data.user.role.toUpperCase()}`)
       window.location.href = '/admin'
     } else {
       const err = await res.json()
-      alert(err.detail || 'Sai tài khoản hoặc mật khẩu Admin.')
+      alert(err.detail || 'Invalid Admin Email or Password.')
     }
   } catch (e) {
-    alert('Lỗi đăng nhập Admin: ' + e.message)
+    alert('Admin Login Error: ' + e.message)
   } finally {
     isAdminLoggingIn.value = false
   }
