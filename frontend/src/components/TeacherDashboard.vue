@@ -1,5 +1,20 @@
 <template>
   <v-container fluid class="pa-4 pa-md-6">
+    <!-- Vuetify Toast Notification -->
+    <v-snackbar
+      v-model="toast.show"
+      :color="toast.color"
+      location="top"
+      timeout="3500"
+      rounded="lg"
+      elevation="4"
+    >
+      <div class="d-flex align-center ga-2 text-subtitle-2 font-weight-bold text-white">
+        <v-icon>{{ toast.icon }}</v-icon>
+        <span>{{ toast.text }}</span>
+      </div>
+    </v-snackbar>
+
     <!-- Header Title Banner -->
     <v-card border flat class="pa-4 mb-4 bg-gradient-indigo text-white rounded-xl elevation-2">
       <div class="d-flex align-center justify-space-between flex-wrap ga-3">
@@ -425,6 +440,11 @@ const props = defineProps({
   userId: Number
 })
 
+const toast = ref({ show: false, text: '', color: 'success', icon: 'mdi-check-circle' })
+const notify = (text, color = 'success', icon = 'mdi-check-circle') => {
+  toast.value = { show: true, text, color, icon }
+}
+
 const classes = ref([])
 const selectedClassId = ref(null)
 const activeTab = ref('gradebook')
@@ -500,10 +520,11 @@ const submitCreateClass = async () => {
     if (res.ok) {
       newClassName.value = ''
       showCreateClassModal.value = false
+      notify('New class created successfully!', 'success')
       await fetchClasses()
     }
   } catch (err) {
-    alert('Failed to create class: ' + err.message)
+    notify('Failed to create class: ' + err.message, 'error', 'mdi-alert-circle')
   } finally {
     isCreatingClass.value = false
   }
@@ -529,10 +550,11 @@ const submitCreateAssignment = async () => {
       newAsgSentence.value = ''
       newAsgDueDate.value = ''
       showCreateAssignmentModal.value = false
+      notify('Homework assigned to classroom!', 'success')
       await selectClass(selectedClassId.value)
     }
   } catch (err) {
-    alert('Failed to create assignment: ' + err.message)
+    notify('Failed to create assignment: ' + err.message, 'error', 'mdi-alert-circle')
   } finally {
     isCreatingAsg.value = false
   }
@@ -583,17 +605,17 @@ const saveFeedback = async (subId) => {
       })
     })
     if (res.ok) {
-      alert('Feedback saved successfully!')
+      notify('Pedagogical feedback saved successfully!', 'success')
       await selectClass(selectedClassId.value)
     }
   } catch (err) {
-    alert('Failed to save feedback: ' + err.message)
+    notify('Failed to save feedback: ' + err.message, 'error', 'mdi-alert-circle')
   }
 }
 
 const copyJoinCode = (code) => {
   navigator.clipboard.writeText(code)
-  alert(`Copied Join Code: ${code}`)
+  notify(`Copied Join Code: ${code}`, 'info', 'mdi-content-copy')
 }
 
 onMounted(() => {

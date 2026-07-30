@@ -1,5 +1,20 @@
 <template>
   <v-container fluid class="pa-4 pa-md-6" style="max-width: 1100px;">
+    <!-- Modern Vuetify Notification Toast -->
+    <v-snackbar
+      v-model="toast.show"
+      :color="toast.color"
+      location="top"
+      timeout="3500"
+      rounded="lg"
+      elevation="4"
+    >
+      <div class="d-flex align-center ga-2 text-subtitle-2 font-weight-bold text-white">
+        <v-icon>{{ toast.icon }}</v-icon>
+        <span>{{ toast.text }}</span>
+      </div>
+    </v-snackbar>
+
     <!-- Embedded Admin Login View if Not Authenticated as Admin -->
     <div v-if="!['admin', 'super_admin'].includes(activeUserRole)" class="d-flex justify-center py-12">
       <v-card border flat class="pa-6 bg-white rounded-lg elevation-3" style="max-width: 440px; width: 100%;">
@@ -305,6 +320,11 @@ const loginPassword = ref('')
 const isLoggingIn = ref(false)
 const loginError = ref('')
 
+const toast = ref({ show: false, text: '', color: 'success', icon: 'mdi-check-circle' })
+const notify = (text, color = 'success', icon = 'mdi-check-circle') => {
+  toast.value = { show: true, text, color, icon }
+}
+
 const activeTab = ref('tenants')
 const overview = ref({ total_tenants: 0, total_teachers: 0, total_students: 0, total_submissions: 0, tenants: [] })
 
@@ -335,6 +355,7 @@ const handleAdminSignIn = async () => {
       const data = await res.json()
       activeUserRole.value = data.user.role
       localStorage.setItem('user_role', data.user.role)
+      notify(`Welcome! Authenticated as ${data.user.role.toUpperCase()}`, 'success', 'mdi-shield-check')
       await fetchOverview()
     } else {
       const err = await res.json()
@@ -350,6 +371,7 @@ const handleAdminSignIn = async () => {
 const handleAdminSignOut = () => {
   activeUserRole.value = 'student'
   localStorage.setItem('user_role', 'student')
+  notify('Signed out from Admin Console.', 'info', 'mdi-information-outline')
 }
 
 const fetchOverview = async () => {
@@ -377,10 +399,11 @@ const submitCreateTenant = async () => {
     if (res.ok) {
       showCreateTenantModal.value = false
       newTenantName.value = ''
+      notify('New B2B School Organization created successfully!', 'success')
       await fetchOverview()
     }
   } catch (e) {
-    alert('Failed to create tenant: ' + e.message)
+    notify('Failed to create tenant: ' + e.message, 'error', 'mdi-alert-circle')
   }
 }
 
@@ -399,13 +422,13 @@ const submitProvisioning = async () => {
       })
     })
     if (res.ok) {
-      alert('Account provisioned successfully!')
+      notify('Account and Parent Code provisioned successfully!', 'success', 'mdi-account-check')
       newProvEmail.value = ''
       newProvName.value = ''
       await fetchOverview()
     }
   } catch (e) {
-    alert('Provisioning error: ' + e.message)
+    notify('Provisioning error: ' + e.message, 'error', 'mdi-alert-circle')
   } finally {
     isProvisioning.value = false
   }
@@ -416,10 +439,10 @@ const runAutoCleanup = async () => {
     const res = await fetch(`${props.backendUrl}/api/admin/auto-cleanup`, { method: 'POST' })
     if (res.ok) {
       const data = await res.json()
-      alert(data.message)
+      notify(data.message, 'success', 'mdi-broom')
     }
   } catch (e) {
-    alert('Auto-cleanup error: ' + e.message)
+    notify('Auto-cleanup error: ' + e.message, 'error', 'mdi-alert-circle')
   }
 }
 

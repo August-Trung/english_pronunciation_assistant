@@ -1,5 +1,20 @@
 <template>
   <v-container fluid class="pa-4 pa-md-6" style="max-width: 900px;">
+    <!-- Vuetify Toast Notification -->
+    <v-snackbar
+      v-model="toast.show"
+      :color="toast.color"
+      location="top"
+      timeout="3500"
+      rounded="lg"
+      elevation="4"
+    >
+      <div class="d-flex align-center ga-2 text-subtitle-2 font-weight-bold text-white">
+        <v-icon>{{ toast.icon }}</v-icon>
+        <span>{{ toast.text }}</span>
+      </div>
+    </v-snackbar>
+
     <!-- Homework Banner -->
     <v-card border flat class="pa-4 mb-4 bg-gradient-purple text-white rounded-lg elevation-1">
       <div class="d-flex align-center justify-space-between flex-wrap ga-3">
@@ -145,6 +160,11 @@ const props = defineProps({
   userId: Number
 })
 
+const toast = ref({ show: false, text: '', color: 'success', icon: 'mdi-check-circle' })
+const notify = (text, color = 'success', icon = 'mdi-check-circle') => {
+  toast.value = { show: true, text, color, icon }
+}
+
 const assignments = ref([])
 const showJoinClassModal = ref(false)
 const joinCodeInput = ref('')
@@ -180,16 +200,16 @@ const submitJoinClass = async () => {
     })
     if (res.ok) {
       const data = await res.json()
-      alert(`Success! You joined ${data.class_name}`)
+      notify(`Success! You joined ${data.class_name}`, 'success', 'mdi-google-classroom')
       showJoinClassModal.value = false
       joinCodeInput.value = ''
       await fetchStudentAssignments()
     } else {
       const err = await res.json()
-      alert(err.detail || 'Invalid Class Join Code.')
+      notify(err.detail || 'Invalid Class Join Code.', 'error', 'mdi-alert-circle')
     }
   } catch (e) {
-    alert('Failed to join class: ' + e.message)
+    notify('Failed to join class: ' + e.message, 'error', 'mdi-alert-circle')
   } finally {
     isJoining.value = false
   }
@@ -206,7 +226,7 @@ const toggleRecording = async (asg) => {
       mediaRecorder.start()
       isRecording.value = true
     } catch (e) {
-      alert('Microphone access denied: ' + e.message)
+      notify('Microphone access denied: ' + e.message, 'error', 'mdi-microphone-off')
     }
   } else {
     if (mediaRecorder) {
@@ -230,11 +250,11 @@ const uploadSubmission = async (asg) => {
       body: formData
     })
     if (res.ok) {
-      alert('Submission successful! Audio file stored on Supabase Storage.')
+      notify('Submission successful! Voice file uploaded to Supabase Storage.', 'success', 'mdi-cloud-upload')
       await fetchStudentAssignments()
     }
   } catch (e) {
-    alert('Submission error: ' + e.message)
+    notify('Submission error: ' + e.message, 'error', 'mdi-alert-circle')
   }
 }
 

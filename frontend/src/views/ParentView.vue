@@ -1,5 +1,20 @@
 <template>
   <v-container fluid class="pa-4 pa-md-6" style="max-width: 900px;">
+    <!-- Vuetify Toast Notification -->
+    <v-snackbar
+      v-model="toast.show"
+      :color="toast.color"
+      location="top"
+      timeout="3500"
+      rounded="lg"
+      elevation="4"
+    >
+      <div class="d-flex align-center ga-2 text-subtitle-2 font-weight-bold text-white">
+        <v-icon>{{ toast.icon }}</v-icon>
+        <span>{{ toast.text }}</span>
+      </div>
+    </v-snackbar>
+
     <!-- Parent Portal Header -->
     <v-card border flat class="pa-4 mb-4 bg-gradient-teal text-white rounded-lg elevation-1">
       <div class="d-flex align-center ga-3">
@@ -116,6 +131,11 @@ const props = defineProps({
   backendUrl: String
 })
 
+const toast = ref({ show: false, text: '', color: 'success', icon: 'mdi-check-circle' })
+const notify = (text, color = 'success', icon = 'mdi-check-circle') => {
+  toast.value = { show: true, text, color, icon }
+}
+
 const parentCode = ref('')
 const isLoading = ref(false)
 const report = ref(null)
@@ -127,13 +147,14 @@ const fetchReport = async () => {
     const res = await fetch(`${props.backendUrl}/api/parent/student/${parentCode.value.trim()}`)
     if (res.ok) {
       report.value = await res.json()
+      notify('Student progress report loaded!', 'success', 'mdi-human-female-boy')
     } else {
       const err = await res.json()
-      alert(err.detail || 'Invalid tracking code.')
+      notify(err.detail || 'Invalid tracking code.', 'error', 'mdi-alert-circle')
       report.value = null
     }
   } catch (e) {
-    alert('Failed to fetch progress report: ' + e.message)
+    notify('Failed to fetch progress report: ' + e.message, 'error', 'mdi-alert-circle')
   } finally {
     isLoading.value = false
   }
