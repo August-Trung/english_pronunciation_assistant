@@ -1753,28 +1753,24 @@ def clear_user_history(user_id: int):
     return {"status": "success"}
 
 @app.get("/api/leaderboard")
-def get_leaderboard():
+def get_leaderboard(mode: str = "freemium"):
     try:
         import_db_from_json()
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
-        cursor.execute('''
-            SELECT u.id, u.name, u.avatar, COUNT(h.id) as total_practices, AVG(h.score) as avg_score, MAX(h.score) as max_score
-            FROM users u
-            INNER JOIN history h ON u.id = h.user_id AND (h.IsXoa IS NULL OR h.IsXoa = 0)
-            WHERE (u.IsXoa IS NULL OR u.IsXoa = 0)
-            GROUP BY u.id
-            HAVING COUNT(h.id) > 0
-            ORDER BY avg_score DESC, total_practices DESC
-            LIMIT 10
-        ''')
-        rows = cursor.fetchall()
-
-        if not rows:
-            conn.close()
-            import_db_from_json()
-            conn = sqlite3.connect(DB_PATH, timeout=20.0)
-            cursor = conn.cursor()
+        
+        if mode == "classroom":
+            cursor.execute('''
+                SELECT s.student_id, COALESCE(u.name, s.student_name, 'Classroom Student'), u.avatar, COUNT(s.id) as total_practices, AVG(COALESCE(s.score_override, s.score)) as avg_score, MAX(COALESCE(s.score_override, s.score)) as max_score
+                FROM submissions s
+                LEFT JOIN users u ON s.student_id = u.id
+                WHERE (s.IsXoa IS NULL OR s.IsXoa = 0)
+                GROUP BY s.student_id
+                HAVING COUNT(s.id) > 0
+                ORDER BY avg_score DESC, total_practices DESC
+                LIMIT 10
+            ''')
+        else:
             cursor.execute('''
                 SELECT u.id, u.name, u.avatar, COUNT(h.id) as total_practices, AVG(h.score) as avg_score, MAX(h.score) as max_score
                 FROM users u
@@ -1785,8 +1781,8 @@ def get_leaderboard():
                 ORDER BY avg_score DESC, total_practices DESC
                 LIMIT 10
             ''')
-            rows = cursor.fetchall()
-
+            
+        rows = cursor.fetchall()
         conn.close()
         
         leaderboard = []
@@ -1797,7 +1793,7 @@ def get_leaderboard():
             leaderboard.append({
                 "rank": idx,
                 "user_id": r[0],
-                "name": r[1] or f"Học Sinh #{r[0]}",
+                "name": r[1] or f"Student #{r[0]}",
                 "avatar": r[2] or "",
                 "avatar_url": r[2] or "",
                 "total_practices": r[3] or 0,

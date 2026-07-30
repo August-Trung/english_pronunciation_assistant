@@ -8,8 +8,8 @@
             <v-icon size="default" color="white">mdi-trophy-variant</v-icon>
           </v-avatar>
           <div>
-            <div class="text-subtitle-1 text-sm-h6 font-weight-black tracking-tight leading-tight">PRONUNCIATION ARENA</div>
-            <div class="text-caption text-indigo-lighten-4 font-weight-bold">Honoring Top 10 Outstanding Learners</div>
+            <div class="text-subtitle-1 text-sm-h6 font-weight-black tracking-tight leading-tight">PRONUNCIATION ARENA LEADERBOARD</div>
+            <div class="text-caption text-indigo-lighten-4 font-weight-bold">Honoring Top Outstanding Learners</div>
           </div>
         </div>
         <v-btn
@@ -21,9 +21,21 @@
           :loading="isLoading"
           @click="fetchLeaderboard"
         >
-          Refresh Leaderboard
+          Refresh Standings
         </v-btn>
       </div>
+    </v-card>
+
+    <!-- Leaderboard Category Sub-Tabs (Freemium Independent vs Classroom Enrolled) -->
+    <v-card border flat class="pa-2 mb-4 bg-white rounded-lg">
+      <v-tabs v-model="activeCategory" color="indigo-darken-3" align-tabs="center" density="comfortable" @update:model-value="fetchLeaderboard">
+        <v-tab value="freemium" class="font-weight-black text-none" prepend-icon="mdi-account-star-outline">
+          Independent Learners (Học Sinh Tự Do)
+        </v-tab>
+        <v-tab value="classroom" class="font-weight-black text-none" prepend-icon="mdi-google-classroom">
+          Classroom Enrolled (Học Sinh Theo Lớp)
+        </v-tab>
+      </v-tabs>
     </v-card>
 
     <div v-if="isLoading" class="d-flex flex-column align-center justify-center py-12">
@@ -77,20 +89,19 @@
               <v-img v-if="!top1.isEmpty" :src="getAvatarUrl(top1)" alt="Avatar" />
               <v-icon v-else color="white" size="medium">mdi-account</v-icon>
             </v-avatar>
-            
-            <div class="text-caption font-weight-black name-wrap mb-1" :class="top1.isEmpty ? 'text-grey' : 'text-amber-darken-4'">
+
+            <div class="text-subtitle-2 font-weight-black name-wrap mb-1" :class="top1.isEmpty ? 'text-grey' : 'text-amber-darken-4'">
               {{ top1.isEmpty ? 'Vacant' : formatDisplayName(top1.name) }}
             </div>
-            
-            <v-chip v-if="top1.badge_title" label size="x-small" color="amber-darken-3" variant="tonal" class="mb-1 px-1" style="font-size: 9px;">
+
+            <v-chip v-if="top1.badge_title" label size="x-small" color="amber-darken-3" variant="flat" class="mb-1 px-1" style="font-size: 9px;">
               {{ top1.badge_title }}
             </v-chip>
-            
-            <div class="text-caption font-weight-black" :class="top1.isEmpty ? 'text-grey' : 'text-amber-darken-4'">
+            <div class="text-subtitle-2 font-weight-black text-amber-darken-4">
               {{ top1.isEmpty ? '--/10' : `${(top1.best_score ?? top1.avg_score ?? 0).toFixed(1).replace('.', ',')}/10` }}
             </div>
-            <div class="text-caption text-amber-darken-3 font-weight-bold" style="font-size: 10px;">
-              <v-icon size="x-small" color="deep-orange">mdi-fire</v-icon> {{ top1.streak_count || top1.streak || 1 }}d
+            <div class="text-caption text-grey-darken-2 font-weight-bold" style="font-size: 11px;">
+              <v-icon size="x-small" color="deep-orange">mdi-fire</v-icon> {{ top1.streak_count || top1.streak || 1 }}d streak
             </div>
           </v-card>
         </v-col>
@@ -104,9 +115,9 @@
               </v-chip>
             </div>
 
-            <v-avatar color="brown-lighten-4" size="38" class="mb-1 border border-brown">
+            <v-avatar color="brown-lighten-4" size="38" class="mb-1 border">
               <v-img v-if="!top3.isEmpty" :src="getAvatarUrl(top3)" alt="Avatar" />
-              <v-icon v-else color="brown-darken-2" size="small">mdi-account</v-icon>
+              <v-icon v-else color="brown" size="small">mdi-account</v-icon>
             </v-avatar>
 
             <div class="text-caption font-weight-black name-wrap mb-1" :class="top3.isEmpty ? 'text-grey' : 'text-grey-darken-3'">
@@ -126,76 +137,64 @@
         </v-col>
       </v-row>
 
-      <!-- Full Top 10 Ranking Table -->
-      <v-card border flat class="pa-2 pa-sm-3 bg-white" rounded="lg">
-        <div class="text-subtitle-2 font-weight-black text-secondary mb-2 d-flex align-center ga-1">
-          <v-icon color="secondary" size="small">mdi-format-list-numbered</v-icon>
-          <span>Hall of Fame (Top 10)</span>
-        </div>
-
-        <v-card v-if="leaderboard.length === 0" border flat class="pa-6 pa-sm-8 text-center bg-white" rounded="lg">
-          <v-avatar color="amber-lighten-5" size="64" class="mb-3 text-amber-darken-3 border border-amber">
-            <v-icon size="large">mdi-trophy-award</v-icon>
-          </v-avatar>
-          <div class="text-subtitle-1 font-weight-black text-secondary mb-1">
-            No Arena Entries Yet!
-          </div>
-          <div class="text-caption text-grey-darken-1 mb-4" style="max-width: 480px; margin: 0 auto; line-height: 1.5;">
-            Complete your first speaking practice to claim your spot on the Hall of Fame Leaderboard!
-          </div>
-          <v-btn color="primary" variant="flat" to="/" prepend-icon="mdi-microphone" class="font-weight-black text-none">
-            Start Speaking Practice Now
-          </v-btn>
-        </v-card>
-
-        <v-list v-else class="pa-0 border rounded-lg overflow-hidden">
-          <v-list-item
-            v-for="(user, idx) in leaderboard"
-            :key="user.user_id"
-            :class="{'bg-blue-lighten-5': user.user_id === currentUserId}"
-            class="border-b py-2 px-2 px-sm-3"
-          >
-            <template #prepend>
-              <div class="d-flex align-center justify-center mr-2 font-weight-black flex-shrink-0" style="width: 28px;">
-                <v-icon v-if="idx === 0" color="amber-darken-2" size="medium">mdi-crown</v-icon>
-                <v-icon v-else-if="idx === 1" color="grey-darken-1" size="medium">mdi-medal-outline</v-icon>
-                <v-icon v-else-if="idx === 2" color="brown-darken-2" size="medium">mdi-medal-outline</v-icon>
-                <span v-else class="text-caption font-weight-black text-grey-darken-1">#{{ idx + 1 }}</span>
-              </div>
-
-              <v-avatar size="36" color="grey-lighten-3" class="mr-3 border flex-shrink-0">
-                <v-img :src="getAvatarUrl(user)" alt="Avatar" />
-              </v-avatar>
-            </template>
-
-            <v-list-item-title class="font-weight-black text-caption text-sm-subtitle-2 text-grey-darken-4 text-truncate">
-              {{ formatDisplayName(user.name) }}
-            </v-list-item-title>
-
-            <v-list-item-subtitle class="text-caption text-grey d-flex align-center flex-wrap ga-1 mt-1" style="font-size: 11px;">
-              <v-chip v-if="user.user_id === currentUserId" label size="x-small" color="success" variant="flat" class="mr-1 font-weight-bold" style="font-size: 9px; height: 18px;">
-                You
-              </v-chip>
-              <v-chip v-if="user.badge_title" label size="x-small" color="primary" variant="tonal" style="font-size: 9px; height: 18px;">
-                {{ user.badge_title }}
-              </v-chip>
-              <span class="font-weight-bold text-grey-darken-2">{{ user.total_sessions || user.total_practices || 0 }} practices</span>
-              <span>•</span>
-              <span class="font-weight-bold text-deep-orange"><v-icon size="x-small" color="deep-orange">mdi-fire</v-icon>{{ user.streak_count || user.streak || 1 }}d</span>
-            </v-list-item-subtitle>
-
-            <template #append>
-              <div class="text-right flex-shrink-0 pl-2">
-                <div class="text-subtitle-2 font-weight-black text-primary">
-                  {{ (user.best_score || user.avg_score || 0).toFixed(1).replace('.', ',') }}/10
+      <!-- Remaining Rankings Table (Ranks 4 - 10) -->
+      <v-card border flat class="bg-white elevation-1 rounded-lg">
+        <v-table density="comfortable" hover>
+          <thead>
+            <tr class="bg-grey-lighten-4">
+              <th class="text-center font-weight-black text-caption text-secondary" style="width: 50px;">RANK</th>
+              <th class="font-weight-black text-caption text-secondary">LEARNER</th>
+              <th class="text-center font-weight-black text-caption text-secondary">BEST SCORE</th>
+              <th class="text-center font-weight-black text-caption text-secondary">STREAK</th>
+              <th class="text-center font-weight-black text-caption text-secondary">PRACTICES</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="item in leaderboard"
+              :key="item.user_id"
+              :class="{ 'bg-amber-lighten-5': item.user_id === currentUserId }"
+            >
+              <td class="text-center font-weight-black text-caption">
+                <v-chip size="x-small" :color="item.rank <= 3 ? 'amber-darken-3' : 'grey'" variant="flat" class="font-weight-black">
+                  #{{ item.rank }}
+                </v-chip>
+              </td>
+              <td>
+                <div class="d-flex align-center ga-2">
+                  <v-avatar size="32" color="indigo-lighten-5" class="border">
+                    <v-img :src="getAvatarUrl(item)" alt="Avatar" />
+                  </v-avatar>
+                  <div>
+                    <div class="font-weight-black text-body-2 text-secondary">
+                      {{ formatDisplayName(item.name) }}
+                      <v-chip v-if="item.user_id === currentUserId" color="primary" size="x-small" class="ml-1 font-weight-bold">YOU</v-chip>
+                    </div>
+                    <div v-if="item.badge_title" class="text-caption text-grey">
+                      {{ item.badge_title }}
+                    </div>
+                  </div>
                 </div>
-                <div class="text-caption text-grey font-weight-bold" style="font-size: 10px;">
-                  Avg: {{ (user.avg_score || 0).toFixed(1).replace('.', ',') }}
-                </div>
-              </div>
-            </template>
-          </v-list-item>
-        </v-list>
+              </td>
+              <td class="text-center font-weight-black text-primary">
+                {{ (item.best_score ?? item.avg_score ?? 0).toFixed(1).replace('.', ',') }}/10
+              </td>
+              <td class="text-center text-caption font-weight-bold">
+                <v-chip size="x-small" color="deep-orange" variant="tonal" class="font-weight-black">
+                  🔥 {{ item.streak_count || item.streak || 1 }}d
+                </v-chip>
+              </td>
+              <td class="text-center text-caption font-weight-bold text-grey-darken-2">
+                {{ item.total_practices || item.total_sessions || 0 }} sessions
+              </td>
+            </tr>
+            <tr v-if="!leaderboard.length">
+              <td colspan="5" class="text-center pa-8 text-caption text-grey font-weight-bold">
+                No rankings recorded yet in this category. Be the first to practice and claim top spot!
+              </td>
+            </tr>
+          </tbody>
+        </v-table>
       </v-card>
     </div>
   </v-container>
@@ -215,6 +214,7 @@ const props = defineProps({
   }
 })
 
+const activeCategory = ref('freemium')
 const leaderboard = ref([])
 const isLoading = ref(false)
 
@@ -249,7 +249,7 @@ const getAvatarUrl = (user) => {
 const fetchLeaderboard = async () => {
   isLoading.value = true
   try {
-    const res = await fetch(`${props.backendUrl}/api/leaderboard`)
+    const res = await fetch(`${props.backendUrl}/api/leaderboard?mode=${activeCategory.value}`)
     if (res.ok) {
       const data = await res.json()
       leaderboard.value = Array.isArray(data) ? data : (data.leaderboard || [])
