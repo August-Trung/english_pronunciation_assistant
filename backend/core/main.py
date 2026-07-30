@@ -1420,7 +1420,6 @@ def export_db_to_json():
 
         with open(BACKUP_JSON_PATH, "w", encoding="utf-8") as f:
             json.dump(backup_data, f, ensure_ascii=False, indent=2)
-        print("DB Exported successfully to persistent_db_backup.json")
     except Exception as e:
         print(f"Export DB Error: {e}")
 

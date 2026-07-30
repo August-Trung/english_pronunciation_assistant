@@ -2,6 +2,27 @@
   "users": [],
   "history": [],
   "user_settings": [],
-  "weak_words": [],
+  "weak_words": [
+    {
+      "id": 1,
+      "user_id": 999,
+      "word": "testword1",
+      "ipa": "ˈtɛst",
+      "meaning": "Từ cần luyện tập lại",
+      "error_count": 2,
+      "created_at": "2026-07-30 15:38:26",
+      "IsXoa": 0
+    },
+    {
+      "id": 2,
+      "user_id": 999,
+      "word": "testword2",
+      "ipa": "ˈwɜːd",
+      "meaning": "Từ cần luyện tập lại",
+      "error_count": 2,
+      "created_at": "2026-07-30 15:38:26",
+      "IsXoa": 0
+    }
+  ],
   "achievements": []
 }
