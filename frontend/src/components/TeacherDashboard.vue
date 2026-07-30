@@ -15,34 +15,99 @@
       </div>
     </v-snackbar>
 
-    <!-- Header Title Banner -->
-    <v-card border flat class="pa-4 mb-4 bg-gradient-indigo text-white rounded-xl elevation-2">
-      <div class="d-flex align-center justify-space-between flex-wrap ga-3">
-        <div class="d-flex align-center ga-3">
-          <v-avatar color="white" size="48" class="elevation-2">
-            <v-icon color="indigo-darken-3" size="large">mdi-school-outline</v-icon>
+    <!-- Embedded Educator Sign In Card if Not Authenticated as Teacher -->
+    <div v-if="!['teacher', 'admin', 'super_admin'].includes(activeUserRole)" class="d-flex justify-center py-12">
+      <v-card border flat class="pa-6 bg-white rounded-lg elevation-3" style="max-width: 440px; width: 100%;">
+        <div class="text-center mb-4">
+          <v-avatar color="indigo-darken-3" size="56" class="text-white mb-2 elevation-2">
+            <v-icon size="large">mdi-school-outline</v-icon>
           </v-avatar>
-          <div>
-            <div class="text-h6 font-weight-black tracking-tight">TEACHER HUB & GRADEBOOK</div>
-            <div class="text-caption opacity-90 font-weight-medium">
-              Manage classes, monitor student IPA scores, listen to Supabase audio recordings, & assign homework
-            </div>
-          </div>
+          <div class="text-h6 font-weight-black text-indigo-darken-3">EDUCATOR PORTAL SIGN IN</div>
+          <div class="text-caption text-grey-darken-1 font-weight-medium">Authorized Teachers & Instructors Only</div>
         </div>
 
-        <div class="d-flex align-center ga-2">
-          <v-btn
-            color="white"
-            variant="flat"
-            class="font-weight-black text-indigo-darken-3 text-none"
-            prepend-icon="mdi-plus-box"
-            @click="showCreateClassModal = true"
-          >
-            Create New Class
-          </v-btn>
+        <v-alert v-if="loginError" type="error" variant="tonal" density="compact" class="mb-3 text-caption font-weight-bold">
+          {{ loginError }}
+        </v-alert>
+
+        <v-text-field
+          v-model="loginEmail"
+          label="Teacher Email:"
+          placeholder="teacher@fluent.edu.vn"
+          variant="outlined"
+          density="comfortable"
+          class="mb-3"
+          prepend-inner-icon="mdi-email-outline"
+        />
+
+        <v-text-field
+          v-model="loginPassword"
+          label="Password:"
+          type="password"
+          placeholder="••••••••"
+          variant="outlined"
+          density="comfortable"
+          class="mb-3"
+          prepend-inner-icon="mdi-lock-outline"
+          @keyup.enter="handleTeacherSignIn"
+        />
+
+        <v-btn
+          color="indigo-darken-3"
+          variant="flat"
+          block
+          size="large"
+          class="font-weight-black text-none mb-3"
+          :loading="isLoggingIn"
+          @click="handleTeacherSignIn"
+        >
+          Sign In to Teacher Hub
+        </v-btn>
+
+        <v-btn
+          color="indigo"
+          variant="tonal"
+          block
+          size="small"
+          class="font-weight-bold text-none"
+          prepend-icon="mdi-account-key"
+          @click="loginEmail = 'teacher@fluent.edu.vn'; loginPassword = 'teacher123'; handleTeacherSignIn();"
+        >
+          Quick Demo Educator Login
+        </v-btn>
+      </v-card>
+    </div>
+
+    <!-- Main Educator Workspace -->
+    <div v-else>
+      <!-- Header Title Banner -->
+      <v-card border flat class="pa-4 mb-4 bg-gradient-indigo text-white rounded-xl elevation-2">
+        <div class="d-flex align-center justify-space-between flex-wrap ga-3">
+          <div class="d-flex align-center ga-3">
+            <v-avatar color="white" size="48" class="elevation-2">
+              <v-icon color="indigo-darken-3" size="large">mdi-school-outline</v-icon>
+            </v-avatar>
+            <div>
+              <div class="text-h6 font-weight-black tracking-tight">TEACHER HUB & GRADEBOOK</div>
+              <div class="text-caption opacity-90 font-weight-medium">
+                Manage classes, monitor student IPA scores, listen to Supabase audio recordings, & assign homework
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex align-center ga-2">
+            <v-btn
+              color="white"
+              variant="flat"
+              class="font-weight-black text-indigo-darken-3 text-none"
+              prepend-icon="mdi-plus-box"
+              @click="showCreateClassModal = true"
+            >
+              Create New Class
+            </v-btn>
+          </div>
         </div>
-      </div>
-    </v-card>
+      </v-card>
 
     <!-- Top KPI Cards -->
     <v-row class="mb-4" density="comfortable">
@@ -474,6 +539,7 @@
         </div>
       </v-card>
     </v-dialog>
+    </div>
   </v-container>
 </template>
 
@@ -485,9 +551,46 @@ const props = defineProps({
   userId: Number
 })
 
+const activeUserRole = ref(localStorage.getItem('user_role') || 'student')
+const loginEmail = ref('teacher@fluent.edu.vn')
+const loginPassword = ref('teacher123')
+const isLoggingIn = ref(false)
+const loginError = ref('')
+
 const toast = ref({ show: false, text: '', color: 'success', icon: 'mdi-check-circle' })
 const notify = (text, color = 'success', icon = 'mdi-check-circle') => {
   toast.value = { show: true, text, color, icon }
+}
+
+const handleTeacherSignIn = async () => {
+  if (!loginEmail.value.trim() || !loginPassword.value.trim()) return
+  isLoggingIn.value = true
+  loginError.value = ''
+  try {
+    const res = await fetch(`${props.backendUrl}/api/teacher/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: loginEmail.value.trim(),
+        password: loginPassword.value.trim()
+      })
+    })
+    if (res.ok) {
+      const data = await res.json()
+      activeUserRole.value = data.user.role || 'teacher'
+      localStorage.setItem('user_role', data.user.role || 'teacher')
+      localStorage.setItem('user_id', data.user.id || 1)
+      notify(`Welcome! Signed in as ${data.user.name}`, 'success', 'mdi-school')
+      await fetchClasses()
+    } else {
+      const err = await res.json()
+      loginError.value = err.detail || 'Invalid Teacher Credentials.'
+    }
+  } catch (e) {
+    loginError.value = 'Sign in error: ' + e.message
+  } finally {
+    isLoggingIn.value = false
+  }
 }
 
 const classes = ref([])

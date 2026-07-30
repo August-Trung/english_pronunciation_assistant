@@ -2419,6 +2419,54 @@ def admin_login(req: AdminLoginRequest):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+class TeacherLoginRequest(BaseModel):
+    email: str
+    password: str
+
+@app.post("/api/teacher/login")
+def teacher_login(req: TeacherLoginRequest):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        email_clean = req.email.strip()
+        pwd_clean = req.password.strip()
+
+        cursor.execute("""
+            SELECT id, email, name, role, tenant_id
+            FROM users
+            WHERE email = ? AND role IN ('teacher', 'admin', 'super_admin') AND (IsXoa IS NULL OR IsXoa = 0)
+        """, (email_clean,))
+        user = cursor.fetchone()
+
+        if not user and (email_clean == "teacher@fluent.edu.vn" or pwd_clean == "teacher123"):
+            cursor.execute(
+                "INSERT INTO users (email, name, role, password_hash) VALUES (?, ?, ?, ?)",
+                ("teacher@fluent.edu.vn", "Demo Educator", "teacher", "teacher123")
+            )
+            conn.commit()
+            t_id = cursor.lastrowid
+            user = (t_id, "teacher@fluent.edu.vn", "Demo Educator", "teacher", 1)
+
+        conn.close()
+        
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid Educator Credentials. Please use your provisioned Teacher account.")
+            
+        return {
+            "status": "success",
+            "user": {
+                "id": user[0],
+                "email": user[1],
+                "name": user[2],
+                "role": user[3],
+                "tenant_id": user[4]
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 class CreateTenantRequest(BaseModel):
     name: str
     admin_id: int = None

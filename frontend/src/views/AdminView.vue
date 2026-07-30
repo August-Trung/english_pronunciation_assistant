@@ -19,11 +19,11 @@
     <div v-if="!['admin', 'super_admin'].includes(activeUserRole)" class="d-flex justify-center py-12">
       <v-card border flat class="pa-6 bg-white rounded-lg elevation-3" style="max-width: 440px; width: 100%;">
         <div class="text-center mb-4">
-          <v-avatar color="grey-darken-4" size="56" class="text-white mb-2 elevation-2">
+          <v-avatar color="indigo-darken-4" size="56" class="text-white mb-2 elevation-2">
             <v-icon size="large">mdi-shield-lock-outline</v-icon>
           </v-avatar>
-          <div class="text-h6 font-weight-black text-secondary">SYSTEM ADMIN PORTAL</div>
-          <div class="text-caption text-grey-darken-1">Authorized provisioned admin accounts only</div>
+          <div class="text-h6 font-weight-black text-indigo-darken-4">SYSTEM ADMIN PORTAL</div>
+          <div class="text-caption text-grey-darken-1 font-weight-medium">Authorized provisioned admin accounts only</div>
         </div>
 
         <v-alert v-if="loginError" type="error" variant="tonal" density="compact" class="mb-3 text-caption font-weight-bold">
@@ -53,7 +53,7 @@
         />
 
         <v-btn
-          color="grey-darken-4"
+          color="indigo-darken-4"
           variant="flat"
           block
           size="large"
