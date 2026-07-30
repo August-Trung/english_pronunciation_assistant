@@ -9,7 +9,9 @@
           </v-avatar>
           <div>
             <div class="text-subtitle-1 text-sm-h6 font-weight-black tracking-tight leading-tight">PRONUNCIATION ARENA LEADERBOARD</div>
-            <div class="text-caption text-indigo-lighten-4 font-weight-bold">Honoring Top Outstanding Learners</div>
+            <div class="text-caption text-indigo-lighten-4 font-weight-bold">
+              {{ activeCategory === 'classroom' ? 'Classroom Enrolled Honor Roll' : 'Global Independent Learners Standings' }}
+            </div>
           </div>
         </div>
         <v-btn
@@ -26,7 +28,7 @@
       </div>
     </v-card>
 
-    <!-- Leaderboard Category Sub-Tabs (Freemium Independent vs Classroom Enrolled) -->
+    <!-- Leaderboard Category Sub-Tabs (Auto-selected by Account Type) -->
     <v-card border flat class="pa-2 mb-4 bg-white rounded-lg">
       <v-tabs v-model="activeCategory" color="indigo-darken-3" align-tabs="center" density="comfortable" @update:model-value="fetchLeaderboard">
         <v-tab value="freemium" class="font-weight-black text-none" prepend-icon="mdi-account-star-outline">
@@ -246,6 +248,21 @@ const getAvatarUrl = (user) => {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=673AB7&color=fff&bold=true`
 }
 
+const checkAccountTypeAndSetTab = async () => {
+  if (!props.currentUserId) return
+  try {
+    const res = await fetch(`${props.backendUrl}/api/assignments/student/${props.currentUserId}`)
+    if (res.ok) {
+      const data = await res.json()
+      if (data.assignments && data.assignments.length > 0) {
+        activeCategory.value = 'classroom'
+      }
+    }
+  } catch (e) {
+    console.error('Check student enrollment error:', e)
+  }
+}
+
 const fetchLeaderboard = async () => {
   isLoading.value = true
   try {
@@ -261,7 +278,8 @@ const fetchLeaderboard = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await checkAccountTypeAndSetTab()
   fetchLeaderboard()
 })
 </script>
