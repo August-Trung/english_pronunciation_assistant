@@ -2452,12 +2452,13 @@ def get_admin_overview():
         
         tenants = [{"id": r[0], "name": r[1], "license_seats": r[2], "license_expiry": r[3], "created_at": r[4]} for r in tenants_rows]
         
+        used_mb = round(total_submissions * 0.05, 2)
         return {
             "total_tenants": total_tenants,
             "total_teachers": total_teachers,
             "total_students": total_students,
             "total_submissions": total_submissions,
-            "supabase_storage_used_mb": 14.5,
+            "supabase_storage_used_mb": used_mb,
             "supabase_storage_limit_mb": 1000,
             "tenants": tenants
         }
