@@ -207,17 +207,6 @@
                     </v-list-item-subtitle>
                   </v-list-item>
 
-                  <!-- Role Switch & Login Actions -->
-                  <v-list-item v-if="userRole === 'student'" class="rounded mb-1" prepend-icon="mdi-school" @click="switchToTeacherRole">
-                    <v-list-item-title class="text-caption font-weight-bold text-indigo">Switch to Educator Mode (/teacher)</v-list-item-title>
-                  </v-list-item>
-
-                  <v-list-item v-if="!['admin', 'super_admin'].includes(userRole)" class="rounded mb-1" prepend-icon="mdi-shield-lock" @click="showAdminLoginModal = true">
-                    <v-list-item-title class="text-caption font-weight-bold text-grey-darken-3">Admin Portal Sign In (/admin)</v-list-item-title>
-                  </v-list-item>
-
-                  <v-divider class="my-1" />
-
                   <!-- Menu Actions -->
                   <v-list-item class="rounded mb-1" prepend-icon="mdi-account-circle-outline" to="/profile">
                     <v-list-item-title class="text-caption font-weight-bold">User Profile</v-list-item-title>
