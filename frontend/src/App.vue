@@ -1,94 +1,14 @@
 <template>
   <v-app class="bg-background">
-    <!-- Render Admin Dashboard if path is /admin -->
-    <template v-if="isAdminRoute">
-      <v-app-bar color="white" flat border class="px-4 px-md-8 px-lg-12">
-        <div class="d-flex align-center w-100">
-          <div class="d-flex align-center ga-2">
-            <v-avatar color="indigo-lighten-5" size="36" class="text-indigo rounded-lg border">
-              <v-icon size="default">mdi-shield-crown-outline</v-icon>
-            </v-avatar>
-            <div>
-              <span class="text-subtitle-1 font-weight-black text-indigo tracking-tight">FLUENT ADMIN</span>
-              <span class="text-caption font-weight-bold text-grey-darken-1 border-s ps-2 ml-2">
-                Developer Admin Console
-              </span>
-            </div>
-          </div>
-          <v-spacer />
-          <v-btn
-            color="primary"
-            variant="outlined"
-            size="small"
-            class="text-none font-weight-bold"
-            prepend-icon="mdi-home"
-            @click="goToHome"
-          >
-            Return to Learning Studio
-          </v-btn>
-        </div>
-      </v-app-bar>
+    <!-- Full Screen Loader while verifying login session -->
+    <div v-if="isCheckingAuth" class="fill-height d-flex align-center justify-center bg-white" style="min-height: 100vh;">
+      <v-progress-circular indeterminate color="teal" size="48" />
+    </div>
 
-      <v-main class="pt-16">
-        <v-container fluid class="px-4 px-md-8 px-lg-12 py-4">
-          <v-row class="ma-0 ga-3">
-            <!-- Col 1: Server Config -->
-            <v-col cols="12" md="6" class="pa-1">
-              <v-card border flat class="pa-4 bg-white" rounded="lg">
-                <div class="d-flex align-center ga-2 mb-3">
-                  <v-avatar color="indigo-lighten-5" size="36" class="text-indigo border">
-                    <v-icon size="small">mdi-server-network</v-icon>
-                  </v-avatar>
-                  <div class="text-subtitle-1 font-weight-black text-secondary">API Server Connection</div>
-                </div>
+    <!-- Login Screen when not logged in (Excluding Admin Route which renders Admin Portal directly) -->
+    <LoginPage v-else-if="!isLoggedIn && !isAdminRoute" @login="handleLogin" />
 
-                <v-row class="ma-0 align-center ga-2">
-                  <v-col cols="12" sm="8" class="pa-1">
-                    <v-text-field
-                      v-model="backendUrl"
-                      label="API Server Endpoint URL:"
-                      placeholder="Example: https://agrse-fluent-english-backend.hf.space"
-                      variant="outlined"
-                      density="comfortable"
-                      hide-details
-                      color="primary"
-                      prepend-inner-icon="mdi-link-variant"
-                    />
-                  </v-col>
-                  <v-col cols="12" sm="4" class="pa-1">
-                    <v-btn
-                      color="primary"
-                      variant="flat"
-                      block
-                      height="48"
-                      class="font-weight-bold text-caption text-sm-body-2"
-                      prepend-icon="mdi-transit-connection-variant"
-                      :loading="isTestingConnection"
-                      @click="testConnection"
-                    >
-                      Test Connection
-                    </v-btn>
-                  </v-col>
-                </v-row>
-
-                <v-alert
-                  v-if="connectionStatus"
-                  :type="connectionStatus.success ? 'success' : 'error'"
-                  density="compact"
-                  variant="tonal"
-                  class="mt-3 py-2 text-caption text-sm-subtitle-2 font-weight-medium"
-                  hide-details
-                >
-                  {{ connectionStatus.message }}
-                </v-alert>
-              </v-card>
-            </v-col>
-          </v-row>
-        </v-container>
-      </v-main>
-    </template>
-
-    <!-- Normal Student Flow (Login / Main Workspace) -->
+    <!-- Main Workspace after logging in or viewing Admin Portal -->
     <template v-else>
       <!-- Full Screen Loader while verifying login session -->
       <div v-if="isCheckingAuth" class="fill-height d-flex align-center justify-center bg-white" style="min-height: 100vh;">
