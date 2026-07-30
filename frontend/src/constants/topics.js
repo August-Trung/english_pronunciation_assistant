@@ -1,36 +1,36 @@
-// Thư viện phân loại theo cấp lớp - Chuẩn SGK GDPT 2018
+// Grade Level Categorization Library - International CEFR Standard
 
 export const GRADE_LEVELS = [
   {
     id: 'primary',
-    name: 'Tiểu học (Lớp 1 - 5)',
-    shortName: 'Tiểu học',
+    name: 'Elementary (Grades 1 - 5)',
+    shortName: 'Elementary',
     icon: 'mdi-school-outline',
     color: 'success',
-    badge: 'Khung A1.1',
-    description: 'Các câu ngắn đơn giản (3 - 7 từ), tập trung phát âm tròn vành rõ chữ.'
+    badge: 'CEFR A1.1',
+    description: 'Short simple sentences (3 - 7 words), focusing on clear articulation.'
   },
   {
     id: 'secondary',
-    name: 'THCS (Lớp 6 - 9)',
-    shortName: 'THCS',
+    name: 'Middle School (Grades 6 - 9)',
+    shortName: 'Middle School',
     icon: 'mdi-book-open-page-variant-outline',
     color: 'primary',
-    badge: 'Khung A1.2 - A2',
-    description: 'Các câu giao tiếp hàng ngày (10 - 18 từ), kết hợp từ nối và thì ngữ pháp cơ bản.'
+    badge: 'CEFR A1.2 - A2',
+    description: 'Daily conversational sentences (10 - 18 words) with basic connectors and tenses.'
   },
   {
     id: 'highschool',
-    name: 'THPT & IELTS (Lớp 10 - 12)',
-    shortName: 'THPT & IELTS',
+    name: 'High School & IELTS (Grades 10 - 12)',
+    shortName: 'High School',
     icon: 'mdi-certificate-outline',
     color: 'purple',
-    badge: 'Khung B1 - B2',
-    description: 'Các câu phức nghị luận (18 - 30 từ), ngữ pháp nâng cao và từ vựng học thuật.'
+    badge: 'CEFR B1 - B2',
+    description: 'Complex academic sentences (18 - 30 words) with advanced vocabulary.'
   }
 ]
 
-// 1. Danh sách Chủ đề / Câu hỏi giao tiếp (Dùng cho Chế độ Nói tự do - Speaking Mode)
+// 1. Conversational Speaking Topics (Free Topic Mode)
 export const SPEAKING_TOPICS = {
   primary: [
     "What is your name?",
@@ -54,11 +54,11 @@ export const SPEAKING_TOPICS = {
   ]
 }
 
-// 2. Thư viện Câu mẫu văn bản chi tiết (Dùng cho Chế độ Đọc theo mẫu - Reading Mode)
+// 2. Model Sentences Library (Sentence Reading Mode)
 export const READING_LIBRARY = {
   primary: [
     {
-      topic: 'Giới thiệu bản thân & Gia đình',
+      topic: 'Self-Introduction & Family',
       sentences: [
         'Hello, my name is Nam.',
         'I am eight years old.',
@@ -68,7 +68,7 @@ export const READING_LIBRARY = {
       ]
     },
     {
-      topic: 'Sở thích & Trường học',
+      topic: 'Hobbies & School Life',
       sentences: [
         'I like cats and dogs.',
         'My favorite color is blue.',
@@ -80,7 +80,7 @@ export const READING_LIBRARY = {
   ],
   secondary: [
     {
-      topic: 'Sở thích & Đời sống hàng ngày',
+      topic: 'Hobbies & Daily Routine',
       sentences: [
         'In my free time, I enjoy reading books because it helps me relax.',
         'My family usually goes to the park together on Sunday mornings.',
@@ -88,7 +88,7 @@ export const READING_LIBRARY = {
       ]
     },
     {
-      topic: 'Môi trường & Cộng đồng',
+      topic: 'Environment & Community',
       sentences: [
         'We should reduce plastic waste to protect our environment and oceans.',
         'Doing morning exercise regularly keeps us healthy and full of energy.',
@@ -98,7 +98,7 @@ export const READING_LIBRARY = {
   ],
   highschool: [
     {
-      topic: 'Công nghệ & Giáo dục hiện đại',
+      topic: 'Technology & Modern Education',
       sentences: [
         'Artificial intelligence is transforming traditional education by providing personalized learning experiences.',
         'Online learning platforms allow students to access valuable educational resources from anywhere.',
@@ -106,7 +106,7 @@ export const READING_LIBRARY = {
       ]
     },
     {
-      topic: 'Xã hội & Sự phát triển bản thân',
+      topic: 'Society & Personal Growth',
       sentences: [
         'Protecting endangered species is crucial for maintaining global ecological balance.',
         'Equal job opportunities should be provided for both men and women in modern society.',

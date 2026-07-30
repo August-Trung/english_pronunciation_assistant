@@ -8,8 +8,8 @@
       class="mb-3 border"
       variant="tonal"
       icon="mdi-shield-alert-outline"
-      title="Yêu cầu bảo mật HTTPS"
-      text="Trình duyệt yêu cầu kết nối bảo mật HTTPS để kích hoạt Microphone. Nếu bạn chạy trên tên miền chính thức, vui lòng cấu hình SSL."
+      title="HTTPS Security Requirement"
+      text="Microphone access requires a secure HTTPS connection. If hosting on a custom domain, please configure SSL."
     />
 
     <v-row class="ma-0 ga-2">
@@ -23,7 +23,7 @@
                 <v-icon size="small">mdi-text-box-search-outline</v-icon>
               </v-avatar>
               <div class="text-subtitle-2 text-sm-subtitle-1 font-weight-black text-secondary">
-                Bước 1: {{ practiceMode === 'reading' ? 'Chọn câu mẫu luyện đọc' : 'Chọn chủ đề luyện nói' }}
+                Step 1: {{ practiceMode === 'reading' ? 'Choose Model Sentence' : 'Choose Speaking Topic' }}
               </div>
             </div>
             <v-btn-toggle
@@ -36,10 +36,10 @@
               class="w-100 w-sm-auto"
             >
               <v-btn value="speaking" size="small" class="text-none font-weight-bold flex-grow-1 flex-sm-grow-0" prepend-icon="mdi-account-voice">
-                Nói tự do
+                Free Topic
               </v-btn>
               <v-btn value="reading" size="small" class="text-none font-weight-bold flex-grow-1 flex-sm-grow-0" prepend-icon="mdi-book-open-variant">
-                Đọc theo mẫu
+                Sentence Reading
               </v-btn>
             </v-btn-toggle>
           </div>
@@ -47,7 +47,7 @@
           <!-- Topic input with TTS button -->
           <v-text-field
             v-model="topic"
-            :placeholder="practiceMode === 'reading' ? 'Chọn hoặc nhập câu mẫu để luyện đọc...' : 'Nhập chủ đề hoặc câu hỏi (Ví dụ: What is your favorite color?)'"
+            :placeholder="practiceMode === 'reading' ? 'Select or enter model sentence to practice reading...' : 'Enter topic or question (e.g. What is your favorite color?)'"
             variant="outlined"
             density="comfortable"
             hide-details
@@ -61,16 +61,16 @@
                   size="x-small"
                   variant="text"
                   color="grey-darken-1"
-                  title="Cài đặt giọng đọc (Anh-Mỹ/Anh-Anh, Nam/Nữ)"
+                  title="TTS Voice Settings (US/UK, Male/Female)"
                 />
                 <v-menu activator="parent" location="bottom end" :close-on-content-click="false">
                   <v-card class="pa-4 text-body-2" width="320" border elevation="4" rounded="lg">
                     <div class="text-subtitle-1 font-weight-black text-secondary mb-3 d-flex align-center justify-space-between border-bottom pb-2">
-                      <span>Cài đặt giọng đọc (TTS)</span>
+                      <span>TTS Voice Settings</span>
                       <v-icon color="primary">mdi-account-voice</v-icon>
                     </div>
                     
-                    <div class="font-weight-bold text-grey-darken-3 mb-2 text-subtitle-2">1. Giọng phát âm (Accent):</div>
+                    <div class="font-weight-bold text-grey-darken-3 mb-2 text-subtitle-2">1. Pronunciation Accent:</div>
                     <v-btn-toggle
                       v-model="ttsAccent"
                       color="primary"
@@ -82,14 +82,14 @@
                       @update:model-value="saveTtsSettings"
                     >
                       <v-btn value="en-US" size="small" class="text-none font-weight-bold flex-grow-1" prepend-icon="mdi-earth">
-                        Anh - Mỹ (US)
+                        US Accent
                       </v-btn>
                       <v-btn value="en-GB" size="small" class="text-none font-weight-bold flex-grow-1" prepend-icon="mdi-earth">
-                        Anh - Anh (UK)
+                        UK Accent
                       </v-btn>
                     </v-btn-toggle>
 
-                    <div class="font-weight-bold text-grey-darken-3 mb-2 text-subtitle-2">2. Giới tính giọng đọc:</div>
+                    <div class="font-weight-bold text-grey-darken-3 mb-2 text-subtitle-2">2. Voice Gender:</div>
                     <v-btn-toggle
                       v-model="ttsGender"
                       color="primary"
@@ -101,10 +101,10 @@
                       @update:model-value="saveTtsSettings"
                     >
                       <v-btn value="female" size="small" class="text-none font-weight-bold flex-grow-1" prepend-icon="mdi-gender-female">
-                        Giọng Nữ
+                        Female Voice
                       </v-btn>
                       <v-btn value="male" size="small" class="text-none font-weight-bold flex-grow-1" prepend-icon="mdi-gender-male">
-                        Giọng Nam
+                        Male Voice
                       </v-btn>
                     </v-btn-toggle>
 
@@ -117,7 +117,7 @@
                       class="font-weight-bold text-none"
                       @click="speakText('Hello! Welcome to Fluent English practice.')"
                     >
-                      Nghe thử giọng chọn
+                      Test Selected Voice
                     </v-btn>
                   </v-card>
                 </v-menu>
@@ -129,7 +129,7 @@
                 variant="text"
                 density="compact"
                 icon="mdi-volume-high"
-                :title="isSpeaking ? 'Đang đọc mẫu...' : 'Nghe mẫu phát âm (TTS)'"
+                :title="isSpeaking ? 'Reading sample...' : 'Listen TTS Audio'"
                 class="mr-1"
                 @click="speakText(topic)"
               />
@@ -138,7 +138,7 @@
                 variant="text"
                 density="compact"
                 icon="mdi-dice-5-outline"
-                :title="practiceMode === 'reading' ? 'Chọn câu mẫu ngẫu nhiên' : 'Chọn chủ đề ngẫu nhiên'"
+                :title="practiceMode === 'reading' ? 'Select Random Sentence' : 'Select Random Topic'"
                 @click="getRandomTopic"
               />
             </template>
@@ -149,7 +149,7 @@
             <div class="text-caption font-weight-bold text-grey-darken-1 mb-1 d-flex align-center justify-space-between ga-2 flex-nowrap">
               <span class="d-flex align-center text-truncate">
                 <v-icon color="primary" size="small" class="mr-1 flex-shrink-0">mdi-school-outline</v-icon>
-                <span class="text-truncate">{{ practiceMode === 'reading' ? 'Thư viện câu mẫu:' : 'Gợi ý chủ đề:' }}</span>
+                <span class="text-truncate">{{ practiceMode === 'reading' ? 'Model Sentence Library:' : 'Topic Suggestions:' }}</span>
               </span>
               <span class="text-caption text-primary font-weight-bold text-no-wrap flex-shrink-0">
                 {{ GRADE_LEVELS.find(g => g.id === selectedGrade)?.badge }}
@@ -217,7 +217,7 @@
                       variant="text"
                       color="primary"
                       class="ml-1"
-                      title="Nghe phát âm mẫu"
+                      title="Listen Native Audio"
                       @click.stop="speakText(sent)"
                     />
                   </v-chip>
@@ -234,7 +234,7 @@
               <v-icon size="x-small">mdi-microphone-outline</v-icon>
             </v-avatar>
             <div class="text-subtitle-2 font-weight-black text-secondary">
-              Bước 2: {{ practiceMode === 'reading' ? 'Đọc lại câu mẫu bằng giọng nói' : 'Trả lời bằng giọng nói' }}
+              Step 2: {{ practiceMode === 'reading' ? 'Read Model Sentence Aloud' : 'Voice Speaking Response' }}
             </div>
           </div>
 
@@ -273,7 +273,7 @@
                   color="error"
                   variant="outlined"
                   density="comfortable"
-                  title="Xóa bản ghi hiện tại"
+                  title="Delete current recording"
                   :disabled="isAnalyzing"
                   @click="clearAudio"
                 />
@@ -284,12 +284,12 @@
               <template v-if="isRecording">
                 <div class="d-flex align-center justify-center text-error font-weight-black text-caption animate-pulse">
                   <v-icon color="error" class="mr-1 animate-pulse" size="x-small">mdi-record-rec</v-icon>
-                  Đang ghi âm... ({{ formatTime(recordingDuration) }})
+                  Recording in progress... ({{ formatTime(recordingDuration) }})
                 </div>
               </template>
               <template v-else-if="!topic.trim()">
                 <span class="text-caption font-weight-bold text-grey-darken-1" style="font-size: 11px;">
-                  Hãy chọn hoặc nhập một câu chủ đề trước
+                  Please select or enter a topic first
                 </span>
               </template>
             </div>
@@ -317,7 +317,7 @@
                 variant="flat"
                 size="32"
                 class="rounded-circle"
-                title="Phát / Tạm dừng"
+                title="Play / Pause"
                 @click="togglePlay"
               />
               
@@ -351,7 +351,7 @@
               :loading="isAnalyzing"
               @click="analyzeSpeech"
             >
-              Chấm điểm phát âm
+              Evaluate Pronunciation
             </v-btn>
           </div>
         </v-card>
@@ -364,13 +364,13 @@
             <v-avatar color="success-lighten-5" size="36" class="text-success mr-1 border">
               <v-icon size="small">mdi-trophy-outline</v-icon>
             </v-avatar>
-            <div class="text-subtitle-1 font-weight-black text-secondary">Kết quả đánh giá</div>
+            <div class="text-subtitle-1 font-weight-black text-secondary">Evaluation Results</div>
           </div>
 
           <!-- Error Alert Card -->
           <v-card v-if="errorMessage" border flat rounded="lg" class="pa-4 mb-3 bg-orange-lighten-5 text-center">
             <v-icon color="warning" size="36" class="mb-2">mdi-alert-circle-outline</v-icon>
-            <div class="text-subtitle-2 font-weight-black text-warning-darken-3 mb-1">Không thể chấm điểm</div>
+            <div class="text-subtitle-2 font-weight-black text-warning-darken-3 mb-1">Evaluation Failed</div>
             <div class="text-caption text-grey-darken-2 mb-3">{{ errorMessage }}</div>
             <v-btn
               color="warning"
@@ -380,15 +380,15 @@
               prepend-icon="mdi-refresh"
               @click="errorMessage = null"
             >
-              Thử lại
+              Try Again
             </v-btn>
           </v-card>
 
           <!-- Empty state -->
           <div v-else-if="!results && !isAnalyzing" class="d-flex flex-column align-center justify-center flex-grow-1 text-grey-darken-1 py-8">
             <v-icon size="48" color="grey-lighten-2" class="mb-2">mdi-comment-text-voice-outline</v-icon>
-            <div class="text-subtitle-2 font-weight-bold text-grey">Chưa có kết quả phân tích</div>
-            <div class="text-caption text-center px-6">Hãy hoàn thành câu trả lời của em ở cột bên trái và nhấn nút để bắt đầu chấm điểm nhé!</div>
+            <div class="text-subtitle-2 font-weight-bold text-grey">No Analysis Results Yet</div>
+            <div class="text-caption text-center px-6">Complete your response on the left and click button to start evaluation!</div>
           </div>
 
           <!-- Loading state -->
@@ -855,14 +855,14 @@
               <v-icon size="36" color="deep-orange">mdi-account-voice</v-icon>
             </div>
           </div>
-          <div class="text-caption font-weight-black text-teal-darken-4">Sơ đồ 3 bước: Môi Răng ➔ Luồng Hơi ➔ Bật Phát Âm</div>
+          <div class="text-caption font-weight-black text-teal-darken-4">3-Step Articulation Flow: Lips & Teeth ➔ Airflow ➔ Sound Release</div>
         </div>
 
         <div class="text-caption">
           <div class="bg-grey-lighten-4 pa-3.5 rounded-lg border mb-3" style="line-height: 1.55;">
             <span class="font-weight-black text-grey-darken-4 d-block mb-1.5 d-flex align-center ga-1">
               <v-icon color="pink" size="small">mdi-lips</v-icon>
-              <span class="text-subtitle-2 font-weight-bold">1. Khẩu Hình Môi & Răng:</span>
+              <span class="text-subtitle-2 font-weight-bold">1. Lips & Teeth Position:</span>
             </span>
             <span class="text-grey-darken-3 d-block pl-6">{{ selectedArticulation.mouth_position }}</span>
           </div>
@@ -870,7 +870,7 @@
           <div class="bg-grey-lighten-4 pa-3.5 rounded-lg border mb-3" style="line-height: 1.55;">
             <span class="font-weight-black text-grey-darken-4 d-block mb-1.5 d-flex align-center ga-1">
               <v-icon color="deep-orange" size="small">mdi-emoticon-tongue-outline</v-icon>
-              <span class="text-subtitle-2 font-weight-bold">2. Vị Trí Đầu Lưỡi:</span>
+              <span class="text-subtitle-2 font-weight-bold">2. Tongue Placement:</span>
             </span>
             <span class="text-grey-darken-3 d-block pl-6">{{ selectedArticulation.tongue_position }}</span>
           </div>
@@ -878,7 +878,7 @@
           <div class="bg-grey-lighten-4 pa-3.5 rounded-lg border mb-3" style="line-height: 1.55;">
             <span class="font-weight-black text-grey-darken-4 d-block mb-1.5 d-flex align-center ga-1">
               <v-icon color="light-blue" size="small">mdi-weather-windy</v-icon>
-              <span class="text-subtitle-2 font-weight-bold">3. Luồng Hơi & Thanh Quản:</span>
+              <span class="text-subtitle-2 font-weight-bold">3. Airflow & Vocal Cords:</span>
             </span>
             <span class="text-grey-darken-3 d-block pl-6">{{ selectedArticulation.airflow }}</span>
           </div>
@@ -886,7 +886,7 @@
           <div class="bg-amber-lighten-5 pa-3.5 rounded-lg border border-amber mb-2" style="line-height: 1.55;">
             <span class="font-weight-black text-amber-darken-4 d-block mb-1.5 d-flex align-center ga-1">
               <v-icon color="amber-darken-3" size="small">mdi-lightbulb-on-outline</v-icon>
-              <span class="text-subtitle-2 font-weight-bold">Mẹo Luyện Tập Nhanh:</span>
+              <span class="text-subtitle-2 font-weight-bold">Quick Practice Tip:</span>
             </span>
             <span class="text-amber-darken-4 font-weight-bold d-block pl-6">{{ selectedArticulation.tip }}</span>
           </div>
@@ -895,10 +895,10 @@
         <v-card-actions class="px-0 pt-3 pb-0">
           <v-spacer />
           <v-btn color="primary" variant="flat" class="font-weight-black text-none" @click="speakText(selectedArticulation.ipa)">
-            <v-icon class="mr-1">mdi-volume-high</v-icon> Nghe Âm Mẫu
+            <v-icon class="mr-1">mdi-volume-high</v-icon> Listen Sample Sound
           </v-btn>
           <v-btn color="grey-darken-1" variant="outlined" class="font-weight-bold text-none" @click="showArticulationModal = false">
-            Đóng
+            Close
           </v-btn>
         </v-card-actions>
       </v-card>
