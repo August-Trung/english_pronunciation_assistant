@@ -15,8 +15,8 @@ const routes = [
   { path: '/', name: 'practice', component: PracticeView },
   { path: '/shadowing', name: 'shadowing', component: ShadowingView },
   { path: '/homework', name: 'homework', component: StudentHomeworkView },
-  { path: '/teacher', name: 'teacher', component: TeacherView, meta: { requiresAuth: true, roles: ['teacher', 'admin', 'super_admin'] } },
-  { path: '/admin', name: 'admin', component: AdminView, meta: { requiresAuth: true, roles: ['admin', 'super_admin'] } },
+  { path: '/teacher', name: 'teacher', component: TeacherView },
+  { path: '/admin', name: 'admin', component: AdminView },
   { path: '/parent', name: 'parent', component: ParentView },
   { path: '/flashcards', name: 'flashcards', component: FlashcardsView },
   { path: '/leaderboard', name: 'leaderboard', component: LeaderboardView },
@@ -29,17 +29,6 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes
-})
-
-router.beforeEach((to, from, next) => {
-  const userRole = localStorage.getItem('user_role') || 'student'
-  if (to.meta.requiresAuth) {
-    if (!to.meta.roles.includes(userRole)) {
-      alert(`Access Denied: Role ${userRole.toUpperCase()} is not authorized to access ${to.path}.`)
-      return next('/')
-    }
-  }
-  next()
 })
 
 export default router
