@@ -35,7 +35,7 @@ router.beforeEach((to, from, next) => {
   const userRole = localStorage.getItem('user_role') || 'student'
   if (to.meta.requiresAuth) {
     if (!to.meta.roles.includes(userRole)) {
-      alert(`Truy cập bị từ chối: Quyền ${userRole.toUpperCase()} không thể vào đường dẫn ${to.path}.`)
+      alert(`Access Denied: Role ${userRole.toUpperCase()} is not authorized to access ${to.path}.`)
       return next('/')
     }
   }

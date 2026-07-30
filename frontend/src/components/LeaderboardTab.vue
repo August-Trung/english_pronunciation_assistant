@@ -224,7 +224,7 @@ const top3 = computed(() => leaderboard.value[2] || { name: 'Empty Slot', best_s
 
 const formatDisplayName = (nameStr) => {
   if (!nameStr) return 'Learner'
-  if (nameStr.startsWith('Học Sinh Khách #')) {
+  if (nameStr.startsWith('Học Sinh Khách #') || nameStr.startsWith('Guest Learner #')) {
     const subId = nameStr.split('#')[1]
     return `Guest Learner #${subId}`
   }
