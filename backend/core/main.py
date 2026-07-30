@@ -1023,11 +1023,10 @@ def analyze_topic_response_with_ai(topic: str, transcribed_text: str):
 Analyze this student's spoken response for the chosen topic.
 
 CRITICAL INSTRUCTIONS:
-1. "original" MUST BE THE EXACT INCORRECT ENGLISH PHRASE FROM THE STUDENT'S TRANSCRIPT (IN ENGLISH!).
-2. "fixed" MUST BE THE CORRECTED ENGLISH PHRASE (MUST BE IN ENGLISH!).
-3. "type" MUST BE THE ERROR CATEGORY (e.g. "Vocabulary", "Grammar", "Verb Tense", "Singular / Plural", "Preposition").
-4. "reason", "topic_comment", and all fields in "pedagogical_feedback" MUST BE WRITTEN IN NATURAL ENGLISH.
-5. All grammatical explanations in "reason" MUST BE 100% FACTUALLY ACCURATE based on standard English textbook rules. Uncountable nouns like 'food', 'water', 'money' take singular verb 'is'/'was'.
+1. "pedagogical_feedback" fields ("fluency", "vocabulary", "grammar", "pronunciation", "communication", "advice") MUST BE 100% IN NATURAL, ENCOURAGING ENGLISH. DO NOT USE ANY VIETNAMESE IN PEDAGOGICAL_FEEDBACK!
+2. All feedback MUST BE DYNAMICALLY TAILORED to the student's specific spoken words. Do NOT repeat generic phrase templates!
+3. "grammar_fixes": "original" MUST be the exact incorrect phrase, "fixed" MUST be the corrected phrase, "reason" MUST be written in clear English.
+4. "native_suggestions": Provide 3 distinct levels of natural English expressions. "meaning" should be a short Vietnamese translation.
 
 Topic Prompt: "{topic or 'Free Speaking Practice'}"
 Student Spoken Transcript: "{transcribed_text}"
@@ -1059,12 +1058,12 @@ Return ONLY a JSON object with this exact structure without markdown or extra te
     "clarity_percent": 95
   }},
   "pedagogical_feedback": {{
-    "fluency": "Em diễn đạt khá trôi chảy, cố gắng nói trọn vẹn cả câu thay vì ngắt quãng.",
-    "vocabulary": "Rất tốt! Em đã sử dụng từ vựng đa dạng và chính xác.",
-    "grammar": "Chúc mừng! Cấu trúc câu ngữ pháp cơ bản khá chính xác.",
-    "pronunciation": "Phát âm khá tốt, hãy chú ý nhấn đúng trọng tâm từ hơn nữa.",
-    "communication": "Đã trả lời đúng trọng tâm câu hỏi.",
-    "advice": "Em đang làm rất tốt! Lần tới hãy tự tin nói dài thêm 15-20 từ nhé!"
+    "fluency": "Your speaking rhythm was steady and confident throughout the sentence.",
+    "vocabulary": "Excellent choice of vocabulary that naturally fits this conversation topic.",
+    "grammar": "Your sentence structure was grammatically accurate and clear.",
+    "pronunciation": "Your word pronunciation was crisp with good intonation.",
+    "communication": "You communicated your ideas clearly and directly addressed the prompt.",
+    "advice": "Keep up the great effort! Try expanding your answer with 1-2 additional details next time."
   }}
 }}"""
             response = requests.post(
@@ -1076,7 +1075,8 @@ Return ONLY a JSON object with this exact structure without markdown or extra te
                 json={
                     "model": "llama-3.3-70b-versatile",
                     "messages": [{"role": "user", "content": prompt}],
-                    "temperature": 0.0,
+                    "temperature": 0.7,
+                    "top_p": 0.9,
                     "response_format": {"type": "json_object"}
                 },
                 timeout=6

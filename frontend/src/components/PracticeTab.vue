@@ -603,7 +603,7 @@
                     variant="flat"
                     class="font-weight-black"
                   >
-                    {{ pair.word1 }} 🔗 {{ pair.word2 }} ({{ pair.ipa_link }})
+                    {{ pair.word1 }} <v-icon size="x-small" class="mx-0.5">mdi-link-variant</v-icon> {{ pair.word2 }} ({{ pair.ipa_link }})
                   </v-chip>
                 </div>
               </div>
@@ -629,11 +629,9 @@
                   >
                     {{ w_ipa.target_ipa }}
                   </v-chip>
-                  <div v-if="w_ipa.spoken_ipa && w_ipa.status !== 'correct'" class="text-caption font-weight-bold text-error mt-0.5" style="font-size: 9px;">
-                    Đọc: {{ w_ipa.spoken_ipa }}
-                  </div>
-                  <div v-if="w_ipa.note" class="text-caption text-error font-weight-bold text-center mt-0.5" style="font-size: 9px; line-height: 1.1;">
-                    ⚠️ {{ w_ipa.note }}
+                  <div v-if="w_ipa.note" class="text-caption text-error font-weight-bold text-center mt-1 d-flex align-center ga-0.5" style="font-size: 9px; line-height: 1.1;">
+                    <v-icon size="x-small" color="error">mdi-alert-circle-outline</v-icon>
+                    <span>{{ w_ipa.note }}</span>
                   </div>
 
                   <!-- Button Xem Khẩu Hình 2D/3D -->
@@ -762,14 +760,14 @@
             <div>
               <div class="text-caption font-weight-bold text-grey-darken-1 mb-2">
                 <v-icon size="small" color="primary" class="mr-1">mdi-account-school-outline</v-icon>
-                Nhận xét chi tiết:
+                Detailed Pedagogical Evaluation:
               </div>
               <v-card border flat rounded="lg" class="pa-3 bg-grey-lighten-4">
                 <template v-if="results.ai_analysis?.pedagogical_feedback">
                   <div class="d-flex align-start ga-2 mb-2">
                     <v-icon size="small" color="blue" class="mt-1">mdi-waveform</v-icon>
                     <div>
-                      <strong class="text-subtitle-2 text-blue-darken-3">Trôi chảy & Diễn đạt:</strong>
+                      <strong class="text-subtitle-2 text-blue-darken-3">Fluency & Expression:</strong>
                       <div class="text-caption text-grey-darken-3">{{ results.ai_analysis.pedagogical_feedback.fluency }}</div>
                     </div>
                   </div>
@@ -777,7 +775,7 @@
                   <div class="d-flex align-start ga-2 mb-2">
                     <v-icon size="small" color="purple" class="mt-1">mdi-book-alphabet</v-icon>
                     <div>
-                      <strong class="text-subtitle-2 text-purple-darken-3">Từ vựng:</strong>
+                      <strong class="text-subtitle-2 text-purple-darken-3">Vocabulary & Word Choice:</strong>
                       <div class="text-caption text-grey-darken-3">{{ results.ai_analysis.pedagogical_feedback.vocabulary }}</div>
                     </div>
                   </div>
@@ -785,7 +783,7 @@
                   <div class="d-flex align-start ga-2 mb-2">
                     <v-icon size="small" color="orange" class="mt-1">mdi-lead-pencil</v-icon>
                     <div>
-                      <strong class="text-subtitle-2 text-orange-darken-4">Ngữ pháp:</strong>
+                      <strong class="text-subtitle-2 text-orange-darken-4">Grammar & Sentence Structure:</strong>
                       <div class="text-caption text-grey-darken-3">{{ results.ai_analysis.pedagogical_feedback.grammar }}</div>
                     </div>
                   </div>
@@ -793,7 +791,7 @@
                   <div class="d-flex align-start ga-2 mb-2">
                     <v-icon size="small" color="teal" class="mt-1">mdi-microphone-outline</v-icon>
                     <div>
-                      <strong class="text-subtitle-2 text-teal-darken-4">Phát âm:</strong>
+                      <strong class="text-subtitle-2 text-teal-darken-4">Pronunciation & Clarity:</strong>
                       <div class="text-caption text-grey-darken-3">{{ results.ai_analysis.pedagogical_feedback.pronunciation }}</div>
                     </div>
                   </div>
@@ -801,7 +799,7 @@
                   <div class="d-flex align-start ga-2 mb-2">
                     <v-icon size="small" color="indigo" class="mt-1">mdi-forum-outline</v-icon>
                     <div>
-                      <strong class="text-subtitle-2 text-indigo-darken-3">Giao tiếp:</strong>
+                      <strong class="text-subtitle-2 text-indigo-darken-3">Communication & Relevance:</strong>
                       <div class="text-caption text-grey-darken-3">{{ results.ai_analysis.pedagogical_feedback.communication }}</div>
                     </div>
                   </div>
@@ -811,7 +809,7 @@
                   <div class="d-flex align-start ga-2 text-amber-darken-4">
                     <v-icon size="small" color="amber-darken-3" class="mt-1">mdi-lightbulb-on</v-icon>
                     <div>
-                      <strong class="text-subtitle-2">LỜI KHUYÊN TIẾN BỘ:</strong>
+                      <strong class="text-subtitle-2">ACTIONABLE ADVICE:</strong>
                       <div class="text-caption font-weight-bold text-grey-darken-3">{{ results.ai_analysis.pedagogical_feedback.advice }}</div>
                     </div>
                   </div>
@@ -843,50 +841,54 @@
         </div>
 
         <!-- Sơ Đồ Khẩu Hình Đồ Họa 2D/3D -->
-        <div class="bg-teal-lighten-5 border border-teal pa-4 rounded-lg mb-3 text-center">
-          <div class="d-flex justify-center align-center ga-4 mb-2">
-            <div class="border pa-2 bg-white rounded-circle elevation-1" style="width: 70px; height: 70px;">
-              <v-icon size="40" color="teal-darken-3">mdi-emoticon-outline</v-icon>
+        <div class="bg-teal-lighten-5 border border-teal pa-4 rounded-lg mb-4 text-center">
+          <div class="d-flex justify-center align-center ga-3 mb-2">
+            <div class="border pa-2 bg-white rounded-circle elevation-1 d-flex align-center justify-center" style="width: 64px; height: 64px;">
+              <v-icon size="36" color="teal-darken-3">mdi-lips</v-icon>
             </div>
-            <v-icon size="large" color="teal-darken-2">mdi-arrow-right-bold-outline</v-icon>
-            <div class="border pa-2 bg-white rounded-circle elevation-1" style="width: 70px; height: 70px;">
-              <v-icon size="40" color="deep-orange">mdi-account-voice</v-icon>
+            <v-icon size="medium" color="teal-darken-2">mdi-arrow-right-bold-outline</v-icon>
+            <div class="border pa-2 bg-white rounded-circle elevation-1 d-flex align-center justify-center" style="width: 64px; height: 64px;">
+              <v-icon size="36" color="light-blue-darken-2">mdi-weather-windy</v-icon>
+            </div>
+            <v-icon size="medium" color="teal-darken-2">mdi-arrow-right-bold-outline</v-icon>
+            <div class="border pa-2 bg-white rounded-circle elevation-1 d-flex align-center justify-center" style="width: 64px; height: 64px;">
+              <v-icon size="36" color="deep-orange">mdi-account-voice</v-icon>
             </div>
           </div>
-          <div class="text-caption font-weight-black text-teal-darken-4">Sơ đồ chuyển động luồng hơi & đầu lưỡi</div>
+          <div class="text-caption font-weight-black text-teal-darken-4">Sơ đồ 3 bước: Môi Răng ➔ Luồng Hơi ➔ Bật Phát Âm</div>
         </div>
 
-        <div class="space-y-2 text-caption">
-          <div class="bg-grey-lighten-4 pa-2.5 rounded border mb-2">
-            <span class="font-weight-black text-grey-darken-4 d-block mb-1 d-flex align-center ga-1">
-              <v-icon color="pink" size="x-small">mdi-lips</v-icon>
-              <span>1. Khẩu Hình Môi & Răng:</span>
+        <div class="text-caption">
+          <div class="bg-grey-lighten-4 pa-3.5 rounded-lg border mb-3" style="line-height: 1.55;">
+            <span class="font-weight-black text-grey-darken-4 d-block mb-1.5 d-flex align-center ga-1">
+              <v-icon color="pink" size="small">mdi-lips</v-icon>
+              <span class="text-subtitle-2 font-weight-bold">1. Khẩu Hình Môi & Răng:</span>
             </span>
-            <span class="text-grey-darken-3">{{ selectedArticulation.mouth_position }}</span>
+            <span class="text-grey-darken-3 d-block pl-6">{{ selectedArticulation.mouth_position }}</span>
           </div>
 
-          <div class="bg-grey-lighten-4 pa-2.5 rounded border mb-2">
-            <span class="font-weight-black text-grey-darken-4 d-block mb-1 d-flex align-center ga-1">
-              <v-icon color="deep-orange" size="x-small">mdi-emoticon-tongue-outline</v-icon>
-              <span>2. Vị Trí Đầu Lưỡi:</span>
+          <div class="bg-grey-lighten-4 pa-3.5 rounded-lg border mb-3" style="line-height: 1.55;">
+            <span class="font-weight-black text-grey-darken-4 d-block mb-1.5 d-flex align-center ga-1">
+              <v-icon color="deep-orange" size="small">mdi-emoticon-tongue-outline</v-icon>
+              <span class="text-subtitle-2 font-weight-bold">2. Vị Trí Đầu Lưỡi:</span>
             </span>
-            <span class="text-grey-darken-3">{{ selectedArticulation.tongue_position }}</span>
+            <span class="text-grey-darken-3 d-block pl-6">{{ selectedArticulation.tongue_position }}</span>
           </div>
 
-          <div class="bg-grey-lighten-4 pa-2.5 rounded border mb-2">
-            <span class="font-weight-black text-grey-darken-4 d-block mb-1 d-flex align-center ga-1">
-              <v-icon color="light-blue" size="x-small">mdi-weather-windy</v-icon>
-              <span>3. Luồng Hơi & Thanh Quản:</span>
+          <div class="bg-grey-lighten-4 pa-3.5 rounded-lg border mb-3" style="line-height: 1.55;">
+            <span class="font-weight-black text-grey-darken-4 d-block mb-1.5 d-flex align-center ga-1">
+              <v-icon color="light-blue" size="small">mdi-weather-windy</v-icon>
+              <span class="text-subtitle-2 font-weight-bold">3. Luồng Hơi & Thanh Quản:</span>
             </span>
-            <span class="text-grey-darken-3">{{ selectedArticulation.airflow }}</span>
+            <span class="text-grey-darken-3 d-block pl-6">{{ selectedArticulation.airflow }}</span>
           </div>
 
-          <div class="bg-amber-lighten-5 pa-2.5 rounded border border-amber">
-            <span class="font-weight-black text-amber-darken-4 d-block mb-1 d-flex align-center ga-1">
-              <v-icon color="amber-darken-3" size="x-small">mdi-lightbulb-on-outline</v-icon>
-              <span>Mẹo Luyện Tập Nhanh:</span>
+          <div class="bg-amber-lighten-5 pa-3.5 rounded-lg border border-amber mb-2" style="line-height: 1.55;">
+            <span class="font-weight-black text-amber-darken-4 d-block mb-1.5 d-flex align-center ga-1">
+              <v-icon color="amber-darken-3" size="small">mdi-lightbulb-on-outline</v-icon>
+              <span class="text-subtitle-2 font-weight-bold">Mẹo Luyện Tập Nhanh:</span>
             </span>
-            <span class="text-amber-darken-4 font-weight-bold">{{ selectedArticulation.tip }}</span>
+            <span class="text-amber-darken-4 font-weight-bold d-block pl-6">{{ selectedArticulation.tip }}</span>
           </div>
         </div>
 
