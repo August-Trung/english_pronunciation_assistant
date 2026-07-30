@@ -443,7 +443,7 @@ const handleAdminLogin = async () => {
 }
 
 // Dev configurations
-const backendUrl = ref('https://agrse-fluent-english-backend.hf.space')
+const backendUrl = ref(import.meta.env.VITE_BACKEND_URL || '')
 const isTestingConnection = ref(false)
 const connectionStatus = ref(null)
 
@@ -453,10 +453,10 @@ onMounted(async () => {
   window.addEventListener('popstate', checkRoute)
 
   const storedUrl = localStorage.getItem('speak_backend_url')
-  if (storedUrl && !storedUrl.includes('august-trung-english-pronunciation-assistant')) {
+  if (storedUrl && storedUrl.startsWith('http') && !storedUrl.includes('august-trung-english-pronunciation-assistant')) {
     backendUrl.value = storedUrl
   } else {
-    backendUrl.value = 'https://agrse-fluent-english-backend.hf.space'
+    backendUrl.value = import.meta.env.VITE_BACKEND_URL || ''
   }
 
   try {
