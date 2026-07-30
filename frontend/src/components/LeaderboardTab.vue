@@ -30,10 +30,10 @@
     <v-card border flat class="pa-2 mb-4 bg-white rounded-lg">
       <v-tabs v-model="activeCategory" color="indigo-darken-3" align-tabs="center" density="comfortable" @update:model-value="fetchLeaderboard">
         <v-tab value="freemium" class="font-weight-black text-none" prepend-icon="mdi-account-star-outline">
-          Independent Learners (Học Sinh Tự Do)
+          Independent Learners
         </v-tab>
         <v-tab value="classroom" class="font-weight-black text-none" prepend-icon="mdi-google-classroom">
-          Classroom Enrolled (Học Sinh Theo Lớp)
+          Classroom Enrolled
         </v-tab>
       </v-tabs>
     </v-card>
