@@ -19,6 +19,35 @@
       </div>
     </v-card>
 
+    <!-- AI Smart Remedial Practice Banner -->
+    <v-card border flat class="pa-3 pa-sm-4 mb-4 bg-indigo-lighten-5 border-indigo rounded-lg">
+      <div class="d-flex align-center justify-space-between flex-wrap ga-3">
+        <div class="d-flex align-center ga-3">
+          <v-avatar color="indigo" size="44" class="elevation-1">
+            <v-icon color="white">mdi-auto-fix</v-icon>
+          </v-avatar>
+          <div>
+            <div class="text-subtitle-1 font-weight-black text-indigo-darken-3">AI Smart Remedial Practice</div>
+            <div class="text-caption text-indigo-darken-2 font-weight-bold">
+              1-Click generate custom reading exercises based on your top mispronounced words
+            </div>
+          </div>
+        </div>
+
+        <v-btn
+          color="indigo-darken-3"
+          variant="flat"
+          size="small"
+          class="font-weight-black text-none"
+          prepend-icon="mdi-flash"
+          :loading="isLoadingRemedial"
+          @click="startRemedialPractice"
+        >
+          Start AI Practice Set
+        </v-btn>
+      </div>
+    </v-card>
+
     <!-- Empty State -->
     <div v-if="weakWords.length === 0" class="text-center py-8 border rounded-lg bg-white pa-4">
       <v-avatar color="green-lighten-5" size="64" class="mb-3">
@@ -114,6 +143,45 @@
         </v-btn>
       </div>
     </div>
+    <!-- Modal: AI Remedial Practice Modal -->
+    <v-dialog v-model="showRemedialModal" max-width="550">
+      <v-card border rounded="lg" class="pa-4 bg-white" v-if="remedialData">
+        <div class="d-flex align-center ga-3 mb-3">
+          <v-avatar color="indigo-lighten-5" size="40" class="text-indigo-darken-3 border">
+            <v-icon size="default">mdi-brain</v-icon>
+          </v-avatar>
+          <div>
+            <div class="text-subtitle-1 font-weight-black text-primary">{{ remedialData.title }}</div>
+            <div class="text-caption text-grey-darken-1">{{ remedialData.reason }}</div>
+          </div>
+        </div>
+
+        <v-card border flat class="pa-3 mb-3 bg-grey-lighten-4 rounded-lg">
+          <div class="text-caption font-weight-black text-secondary mb-1">SMART REMEDIAL SENTENCE:</div>
+          <div class="text-body-1 font-weight-black text-grey-darken-4 mb-2">
+            "{{ remedialData.topic_sentence }}"
+          </div>
+          <div class="text-caption text-primary font-weight-bold">
+            IPA Target: {{ remedialData.target_ipa }}
+          </div>
+        </v-card>
+
+        <div class="text-caption font-weight-black text-grey-darken-2 mb-2">FOCUS WEAK WORDS:</div>
+        <div class="d-flex align-center flex-wrap ga-1 mb-4">
+          <v-chip v-for="w in (remedialData.focus_words || [])" :key="w" color="deep-orange" size="small" variant="flat" class="font-weight-bold">
+            {{ w }}
+          </v-chip>
+        </div>
+
+        <v-card-actions class="px-0 pb-0">
+          <v-spacer />
+          <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showRemedialModal = false">Close</v-btn>
+          <v-btn color="indigo-darken-3" variant="flat" class="text-none font-weight-bold" prepend-icon="mdi-headphones" @click="playAudio(remedialData.topic_sentence)">
+            Listen Sample
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -126,6 +194,9 @@ const props = defineProps({
 })
 
 const weakWords = ref([])
+const isLoadingRemedial = ref(false)
+const showRemedialModal = ref(false)
+const remedialData = ref(null)
 
 const currentCardIndex = ref(0)
 const isFlipped = ref(false)
@@ -142,7 +213,25 @@ const fetchWeakWords = async () => {
       }
     }
   } catch (e) {
-    // Graceful silent fallback without console error
+    // Graceful silent fallback
+  }
+}
+
+const startRemedialPractice = async () => {
+  isLoadingRemedial.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/practice/recommended/${props.userId || 1}`)
+    if (res.ok) {
+      const data = await res.json()
+      if (data.recommendations && data.recommendations.length > 0) {
+        remedialData.value = data.recommendations[0]
+        showRemedialModal.value = true
+      }
+    }
+  } catch (e) {
+    console.error('Fetch remedial practice error:', e)
+  } finally {
+    isLoadingRemedial.value = false
   }
 }
 

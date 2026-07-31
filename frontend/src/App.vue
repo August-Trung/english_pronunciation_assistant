@@ -352,7 +352,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useTheme } from 'vuetify'
 import LoginPage from '@/components/LoginPage.vue'
 import PracticeTab from '@/components/PracticeTab.vue'
@@ -364,22 +365,18 @@ import AchievementsDialog from '@/components/AchievementsDialog.vue'
 import WeakWordsDialog from '@/components/WeakWordsDialog.vue'
 
 const theme = useTheme()
+const router = useRouter()
+const route = useRoute()
 
 // Routing
-const isAdminRoute = ref(false)
+const isAdminRoute = computed(() => route.path === '/admin')
 
 const isStandalonePortalRoute = computed(() => {
-  const path = window.location.pathname
-  return ['/teacher', '/admin', '/parent'].includes(path)
+  return ['/teacher', '/admin', '/parent'].includes(route.path)
 })
 
-const checkRoute = () => {
-  isAdminRoute.value = window.location.pathname === '/admin'
-}
-
 const goToHome = () => {
-  window.history.pushState({}, '', '/')
-  checkRoute()
+  router.push('/')
 }
 
 // State
@@ -449,9 +446,6 @@ const connectionStatus = ref(null)
 
 // Lifecycle - Load persistent device session
 onMounted(async () => {
-  checkRoute()
-  window.addEventListener('popstate', checkRoute)
-
   const storedUrl = localStorage.getItem('speak_backend_url')
   if (storedUrl && storedUrl.startsWith('http') && !storedUrl.includes('august-trung-english-pronunciation-assistant')) {
     backendUrl.value = storedUrl
@@ -467,6 +461,9 @@ onMounted(async () => {
     }
   } finally {
     isCheckingAuth.value = false
+    if (!isLoggedIn.value && !isStandalonePortalRoute.value && route.path !== '/') {
+      router.replace('/')
+    }
   }
 
   const storedTheme = localStorage.getItem('speak_theme')
@@ -474,6 +471,15 @@ onMounted(async () => {
     theme.global.name.value = storedTheme
   }
 })
+
+watch(
+  () => route.path,
+  (newPath) => {
+    if (!isCheckingAuth.value && !isLoggedIn.value && !isStandalonePortalRoute.value && newPath !== '/') {
+      router.replace('/')
+    }
+  }
+)
 
 // Auto login device session from Cloud DB
 const autoLoginByEmail = async (emailVal) => {
@@ -632,6 +638,7 @@ const handleLogout = () => {
   userAvatar.value = ''
   history.value = []
   showLogoutDialog.value = false
+  router.replace('/')
 }
 
 const cycleTheme = () => {

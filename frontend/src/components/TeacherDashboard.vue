@@ -93,6 +93,16 @@
             >
               Create New Class
             </v-btn>
+            <v-btn
+              color="white"
+              variant="outlined"
+              size="small"
+              class="font-weight-bold text-none"
+              prepend-icon="mdi-logout"
+              @click="showLogoutDialog = true"
+            >
+              Sign Out
+            </v-btn>
           </div>
         </div>
       </v-card>
@@ -180,11 +190,13 @@
           <!-- Class Header Banner -->
           <div class="d-flex align-center justify-space-between flex-wrap ga-2 border-b pb-3 mb-3">
             <div>
-              <div class="d-flex align-center ga-2">
+              <div class="d-flex align-center ga-2 flex-wrap">
                 <span class="text-h6 font-weight-black text-primary">{{ selectedClass.name }}</span>
                 <v-chip color="indigo" size="small" variant="flat" class="font-weight-bold">
                   {{ selectedClass.grade_level }}
                 </v-chip>
+                <v-btn icon="mdi-pencil-outline" size="x-small" color="primary" variant="tonal" title="Edit Class Information" @click="openEditClassModal" />
+                <v-btn icon="mdi-delete-outline" size="x-small" color="error" variant="tonal" title="Delete Classroom" @click="showDeleteClassModal = true" />
               </div>
               <div class="text-caption text-grey-darken-2 font-weight-bold d-flex align-center flex-wrap ga-2 mt-1">
                 <span>Student Join Code:</span>
@@ -220,7 +232,7 @@
           <!-- Class Tabs: Gradebook Roster vs Assignments List -->
           <v-tabs v-model="activeTab" color="primary" density="compact" class="mb-3">
             <v-tab value="gradebook" class="font-weight-black text-none" prepend-icon="mdi-table-account">
-              Gradebook Roster ({{ gradebook.students?.length || 0 }})
+              Gradebook Roster ({{ filteredStudents.length }})
             </v-tab>
             <v-tab value="assignments" class="font-weight-black text-none" prepend-icon="mdi-clipboard-text-outline">
               Assignments ({{ gradebook.assignments?.length || 0 }})
@@ -230,6 +242,28 @@
           <v-window v-model="activeTab">
             <!-- Tab 1: Gradebook Roster Table -->
             <v-window-item value="gradebook">
+              <div class="mb-3 d-flex align-center justify-space-between flex-wrap ga-2">
+                <v-text-field
+                  v-model="searchStudentText"
+                  placeholder="Search student name or email..."
+                  variant="outlined"
+                  density="compact"
+                  hide-details
+                  prepend-inner-icon="mdi-magnify"
+                  style="max-width: 320px;"
+                />
+                <v-btn
+                  color="success"
+                  variant="flat"
+                  size="small"
+                  class="font-weight-black text-none"
+                  prepend-icon="mdi-file-excel-outline"
+                  @click="exportGradebookCSV"
+                >
+                  Export Gradebook (CSV)
+                </v-btn>
+              </div>
+
               <v-table density="comfortable" hover class="border rounded-lg">
                 <thead>
                   <tr class="bg-grey-lighten-4">
@@ -241,7 +275,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="std in gradebook.students" :key="std.id">
+                  <tr v-for="std in filteredStudents" :key="std.id">
                     <td class="font-weight-bold text-body-2">
                       <div class="d-flex align-center ga-2 pa-1">
                         <v-avatar color="indigo-lighten-5" size="28" class="text-indigo font-weight-black text-caption border">
@@ -265,23 +299,33 @@
                       </v-chip>
                     </td>
                     <td class="text-center">
-                      <v-btn
-                        size="x-small"
-                        color="primary"
-                        variant="tonal"
-                        class="font-weight-bold text-none"
-                        prepend-icon="mdi-headphones"
-                        :disabled="!getStudentSubmissions(std.id).length"
-                        @click="openStudentSubmissionsModal(std)"
-                      >
-                        Review Audio
-                      </v-btn>
+                      <div class="d-flex align-center justify-center ga-1">
+                        <v-btn
+                          size="x-small"
+                          color="primary"
+                          variant="tonal"
+                          class="font-weight-bold text-none"
+                          prepend-icon="mdi-headphones"
+                          :disabled="!getStudentSubmissions(std.id).length"
+                          @click="openStudentSubmissionsModal(std)"
+                        >
+                          Review Audio
+                        </v-btn>
+                        <v-btn
+                          size="x-small"
+                          color="error"
+                          variant="tonal"
+                          icon="mdi-account-remove-outline"
+                          title="Remove student from class"
+                          @click="confirmRemoveStudent(std)"
+                        />
+                      </div>
                     </td>
                   </tr>
 
-                  <tr v-if="!gradebook.students?.length">
+                  <tr v-if="!filteredStudents.length">
                     <td colspan="5" class="text-center pa-6 text-caption text-grey">
-                      No students enrolled yet. Share join code <strong>{{ selectedClass.join_code }}</strong> with your class!
+                      No students found. Share join code <strong>{{ selectedClass.join_code }}</strong> with your class!
                     </td>
                   </tr>
                 </tbody>
@@ -309,9 +353,13 @@
                       </div>
                     </div>
 
-                    <v-chip color="teal" size="small" variant="flat" class="font-weight-bold">
-                      Submissions: {{ getAssignmentSubmissionsCount(asg.id) }}/{{ gradebook.students?.length || 0 }}
-                    </v-chip>
+                    <div class="d-flex align-center ga-2">
+                      <v-btn size="x-small" icon="mdi-pencil-outline" color="primary" variant="tonal" title="Edit Assignment" @click="openEditAssignmentModal(asg)" />
+                      <v-btn size="x-small" icon="mdi-delete-outline" color="error" variant="tonal" title="Delete Assignment" @click="confirmDeleteAssignment(asg)" />
+                      <v-chip color="teal" size="small" variant="flat" class="font-weight-bold">
+                        Submissions: {{ getAssignmentSubmissionsCount(asg.id) }}/{{ gradebook.students?.length || 0 }}
+                      </v-chip>
+                    </div>
                   </div>
                 </v-card>
 
@@ -364,6 +412,172 @@
           <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showCreateClassModal = false">Cancel</v-btn>
           <v-btn color="primary" variant="flat" class="text-none font-weight-bold" :loading="isCreatingClass" @click="submitCreateClass">
             Generate Class & Join Code
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Modal: Edit Classroom -->
+    <v-dialog v-model="showEditClassModal" max-width="450">
+      <v-card border rounded="lg" class="pa-4">
+        <div class="text-subtitle-1 font-weight-black text-primary mb-3 d-flex align-center ga-2">
+          <v-icon color="primary">mdi-pencil</v-icon>
+          <span>Update Classroom Details</span>
+        </div>
+
+        <v-text-field
+          v-model="editClassName"
+          label="Classroom Name:"
+          variant="outlined"
+          density="comfortable"
+          class="mb-2"
+          prepend-inner-icon="mdi-school"
+        />
+
+        <v-select
+          v-model="editClassGrade"
+          :items="['Elementary (Grades 1 - 5)', 'Middle School (Grades 6 - 9)', 'High School & IELTS (Grades 10 - 12)']"
+          label="Grade Level Category:"
+          variant="outlined"
+          density="comfortable"
+          class="mb-3"
+          prepend-inner-icon="mdi-notebook"
+        />
+
+        <v-card-actions class="px-0 pb-0">
+          <v-spacer />
+          <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showEditClassModal = false">Cancel</v-btn>
+          <v-btn color="primary" variant="flat" class="text-none font-weight-bold" :loading="isUpdatingClass" @click="submitEditClass">
+            Save Changes
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Modal: Delete Classroom Confirmation -->
+    <v-dialog v-model="showDeleteClassModal" max-width="400">
+      <v-card border rounded="lg" class="pa-4">
+        <div class="text-subtitle-1 font-weight-black text-error mb-2 d-flex align-center ga-2">
+          <v-icon color="error">mdi-alert-circle</v-icon>
+          <span>Delete Classroom</span>
+        </div>
+        <div class="text-body-2 text-grey-darken-2 mb-4">
+          Are you sure you want to delete classroom <strong>{{ selectedClass?.name }}</strong>? Students will no longer be able to submit homework to this class.
+        </div>
+        <v-card-actions class="px-0 pb-0">
+          <v-spacer />
+          <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showDeleteClassModal = false">Cancel</v-btn>
+          <v-btn color="error" variant="flat" class="text-none font-weight-bold" :loading="isDeletingClass" @click="submitDeleteClass">
+            Delete Classroom
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Modal: Remove Student Confirmation -->
+    <v-dialog v-model="showRemoveStudentModal" max-width="400">
+      <v-card border rounded="lg" class="pa-4">
+        <div class="text-subtitle-1 font-weight-black text-error mb-2 d-flex align-center ga-2">
+          <v-icon color="error">mdi-account-remove</v-icon>
+          <span>Remove Student</span>
+        </div>
+        <div class="text-body-2 text-grey-darken-2 mb-4">
+          Remove student <strong>{{ studentToRemove?.name }}</strong> from classroom <strong>{{ selectedClass?.name }}</strong>?
+        </div>
+        <v-card-actions class="px-0 pb-0">
+          <v-spacer />
+          <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showRemoveStudentModal = false">Cancel</v-btn>
+          <v-btn color="error" variant="flat" class="text-none font-weight-bold" :loading="isRemovingStudent" @click="submitRemoveStudent">
+            Remove Student
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Modal: Edit Assignment -->
+    <v-dialog v-model="showEditAssignmentModal" max-width="500">
+      <v-card border rounded="lg" class="pa-4">
+        <div class="text-subtitle-1 font-weight-black text-primary mb-3 d-flex align-center ga-2">
+          <v-icon color="primary">mdi-pencil</v-icon>
+          <span>Edit Homework Assignment</span>
+        </div>
+
+        <v-text-field
+          v-model="editAsgTitle"
+          label="Assignment Title:"
+          variant="outlined"
+          density="comfortable"
+          class="mb-2"
+          prepend-inner-icon="mdi-format-title"
+        />
+
+        <v-textarea
+          v-model="editAsgSentence"
+          label="Model Reading Sentence:"
+          variant="outlined"
+          density="comfortable"
+          rows="3"
+          class="mb-2"
+          prepend-inner-icon="mdi-subtitles"
+        />
+
+        <v-text-field
+          v-model="editAsgDueDate"
+          label="Due Date (Optional):"
+          placeholder="Example: 2026-08-05"
+          variant="outlined"
+          density="comfortable"
+          class="mb-3"
+          prepend-inner-icon="mdi-calendar-clock"
+        />
+
+        <v-card-actions class="px-0 pb-0">
+          <v-spacer />
+          <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showEditAssignmentModal = false">Cancel</v-btn>
+          <v-btn color="primary" variant="flat" class="text-none font-weight-bold" :loading="isUpdatingAsg" @click="submitEditAssignment">
+            Save Assignment
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Modal: Delete Assignment Confirmation -->
+    <v-dialog v-model="showDeleteAssignmentModal" max-width="400">
+      <v-card border rounded="lg" class="pa-4">
+        <div class="text-subtitle-1 font-weight-black text-error mb-2 d-flex align-center ga-2">
+          <v-icon color="error">mdi-delete</v-icon>
+          <span>Delete Assignment</span>
+        </div>
+        <div class="text-body-2 text-grey-darken-2 mb-4">
+          Are you sure you want to delete assignment <strong>"{{ asgToDelete?.title }}"</strong>?
+        </div>
+        <v-card-actions class="px-0 pb-0">
+          <v-spacer />
+          <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showDeleteAssignmentModal = false">Cancel</v-btn>
+          <v-btn color="error" variant="flat" class="text-none font-weight-bold" :loading="isDeletingAsg" @click="submitDeleteAssignment">
+            Delete Assignment
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Modal: Sign Out Confirmation -->
+    <v-dialog v-model="showLogoutDialog" max-width="400">
+      <v-card border rounded="lg" class="pa-4 bg-white">
+        <div class="d-flex align-center ga-3 mb-3">
+          <v-avatar color="red-lighten-5" size="40" class="text-error border">
+            <v-icon size="default">mdi-logout-variant</v-icon>
+          </v-avatar>
+          <div>
+            <div class="text-subtitle-1 font-weight-black text-secondary">Confirm Sign Out</div>
+            <div class="text-caption text-grey-darken-1">Are you sure you want to sign out from Teacher Hub?</div>
+          </div>
+        </div>
+        <v-card-actions class="px-0 pb-0">
+          <v-spacer />
+          <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showLogoutDialog = false">Cancel</v-btn>
+          <v-btn color="error" variant="flat" class="text-none font-weight-bold" prepend-icon="mdi-logout" @click="confirmSignOut">
+            Sign Out
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -533,11 +747,14 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
 const props = defineProps({
   backendUrl: String,
   userId: Number
 })
+
+const router = useRouter()
 
 const activeUserRole = ref(localStorage.getItem('user_role') || 'student')
 const loginEmail = ref('')
@@ -548,6 +765,23 @@ const loginError = ref('')
 const toast = ref({ show: false, text: '', color: 'success', icon: 'mdi-check-circle' })
 const notify = (text, color = 'success', icon = 'mdi-check-circle') => {
   toast.value = { show: true, text, color, icon }
+}
+
+const showLogoutDialog = ref(false)
+
+const confirmSignOut = () => {
+  showLogoutDialog.value = false
+  handleTeacherSignOut()
+}
+
+const handleTeacherSignOut = () => {
+  activeUserRole.value = 'student'
+  localStorage.setItem('user_role', 'student')
+  localStorage.removeItem('user_id')
+  loginEmail.value = ''
+  loginPassword.value = ''
+  notify('Signed out from Teacher Hub.', 'info', 'mdi-logout')
+  router.push('/')
 }
 
 const handleTeacherSignIn = async () => {
@@ -604,6 +838,43 @@ const getQrCodeUrl = (joinCode) => {
   return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(fullLink)}`
 }
 
+const exportGradebookCSV = () => {
+  if (!filteredStudents.value || filteredStudents.value.length === 0) {
+    notify('No student roster records to export.', 'warning', 'mdi-alert-circle')
+    return
+  }
+
+  const selectedClassName = selectedClass.value ? selectedClass.value.name : 'Class'
+  const headers = ['"Họ và Tên"', '"Email"', '"Số Bài Nộp"', '"Điểm Trung Bình (10)"', '"Đánh Giá Xếp Loại"']
+  
+  const rows = filteredStudents.value.map(std => {
+    const name = `"${(std.name || 'Học sinh').replace(/"/g, '""')}"`
+    const email = `"${(std.email || '--').replace(/"/g, '""')}"`
+    const count = std.submission_count || std.total_submissions || 0
+    const scoreNum = std.avg_score || 0
+    const scoreVal = scoreNum.toFixed(1).replace('.', ',')
+    let tier = '"Cần cố gắng"'
+    if (scoreNum >= 8.5) tier = '"Xuất sắc"'
+    else if (scoreNum >= 7.0) tier = '"Giỏi"'
+    else if (scoreNum >= 5.0) tier = '"Khá"'
+    
+    return [name, email, count, `"${scoreVal}"`, tier].join(',')
+  })
+
+  const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n')
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  const dateStr = new Date().toISOString().slice(0, 10)
+  link.setAttribute('href', url)
+  link.setAttribute('download', `BangDiem_${selectedClassName.replace(/[^a-zA-Z0-9]/g, '_')}_${dateStr}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+
+  notify(`Gradebook exported successfully for ${selectedClassName}!`, 'success', 'mdi-file-excel')
+}
+
 const openQrPosterModal = (cls) => {
   qrClass.value = cls
   showQrModal.value = true
@@ -628,6 +899,174 @@ const isCreatingAsg = ref(false)
 const showSubmissionsModal = ref(false)
 const selectedStudent = ref(null)
 const feedbackInputs = ref({})
+
+const searchStudentText = ref('')
+const filteredStudents = computed(() => {
+  const stds = gradebook.value.students || []
+  if (!searchStudentText.value.trim()) return stds
+  const q = searchStudentText.value.toLowerCase().trim()
+  return stds.filter(s => (s.name || '').toLowerCase().includes(q) || (s.email || '').toLowerCase().includes(q))
+})
+
+// Edit / Delete Class states
+const showEditClassModal = ref(false)
+const editClassName = ref('')
+const editClassGrade = ref('Elementary (Grades 1 - 5)')
+const isUpdatingClass = ref(false)
+
+const showDeleteClassModal = ref(false)
+const isDeletingClass = ref(false)
+
+// Remove Student states
+const showRemoveStudentModal = ref(false)
+const studentToRemove = ref(null)
+const isRemovingStudent = ref(false)
+
+// Edit / Delete Assignment states
+const showEditAssignmentModal = ref(false)
+const editingAsg = ref(null)
+const editAsgTitle = ref('')
+const editAsgSentence = ref('')
+const editAsgDueDate = ref('')
+const isUpdatingAsg = ref(false)
+
+const showDeleteAssignmentModal = ref(false)
+const asgToDelete = ref(null)
+const isDeletingAsg = ref(false)
+
+const openEditClassModal = () => {
+  if (!selectedClass.value) return
+  editClassName.value = selectedClass.value.name
+  editClassGrade.value = selectedClass.value.grade_level
+  showEditClassModal.value = true
+}
+
+const submitEditClass = async () => {
+  if (!editClassName.value.trim() || !selectedClassId.value) return
+  isUpdatingClass.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/classes/${selectedClassId.value}/update`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: editClassName.value.trim(),
+        grade_level: editClassGrade.value
+      })
+    })
+    if (res.ok) {
+      showEditClassModal.value = false
+      notify('Classroom updated successfully!', 'success', 'mdi-check-circle')
+      await fetchClasses()
+    }
+  } catch (err) {
+    notify('Failed to update class: ' + err.message, 'error', 'mdi-alert-circle')
+  } finally {
+    isUpdatingClass.value = false
+  }
+}
+
+const submitDeleteClass = async () => {
+  if (!selectedClassId.value) return
+  isDeletingClass.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/classes/${selectedClassId.value}`, {
+      method: 'DELETE'
+    })
+    if (res.ok) {
+      showDeleteClassModal.value = false
+      selectedClassId.value = null
+      notify('Classroom deleted successfully!', 'info', 'mdi-delete')
+      await fetchClasses()
+    }
+  } catch (err) {
+    notify('Failed to delete class: ' + err.message, 'error', 'mdi-alert-circle')
+  } finally {
+    isDeletingClass.value = false
+  }
+}
+
+const confirmRemoveStudent = (std) => {
+  studentToRemove.value = std
+  showRemoveStudentModal.value = true
+}
+
+const submitRemoveStudent = async () => {
+  if (!studentToRemove.value || !selectedClassId.value) return
+  isRemovingStudent.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/classes/${selectedClassId.value}/remove-student`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ student_id: studentToRemove.value.id })
+    })
+    if (res.ok) {
+      showRemoveStudentModal.value = false
+      notify(`Removed ${studentToRemove.value.name} from class.`, 'info')
+      await selectClass(selectedClassId.value)
+    }
+  } catch (err) {
+    notify('Failed to remove student: ' + err.message, 'error', 'mdi-alert-circle')
+  } finally {
+    isRemovingStudent.value = false
+  }
+}
+
+const openEditAssignmentModal = (asg) => {
+  editingAsg.value = asg
+  editAsgTitle.value = asg.title
+  editAsgSentence.value = asg.topic_sentence
+  editAsgDueDate.value = asg.due_date || ''
+  showEditAssignmentModal.value = true
+}
+
+const submitEditAssignment = async () => {
+  if (!editingAsg.value || !editAsgTitle.value.trim()) return
+  isUpdatingAsg.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/assignments/${editingAsg.value.id}/update`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: editAsgTitle.value.trim(),
+        topic_sentence: editAsgSentence.value.trim(),
+        due_date: editAsgDueDate.value.trim()
+      })
+    })
+    if (res.ok) {
+      showEditAssignmentModal.value = false
+      notify('Assignment updated successfully!', 'success')
+      await selectClass(selectedClassId.value)
+    }
+  } catch (err) {
+    notify('Failed to update assignment: ' + err.message, 'error', 'mdi-alert-circle')
+  } finally {
+    isUpdatingAsg.value = false
+  }
+}
+
+const confirmDeleteAssignment = (asg) => {
+  asgToDelete.value = asg
+  showDeleteAssignmentModal.value = true
+}
+
+const submitDeleteAssignment = async () => {
+  if (!asgToDelete.value) return
+  isDeletingAsg.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/assignments/${asgToDelete.value.id}`, {
+      method: 'DELETE'
+    })
+    if (res.ok) {
+      showDeleteAssignmentModal.value = false
+      notify('Assignment deleted.', 'info')
+      await selectClass(selectedClassId.value)
+    }
+  } catch (err) {
+    notify('Failed to delete assignment: ' + err.message, 'error', 'mdi-alert-circle')
+  } finally {
+    isDeletingAsg.value = false
+  }
+}
 
 const selectedClass = computed(() => {
   return classes.value.find(c => c.id === selectedClassId.value)

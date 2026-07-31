@@ -9,8 +9,14 @@
           </v-avatar>
           <div>
             <div class="text-subtitle-1 text-sm-h6 font-weight-black tracking-tight leading-tight">PRONUNCIATION ARENA LEADERBOARD</div>
-            <div class="text-caption text-indigo-lighten-4 font-weight-bold">
-              {{ activeCategory === 'classroom' ? 'Classroom Enrolled Honor Roll' : 'Global Independent Learners Standings' }}
+            <div class="text-caption text-indigo-lighten-4 font-weight-bold d-flex align-center ga-1 mt-0.5">
+              <span>Account Mode:</span>
+              <v-chip color="amber" size="x-small" variant="flat" class="font-weight-black text-black ml-1">
+                <v-icon size="x-small" class="mr-1">
+                  {{ activeCategory === 'classroom' ? 'mdi-google-classroom' : 'mdi-account-star-outline' }}
+                </v-icon>
+                {{ activeCategory === 'classroom' ? 'Classroom Enrolled Honor Roll' : 'Global Independent Learners Standings' }}
+              </v-chip>
             </div>
           </div>
         </div>
@@ -26,18 +32,6 @@
           Refresh Standings
         </v-btn>
       </div>
-    </v-card>
-
-    <!-- Leaderboard Category Sub-Tabs (Auto-selected by Account Type) -->
-    <v-card border flat class="pa-2 mb-4 bg-white rounded-lg">
-      <v-tabs v-model="activeCategory" color="indigo-darken-3" align-tabs="center" density="comfortable" @update:model-value="fetchLeaderboard">
-        <v-tab value="freemium" class="font-weight-black text-none" prepend-icon="mdi-account-star-outline">
-          Independent Learners
-        </v-tab>
-        <v-tab value="classroom" class="font-weight-black text-none" prepend-icon="mdi-google-classroom">
-          Classroom Enrolled
-        </v-tab>
-      </v-tabs>
     </v-card>
 
     <div v-if="isLoading" class="d-flex flex-column align-center justify-center py-12">
