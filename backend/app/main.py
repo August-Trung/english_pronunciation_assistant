@@ -3014,8 +3014,45 @@ def agent_chat(req: AgentChatRequest):
         except Exception as e:
             return {"status": "success", "reply": f"Lỗi tạo bài tập tự động: {str(e)}", "action": None, "data": None}
 
-    def execute_remedial_practice():
+    def execute_remedial_practice(target_sound=None, topic=None):
         try:
+            # If user specified target sound (e.g. /θ/, /ð/, /ʃ/, /r/) or topic
+            if target_sound:
+                clean_sound = target_sound.replace("/", "").strip()
+                if clean_sound in ["θ", "th"]:
+                    sentence = "Arthur thought about thirty-three healthy things on Thursday."
+                    top_words = ["thought", "thirty-three", "healthy", "Thursday"]
+                    reply = f"Đã tạo phiên luyện tập chuyên biệt cho âm **/{clean_sound}/**:\n\n**Câu mẫu tự luyện**: \"{sentence}\""
+                elif clean_sound in ["ð", "voiced th"]:
+                    sentence = "My father and mother live together with their brother in that house."
+                    top_words = ["father", "mother", "together", "their"]
+                    reply = f"Đã tạo phiên luyện tập chuyên biệt cho âm **/{clean_sound}/**:\n\n**Câu mẫu tự luyện**: \"{sentence}\""
+                elif clean_sound in ["ʃ", "sh"]:
+                    sentence = "She sells sea shells by the seashore."
+                    top_words = ["She", "shells", "seashore"]
+                    reply = f"Đã tạo phiên luyện tập chuyên biệt cho âm **/{clean_sound}/**:\n\n**Câu mẫu tự luyện**: \"{sentence}\""
+                else:
+                    sentence = f"I am practicing the sound /{clean_sound}/ with confidence and clarity."
+                    top_words = ["practicing", "confidence", "clarity"]
+                    reply = f"Đã tạo phiên luyện tập cho âm **/{clean_sound}/**:\n\n**Câu mẫu tự luyện**: \"{sentence}\""
+                return {"status": "success", "reply": reply, "action": "remedial_generated", "data": {"topic_sentence": sentence, "focus_words": top_words}}
+
+            if topic:
+                if "restaurant" in topic.lower() or "nhà hàng" in topic.lower() or "ăn" in topic.lower():
+                    sentence = "I would like to reserve a window table for two people at seven o'clock."
+                    top_words = ["reserve", "window", "table", "o'clock"]
+                    reply = f"Đã tạo phiên luyện tập chủ đề **Nhà hàng & Gọi món**:\n\n**Câu mẫu tự luyện**: \"{sentence}\""
+                elif "travel" in topic.lower() or "du lịch" in topic.lower() or "khách sạn" in topic.lower():
+                    sentence = "Could you please help me check in for my flight to London?"
+                    top_words = ["please", "check in", "flight", "London"]
+                    reply = f"Đã tạo phiên luyện tập chủ đề **Du lịch & Sân bay**:\n\n**Câu mẫu tự luyện**: \"{sentence}\""
+                else:
+                    sentence = f"Artificial intelligence is revolutionizing the {topic} industry."
+                    top_words = ["revolutionizing", topic, "industry"]
+                    reply = f"Đã tạo phiên luyện tập chủ đề **{topic.title()}**:\n\n**Câu mẫu tự luyện**: \"{sentence}\""
+                return {"status": "success", "reply": reply, "action": "remedial_generated", "data": {"topic_sentence": sentence, "focus_words": top_words}}
+
+            # Fallback to DB weak words query
             conn = sqlite3.connect(DB_PATH, timeout=20.0)
             cursor = conn.cursor()
             cursor.execute("SELECT word, ipa, error_count FROM weak_words WHERE (IsXoa IS NULL OR IsXoa = 0) ORDER BY error_count DESC LIMIT 5")
@@ -3099,7 +3136,7 @@ def agent_chat(req: AgentChatRequest):
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "topic": {"type": "string", "description": "Assignment topic title, e.g., Environment, Family"}
+                        "topic": {"type": "string", "description": "Assignment topic title, e.g., Environment, Family, Technology"}
                     }
                 }
             }
@@ -3116,8 +3153,14 @@ def agent_chat(req: AgentChatRequest):
             "type": "function",
             "function": {
                 "name": "generate_remedial_practice",
-                "description": "Student tool to generate a practice set targeting student mispronounced weak words.",
-                "parameters": {"type": "object", "properties": {}}
+                "description": "Student tool to generate a practice set targeting specific IPA sound (e.g. /θ/, /ð/), topic, or mispronounced weak words.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "target_sound": {"type": "string", "description": "Target IPA sound to practice, e.g. /θ/, /ð/, /ʃ/"},
+                        "topic": {"type": "string", "description": "Practice topic, e.g. Restaurant, Travel, General"}
+                    }
+                }
             }
         },
         {
@@ -3142,7 +3185,6 @@ def agent_chat(req: AgentChatRequest):
     if role in ["teacher", "admin", "super_admin"]:
         active_tools = all_tools
     else:
-        # Students / Freemium users cannot invoke teacher creation tools
         active_tools = [t for t in all_tools if t["function"]["name"] in ["generate_remedial_practice", "check_homework", "start_voice_roleplay"]]
 
     # Execute via Groq LLM Native Function Calling (Multi-Key Pool Rotational Engine)
@@ -3160,10 +3202,16 @@ def agent_chat(req: AgentChatRequest):
     if groq_pool:
         import urllib.request
         sys_prompt = (
-            f"You are Fluent AI Assistant, a warm academic English tutor. User role: {role}.\n"
+            f"You are Fluent AI Assistant, a warm academic English and Pronunciation tutor. User role: {role}.\n"
             "DEFAULT LANGUAGE: You MUST respond in warm, helpful, encouraging VIETNAMESE by default.\n"
-            "ONLY use English when the user explicitly asks to chat in English or is participating in a Voice Roleplay.\n"
-            "If the user asks an educational question (e.g., pronunciation tips for sounds like /θ/ or grammar explanations), provide a clear, encouraging pedagogical answer directly in Vietnamese without calling any DB tools.\n"
+            "ONLY use English when the user explicitly asks to chat in English or is participating in a Voice Roleplay.\n\n"
+            "GENTLE PIVOT GUARDRAIL:\n"
+            "If the user asks an out-of-scope question (e.g., cooking, programming, finance, politics), acknowledge politely in 1 short sentence, and gently pivot by offering a relevant English sentence on that topic to practice pronouncing!\n"
+            "Example for cooking Pho: 'Mình là Trợ lý Luyện phát âm Tiếng Anh FLUENT! Về món Phở, bạn có muốn cùng mình luyện đọc câu giới thiệu món Phở bằng Tiếng Anh không: \"Pho is a traditional Vietnamese noodle soup served with savory beef broth.\"' \n\n"
+            "PRONUNCIATION TIPS:\n"
+            "If the user asks for pronunciation tips (e.g., how to pronounce /θ/ or /ð/), provide a clear, encouraging 4-step pedagogical explanation directly in Vietnamese.\n\n"
+            "PRACTICE REQUESTS:\n"
+            "If the user asks to practice a specific sound (e.g., /θ/, /ð/, /ʃ/), topic, or weak words, call the generate_remedial_practice function with target_sound or topic parameters.\n\n"
             "Keep responses concise, supportive, and formatted in clean markdown without extra bot headers."
         )
 
@@ -3212,7 +3260,7 @@ def agent_chat(req: AgentChatRequest):
                         if fn_name == "create_assignment":
                             return execute_create_assignment(args.get("topic", "General"))
                         elif fn_name == "generate_remedial_practice":
-                            return execute_remedial_practice()
+                            return execute_remedial_practice(target_sound=args.get("target_sound"), topic=args.get("topic"))
                         elif fn_name == "query_class_analytics":
                             return execute_class_analytics()
                         elif fn_name == "check_homework":

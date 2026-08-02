@@ -77,6 +77,16 @@
             color="indigo"
             variant="tonal"
             class="font-weight-bold cursor-pointer flex-shrink-0"
+            prepend-icon="mdi-lips"
+            @click="sendQuickPrompt('Tôi muốn luyện tập phát âm âm /θ/ trong tiếng Anh')"
+          >
+            Luyện âm /θ/
+          </v-chip>
+          <v-chip
+            size="x-small"
+            color="indigo"
+            variant="tonal"
+            class="font-weight-bold cursor-pointer flex-shrink-0"
             prepend-icon="mdi-flash"
             @click="sendQuickPrompt('Tự động tạo bài tập luyện các từ mình hay đọc sai')"
           >
