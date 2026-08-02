@@ -27,19 +27,16 @@
               </div>
             </div>
             <div class="d-flex align-center ga-2 flex-wrap">
-              <v-switch
-                v-model="rememberSession"
-                color="primary"
-                density="compact"
-                hide-details
-                inset
-                class="ms-1"
-                @update:model-value="onRememberSessionToggle"
+              <v-btn
+                size="small"
+                :color="rememberSession ? 'primary' : 'grey'"
+                :variant="rememberSession ? 'tonal' : 'outlined'"
+                class="text-none font-weight-bold mr-1"
+                :prepend-icon="rememberSession ? 'mdi-bookmark-check-outline' : 'mdi-bookmark-off-outline'"
+                @click="rememberSession = !rememberSession; onRememberSessionToggle(rememberSession)"
               >
-                <template #label>
-                  <span class="text-caption font-weight-bold text-grey-darken-3">Remember Session Result</span>
-                </template>
-              </v-switch>
+                Remember Result
+              </v-btn>
               <v-btn-toggle
                 v-model="practiceMode"
                 color="primary"
