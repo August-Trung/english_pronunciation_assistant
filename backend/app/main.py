@@ -3205,8 +3205,37 @@ def agent_chat(req: AgentChatRequest):
         except Exception as groq_err:
             print(f"Groq Native Tool Call notice: {groq_err}")
 
-    # Fallback Semantic Heuristic Intent Matching (if LLM is offline)
+    # Fallback Semantic Heuristic Intent Matching & Educational Knowledge Base (if LLM is offline or 403 Forbidden)
     msg_lower = user_msg.lower()
+
+    # Educational Query: Pronunciation Tips (/θ/, /ð/, /ʃ/, /ʒ/, /r/, /l/, etc.)
+    if "mẹo" in msg_lower or "cách đọc" in msg_lower or "cách phát âm" in msg_lower or "thế nào" in msg_lower or "/θ/" in msg_lower or "/ð/" in msg_lower or "/ʃ/" in msg_lower or "âm th" in msg_lower or "âm sh" in msg_lower:
+        if "/θ/" in msg_lower or "âm th" in msg_lower or "th" in msg_lower:
+            reply = (
+                "🗣️ **FLUENT AI ASSISTANT: Mẹo phát âm chuẩn âm `/θ/` (Unvoiced TH)**\n\n"
+                "1. **Vị trí lưỡi & răng**: Đặt nhẹ đầu lưỡi ở giữa hai hàm răng cửa (chạm nhẹ vào hàm răng trên).\n"
+                "2. **Thổi hơi**: Thổi nhẹ luồng khí ra ngoài qua khe giữa lưỡi và răng cửa (dây thanh quản không rung).\n"
+                "3. **Từ mẫu thực hành**: *think* `/θɪŋk/`, *thanks* `/θæŋks/`, *three* `/θriː/`, *birthday* `/ˈbɜːθ.deɪ/`.\n"
+                "4. **Lỗi cần tránh**: Không đọc chệch thành âm `/t/` (như đọc *think* thành *tink*) hay âm `/s/`!"
+            )
+            return {"status": "success", "reply": reply, "action": None, "data": None}
+        elif "/ð/" in msg_lower:
+            reply = (
+                "🗣️ **FLUENT AI ASSISTANT: Mẹo phát âm chuẩn âm `/ð/` (Voiced TH)**\n\n"
+                "1. **Vị trí lưỡi**: Đặt đầu lưỡi ở giữa hai răng cửa tương tự như âm `/θ/`.\n"
+                "2. **Tạo tiếng rung**: Thổi luồng hơi đồng thời làm rung dây thanh quản trong cổ họng.\n"
+                "3. **Từ mẫu thực hành**: *this* `/ðɪs/`, *that* `/ðæt/`, *father* `/ˈfɑː.ðər/`, *mother* `/ˈmʌð.ər/`."
+            )
+            return {"status": "success", "reply": reply, "action": None, "data": None}
+        else:
+            reply = (
+                "🗣️ **FLUENT AI ASSISTANT: Mẹo luyện phát âm Tiếng Anh chuẩn Academic**\n\n"
+                "1. **Khẩu hình miệng (Mouth Shape)**: Mở rộng cơ miệng và đặt lưỡi đúng vị trí IPA.\n"
+                "2. **Nhấn trọng âm (Word Stress)**: Nhấn rõ trọng âm của từ (ví dụ: *'PRESENT* vs *pre'SENT*).\n"
+                "3. **Luyện bật âm đuôi (Ending Sounds)**: Chú ý phát âm rõ các phụ âm cuối như `/s/`, `/z/`, `/t/`, `/d/`."
+            )
+            return {"status": "success", "reply": reply, "action": None, "data": None}
+
     if "từ yếu" in msg_lower or "luyện từ" in msg_lower or "tự luyện" in msg_lower or "đọc sai" in msg_lower or "phát âm sai" in msg_lower or "remedial" in msg_lower or "weak" in msg_lower or "smart practice" in msg_lower or (role == "student" and ("tạo" in msg_lower or "luyện" in msg_lower)):
         return execute_remedial_practice()
     elif ("tạo" in msg_lower or "giao" in msg_lower or "create" in msg_lower) and ("bài tập" in msg_lower or "assignment" in msg_lower) and role in ["teacher", "admin", "super_admin"]:
