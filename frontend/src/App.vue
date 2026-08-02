@@ -77,6 +77,11 @@
                 Homework
               </v-btn>
 
+              <!-- History Log Pill for Students -->
+              <v-btn to="/history" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-history" class="font-weight-bold text-none text-body-2">
+                History Log
+              </v-btn>
+
               <!-- Teacher Hub Pill (Visible to Teacher / Admin) -->
               <v-btn
                 v-if="['teacher', 'admin', 'super_admin'].includes(userRole)"

@@ -908,7 +908,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, onUnmounted, onMounted } from 'vue'
 import { GRADE_LEVELS, SPEAKING_TOPICS, READING_LIBRARY } from '../constants/topics.js'
 
 // State Modal Khẩu Hình 2D/3D
@@ -1031,6 +1031,22 @@ const isAnalyzing = ref(false)
 const loadingText = ref('Processing speech audio...')
 const results = ref(null)
 const errorMessage = ref(null)
+
+onMounted(() => {
+  try {
+    const saved = sessionStorage.getItem('fluent_latest_practice')
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      if (parsed && parsed.results) {
+        results.value = parsed.results
+        if (parsed.topic) topic.value = parsed.topic
+        if (parsed.practiceMode) practiceMode.value = parsed.practiceMode
+      }
+    }
+  } catch (e) {
+    console.warn('Error reading saved session state', e)
+  }
+})
 
 const isSecure = ref(window.isSecureContext)
 const isLocalhost = ref(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
@@ -1288,6 +1304,15 @@ const analyzeSpeech = async () => {
     const data = await response.json()
     if (data.success) {
       results.value = data
+      try {
+        sessionStorage.setItem('fluent_latest_practice', JSON.stringify({
+          results: data,
+          topic: topic.value,
+          practiceMode: practiceMode.value
+        }))
+      } catch (e) {
+        console.warn('Session storage write error', e)
+      }
       emit('history-updated')
     }
   } catch (err) {

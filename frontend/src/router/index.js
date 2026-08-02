@@ -15,6 +15,7 @@ const routes = [
   { path: '/', name: 'practice', component: PracticeView },
   { path: '/shadowing', name: 'shadowing', component: ShadowingView },
   { path: '/homework', name: 'homework', component: StudentHomeworkView },
+  { path: '/history', name: 'history', component: () => import('@/views/HistoryView.vue') },
   { path: '/teacher', name: 'teacher', component: TeacherView },
   { path: '/admin', name: 'admin', component: AdminView },
   { path: '/parent', name: 'parent', component: ParentView },

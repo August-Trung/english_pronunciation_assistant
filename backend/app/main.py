@@ -4,8 +4,9 @@ import json
 import sqlite3
 import random
 import tempfile
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydub import AudioSegment
 try:
@@ -3346,6 +3347,120 @@ try:
     app = gr.mount_gradio_app(app, demo, path="/gradio")
 except Exception as gr_err:
     print(f"Gradio mount notice: {gr_err}")
+
+class HistoryQueryRequest(BaseModel):
+    user_id: int = 1
+    range_type: str = "today" # "today" | "30days" | "custom"
+    start_date: str = ""
+    end_date: str = ""
+
+@app.post("/api/history/query")
+def query_student_history(req: HistoryQueryRequest):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        
+        now_dt = datetime.now()
+        today_str = now_dt.strftime("%Y-%m-%d")
+        
+        where_clause = "user_id = ? AND (IsXoa IS NULL OR IsXoa = 0)"
+        params = [req.user_id]
+        
+        if req.range_type == "today":
+            where_clause += " AND date = ?"
+            params.append(today_str)
+        elif req.range_type == "30days":
+            thirty_days_ago = (now_dt - timedelta(days=30)).strftime("%Y-%m-%d")
+            where_clause += " AND date >= ?"
+            params.append(thirty_days_ago)
+        elif req.range_type == "custom":
+            if req.start_date:
+                where_clause += " AND date >= ?"
+                params.append(req.start_date)
+            if req.end_date:
+                where_clause += " AND date <= ?"
+                params.append(req.end_date)
+                
+        cursor.execute(f"""
+            SELECT id, topic, transcribed, score, breakdown_json, feedback, timestamp, date
+            FROM history
+            WHERE {where_clause}
+            ORDER BY id DESC
+        """, tuple(params))
+        rows = cursor.fetchall()
+        
+        cutoff_27_days = (now_dt - timedelta(days=27)).strftime("%Y-%m-%d")
+        cursor.execute("""
+            SELECT COUNT(*), MIN(date) FROM history
+            WHERE user_id = ? AND date <= ? AND (IsXoa IS NULL OR IsXoa = 0)
+        """, (req.user_id, cutoff_27_days))
+        exp_row = cursor.fetchone()
+        expiring_count = exp_row[0] if exp_row else 0
+        earliest_exp_date = exp_row[1] if exp_row and exp_row[1] else ""
+        
+        conn.close()
+        
+        history_list = []
+        for r in rows:
+            h_id, topic, transcribed, score, bd_json, feedback, ts, date_val = r
+            bd_dict = {}
+            try:
+                bd_dict = json.loads(bd_json) if bd_json else {}
+            except:
+                pass
+                
+            history_list.append({
+                "id": h_id,
+                "topic": topic,
+                "transcribed": transcribed,
+                "score": score,
+                "breakdown": bd_dict,
+                "feedback": feedback,
+                "timestamp": ts,
+                "date": date_val,
+                "time": ts.split(" ")[1] if " " in str(ts) else ts
+            })
+            
+        return {
+            "status": "success",
+            "history": history_list,
+            "expiring_soon_count": expiring_count,
+            "earliest_expiring_date": earliest_exp_date
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e), "history": [], "expiring_soon_count": 0}
+
+@app.post("/api/history/export-zip")
+def export_student_history_zip(req: HistoryQueryRequest):
+    import io
+    import zipfile
+    try:
+        data = query_student_history(req)
+        history_list = data.get("history", [])
+        
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            summary_txt = f"FLUENT ACADEMIC ENGLISH STUDIO - PRACTICE HISTORY REPORT\n"
+            summary_txt += f"User ID: {req.user_id}\nRange: {req.range_type}\nTotal Sessions: {len(history_list)}\n\n"
+            
+            for idx, h in enumerate(history_list, 1):
+                summary_txt += f"--- SESSION #{idx} ({h.get('timestamp')}) ---\n"
+                summary_txt += f"Topic: {h.get('topic')}\n"
+                summary_txt += f"Transcribed Speech: {h.get('transcribed')}\n"
+                summary_txt += f"Score: {h.get('score')}/10\n"
+                summary_txt += f"Feedback: {h.get('feedback')}\n\n"
+                
+            zip_file.writestr("evaluation_report_summary.txt", summary_txt.encode("utf-8"))
+            zip_file.writestr("evaluation_report_full.json", json.dumps(history_list, indent=2).encode("utf-8"))
+            
+        zip_buffer.seek(0)
+        return StreamingResponse(
+            zip_buffer,
+            media_type="application/zip",
+            headers={"Content-Disposition": f"attachment; filename=practice_history_{req.range_type}.zip"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn
