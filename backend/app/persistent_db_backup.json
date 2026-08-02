@@ -184,23 +184,23 @@
       "IsXoa": 1
     },
     {
-      "id": 14,
+      "id": 16,
       "user_id": 1,
       "word": "environment",
       "ipa": "/ɪnˈvaɪ.rən.mənt/",
       "meaning": "Môi trường",
       "error_count": 5,
-      "created_at": "2026-08-02 13:58:34",
+      "created_at": "2026-08-02 14:15:37",
       "IsXoa": 0
     },
     {
-      "id": 15,
+      "id": 17,
       "user_id": 1,
       "word": "protect",
       "ipa": "/prəˈtekt/",
       "meaning": "Bảo vệ",
       "error_count": 3,
-      "created_at": "2026-08-02 13:58:34",
+      "created_at": "2026-08-02 14:15:37",
       "IsXoa": 0
     }
   ],

@@ -2972,14 +2972,70 @@ def agent_chat(req: AgentChatRequest):
     if not user_msg:
         raise HTTPException(status_code=400, detail="Message cannot be empty.")
 
-    reply = ""
-    action = None
-    data = None
+    detected_intent = "GENERAL_CHAT"
+    extracted_topic = "General English"
 
+    # Step 1: Semantic LLM Intent Classification (via Groq API if available)
+    if GROQ_API_KEY:
+        try:
+            import urllib.request
+            classifier_sys = (
+                "You are the NLU Intent Classifier for Fluent AI Assistant.\n"
+                "Analyze the user's natural message (in Vietnamese, English, or mixed) and classify into ONE intent:\n"
+                "- CREATE_ASSIGNMENT: Teacher creating/assigning new homework.\n"
+                "- CLASS_ANALYTICS: Teacher/Admin checking student scores, gradebook, or low performers.\n"
+                "- REMEDIAL_PRACTICE: User requesting practice for weak/mispronounced words.\n"
+                "- CHECK_HOMEWORK: Student asking for pending homework or due dates.\n"
+                "- ROLEPLAY: User wanting interactive English speaking roleplay (e.g. hotel, travel).\n"
+                "- GENERAL_CHAT: Casual chat, greeting, or general English advice.\n\n"
+                "Return ONLY a valid JSON: {\"intent\": \"INTENT_NAME\", \"topic\": \"extracted_topic\"}"
+            )
+
+            cls_payload = json.dumps({
+                "model": "llama-3.3-70b-versatile",
+                "messages": [
+                    {"role": "system", "content": classifier_sys},
+                    {"role": "user", "content": user_msg}
+                ],
+                "response_format": {"type": "json_object"},
+                "temperature": 0.1,
+                "max_tokens": 150
+            }).encode('utf-8')
+
+            cls_req = urllib.request.Request(
+                "https://api.groq.com/openai/v1/chat/completions",
+                data=cls_payload,
+                headers={
+                    "Authorization": f"Bearer {GROQ_API_KEY}",
+                    "Content-Type": "application/json"
+                }
+            )
+            with urllib.request.urlopen(cls_req, timeout=5.0) as resp:
+                resp_json = json.loads(resp.read().decode('utf-8'))
+                raw_content = resp_json["choices"][0]["message"]["content"]
+                parsed = json.loads(raw_content)
+                detected_intent = parsed.get("intent", "GENERAL_CHAT").upper()
+                extracted_topic = parsed.get("topic", "General English")
+        except Exception as cls_err:
+            print(f"Semantic Intent Classifier notice: {cls_err}")
+
+    # Fallback Semantic Heuristic Intent Matching (if LLM is offline)
     msg_lower = user_msg.lower()
+    if detected_intent == "GENERAL_CHAT":
+        if ("tạo" in msg_lower or "giao" in msg_lower or "create" in msg_lower) and ("bài tập" in msg_lower or "assignment" in msg_lower):
+            detected_intent = "CREATE_ASSIGNMENT"
+        elif "từ yếu" in msg_lower or "luyện từ" in msg_lower or "đọc sai" in msg_lower or "phát âm sai" in msg_lower or "remedial" in msg_lower or "weak" in msg_lower or "smart practice" in msg_lower:
+            detected_intent = "REMEDIAL_PRACTICE"
+        elif ("thống kê" in msg_lower or "điểm" in msg_lower or "bảng điểm" in msg_lower or "học sinh" in msg_lower or "trường" in msg_lower or "stats" in msg_lower or "analytics" in msg_lower or "gradebook" in msg_lower) and role in ["teacher", "admin", "super_admin"]:
+            detected_intent = "CLASS_ANALYTICS"
+        elif "bài tập" in msg_lower or "hạn nộp" in msg_lower or "chưa làm" in msg_lower or "homework" in msg_lower or "assignment" in msg_lower or "pending" in msg_lower or "upcoming" in msg_lower:
+            detected_intent = "CHECK_HOMEWORK"
+        elif "roleplay" in msg_lower or "hotel" in msg_lower or "receptionist" in msg_lower or "đóng vai" in msg_lower or "giao tiếp" in msg_lower:
+            detected_intent = "ROLEPLAY"
 
-    # Tool 1: Create Assignment (Teacher/Admin)
-    if (("tạo" in msg_lower or "giao" in msg_lower or "create" in msg_lower) and ("bài tập" in msg_lower or "assignment" in msg_lower)) and role in ["teacher", "admin", "super_admin"]:
+    # Step 2: Execute Tool based on Classified Intent
+    # Tool 1: Create Assignment
+    if detected_intent == "CREATE_ASSIGNMENT" and role in ["teacher", "admin", "super_admin"]:
         try:
             conn = sqlite3.connect(DB_PATH, timeout=20.0)
             cursor = conn.cursor()
@@ -2988,12 +3044,12 @@ def agent_chat(req: AgentChatRequest):
             class_id = cls_row[0] if cls_row else 1
             class_name = cls_row[1] if cls_row else "English Class"
 
-            topic_title = "AI Speaking Practice Assignment"
+            topic_title = f"Unit: {extracted_topic.title()}" if extracted_topic and extracted_topic != "General English" else "AI Speaking Practice Assignment"
             sentence = "Artificial intelligence is revolutionizing modern education."
-            if "environment" in msg_lower or "môi trường" in msg_lower:
+            if "environment" in msg_lower or "môi trường" in msg_lower or "environment" in extracted_topic.lower():
                 topic_title = "Unit: Environmental Conservation"
                 sentence = "Protecting natural habitats is essential for maintaining global biodiversity."
-            elif "family" in msg_lower or "gia đình" in msg_lower:
+            elif "family" in msg_lower or "gia đình" in msg_lower or "family" in extracted_topic.lower():
                 topic_title = "Unit: My Family & Life"
                 sentence = "I live with my loving family in a peaceful town."
 
@@ -3008,14 +3064,12 @@ def agent_chat(req: AgentChatRequest):
             export_db_to_json()
 
             reply = f"🤖 **FLUENT AI ASSISTANT**: Successfully created a new assignment for **{class_name}**!\n\n- **Title**: {topic_title}\n- **Practice Sentence**: \"{sentence}\"\n- **Due Date**: {due_date}"
-            action = "assignment_created"
-            data = {"assignment_id": asg_id, "title": topic_title, "class_id": class_id, "class_name": class_name}
-            return {"status": "success", "reply": reply, "action": action, "data": data}
+            return {"status": "success", "reply": reply, "action": "assignment_created", "data": {"assignment_id": asg_id, "title": topic_title, "class_id": class_id, "class_name": class_name}}
         except Exception as e:
-            reply = f"Error creating assignment: {str(e)}"
+            return {"status": "success", "reply": f"Error creating assignment: {str(e)}", "action": None, "data": None}
 
-    # Tool 2: Get Weak Words / Smart Remedial Practice
-    if "từ yếu" in msg_lower or "luyện từ" in msg_lower or "đọc sai" in msg_lower or "phát âm sai" in msg_lower or "remedial" in msg_lower or "weak" in msg_lower or "smart practice" in msg_lower:
+    # Tool 2: Remedial Weak Words Practice
+    if detected_intent == "REMEDIAL_PRACTICE":
         try:
             conn = sqlite3.connect(DB_PATH, timeout=20.0)
             cursor = conn.cursor()
@@ -3028,19 +3082,17 @@ def agent_chat(req: AgentChatRequest):
                 words_str = ", ".join(top_words)
                 sentence = f"I am practicing to pronounce {' and '.join(top_words[:3])} accurately."
                 reply = f"🎯 **FLUENT AI ASSISTANT: Smart Remedial Set**\n\nCreated a custom practice session targeting your mispronounced words: **{words_str}**!\n\n**Practice Sentence**: \"{sentence}\""
-                action = "remedial_generated"
                 data = {"topic_sentence": sentence, "focus_words": top_words}
             else:
                 sentence = "Protecting natural habitats is essential for global biodiversity."
                 reply = f"🌟 **FLUENT AI ASSISTANT: Smart Practice Set**\n\nNo weak words recorded yet! Here is your daily practice sentence:\n\n**Practice Sentence**: \"{sentence}\""
-                action = "remedial_generated"
                 data = {"topic_sentence": sentence, "focus_words": ["biodiversity", "essential"]}
-            return {"status": "success", "reply": reply, "action": action, "data": data}
+            return {"status": "success", "reply": reply, "action": "remedial_generated", "data": data}
         except Exception as e:
-            reply = f"Error generating remedial set: {str(e)}"
+            return {"status": "success", "reply": f"Error generating remedial set: {str(e)}", "action": None, "data": None}
 
-    # Tool 3: Query Class Roster / Analytics (Teacher/Admin)
-    if ("thống kê" in msg_lower or "điểm" in msg_lower or "bảng điểm" in msg_lower or "học sinh" in msg_lower or "trường" in msg_lower or "stats" in msg_lower or "analytics" in msg_lower or "gradebook" in msg_lower) and role in ["teacher", "admin", "super_admin"]:
+    # Tool 3: Class Roster Analytics & Gradebook
+    if detected_intent == "CLASS_ANALYTICS" and role in ["teacher", "admin", "super_admin"]:
         try:
             conn = sqlite3.connect(DB_PATH, timeout=20.0)
             cursor = conn.cursor()
@@ -3061,14 +3113,12 @@ def agent_chat(req: AgentChatRequest):
                 student_summary.append(f"- **{r[1]}** ({r[2]}): {score_str} ({r[3]} submissions)")
 
             reply = "📊 **FLUENT AI ASSISTANT: Class Analytics & Gradebook Summary**\n\n" + "\n".join(student_summary)
-            action = "stats_queried"
-            data = {"students": [{"name": r[1], "email": r[2], "avg_score": r[4]} for r in rows]}
-            return {"status": "success", "reply": reply, "action": action, "data": data}
+            return {"status": "success", "reply": reply, "action": "stats_queried", "data": {"students": [{"name": r[1], "email": r[2], "avg_score": r[4]} for r in rows]}}
         except Exception as e:
-            reply = f"Analytics query error: {str(e)}"
+            return {"status": "success", "reply": f"Analytics query error: {str(e)}", "action": None, "data": None}
 
-    # Tool 4: Pending Homework Check (Student)
-    if "bài tập" in msg_lower or "hạn nộp" in msg_lower or "chưa làm" in msg_lower or "homework" in msg_lower or "assignment" in msg_lower or "pending" in msg_lower or "upcoming" in msg_lower:
+    # Tool 4: Pending Homework Check
+    if detected_intent == "CHECK_HOMEWORK":
         try:
             conn = sqlite3.connect(DB_PATH, timeout=20.0)
             cursor = conn.cursor()
@@ -3090,18 +3140,18 @@ def agent_chat(req: AgentChatRequest):
                 reply = "🎉 **FLUENT AI ASSISTANT**: You have no pending class homework assignments at this time!"
             return {"status": "success", "reply": reply, "action": "homework_checked", "data": {}}
         except Exception as e:
-            reply = f"Homework check error: {str(e)}"
+            return {"status": "success", "reply": f"Homework check error: {str(e)}", "action": None, "data": None}
 
     # Tool 5: Voice Roleplay Scenario
-    if "roleplay" in msg_lower or "hotel" in msg_lower or "receptionist" in msg_lower or "đóng vai" in msg_lower or "giao tiếp" in msg_lower:
+    if detected_intent == "ROLEPLAY":
         reply = "🏨 **FLUENT AI ASSISTANT (Hotel Receptionist Roleplay)**\n\n*\"Good day and welcome to Grand Hotel! How may I assist you with your check-in or room reservation today?\"*"
         return {"status": "success", "reply": reply, "action": "roleplay_started", "data": {}}
 
-    # Tool 6: Groq LLM API call (if GROQ_API_KEY set) or Fallback Response
+    # Tool 6: Open Conversational LLM Response (via Groq API if available)
     if GROQ_API_KEY:
         try:
             import urllib.request
-            sys_prompt = f"You are Fluent AI Assistant, an encouraging academic English pronunciation and speaking assistant for an app. User role: {role}. Keep responses concise, supportive, and formatted in clean markdown in English."
+            sys_prompt = f"You are Fluent AI Assistant, an encouraging academic English pronunciation and speaking assistant. User role: {role}. Respond concisely, supportively, and in clean markdown in English."
             messages = [{"role": "system", "content": sys_prompt}]
             for h in req.conversation_history[-4:]:
                 messages.append(h)
@@ -3127,9 +3177,9 @@ def agent_chat(req: AgentChatRequest):
                 reply = resp_data["choices"][0]["message"]["content"]
                 return {"status": "success", "reply": reply, "action": None, "data": None}
         except Exception as groq_err:
-            print(f"Groq API call fallback: {groq_err}")
+            print(f"Groq API open chat notice: {groq_err}")
 
-    # Default Intelligent Fallback Response (Clean Academic English)
+    # Fallback Default Response
     if role in ["teacher", "admin", "super_admin"]:
         reply = f"👋 **Welcome! I am your Fluent AI Assistant.**\n\nHow can I assist you today?\n- 🤖 *'Create assignment on Environment topic for class'*\n- 📊 *'Show class gradebook and student analytics'*\n- ⚠️ *'Show top mispronounced words across class'*"
     else:
