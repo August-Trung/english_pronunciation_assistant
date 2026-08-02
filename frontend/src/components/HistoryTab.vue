@@ -368,38 +368,63 @@ const generateAcademicPdf = () => {
             <span class="metric-val">${historyItems.value.length ? (historyItems.value.reduce((acc, curr) => acc + (curr.score || 0), 0) / historyItems.value.length).toFixed(1) : '0.0'} / 10.0</span>
           </div>
         </div>
+    `
 
+    if (pdfExportMode.value === 'summary') {
+      reportHtml += `
         <div class="section">
-          <div class="section-title">Practice Log Summary (${groupedHistory.value.length} Active Days)</div>
+          <div class="section-title">Daily Summary Aggregates (${groupedHistory.value.length} Active Days)</div>
           <table>
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Sessions</th>
-                <th>Avg Score</th>
-                <th>Sample Practice Topic</th>
+                <th>Total Sessions</th>
+                <th>Daily Avg Score</th>
+                <th>Primary Practice Topic</th>
               </tr>
             </thead>
             <tbody>
-    `
-
-    groupedHistory.value.forEach(group => {
-      const avgScore = (group.items.reduce((acc, curr) => acc + (curr.score || 0), 0) / group.items.length).toFixed(1)
-      const firstTopic = group.items[0] ? group.items[0].topic : 'General Practice'
-      reportHtml += `
-        <tr>
-          <td><strong>${group.date}</strong></td>
-          <td>${group.items.length} sessions</td>
-          <td><span class="score-badge">${avgScore} / 10.0</span></td>
-          <td>"${firstTopic}"</td>
-        </tr>
       `
-    })
-
-    reportHtml += `
+      groupedHistory.value.forEach(group => {
+        const avgScore = (group.items.reduce((acc, curr) => acc + (curr.score || 0), 0) / group.items.length).toFixed(1)
+        const firstTopic = group.items[0] ? group.items[0].topic : 'General Practice'
+        reportHtml += `
+          <tr>
+            <td><strong>${group.date}</strong></td>
+            <td>${group.items.length} sessions</td>
+            <td><span class="score-badge">${avgScore} / 10.0</span></td>
+            <td>"${firstTopic}"</td>
+          </tr>
+        `
+      })
+      reportHtml += `
             </tbody>
           </table>
         </div>
+      `
+    } else {
+      // Option B: Full Detailed Transcript PDF
+      reportHtml += `
+        <div class="section">
+          <div class="section-title">Full Practice Transcripts (${historyItems.value.length} Detailed Sessions)</div>
+          ${historyItems.value.map((item, idx) => `
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px 16px; margin-bottom: 12px;">
+              <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 800; color: #334155; margin-bottom: 6px;">
+                <span>Session #${historyItems.value.length - idx} &bull; ${item.timestamp || item.date}</span>
+                <span class="score-badge">Score ${item.score}/10</span>
+              </div>
+              <div style="font-weight: 800; color: #312e81; font-size: 13px; margin-bottom: 4px;">Topic: "${item.topic}"</div>
+              <div style="background: white; border: 1px solid #e2e8f0; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-style: italic; margin-bottom: 8px; color: #1e293b;">
+                Transcribed Speech: "${item.transcribed}"
+              </div>
+              ${item.ipa ? `<div style="font-family: monospace; font-size: 11px; color: #0f766e; background: #ccfbf1; border: 1px solid #99f6e4; padding: 6px 10px; border-radius: 6px; margin-bottom: 6px;">Target IPA: ${item.ipa.target_full_ipa || ''}<br>Spoken IPA: ${item.ipa.spoken_full_ipa || ''}</div>` : ''}
+              ${item.feedback ? `<div style="font-size: 11px; color: #475569;"><strong>AI Feedback:</strong> ${item.feedback}</div>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      `
+    }
+    reportHtml += `
       </body>
       </html>
     `
