@@ -3131,6 +3131,13 @@ def agent_chat(req: AgentChatRequest):
 
     return {"status": "success", "reply": reply, "action": None, "data": None}
 
+try:
+    import gradio as gr
+    demo = gr.Interface(fn=lambda x: f"Fluent English Backend Active: {x}", inputs="text", outputs="text", title="Fluent English Backend API")
+    app = gr.mount_gradio_app(app, demo, path="/gradio")
+except Exception as gr_err:
+    print(f"Gradio mount notice: {gr_err}")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=7860)
