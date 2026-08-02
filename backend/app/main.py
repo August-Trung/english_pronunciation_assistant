@@ -3137,73 +3137,87 @@ def agent_chat(req: AgentChatRequest):
         # Students / Freemium users cannot invoke teacher creation tools
         active_tools = [t for t in all_tools if t["function"]["name"] in ["generate_remedial_practice", "check_homework", "start_voice_roleplay"]]
 
-    # Execute via Groq LLM Native Function Calling
-    if GROQ_API_KEY:
-        try:
-            import urllib.request
-            sys_prompt = (
-                f"You are Fluent AI Assistant, a warm academic English tutor. User role: {role}.\n"
-                "DEFAULT LANGUAGE: You MUST respond in warm, helpful, encouraging VIETNAMESE by default.\n"
-                "ONLY use English when the user explicitly asks to chat in English or is participating in a Voice Roleplay.\n"
-                "If the user asks an educational question (e.g., pronunciation tips for sounds like /θ/ or grammar explanations), provide a clear, encouraging pedagogical answer directly in Vietnamese without calling any DB tools.\n"
-                "Keep responses concise, supportive, and formatted in clean markdown without extra bot headers."
-            )
+    # Execute via Groq LLM Native Function Calling (Multi-Key Pool Rotational Engine)
+    candidate_keys = [
+        os.getenv("GROQ_API_KEY", "").strip(),
+        os.getenv("GROQ_API_KEY_2", "").strip(),
+        os.getenv("GROQ_API_KEY_3", "").strip(),
+        "REMOVED_GROQ_API_KEY_1",
+        "REMOVED_GROQ_API_KEY_2",
+        "REMOVED_GROQ_API_KEY_3",
+        "REMOVED_GROQ_API_KEY_4"
+    ]
+    groq_pool = list(dict.fromkeys([k for k in candidate_keys if k]))
 
-            messages = [{"role": "system", "content": sys_prompt}]
-            for h in req.conversation_history[-4:]:
-                messages.append(h)
-            messages.append({"role": "user", "content": user_msg})
+    if groq_pool:
+        import urllib.request
+        sys_prompt = (
+            f"You are Fluent AI Assistant, a warm academic English tutor. User role: {role}.\n"
+            "DEFAULT LANGUAGE: You MUST respond in warm, helpful, encouraging VIETNAMESE by default.\n"
+            "ONLY use English when the user explicitly asks to chat in English or is participating in a Voice Roleplay.\n"
+            "If the user asks an educational question (e.g., pronunciation tips for sounds like /θ/ or grammar explanations), provide a clear, encouraging pedagogical answer directly in Vietnamese without calling any DB tools.\n"
+            "Keep responses concise, supportive, and formatted in clean markdown without extra bot headers."
+        )
 
-            payload_dict = {
-                "model": "llama-3.3-70b-versatile",
-                "messages": messages,
-                "tools": active_tools,
-                "tool_choice": "auto",
-                "temperature": 0.3,
-                "max_tokens": 500
-            }
+        messages = [{"role": "system", "content": sys_prompt}]
+        for h in req.conversation_history[-4:]:
+            messages.append(h)
+        messages.append({"role": "user", "content": user_msg})
 
-            payload = json.dumps(payload_dict).encode('utf-8')
-            req_obj = urllib.request.Request(
-                "https://api.groq.com/openai/v1/chat/completions",
-                data=payload,
-                headers={
-                    "Authorization": f"Bearer {GROQ_API_KEY}",
-                    "Content-Type": "application/json"
-                }
-            )
+        payload_dict = {
+            "model": "llama-3.3-70b-versatile",
+            "messages": messages,
+            "tools": active_tools,
+            "tool_choice": "auto",
+            "temperature": 0.3,
+            "max_tokens": 500
+        }
+        payload = json.dumps(payload_dict).encode('utf-8')
 
-            with urllib.request.urlopen(req_obj, timeout=8.0) as resp:
-                resp_data = json.loads(resp.read().decode('utf-8'))
-                choice = resp_data["choices"][0]["message"]
+        # Rotate through Key Pool until success
+        for current_key in groq_pool:
+            try:
+                req_obj = urllib.request.Request(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    data=payload,
+                    headers={
+                        "Authorization": f"Bearer {current_key}",
+                        "Content-Type": "application/json"
+                    }
+                )
 
-                # Check if Native LLM invoked a tool call
-                tool_calls = choice.get("tool_calls")
-                if tool_calls and len(tool_calls) > 0:
-                    fn_name = tool_calls[0]["function"]["name"]
-                    args = {}
-                    try:
-                        args = json.loads(tool_calls[0]["function"].get("arguments", "{}"))
-                    except Exception:
+                with urllib.request.urlopen(req_obj, timeout=8.0) as resp:
+                    resp_data = json.loads(resp.read().decode('utf-8'))
+                    choice = resp_data["choices"][0]["message"]
+
+                    # Check if Native LLM invoked a tool call
+                    tool_calls = choice.get("tool_calls")
+                    if tool_calls and len(tool_calls) > 0:
+                        fn_name = tool_calls[0]["function"]["name"]
                         args = {}
+                        try:
+                            args = json.loads(tool_calls[0]["function"].get("arguments", "{}"))
+                        except Exception:
+                            args = {}
 
-                    if fn_name == "create_assignment":
-                        return execute_create_assignment(args.get("topic", "General"))
-                    elif fn_name == "generate_remedial_practice":
-                        return execute_remedial_practice()
-                    elif fn_name == "query_class_analytics":
-                        return execute_class_analytics()
-                    elif fn_name == "check_homework":
-                        return execute_check_homework()
-                    elif fn_name == "start_voice_roleplay":
-                        return execute_roleplay()
+                        if fn_name == "create_assignment":
+                            return execute_create_assignment(args.get("topic", "General"))
+                        elif fn_name == "generate_remedial_practice":
+                            return execute_remedial_practice()
+                        elif fn_name == "query_class_analytics":
+                            return execute_class_analytics()
+                        elif fn_name == "check_homework":
+                            return execute_check_homework()
+                        elif fn_name == "start_voice_roleplay":
+                            return execute_roleplay()
 
-                # Otherwise return conversational LLM response
-                reply = choice.get("content", "")
-                if reply:
-                    return {"status": "success", "reply": reply, "action": None, "data": None}
-        except Exception as groq_err:
-            print(f"Groq Native Tool Call notice: {groq_err}")
+                    # Otherwise return conversational LLM response
+                    reply = choice.get("content", "")
+                    if reply:
+                        return {"status": "success", "reply": reply, "action": None, "data": None}
+            except Exception as groq_err:
+                print(f"Groq Multi-Key Pool notice (Key ...{current_key[-6:]}): {groq_err}")
+                continue
 
     # Fallback Semantic Heuristic Intent Matching & Educational Knowledge Base (if LLM is offline or 403 Forbidden)
     msg_lower = user_msg.lower()
