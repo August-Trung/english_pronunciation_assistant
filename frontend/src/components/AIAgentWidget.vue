@@ -77,7 +77,7 @@
             color="indigo"
             variant="tonal"
             class="font-weight-bold cursor-pointer flex-shrink-0"
-            prepend-icon="mdi-lips"
+            prepend-icon="mdi-account-voice"
             @click="sendQuickPrompt('Tôi muốn luyện tập phát âm âm /θ/ trong tiếng Anh')"
           >
             Luyện âm /θ/
