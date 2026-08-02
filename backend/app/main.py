@@ -3063,10 +3063,10 @@ def agent_chat(req: AgentChatRequest):
             conn.close()
             export_db_to_json()
 
-            reply = f"🤖 **FLUENT AI ASSISTANT**: Successfully created a new assignment for **{class_name}**!\n\n- **Title**: {topic_title}\n- **Practice Sentence**: \"{sentence}\"\n- **Due Date**: {due_date}"
+            reply = f"🤖 **FLUENT AI ASSISTANT**: Đã khởi tạo thành công bài tập mới cho lớp **{class_name}**!\n\n- **Tiêu đề**: {topic_title}\n- **Câu đọc mẫu**: \"{sentence}\"\n- **Hạn nộp**: {due_date}"
             return {"status": "success", "reply": reply, "action": "assignment_created", "data": {"assignment_id": asg_id, "title": topic_title, "class_id": class_id, "class_name": class_name}}
         except Exception as e:
-            return {"status": "success", "reply": f"Error creating assignment: {str(e)}", "action": None, "data": None}
+            return {"status": "success", "reply": f"Lỗi tạo bài tập tự động: {str(e)}", "action": None, "data": None}
 
     # Tool 2: Remedial Weak Words Practice
     if detected_intent == "REMEDIAL_PRACTICE":
@@ -3081,15 +3081,15 @@ def agent_chat(req: AgentChatRequest):
                 top_words = [r[0] for r in rows]
                 words_str = ", ".join(top_words)
                 sentence = f"I am practicing to pronounce {' and '.join(top_words[:3])} accurately."
-                reply = f"🎯 **FLUENT AI ASSISTANT: Smart Remedial Set**\n\nCreated a custom practice session targeting your mispronounced words: **{words_str}**!\n\n**Practice Sentence**: \"{sentence}\""
+                reply = f"🎯 **FLUENT AI ASSISTANT: Bài tự luyện khắc phục từ yếu**\n\nĐã tạo phiên tự luyện cá nhân hóa tập trung vào các từ bạn hay đọc sai nhất: **{words_str}**!\n\n**Câu mẫu tự luyện**: \"{sentence}\""
                 data = {"topic_sentence": sentence, "focus_words": top_words}
             else:
                 sentence = "Protecting natural habitats is essential for global biodiversity."
-                reply = f"🌟 **FLUENT AI ASSISTANT: Smart Practice Set**\n\nNo weak words recorded yet! Here is your daily practice sentence:\n\n**Practice Sentence**: \"{sentence}\""
+                reply = f"🌟 **FLUENT AI ASSISTANT: Bài luyện đọc mẫu hằng ngày**\n\nHệ thống chưa ghi nhận từ yếu nào! Đây là câu luyện tập dành cho bạn hôm nay:\n\n**Câu mẫu tự luyện**: \"{sentence}\""
                 data = {"topic_sentence": sentence, "focus_words": ["biodiversity", "essential"]}
             return {"status": "success", "reply": reply, "action": "remedial_generated", "data": data}
         except Exception as e:
-            return {"status": "success", "reply": f"Error generating remedial set: {str(e)}", "action": None, "data": None}
+            return {"status": "success", "reply": f"Lỗi khởi tạo bài tự luyện: {str(e)}", "action": None, "data": None}
 
     # Tool 3: Class Roster Analytics & Gradebook
     if detected_intent == "CLASS_ANALYTICS" and role in ["teacher", "admin", "super_admin"]:
@@ -3109,13 +3109,13 @@ def agent_chat(req: AgentChatRequest):
 
             student_summary = []
             for r in rows:
-                score_str = f"{r[4]:.1f}/10" if r[4] is not None else "No Submissions"
-                student_summary.append(f"- **{r[1]}** ({r[2]}): {score_str} ({r[3]} submissions)")
+                score_str = f"{r[4]:.1f}/10" if r[4] is not None else "Chưa có bài"
+                student_summary.append(f"- **{r[1]}** ({r[2]}): {score_str} ({r[3]} bài nộp)")
 
-            reply = "📊 **FLUENT AI ASSISTANT: Class Analytics & Gradebook Summary**\n\n" + "\n".join(student_summary)
+            reply = "📊 **FLUENT AI ASSISTANT: Thống kê Bảng điểm & Học lực Lớp học**\n\n" + "\n".join(student_summary)
             return {"status": "success", "reply": reply, "action": "stats_queried", "data": {"students": [{"name": r[1], "email": r[2], "avg_score": r[4]} for r in rows]}}
         except Exception as e:
-            return {"status": "success", "reply": f"Analytics query error: {str(e)}", "action": None, "data": None}
+            return {"status": "success", "reply": f"Lỗi truy vấn thống kê: {str(e)}", "action": None, "data": None}
 
     # Tool 4: Pending Homework Check
     if detected_intent == "CHECK_HOMEWORK":
@@ -3134,13 +3134,13 @@ def agent_chat(req: AgentChatRequest):
             conn.close()
 
             if rows:
-                asg_list = [f"- **{r[1]}** (Class: {r[2]}) - Due: {r[3] or 'No Due Date'}" for r in rows]
-                reply = "⏰ **FLUENT AI ASSISTANT: Pending Class Homework Assignments**\n\n" + "\n".join(asg_list)
+                asg_list = [f"- **{r[1]}** (Lớp: {r[2]}) - Hạn: {r[3] or 'Không có'}" for r in rows]
+                reply = "⏰ **FLUENT AI ASSISTANT: Danh sách Bài tập Lớp học của bạn**\n\n" + "\n".join(asg_list)
             else:
-                reply = "🎉 **FLUENT AI ASSISTANT**: You have no pending class homework assignments at this time!"
+                reply = "🎉 **FLUENT AI ASSISTANT**: Bạn không có bài tập lớp học nào chưa hoàn thành!"
             return {"status": "success", "reply": reply, "action": "homework_checked", "data": {}}
         except Exception as e:
-            return {"status": "success", "reply": f"Homework check error: {str(e)}", "action": None, "data": None}
+            return {"status": "success", "reply": f"Lỗi kiểm tra bài tập: {str(e)}", "action": None, "data": None}
 
     # Tool 5: Voice Roleplay Scenario
     if detected_intent == "ROLEPLAY":
@@ -3151,7 +3151,7 @@ def agent_chat(req: AgentChatRequest):
     if GROQ_API_KEY:
         try:
             import urllib.request
-            sys_prompt = f"You are Fluent AI Assistant, an encouraging academic English pronunciation and speaking assistant. User role: {role}. Respond concisely, supportively, and in clean markdown in English."
+            sys_prompt = f"You are Fluent AI Assistant, a friendly academic English tutor. User role: {role}. Priority language MUST be VIETNAMESE (warm, helpful academic Vietnamese) UNLESS the user explicitly requests to chat in English or is participating in a Voice Roleplay scenario. Keep responses concise, supportive, and formatted in clean markdown."
             messages = [{"role": "system", "content": sys_prompt}]
             for h in req.conversation_history[-4:]:
                 messages.append(h)
@@ -3179,11 +3179,11 @@ def agent_chat(req: AgentChatRequest):
         except Exception as groq_err:
             print(f"Groq API open chat notice: {groq_err}")
 
-    # Fallback Default Response
+    # Fallback Default Response (Friendly Vietnamese by default)
     if role in ["teacher", "admin", "super_admin"]:
-        reply = f"👋 **Welcome! I am your Fluent AI Assistant.**\n\nHow can I assist you today?\n- 🤖 *'Create assignment on Environment topic for class'*\n- 📊 *'Show class gradebook and student analytics'*\n- ⚠️ *'Show top mispronounced words across class'*"
+        reply = f"👋 **Chào Thầy/Cô! Tôi là FLUENT AI ASSISTANT.**\n\nTôi có thể hỗ trợ Thầy/Cô:\n- 🤖 *'Tạo bài tập chủ đề Môi trường cho lớp 10A1'* \n- 📊 *'Thống kê danh sách học sinh điểm phát âm dưới 6'* \n- ⚠️ *'Cho xem các từ phát âm sai nhiều nhất của lớp'*"
     else:
-        reply = f"👋 **Welcome! I am your Fluent AI Assistant.**\n\nHow can I help you today?\n- 🎯 *'Generate personalized practice for my weak words'*\n- ⏰ *'Check my upcoming class homework assignments'*\n- 🗣️ *'Start interactive hotel receptionist speaking roleplay'*"
+        reply = f"👋 **Chào bạn! Mình là FLUENT AI ASSISTANT - Trợ lý Luyện phát âm 24/7.**\n\nMình có thể hỗ trợ bạn:\n- 🎯 *'Tự động tạo bài tập luyện các từ mình hay đọc sai'*\n- ⏰ *'Kiểm tra danh sách bài tập lớp học sắp hết hạn'*\n- 🗣️ *'Đóng vai khách du lịch giao tiếp tiếng Anh với mình'*"
 
     return {"status": "success", "reply": reply, "action": None, "data": None}
 

@@ -52,35 +52,35 @@
         <template v-if="userRole === 'teacher' || userRole === 'admin' || userRole === 'super_admin'">
           <v-chip
             size="x-small"
-            color="indigo-darken-3"
+            color="indigo"
             variant="tonal"
             class="font-weight-bold cursor-pointer flex-shrink-0"
             prepend-icon="mdi-plus-box"
-            @click="sendQuickPrompt('Create assignment on Environment topic for class')"
+            @click="sendQuickPrompt('Tạo bài tập chủ đề Môi trường cho lớp 10A1')"
           >
-            Create AI Assignment
+            Tạo bài tập
           </v-chip>
           <v-chip
             size="x-small"
-            color="indigo-darken-3"
+            color="indigo"
             variant="tonal"
             class="font-weight-bold cursor-pointer flex-shrink-0"
-            prepend-icon="mdi-chart-box"
-            @click="sendQuickPrompt('Show class gradebook and student analytics')"
+            prepend-icon="mdi-chart-bar"
+            @click="sendQuickPrompt('Xem danh sách học sinh yếu và bảng điểm lớp 10A1')"
           >
-            Class Analytics
+            Sổ điểm lớp
           </v-chip>
         </template>
         <template v-else>
           <v-chip
             size="x-small"
-            color="deep-orange"
+            color="indigo"
             variant="tonal"
             class="font-weight-bold cursor-pointer flex-shrink-0"
             prepend-icon="mdi-flash"
-            @click="sendQuickPrompt('Generate personalized practice for my weak words')"
+            @click="sendQuickPrompt('Tự động tạo bài tập luyện các từ mình hay đọc sai')"
           >
-            Smart Practice
+            Tự luyện từ yếu
           </v-chip>
           <v-chip
             size="x-small"
@@ -88,9 +88,9 @@
             variant="tonal"
             class="font-weight-bold cursor-pointer flex-shrink-0"
             prepend-icon="mdi-clock-alert-outline"
-            @click="sendQuickPrompt('Check my upcoming class homework assignments')"
+            @click="sendQuickPrompt('Kiểm tra bài tập lớp học cần nộp')"
           >
-            Pending Homework
+            Bài tập cần nộp
           </v-chip>
           <v-chip
             size="x-small"
@@ -198,7 +198,7 @@ const scrollToBottom = () => {
 const messages = ref([
   {
     sender: 'agent',
-    text: '👋 **Welcome! I am your Fluent AI Assistant.**\n\nHow can I help you today? You can ask me to *Create AI Assignments*, *Check Class Analytics*, or *Generate Remedial Practice Sets*.'
+    text: '👋 **Chào bạn! Mình là FLUENT AI ASSISTANT.**\n\nMình có thể hỗ trợ bạn *Tự động tạo bài tập luyện từ yếu*, *Kiểm tra bài tập cần nộp*, hoặc *Thống kê sổ điểm*!'
   }
 ])
 
