@@ -25,8 +25,7 @@
             size="small"
             class="text-none font-weight-bold"
             prepend-icon="mdi-file-pdf-box"
-            :loading="isExportingPdf"
-            @click="exportPdfReport"
+            @click="showPdfDialog = true"
           >
             Export PDF Report
           </v-btn>
@@ -197,6 +196,50 @@
         </v-row>
       </div>
     </div>
+
+    <!-- PDF Export Selection Dialog Modal -->
+    <v-dialog v-model="showPdfDialog" max-width="520">
+      <v-card rounded="lg" class="pa-4">
+        <div class="d-flex align-center justify-space-between mb-3 border-b pb-2">
+          <div class="d-flex align-center ga-2">
+            <v-avatar color="indigo-lighten-5" size="36" class="text-indigo border">
+              <v-icon size="small">mdi-file-pdf-box</v-icon>
+            </v-avatar>
+            <span class="text-subtitle-1 font-weight-black text-indigo-darken-3">Select PDF Report Format</span>
+          </div>
+          <v-btn icon="mdi-close" variant="text" density="compact" @click="showPdfDialog = false" />
+        </div>
+
+        <v-radio-group v-model="pdfExportMode" hide-details class="mb-4">
+          <v-card border flat class="pa-3 mb-2 cursor-pointer" :class="pdfExportMode === 'summary' ? 'bg-indigo-lighten-5 border-indigo' : ''" @click="pdfExportMode = 'summary'">
+            <div class="d-flex align-start ga-2">
+              <v-radio value="summary" color="indigo" class="mt-0" />
+              <div>
+                <div class="text-subtitle-2 font-weight-black text-indigo-darken-4">Option A: Executive Summary Report (3-4 Pages)</div>
+                <div class="text-caption text-grey-darken-2">Aggregates all sessions into a clean 3-4 page academic summary table with performance radar & top weak words.</div>
+              </div>
+            </div>
+          </v-card>
+
+          <v-card border flat class="pa-3 cursor-pointer" :class="pdfExportMode === 'full' ? 'bg-indigo-lighten-5 border-indigo' : ''" @click="pdfExportMode = 'full'">
+            <div class="d-flex align-start ga-2">
+              <v-radio value="full" color="indigo" class="mt-0" />
+              <div>
+                <div class="text-subtitle-2 font-weight-black text-indigo-darken-4">Option B: Full Detailed Transcript PDF</div>
+                <div class="text-caption text-grey-darken-2">Includes 100% of all practice sessions in unabridged detail (Target IPA vs. Spoken IPA & AI feedback).</div>
+              </div>
+            </div>
+          </v-card>
+        </v-radio-group>
+
+        <div class="d-flex justify-end ga-2">
+          <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showPdfDialog = false">Cancel</v-btn>
+          <v-btn color="indigo" variant="flat" class="text-none font-weight-bold" prepend-icon="mdi-download" :loading="isGeneratingPdf" @click="generateAcademicPdf">
+            Generate PDF
+          </v-btn>
+        </div>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -215,7 +258,9 @@ const props = defineProps({
 })
 
 const isLoading = ref(false)
-const isExportingPdf = ref(false)
+const showPdfDialog = ref(false)
+const pdfExportMode = ref('summary')
+const isGeneratingPdf = ref(false)
 const isExportingZip = ref(false)
 const rangeType = ref('today')
 const customStartDate = ref('')
@@ -271,14 +316,108 @@ const playAudio = (url) => {
   audio.play()
 }
 
-const exportPdfReport = async () => {
-  isExportingPdf.value = true
+const generateAcademicPdf = () => {
+  isGeneratingPdf.value = true
   try {
-    window.print()
+    // Generate clean academic HTML string and open printable report window
+    const reportTitle = pdfExportMode.value === 'summary' ? 'Executive Summary Report' : 'Full Practice Transcript'
+    let reportHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Fluent Academic English Studio - ${reportTitle}</title>
+        <style>
+          body { font-family: 'Segoe UI', Helvetica, Arial, sans-serif; color: #1e293b; padding: 30px; margin: 0; }
+          .header { border-bottom: 3px solid #312e81; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
+          .title { font-size: 22px; font-weight: 900; color: #312e81; margin: 0; }
+          .subtitle { font-size: 13px; color: #64748b; margin-top: 4px; }
+          .section { margin-bottom: 24px; }
+          .section-title { font-size: 15px; font-weight: 800; color: #1e1b4b; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px; margin-bottom: 12px; }
+          .metric-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 18px; margin-bottom: 16px; display: flex; gap: 24px; }
+          .metric { display: flex; flex-direction: column; }
+          .metric-label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+          .metric-val { font-size: 20px; font-weight: 900; color: #4338ca; }
+          table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+          th { background: #f1f5f9; text-align: left; padding: 8px 12px; font-size: 12px; font-weight: 800; color: #334155; border-bottom: 2px solid #cbd5e1; }
+          td { padding: 10px 12px; font-size: 12px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+          .score-badge { font-weight: 800; color: #047857; background: #d1fae5; padding: 2px 8px; border-radius: 12px; font-size: 11px; }
+          @media print {
+            body { padding: 0; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <h1 class="title">FLUENT ACADEMIC ENGLISH STUDIO</h1>
+            <div class="subtitle">Official Student Evaluation Report &bull; Mode: ${reportTitle}</div>
+          </div>
+          <div style="text-align: right; font-size: 12px; color: #64748b;">
+            <div>Student ID: #${props.userId || 1}</div>
+            <div>Date Range: ${rangeType.value.toUpperCase()}</div>
+          </div>
+        </div>
+
+        <div class="metric-box">
+          <div class="metric">
+            <span class="metric-label">Total Practice Sessions</span>
+            <span class="metric-val">${historyItems.value.length}</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Overall Average Score</span>
+            <span class="metric-val">${historyItems.value.length ? (historyItems.value.reduce((acc, curr) => acc + (curr.score || 0), 0) / historyItems.value.length).toFixed(1) : '0.0'} / 10.0</span>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Practice Log Summary (${groupedHistory.value.length} Active Days)</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Sessions</th>
+                <th>Avg Score</th>
+                <th>Sample Practice Topic</th>
+              </tr>
+            </thead>
+            <tbody>
+    `
+
+    groupedHistory.value.forEach(group => {
+      const avgScore = (group.items.reduce((acc, curr) => acc + (curr.score || 0), 0) / group.items.length).toFixed(1)
+      const firstTopic = group.items[0] ? group.items[0].topic : 'General Practice'
+      reportHtml += `
+        <tr>
+          <td><strong>${group.date}</strong></td>
+          <td>${group.items.length} sessions</td>
+          <td><span class="score-badge">${avgScore} / 10.0</span></td>
+          <td>"${firstTopic}"</td>
+        </tr>
+      `
+    })
+
+    reportHtml += `
+            </tbody>
+          </table>
+        </div>
+      </body>
+      </html>
+    `
+
+    const printWin = window.open('', '_blank')
+    printWin.document.write(reportHtml)
+    printWin.document.close()
+    printWin.focus()
+    setTimeout(() => {
+      printWin.print()
+    }, 500)
+
+    showPdfDialog.value = false
   } catch (err) {
-    console.error('PDF export error:', err)
+    console.error('PDF Generation Error:', err)
   } finally {
-    isExportingPdf.value = false
+    isGeneratingPdf.value = false
   }
 }
 
