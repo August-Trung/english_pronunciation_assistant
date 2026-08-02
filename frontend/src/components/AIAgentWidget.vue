@@ -28,9 +28,9 @@
             <v-icon color="indigo-darken-4" size="small">mdi-robot</v-icon>
           </v-avatar>
           <div>
-            <div class="text-subtitle-2 font-weight-black leading-tight">AI AGENT COPILOT</div>
-            <div class="text-caption text-indigo-lighten-4" style="font-size: 10px;">
-              Powered by Groq Llama 3.3 70B
+            <div class="text-subtitle-2 font-weight-black leading-tight">FLUENT AI ASSISTANT</div>
+            <div class="text-caption text-indigo-lighten-4" style="font-size: 11px;">
+              Trợ lý Luyện âm & Học tập 24/7
             </div>
           </div>
         </div>
@@ -134,9 +134,9 @@
           </div>
         </div>
 
-        <div v-if="isLoading" class="d-flex align-center ga-2 text-caption text-grey font-weight-bold pa-2">
+        <div v-if="isLoading" class="d-flex align-center ga-2 text-caption text-indigo font-weight-bold pa-2">
           <v-progress-circular indeterminate size="18" color="indigo" width="2" />
-          <span>AI Copilot is reasoning...</span>
+          <span>Trợ lý AI đang xử lý...</span>
         </div>
       </div>
 
@@ -144,7 +144,7 @@
       <div class="pa-2 bg-white border-t d-flex align-center ga-2">
         <v-text-field
           v-model="inputMsg"
-          placeholder="Ask AI Copilot (e.g., 'Tạo bài tập', 'Thống kê')..."
+          placeholder="Nhập yêu cầu (ví dụ: 'Tạo bài tập', 'Luyện từ sai')..."
           variant="outlined"
           density="compact"
           hide-details
@@ -189,7 +189,7 @@ const inputMsg = ref('')
 const messages = ref([
   {
     sender: 'agent',
-    text: '👋 **Chào bạn! Mình là AI Agent Copilot.**\n\nBạn có thể ra lệnh hoặc hỏi mình bất cứ điều gì (ví dụ: *Tạo bài tập AI*, *Thống kê điểm số*, *Luyện từ yếu*).'
+    text: '👋 **Chào bạn! Mình là Trợ lý AI Fluent.**\n\nBạn có thể ra lệnh hoặc hỏi mình bất cứ điều gì (ví dụ: *Tạo bài tập AI*, *Thống kê điểm*, *Luyện từ đọc sai*).'
   }
 ])
 
