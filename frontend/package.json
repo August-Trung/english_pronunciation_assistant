@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "deploy:host": "vite build && python ../scratch/deploy_to_123host.py",
     "preview": "vite preview"
   },
   "dependencies": {
