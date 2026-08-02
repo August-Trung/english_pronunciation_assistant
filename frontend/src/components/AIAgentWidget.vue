@@ -30,7 +30,7 @@
           <div>
             <div class="text-subtitle-2 font-weight-black leading-tight">FLUENT AI ASSISTANT</div>
             <div class="text-caption text-indigo-lighten-4" style="font-size: 11px;">
-              Trợ lý Luyện âm & Học tập 24/7
+              24/7 Smart Pronunciation & Learning Tutor
             </div>
           </div>
         </div>
@@ -56,9 +56,9 @@
             variant="tonal"
             class="font-weight-bold cursor-pointer flex-shrink-0"
             prepend-icon="mdi-plus-box"
-            @click="sendQuickPrompt('Tạo bài tập 3 câu chủ đề Environment cho lớp')"
+            @click="sendQuickPrompt('Create assignment on Environment topic for class')"
           >
-            Tạo bài tập AI
+            Create AI Assignment
           </v-chip>
           <v-chip
             size="x-small"
@@ -66,9 +66,9 @@
             variant="tonal"
             class="font-weight-bold cursor-pointer flex-shrink-0"
             prepend-icon="mdi-chart-box"
-            @click="sendQuickPrompt('Thống kê danh sách học sinh điểm thấp')"
+            @click="sendQuickPrompt('Show class gradebook and student analytics')"
           >
-            Thống kê điểm
+            Class Analytics
           </v-chip>
         </template>
         <template v-else>
@@ -78,9 +78,9 @@
             variant="tonal"
             class="font-weight-bold cursor-pointer flex-shrink-0"
             prepend-icon="mdi-flash"
-            @click="sendQuickPrompt('Tự động tạo bài tập luyện các từ mình hay đọc sai')"
+            @click="sendQuickPrompt('Generate personalized practice for my weak words')"
           >
-            Tạo bài luyện từ yếu
+            Smart Practice
           </v-chip>
           <v-chip
             size="x-small"
@@ -88,9 +88,9 @@
             variant="tonal"
             class="font-weight-bold cursor-pointer flex-shrink-0"
             prepend-icon="mdi-clock-alert-outline"
-            @click="sendQuickPrompt('Kiểm tra danh sách bài tập lớp học sắp hết hạn')"
+            @click="sendQuickPrompt('Check my upcoming class homework assignments')"
           >
-            Bài tập cần làm
+            Pending Homework
           </v-chip>
           <v-chip
             size="x-small"
@@ -98,9 +98,9 @@
             variant="tonal"
             class="font-weight-bold cursor-pointer flex-shrink-0"
             prepend-icon="mdi-forum"
-            @click="sendQuickPrompt('Đóng vai đối thoại giao tiếp tiếng Anh với mình')"
+            @click="sendQuickPrompt('Start interactive hotel receptionist speaking roleplay')"
           >
-            Luyện đối thoại
+            Voice Roleplay
           </v-chip>
         </template>
       </div>
@@ -119,7 +119,7 @@
             style="max-width: 88%; word-break: break-word; white-space: pre-line;"
           >
             <div class="d-flex align-center justify-space-between ga-2 mb-1" v-if="msg.sender === 'agent'">
-              <span class="text-caption font-weight-black text-indigo-darken-3">AI COPILOT</span>
+              <span class="text-caption font-weight-black text-indigo-darken-3">FLUENT AI ASSISTANT</span>
               <v-btn
                 icon="mdi-volume-high"
                 variant="text"
@@ -136,7 +136,7 @@
 
         <div v-if="isLoading" class="d-flex align-center ga-2 text-caption text-indigo font-weight-bold pa-2">
           <v-progress-circular indeterminate size="18" color="indigo" width="2" />
-          <span>Trợ lý AI đang xử lý...</span>
+          <span>AI Assistant is processing...</span>
         </div>
       </div>
 
@@ -144,7 +144,7 @@
       <div class="pa-2 bg-white border-t d-flex align-center ga-2">
         <v-text-field
           v-model="inputMsg"
-          placeholder="Nhập yêu cầu (ví dụ: 'Tạo bài tập', 'Luyện từ sai')..."
+          placeholder="Ask AI Assistant (e.g., 'Create assignment', 'Practice weak words')..."
           variant="outlined"
           density="compact"
           hide-details
@@ -189,7 +189,7 @@ const inputMsg = ref('')
 const messages = ref([
   {
     sender: 'agent',
-    text: '👋 **Chào bạn! Mình là Trợ lý AI Fluent.**\n\nBạn có thể ra lệnh hoặc hỏi mình bất cứ điều gì (ví dụ: *Tạo bài tập AI*, *Thống kê điểm*, *Luyện từ đọc sai*).'
+    text: '👋 **Welcome! I am your Fluent AI Assistant.**\n\nHow can I help you today? You can ask me to *Create AI Assignments*, *Check Class Analytics*, or *Generate Remedial Practice Sets*.'
   }
 ])
 
