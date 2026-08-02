@@ -7,6 +7,7 @@ import tempfile
 from datetime import datetime, timedelta
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.responses import StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydub import AudioSegment
 try:
@@ -20,6 +21,10 @@ app = FastAPI(
     description="Backend API for speech transcription and pronunciation grading using Whisper AI",
     version="5.0"
 )
+
+RECORDINGS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "uploads", "recordings"))
+os.makedirs(RECORDINGS_DIR, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=os.path.abspath(os.path.join(os.path.dirname(__file__), "uploads"))), name="uploads")
 
 # Enable CORS for frontend connection
 app.add_middleware(
@@ -1200,6 +1205,17 @@ async def analyze_audio(
     try:
         transcribed_text, whisper_confidence = transcribe_audio(wav_path)
         
+        # Save permanent copy for audio player & ZIP export
+        import shutil
+        rec_filename = f"rec_{user_id}_{int(datetime.now().timestamp())}_{random.randint(100,999)}.wav"
+        rec_disk_path = os.path.join(RECORDINGS_DIR, rec_filename)
+        saved_audio_url = ""
+        try:
+            shutil.copyfile(wav_path, rec_disk_path)
+            saved_audio_url = f"/uploads/recordings/{rec_filename}"
+        except Exception as copy_err:
+            print(f"Error saving permanent recording: {copy_err}")
+
         try:
             os.unlink(wav_path)
         except:
@@ -1267,10 +1283,15 @@ async def analyze_audio(
                 cursor.execute("INSERT INTO users (id, email, name, avatar) VALUES (?, ?, ?, ?)", (uid_val, f"user_{uid_val}@fluent.edu.vn", f"Học Sinh #{uid_val}", ""))
                 cursor.execute("INSERT OR IGNORE INTO user_settings (user_id, daily_goal) VALUES (?, 5)", (uid_val,))
 
+            try:
+                cursor.execute("ALTER TABLE history ADD COLUMN audio_url TEXT")
+            except:
+                pass
+
             cursor.execute('''
-                INSERT INTO history (user_id, topic, transcribed, score, breakdown_json, feedback, timestamp, date, IsXoa)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
-            ''', (uid_val, topic or "Luyện nói tự do", transcribed_text, score, breakdown_str, feedback_str, now_ts, now_dt))
+                INSERT INTO history (user_id, topic, transcribed, score, breakdown_json, feedback, timestamp, date, audio_url, IsXoa)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+            ''', (uid_val, topic or "Luyện nói tự do", transcribed_text, score, breakdown_str, feedback_str, now_ts, now_dt, saved_audio_url))
             conn.commit()
             conn.close()
             export_db_to_json()
@@ -3382,7 +3403,7 @@ def query_student_history(req: HistoryQueryRequest):
                 params.append(req.end_date)
                 
         cursor.execute(f"""
-            SELECT id, topic, transcribed, score, breakdown_json, feedback, timestamp, date
+            SELECT id, topic, transcribed, score, breakdown_json, feedback, timestamp, date, audio_url
             FROM history
             WHERE {where_clause}
             ORDER BY id DESC
@@ -3402,7 +3423,7 @@ def query_student_history(req: HistoryQueryRequest):
         
         history_list = []
         for r in rows:
-            h_id, topic, transcribed, score, bd_json, feedback, ts, date_val = r
+            h_id, topic, transcribed, score, bd_json, feedback, ts, date_val, audio_url_val = r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8] if len(r) > 8 else ""
             bd_dict = {}
             try:
                 bd_dict = json.loads(bd_json) if bd_json else {}
@@ -3418,7 +3439,8 @@ def query_student_history(req: HistoryQueryRequest):
                 "feedback": feedback,
                 "timestamp": ts,
                 "date": date_val,
-                "time": ts.split(" ")[1] if " " in str(ts) else ts
+                "time": ts.split(" ")[1] if " " in str(ts) else ts,
+                "audio_url": audio_url_val or ""
             })
             
         return {
@@ -3454,9 +3476,23 @@ def export_student_history_zip(req: HistoryQueryRequest):
                 summary_txt += f"Topic / Sentence: \"{h.get('topic')}\"\n"
                 summary_txt += f"Transcribed Speech: \"{h.get('transcribed')}\"\n"
                 summary_txt += f"Overall Score: {h.get('score')} / 10.0\n"
+                if h.get('audio_url'):
+                    summary_txt += f"Audio Recording File: audio_recordings/session_{idx:02d}_{h.get('date')}.wav\n"
                 if h.get('feedback'):
                     summary_txt += f"AI Feedback: {h.get('feedback')}\n"
                 summary_txt += f"------------------------------------------------------------------------\n\n"
+                
+                # Write audio file if exists on disk
+                a_url = h.get("audio_url", "")
+                if a_url and "/uploads/recordings/" in a_url:
+                    fname = os.path.basename(a_url)
+                    fpath = os.path.join(RECORDINGS_DIR, fname)
+                    if os.path.exists(fpath):
+                        try:
+                            with open(fpath, "rb") as af:
+                                zip_file.writestr(f"audio_recordings/session_{idx:02d}_{h.get('date')}.wav", af.read())
+                        except Exception as a_err:
+                            print(f"Error zipping audio file {fname}: {a_err}")
 
             # Formatted HTML Report for visual browsers
             html_content = f"""<!DOCTYPE html>
