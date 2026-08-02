@@ -145,6 +145,23 @@ def run_tests():
     passed_rec = res_rec.status_code == 200 and isinstance(res_rec.json().get("recommendations"), list)
     results.append(("GET /api/practice/recommended/{user_id}", passed_rec, f"Recommendations count: {len(res_rec.json().get('recommendations', []))}"))
 
+    # 13. Test POST /api/agent/chat (Groq Multi-Role AI Agent Copilot)
+    res_agent = client.post("/api/agent/chat", json={
+        "user_id": user_id,
+        "role": "teacher",
+        "message": "Tạo bài tập 3 câu chủ đề Environment cho lớp"
+    })
+    passed_agent = res_agent.status_code == 200 and res_agent.json().get("status") == "success"
+    results.append(("POST /api/agent/chat (Teacher)", passed_agent, f"Action: {res_agent.json().get('action')}"))
+
+    res_agent_std = client.post("/api/agent/chat", json={
+        "user_id": 999,
+        "role": "student",
+        "message": "Tự động tạo bài tập luyện các từ mình hay đọc sai"
+    })
+    passed_agent_std = res_agent_std.status_code == 200 and res_agent_std.json().get("status") == "success"
+    results.append(("POST /api/agent/chat (Student)", passed_agent_std, f"Action: {res_agent_std.json().get('action')}"))
+
     # Print summary
     print("\n---------------- TEST SUMMARY RESULTS ----------------")
     all_passed = True

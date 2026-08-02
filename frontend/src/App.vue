@@ -347,6 +347,12 @@
             </div>
           </v-card>
         </v-dialog>
+        <!-- Floating Groq-Powered AI Agent Copilot -->
+        <AIAgentWidget
+          :backend-url="backendUrl"
+          :user-role="userRole"
+          :user-id="userId || 1"
+        />
       </template>
   </v-app>
 </template>
@@ -363,6 +369,7 @@ import SettingsTab from '@/components/SettingsTab.vue'
 import ProfileDialog from '@/components/ProfileDialog.vue'
 import AchievementsDialog from '@/components/AchievementsDialog.vue'
 import WeakWordsDialog from '@/components/WeakWordsDialog.vue'
+import AIAgentWidget from '@/components/AIAgentWidget.vue'
 
 const theme = useTheme()
 const router = useRouter()

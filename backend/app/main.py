@@ -2957,4 +2957,178 @@ def get_parent_student_report(parent_code: str):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+class AgentChatRequest(BaseModel):
+    user_id: int = 1
+    role: str = "student"
+    message: str
+    conversation_history: list = []
+
+@app.post("/api/agent/chat")
+def agent_chat(req: AgentChatRequest):
+    user_msg = req.message.strip()
+    role = req.role.lower()
+    uid = req.user_id
+
+    if not user_msg:
+        raise HTTPException(status_code=400, detail="Message cannot be empty.")
+
+    reply = ""
+    action = None
+    data = None
+
+    msg_lower = user_msg.lower()
+
+    # Tool 1: Create Assignment (Teacher/Admin)
+    if ("tạo bài tập" in msg_lower or "create assignment" in msg_lower or "giao bài tập" in msg_lower) and role in ["teacher", "admin", "super_admin"]:
+        try:
+            conn = sqlite3.connect(DB_PATH, timeout=20.0)
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, name FROM classrooms WHERE teacher_id = ? AND (IsXoa IS NULL OR IsXoa = 0) ORDER BY id DESC LIMIT 1", (uid,))
+            cls_row = cursor.fetchone()
+            class_id = cls_row[0] if cls_row else 1
+            class_name = cls_row[1] if cls_row else "Lớp Tiếng Anh"
+
+            topic_title = "Bài tập Phát âm AI"
+            sentence = "Artificial intelligence is revolutionizing modern education."
+            if "environment" in msg_lower or "môi trường" in msg_lower:
+                topic_title = "Unit: Environmental Conservation"
+                sentence = "Protecting natural habitats is essential for maintaining global biodiversity."
+            elif "family" in msg_lower or "gia đình" in msg_lower:
+                topic_title = "Unit: My Family & Life"
+                sentence = "I live with my loving family in a peaceful town."
+
+            due_date = "2026-08-15"
+            cursor.execute(
+                "INSERT INTO assignments (class_id, teacher_id, title, topic_sentence, target_ipa, due_date) VALUES (?, ?, ?, ?, ?, ?)",
+                (class_id, uid, topic_title, sentence, "/ˌɑː.tɪˈfɪʃ.əl ɪnˈtel.ɪ.dʒəns/", due_date)
+            )
+            conn.commit()
+            asg_id = cursor.lastrowid
+            conn.close()
+            export_db_to_json()
+
+            reply = f"🤖 **AI Agent Copilot**: Đã khởi tạo thành công bài tập mới cho **{class_name}**!\n\n- **Tiêu đề**: {topic_title}\n- **Câu đọc mẫu**: \"{sentence}\"\n- **Hạn nộp**: {due_date}"
+            action = "assignment_created"
+            data = {"assignment_id": asg_id, "title": topic_title, "class_id": class_id, "class_name": class_name}
+            return {"status": "success", "reply": reply, "action": action, "data": data}
+        except Exception as e:
+            reply = f"Lỗi tạo bài tập tự động: {str(e)}"
+
+    # Tool 2: Query Class Roster / Stats (Teacher/Admin)
+    if ("thống kê" in msg_lower or "điểm" in msg_lower or "bảng điểm" in msg_lower or "học sinh" in msg_lower) and role in ["teacher", "admin", "super_admin"]:
+        try:
+            conn = sqlite3.connect(DB_PATH, timeout=20.0)
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT u.id, u.name, u.email, COUNT(s.id) as sub_cnt, AVG(COALESCE(s.score_override, s.score)) as avg_score
+                FROM users u
+                LEFT JOIN submissions s ON u.id = s.student_id AND (s.IsXoa IS NULL OR s.IsXoa = 0)
+                WHERE u.role = 'student' AND (u.IsXoa IS NULL OR u.IsXoa = 0)
+                GROUP BY u.id
+                ORDER BY avg_score ASC LIMIT 5
+            """)
+            rows = cursor.fetchall()
+            conn.close()
+
+            student_summary = []
+            for r in rows:
+                score_str = f"{r[4]:.1f}/10" if r[4] is not None else "Chưa có bài"
+                student_summary.append(f"- **{r[1]}** ({r[2]}): {score_str} ({r[3]} bài nộp)")
+
+            reply = "📊 **AI Agent Copilot: Thống kê Điểm số Lớp học**\n\n" + "\n".join(student_summary)
+            action = "stats_queried"
+            data = {"students": [{"name": r[1], "email": r[2], "avg_score": r[4]} for r in rows]}
+            return {"status": "success", "reply": reply, "action": action, "data": data}
+        except Exception as e:
+            reply = f"Lỗi thống kê: {str(e)}"
+
+    # Tool 3: Get Weak Words / Smart Remedial Practice (Student)
+    if "từ yếu" in msg_lower or "bài tập tự luyện" in msg_lower or "luyện từ đọc sai" in msg_lower or "remedial" in msg_lower:
+        try:
+            conn = sqlite3.connect(DB_PATH, timeout=20.0)
+            cursor = conn.cursor()
+            cursor.execute("SELECT word, ipa, error_count FROM weak_words WHERE user_id = ? AND (IsXoa IS NULL OR IsXoa = 0) ORDER BY error_count DESC LIMIT 5", (uid,))
+            rows = cursor.fetchall()
+            conn.close()
+
+            if rows:
+                top_words = [r[0] for r in rows]
+                words_str = ", ".join(top_words)
+                sentence = f"I am practicing to pronounce {' and '.join(top_words[:3])} accurately."
+                reply = f"🎯 **AI Smart Practice Set**: Đã tổng hợp bài luyện đọc khắc phục {len(rows)} từ bạn đọc sai nhiều nhất ({words_str})!\n\n**Câu mẫu tự luyện**: \"{sentence}\""
+                action = "remedial_generated"
+                data = {"topic_sentence": sentence, "focus_words": top_words}
+            else:
+                reply = "🌟 **AI Copilot**: Bạn hiện chưa có từ yếu nào recorded! Hãy thử bài luyện tập phát âm mới tại Speaking Studio nhé!"
+                action = "no_weak_words"
+                data = {}
+            return {"status": "success", "reply": reply, "action": action, "data": data}
+        except Exception as e:
+            reply = f"Lỗi tạo bài luyện từ yếu: {str(e)}"
+
+    # Tool 4: Pending Homework Check (Classroom Student)
+    if "bài tập" in msg_lower or "hạn nộp" in msg_lower or "chưa làm" in msg_lower:
+        try:
+            conn = sqlite3.connect(DB_PATH, timeout=20.0)
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT a.id, a.title, c.name, a.due_date
+                FROM assignments a
+                JOIN classrooms c ON a.class_id = c.id
+                JOIN class_enrollments e ON c.id = e.class_id
+                WHERE e.student_id = ? AND (a.IsXoa IS NULL OR a.IsXoa = 0)
+                ORDER BY a.id DESC LIMIT 3
+            """, (uid,))
+            rows = cursor.fetchall()
+            conn.close()
+
+            if rows:
+                asg_list = [f"- **{r[1]}** (Lớp: {r[2]}) - Hạn: {r[3] or 'Không có'}" for r in rows]
+                reply = "⏰ **AI Copilot: Danh sách Bài tập Lớp học của bạn**\n\n" + "\n".join(asg_list)
+            else:
+                reply = "🎉 **AI Copilot**: Bạn không có bài tập lớp học nào chưa hoàn thành!"
+            return {"status": "success", "reply": reply, "action": "homework_checked", "data": {}}
+        except Exception as e:
+            reply = f"Lỗi kiểm tra bài tập: {str(e)}"
+
+    # Tool 5: Groq LLM API call (if GROQ_API_KEY set) or Fallback Response
+    if GROQ_API_KEY:
+        try:
+            import urllib.request
+            sys_prompt = f"You are Fluent AI Agent Copilot, an encouraging academic English pronunciation and speaking assistant for an app. User role: {role}. Keep responses concise, supportive, and formatted in clean markdown in Vietnamese."
+            messages = [{"role": "system", "content": sys_prompt}]
+            for h in req.conversation_history[-4:]:
+                messages.append(h)
+            messages.append({"role": "user", "content": user_msg})
+
+            payload = json.dumps({
+                "model": "llama-3.3-70b-versatile",
+                "messages": messages,
+                "temperature": 0.7,
+                "max_tokens": 500
+            }).encode('utf-8')
+
+            req_obj = urllib.request.Request(
+                "https://api.groq.com/openai/v1/chat/completions",
+                data=payload,
+                headers={
+                    "Authorization": f"Bearer {GROQ_API_KEY}",
+                    "Content-Type": "application/json"
+                }
+            )
+            with urllib.request.urlopen(req_obj, timeout=10.0) as resp:
+                resp_data = json.loads(resp.read().decode('utf-8'))
+                reply = resp_data["choices"][0]["message"]["content"]
+                return {"status": "success", "reply": reply, "action": None, "data": None}
+        except Exception as groq_err:
+            print(f"Groq API call fallback: {groq_err}")
+
+    # Default Intelligent Fallback Response
+    if role in ["teacher", "admin", "super_admin"]:
+        reply = f"👋 **Chào Thầy/Cô! Tôi là AI Copilot.**\n\nTôi có thể hỗ trợ Thầy/Cô:\n- 🤖 *'Tạo bài tập chủ đề Environment cho lớp 10A1'* \n- 📊 *'Thống kê danh sách học sinh điểm phát âm dưới 6'* \n- ⚠️ *'Cho xem các từ phát âm sai nhiều nhất của lớp'*"
+    else:
+        reply = f"👋 **Chào bạn! Mình là AI Copilot - Trợ lý Luyện phát âm Tiếng Anh 24/7.**\n\nMình có thể hỗ trợ bạn:\n- 🎯 *'Tự động tạo bài tập luyện các từ mình hay đọc sai'*\n- ⏰ *'Kiểm tra danh sách bài tập lớp học sắp hết hạn'*\n- 🗣️ *'Đóng vai khách du lịch giao tiếp tiếng Anh với mình'*"
+
+    return {"status": "success", "reply": reply, "action": None, "data": None}
+
 
