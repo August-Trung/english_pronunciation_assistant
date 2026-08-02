@@ -3440,18 +3440,63 @@ def export_student_history_zip(req: HistoryQueryRequest):
         
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-            summary_txt = f"FLUENT ACADEMIC ENGLISH STUDIO - PRACTICE HISTORY REPORT\n"
-            summary_txt += f"User ID: {req.user_id}\nRange: {req.range_type}\nTotal Sessions: {len(history_list)}\n\n"
+            summary_txt = f"========================================================================\n"
+            summary_txt += f"  FLUENT ACADEMIC ENGLISH STUDIO - STUDENT PRACTICE HISTORY REPORT  \n"
+            summary_txt += f"========================================================================\n"
+            summary_txt += f"Student ID: {req.user_id}\n"
+            summary_txt += f"Range Type: {req.range_type.upper()}\n"
+            summary_txt += f"Total Sessions: {len(history_list)}\n"
+            summary_txt += f"Generated On: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+            summary_txt += f"========================================================================\n\n"
             
             for idx, h in enumerate(history_list, 1):
-                summary_txt += f"--- SESSION #{idx} ({h.get('timestamp')}) ---\n"
-                summary_txt += f"Topic: {h.get('topic')}\n"
-                summary_txt += f"Transcribed Speech: {h.get('transcribed')}\n"
-                summary_txt += f"Score: {h.get('score')}/10\n"
-                summary_txt += f"Feedback: {h.get('feedback')}\n\n"
+                summary_txt += f"[SESSION #{idx}] - Date: {h.get('timestamp')}\n"
+                summary_txt += f"Topic / Sentence: \"{h.get('topic')}\"\n"
+                summary_txt += f"Transcribed Speech: \"{h.get('transcribed')}\"\n"
+                summary_txt += f"Overall Score: {h.get('score')} / 10.0\n"
+                if h.get('feedback'):
+                    summary_txt += f"AI Feedback: {h.get('feedback')}\n"
+                summary_txt += f"------------------------------------------------------------------------\n\n"
+
+            # Formatted HTML Report for visual browsers
+            html_content = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fluent English Practice History Report</title>
+    <style>
+        body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #f8fafc; color: #1e293b; padding: 24px; }}
+        .header {{ background: #1e1b4b; color: white; padding: 24px; border-radius: 12px; margin-bottom: 24px; }}
+        .session-card {{ background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }}
+        .badge {{ background: #4f46e5; color: white; padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 12px; }}
+        .score {{ font-size: 18px; font-weight: 800; color: #047857; }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 style="margin: 0 0 8px 0;">FLUENT ACADEMIC ENGLISH STUDIO</h1>
+        <p style="margin: 0; opacity: 0.85;">Student Practice History & Evaluation Report</p>
+    </div>
+    <h2>Practice Sessions ({len(history_list)})</h2>
+"""
+            for idx, h in enumerate(history_list, 1):
+                html_content += f"""
+    <div class="session-card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="badge">Session #{idx} &bull; {h.get('timestamp')}</span>
+            <span class="score">Score {h.get('score')}/10</span>
+        </div>
+        <h3 style="color: #334155; margin: 12px 0 6px 0;">Topic: "{h.get('topic')}"</h3>
+        <p style="background: #f1f5f9; padding: 10px; border-radius: 6px; font-style: italic;">
+            Transcribed Speech: "{h.get('transcribed')}"
+        </p>
+        <p><strong>AI Feedback:</strong> {h.get('feedback') or 'Practice completed successfully.'}</p>
+    </div>
+"""
+            html_content += "</body></html>"
                 
-            zip_file.writestr("evaluation_report_summary.txt", summary_txt.encode("utf-8"))
-            zip_file.writestr("evaluation_report_full.json", json.dumps(history_list, indent=2).encode("utf-8"))
+            zip_file.writestr("Student_Practice_Report.txt", summary_txt.encode("utf-8"))
+            zip_file.writestr("Student_Practice_Report.html", html_content.encode("utf-8"))
             
         zip_buffer.seek(0)
         return StreamingResponse(
