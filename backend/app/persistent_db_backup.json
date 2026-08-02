@@ -129,10 +129,70 @@
       "tenant_id": null,
       "parent_code": "PA-9999",
       "password_hash": "newpassword456"
+    },
+    {
+      "id": 1006,
+      "email": "updated_prof_641121@fluent.edu.vn",
+      "name": "Prof. Updated Name",
+      "avatar": null,
+      "google_id": null,
+      "created_at": "2026-08-02 13:29:44",
+      "IsXoa": 1,
+      "role": "admin",
+      "tenant_id": null,
+      "parent_code": "PA-8888",
+      "password_hash": "newpassword456"
+    },
+    {
+      "id": 1007,
+      "email": "updated_prof_775031@fluent.edu.vn",
+      "name": "Prof. Updated Name",
+      "avatar": null,
+      "google_id": null,
+      "created_at": "2026-08-02 13:29:54",
+      "IsXoa": 1,
+      "role": "admin",
+      "tenant_id": null,
+      "parent_code": "PA-8888",
+      "password_hash": "newpassword456"
+    },
+    {
+      "id": 1008,
+      "email": "updated_prof_791886@fluent.edu.vn",
+      "name": "Prof. Updated Name",
+      "avatar": null,
+      "google_id": null,
+      "created_at": "2026-08-02 13:30:06",
+      "IsXoa": 1,
+      "role": "admin",
+      "tenant_id": null,
+      "parent_code": "PA-8888",
+      "password_hash": "newpassword456"
     }
   ],
   "history": [],
   "user_settings": [],
-  "weak_words": [],
+  "weak_words": [
+    {
+      "id": 5,
+      "user_id": 1,
+      "word": "biodiversity",
+      "ipa": "/ˌbaɪ.əʊ.daɪˈvɜː.sə.ti/",
+      "meaning": "Đa dạng sinh học",
+      "error_count": 5,
+      "created_at": "2026-08-02 13:30:06",
+      "IsXoa": 1
+    },
+    {
+      "id": 7,
+      "user_id": 1,
+      "word": "environment",
+      "ipa": "/ɪnˈvaɪ.rən.mənt/",
+      "meaning": "Môi trường",
+      "error_count": 5,
+      "created_at": "2026-08-02 13:55:01",
+      "IsXoa": 0
+    }
+  ],
   "achievements": []
 }

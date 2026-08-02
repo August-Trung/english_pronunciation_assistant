@@ -3014,8 +3014,32 @@ def agent_chat(req: AgentChatRequest):
         except Exception as e:
             reply = f"Lỗi tạo bài tập tự động: {str(e)}"
 
-    # Tool 2: Query Class Roster / Stats (Teacher/Admin)
-    if ("thống kê" in msg_lower or "điểm" in msg_lower or "bảng điểm" in msg_lower or "học sinh" in msg_lower) and role in ["teacher", "admin", "super_admin"]:
+    # Tool 2: Get Weak Words / Smart Remedial Practice (Student or Teacher querying weak words)
+    if "từ yếu" in msg_lower or "luyện từ đọc sai" in msg_lower or "đọc sai" in msg_lower or "phát âm sai" in msg_lower or "remedial" in msg_lower:
+        try:
+            conn = sqlite3.connect(DB_PATH, timeout=20.0)
+            cursor = conn.cursor()
+            cursor.execute("SELECT word, ipa, error_count FROM weak_words WHERE (IsXoa IS NULL OR IsXoa = 0) ORDER BY error_count DESC LIMIT 5")
+            rows = cursor.fetchall()
+            conn.close()
+
+            if rows:
+                top_words = [r[0] for r in rows]
+                words_str = ", ".join(top_words)
+                sentence = f"I am practicing to pronounce {' and '.join(top_words[:3])} accurately."
+                reply = f"🎯 **AI Smart Practice Set**: Đã tổng hợp bài luyện đọc khắc phục các từ đọc sai nhiều nhất ({words_str})!\n\n**Câu mẫu tự luyện**: \"{sentence}\""
+                action = "remedial_generated"
+                data = {"topic_sentence": sentence, "focus_words": top_words}
+            else:
+                reply = "🌟 **AI Copilot**: Hiện chưa ghi nhận từ yếu nào! Hãy thử bài luyện tập phát âm mới tại Speaking Studio nhé!"
+                action = "remedial_generated"
+                data = {}
+            return {"status": "success", "reply": reply, "action": action, "data": data}
+        except Exception as e:
+            reply = f"Lỗi tạo bài luyện từ yếu: {str(e)}"
+
+    # Tool 3: Query Class Roster / Stats (Teacher/Admin)
+    if ("thống kê" in msg_lower or "điểm" in msg_lower or "bảng điểm" in msg_lower or "học sinh" in msg_lower or "trường" in msg_lower) and role in ["teacher", "admin", "super_admin"]:
         try:
             conn = sqlite3.connect(DB_PATH, timeout=20.0)
             cursor = conn.cursor()
@@ -3041,30 +3065,6 @@ def agent_chat(req: AgentChatRequest):
             return {"status": "success", "reply": reply, "action": action, "data": data}
         except Exception as e:
             reply = f"Lỗi thống kê: {str(e)}"
-
-    # Tool 3: Get Weak Words / Smart Remedial Practice (Student)
-    if "từ yếu" in msg_lower or "bài tập tự luyện" in msg_lower or "luyện từ đọc sai" in msg_lower or "remedial" in msg_lower:
-        try:
-            conn = sqlite3.connect(DB_PATH, timeout=20.0)
-            cursor = conn.cursor()
-            cursor.execute("SELECT word, ipa, error_count FROM weak_words WHERE user_id = ? AND (IsXoa IS NULL OR IsXoa = 0) ORDER BY error_count DESC LIMIT 5", (uid,))
-            rows = cursor.fetchall()
-            conn.close()
-
-            if rows:
-                top_words = [r[0] for r in rows]
-                words_str = ", ".join(top_words)
-                sentence = f"I am practicing to pronounce {' and '.join(top_words[:3])} accurately."
-                reply = f"🎯 **AI Smart Practice Set**: Đã tổng hợp bài luyện đọc khắc phục {len(rows)} từ bạn đọc sai nhiều nhất ({words_str})!\n\n**Câu mẫu tự luyện**: \"{sentence}\""
-                action = "remedial_generated"
-                data = {"topic_sentence": sentence, "focus_words": top_words}
-            else:
-                reply = "🌟 **AI Copilot**: Bạn hiện chưa có từ yếu nào recorded! Hãy thử bài luyện tập phát âm mới tại Speaking Studio nhé!"
-                action = "no_weak_words"
-                data = {}
-            return {"status": "success", "reply": reply, "action": action, "data": data}
-        except Exception as e:
-            reply = f"Lỗi tạo bài luyện từ yếu: {str(e)}"
 
     # Tool 4: Pending Homework Check (Classroom Student)
     if "bài tập" in msg_lower or "hạn nộp" in msg_lower or "chưa làm" in msg_lower:
