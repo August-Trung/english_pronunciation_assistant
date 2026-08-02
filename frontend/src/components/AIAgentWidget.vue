@@ -106,7 +106,7 @@
       </div>
 
       <!-- Messages Body -->
-      <div class="agent-messages-container pa-3 flex-grow-1 overflow-y-auto">
+      <div ref="messagesContainer" class="agent-messages-container pa-3 flex-grow-1 overflow-y-auto">
         <div
           v-for="(msg, idx) in messages"
           :key="idx"
@@ -165,7 +165,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, nextTick, watch, onMounted } from 'vue'
 
 const props = defineProps({
   backendUrl: {
@@ -185,6 +185,15 @@ const props = defineProps({
 const isOpen = ref(false)
 const isLoading = ref(false)
 const inputMsg = ref('')
+const messagesContainer = ref(null)
+
+const scrollToBottom = () => {
+  nextTick(() => {
+    if (messagesContainer.value) {
+      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+    }
+  })
+}
 
 const messages = ref([
   {
@@ -192,6 +201,10 @@ const messages = ref([
     text: '👋 **Welcome! I am your Fluent AI Assistant.**\n\nHow can I help you today? You can ask me to *Create AI Assignments*, *Check Class Analytics*, or *Generate Remedial Practice Sets*.'
   }
 ])
+
+watch(messages, () => {
+  scrollToBottom()
+}, { deep: true })
 
 const sendQuickPrompt = (promptText) => {
   inputMsg.value = promptText
@@ -205,6 +218,7 @@ const sendMessage = async () => {
   messages.value.push({ sender: 'user', text })
   inputMsg.value = ''
   isLoading.value = true
+  scrollToBottom()
 
   try {
     const res = await fetch(`${props.backendUrl}/api/agent/chat`, {
@@ -231,6 +245,7 @@ const sendMessage = async () => {
     messages.value.push({ sender: 'agent', text: '⚠️ Connection error to AI Agent service.' })
   } finally {
     isLoading.value = false
+    scrollToBottom()
   }
 }
 

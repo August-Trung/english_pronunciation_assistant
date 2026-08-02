@@ -3022,13 +3022,13 @@ def agent_chat(req: AgentChatRequest):
     # Fallback Semantic Heuristic Intent Matching (if LLM is offline)
     msg_lower = user_msg.lower()
     if detected_intent == "GENERAL_CHAT":
-        if "từ yếu" in msg_lower or "luyện từ" in msg_lower or "tự luyện" in msg_lower or "đọc sai" in msg_lower or "phát âm sai" in msg_lower or "remedial" in msg_lower or "weak" in msg_lower or "smart practice" in msg_lower:
+        if "từ yếu" in msg_lower or "luyện từ" in msg_lower or "tự luyện" in msg_lower or "đọc sai" in msg_lower or "phát âm sai" in msg_lower or "remedial" in msg_lower or "weak" in msg_lower or "smart practice" in msg_lower or (role == "student" and ("tạo" in msg_lower or "luyện" in msg_lower)):
             detected_intent = "REMEDIAL_PRACTICE"
         elif ("tạo" in msg_lower or "giao" in msg_lower or "create" in msg_lower) and ("bài tập" in msg_lower or "assignment" in msg_lower) and role in ["teacher", "admin", "super_admin"]:
             detected_intent = "CREATE_ASSIGNMENT"
         elif ("thống kê" in msg_lower or "điểm" in msg_lower or "bảng điểm" in msg_lower or "học sinh" in msg_lower or "trường" in msg_lower or "stats" in msg_lower or "analytics" in msg_lower or "gradebook" in msg_lower) and role in ["teacher", "admin", "super_admin"]:
             detected_intent = "CLASS_ANALYTICS"
-        elif "bài tập" in msg_lower or "hạn nộp" in msg_lower or "chưa làm" in msg_lower or "homework" in msg_lower or "assignment" in msg_lower or "pending" in msg_lower or "upcoming" in msg_lower:
+        elif "bài" in msg_lower or "bài tập" in msg_lower or "hạn nộp" in msg_lower or "chưa làm" in msg_lower or "homework" in msg_lower or "assignment" in msg_lower or "pending" in msg_lower or "upcoming" in msg_lower:
             detected_intent = "CHECK_HOMEWORK"
         elif "roleplay" in msg_lower or "hotel" in msg_lower or "receptionist" in msg_lower or "đóng vai" in msg_lower or "giao tiếp" in msg_lower:
             detected_intent = "ROLEPLAY"
