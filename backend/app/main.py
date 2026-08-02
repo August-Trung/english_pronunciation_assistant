@@ -86,6 +86,14 @@ def upload_audio_to_supabase(file_bytes: bytes, filename: str) -> str:
 def startup_event():
     global model
     ensure_supabase_bucket()
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute("PRAGMA busy_timeout=10000;")
+        conn.close()
+    except Exception as e:
+        print(f"WAL mode enable note: {e}")
+
     if GROQ_API_KEY:
         print("GROQ_API_KEY detected. Skipping local Whisper model loading to optimize RAM and Cold Start!")
         return
@@ -3139,13 +3147,13 @@ def agent_chat(req: AgentChatRequest):
 
     # Execute via Groq LLM Native Function Calling (Multi-Key Pool Rotational Engine)
     candidate_keys = [
-        os.getenv("GROQ_API_KEY", "").strip(),
-        os.getenv("GROQ_API_KEY_2", "").strip(),
-        os.getenv("GROQ_API_KEY_3", "").strip(),
         "REMOVED_GROQ_API_KEY_1",
         "REMOVED_GROQ_API_KEY_2",
         "REMOVED_GROQ_API_KEY_3",
-        "REMOVED_GROQ_API_KEY_4"
+        "REMOVED_GROQ_API_KEY_4",
+        os.getenv("GROQ_API_KEY", "").strip(),
+        os.getenv("GROQ_API_KEY_2", "").strip(),
+        os.getenv("GROQ_API_KEY_3", "").strip(),
     ]
     groq_pool = list(dict.fromkeys([k for k in candidate_keys if k]))
 
@@ -3182,7 +3190,8 @@ def agent_chat(req: AgentChatRequest):
                     data=payload,
                     headers={
                         "Authorization": f"Bearer {current_key}",
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json",
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
                     }
                 )
 
@@ -3217,6 +3226,8 @@ def agent_chat(req: AgentChatRequest):
                         return {"status": "success", "reply": reply, "action": None, "data": None}
             except Exception as groq_err:
                 print(f"Groq Multi-Key Pool notice (Key ...{current_key[-6:]}): {groq_err}")
+                if "429" in str(groq_err):
+                    time.sleep(0.5)
                 continue
 
     # Fallback Semantic Heuristic Intent Matching & Educational Knowledge Base (if LLM is offline or 403 Forbidden)
