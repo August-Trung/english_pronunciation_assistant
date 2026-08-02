@@ -1276,7 +1276,15 @@ async def analyze_audio(
         except Exception as db_err:
             print(f"Auto save history to DB error: {db_err}")
         
-        target_ref = target_text if (mode == "reading" and target_text.strip()) else (topic or transcribed_text)
+        # Target reference logic:
+        # - For reading mode: target_ref is the exact target sentence to read.
+        # - For free speaking / prompt topic mode: target_ref is the student's spoken transcribed text.
+        is_prompt_question = any(q in (topic or "").lower() for q in ["tell me", "what is", "what do", "how do", "why do", "kể về", "là gì"])
+        if mode == "reading" and target_text.strip() and not is_prompt_question:
+            target_ref = target_text.strip()
+        else:
+            target_ref = transcribed_text
+
         ipa_analysis = evaluate_ipa_phonetics(target_ref, transcribed_text, wav_path=wav_path)
 
         # Tự động lưu các từ phát âm sai (partial), đọc thiếu (missing) hoặc rụng phụ âm vào SQLite DB weak_words

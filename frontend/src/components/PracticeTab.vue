@@ -533,7 +533,7 @@
             <v-card v-if="results.ipa_analysis" border flat rounded="lg" class="pa-3 mb-3 bg-teal-lighten-5 border-teal">
               <div class="d-flex align-center justify-space-between mb-2">
                 <div class="text-subtitle-2 font-weight-black text-teal-darken-4 d-flex align-center ga-1">
-                  <v-icon color="teal-darken-3" size="small">mdi-phonetics</v-icon>
+                  <v-icon color="teal-darken-3" size="small">mdi-waveform</v-icon>
                   <span>IPA Phonetic Evaluation (International Standard)</span>
                 </div>
                 <v-chip color="teal-darken-3" font-weight-bold size="small" variant="flat">
