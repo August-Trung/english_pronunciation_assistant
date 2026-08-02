@@ -2979,7 +2979,7 @@ def agent_chat(req: AgentChatRequest):
     msg_lower = user_msg.lower()
 
     # Tool 1: Create Assignment (Teacher/Admin)
-    if ("tạo bài tập" in msg_lower or "create assignment" in msg_lower or "giao bài tập" in msg_lower) and role in ["teacher", "admin", "super_admin"]:
+    if (("tạo" in msg_lower or "giao" in msg_lower or "create" in msg_lower) and ("bài tập" in msg_lower or "assignment" in msg_lower)) and role in ["teacher", "admin", "super_admin"]:
         try:
             conn = sqlite3.connect(DB_PATH, timeout=20.0)
             cursor = conn.cursor()
