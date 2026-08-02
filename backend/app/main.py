@@ -1277,13 +1277,16 @@ async def analyze_audio(
             print(f"Auto save history to DB error: {db_err}")
         
         # Target reference logic:
-        # - For reading mode: target_ref is the exact target sentence to read.
-        # - For free speaking / prompt topic mode: target_ref is the student's spoken transcribed text.
-        is_prompt_question = any(q in (topic or "").lower() for q in ["tell me", "what is", "what do", "how do", "why do", "kể về", "là gì"])
-        if mode == "reading" and target_text.strip() and not is_prompt_question:
-            target_ref = target_text.strip()
+        # - For reading mode: target_ref is the exact target model sentence to read.
+        # - For free speaking / prompt topic mode: target_ref is the student's corrected native response or transcribed text (NEVER the prompt question).
+        is_prompt_question = any(q in (topic or "").lower() for q in ["tell me", "what is", "what do", "how do", "why do", "kể về", "là gì", "favorite", "pet", "name"])
+        if mode != "reading" or is_prompt_question:
+            if ai_analysis and ai_analysis.get("casual"):
+                target_ref = ai_analysis.get("casual")
+            else:
+                target_ref = transcribed_text
         else:
-            target_ref = transcribed_text
+            target_ref = target_text.strip() if target_text.strip() else transcribed_text
 
         ipa_analysis = evaluate_ipa_phonetics(target_ref, transcribed_text, wav_path=wav_path)
 
