@@ -1,6 +1,7 @@
 import sys
 import os
 import sqlite3
+import time
 
 # Ensure backend/app is in sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "backend", "app")))
@@ -83,7 +84,7 @@ def run_roleplay_user_experience_tests():
             "Ban Linh (Freemium Learner)",
             "student",
             "Bây giờ bạn đóng vai lễ tân khách sạn, mình là khách thuê phòng, trò chuyện bằng tiếng Anh với mình nha!",
-            None
+            "roleplay_started"
         ),
         (
             "RP-I03",
@@ -119,6 +120,7 @@ def run_roleplay_user_experience_tests():
                 results.append((sc_id, actor, "error", False, f"HTTP Error {res.status_code}"))
         except Exception as e:
             results.append((sc_id, actor, "error", False, str(e)))
+        time.sleep(1.0)
 
     # PRINT HUMAN SCENARIOS REPORT
     print("\n-------------------------------------------------------------------------------------------------------------------")

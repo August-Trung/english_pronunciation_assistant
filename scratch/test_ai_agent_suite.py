@@ -75,7 +75,7 @@ def run_ai_agent_test_suite():
                 results.append((tc_id, role_label, message, "error", False, f"HTTP {res.status_code}"))
         except Exception as e:
             results.append((tc_id, role_label, message, "error", False, str(e)))
-        time.sleep(0.3)
+        time.sleep(1.0)
 
     # PRINT EXTENSIVE AGENT TEST REPORT
     print("\n-------------------------------------------------------------------------------------------------------------------")

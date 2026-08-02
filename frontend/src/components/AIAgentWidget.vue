@@ -140,7 +140,7 @@
                 @click="playSpeech(msg.text)"
               />
             </div>
-            <span>{{ msg.text }}</span>
+            <div class="markdown-content" v-html="formatMarkdown(msg.text)"></div>
           </div>
         </div>
 
@@ -195,7 +195,13 @@ const props = defineProps({
 const isOpen = ref(false)
 const isLoading = ref(false)
 const inputMsg = ref('')
-const messagesContainer = ref(null)
+const formatMarkdown = (text) => {
+  if (!text) return ''
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/\n/g, '<br>')
+}
 
 const scrollToBottom = () => {
   nextTick(() => {
