@@ -354,7 +354,6 @@ const generateAcademicPdf = () => {
             <div class="subtitle">Official Student Evaluation Report &bull; Mode: ${reportTitle}</div>
           </div>
           <div style="text-align: right; font-size: 12px; color: #64748b;">
-            <div>Student ID: #${props.userId || 1}</div>
             <div>Date Range: ${rangeType.value.toUpperCase()}</div>
           </div>
         </div>
