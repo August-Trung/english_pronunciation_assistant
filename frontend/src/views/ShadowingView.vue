@@ -332,7 +332,7 @@
                 color="teal-darken-3"
                 class="mt-1 font-weight-bold text-none"
                 style="font-size: 8.5px; height: 18px;"
-                prepend-icon="mdi-lips"
+                prepend-icon="mdi-account-voice"
                 @click="openArticulationGuide(w_ipa.word, w_ipa.target_ipa)"
               >
                 Articulation
@@ -477,7 +477,7 @@
         <div class="d-flex align-center justify-space-between mb-3 border-b pb-2">
           <div class="d-flex align-center ga-2">
             <v-avatar color="teal-lighten-5" size="40" class="text-teal-darken-3 border border-teal">
-              <v-icon size="medium">mdi-lips</v-icon>
+              <v-icon size="medium">mdi-account-voice</v-icon>
             </v-avatar>
             <div>
               <div class="text-subtitle-1 font-weight-black text-teal-darken-4">{{ selectedArticulation.title }}</div>
@@ -504,7 +504,7 @@
         <div class="space-y-2 text-caption">
           <div class="bg-grey-lighten-4 pa-2.5 rounded border mb-2">
             <span class="font-weight-black text-grey-darken-4 d-block mb-1 d-flex align-center ga-1">
-              <v-icon color="pink" size="x-small">mdi-lips</v-icon>
+              <v-icon color="pink" size="x-small">mdi-account-voice</v-icon>
               <span>1. Lips & Teeth Position:</span>
             </span>
             <span class="text-grey-darken-3">{{ selectedArticulation.mouth_position }}</span>

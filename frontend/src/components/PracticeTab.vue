@@ -643,7 +643,7 @@
                     color="teal-darken-3"
                     class="mt-1 font-weight-bold text-none"
                     style="font-size: 8.5px; height: 18px;"
-                    prepend-icon="mdi-lips"
+                    prepend-icon="mdi-account-voice"
                     @click="openArticulationGuide(w_ipa.word, w_ipa.target_ipa)"
                   >
                     Articulation
@@ -831,7 +831,7 @@
         <div class="d-flex align-center justify-space-between mb-3 border-b pb-2">
           <div class="d-flex align-center ga-2">
             <v-avatar color="teal-lighten-5" size="40" class="text-teal-darken-3 border border-teal">
-              <v-icon size="medium">mdi-lips</v-icon>
+              <v-icon size="medium">mdi-account-voice</v-icon>
             </v-avatar>
             <div>
               <div class="text-subtitle-1 font-weight-black text-teal-darken-4">{{ selectedArticulation.title }}</div>
@@ -845,7 +845,7 @@
         <div class="bg-teal-lighten-5 border border-teal pa-4 rounded-lg mb-4 text-center">
           <div class="d-flex justify-center align-center ga-3 mb-2">
             <div class="border pa-2 bg-white rounded-circle elevation-1 d-flex align-center justify-center" style="width: 64px; height: 64px;">
-              <v-icon size="36" color="teal-darken-3">mdi-lips</v-icon>
+              <v-icon size="36" color="teal-darken-3">mdi-account-voice</v-icon>
             </div>
             <v-icon size="medium" color="teal-darken-2">mdi-arrow-right-bold-outline</v-icon>
             <div class="border pa-2 bg-white rounded-circle elevation-1 d-flex align-center justify-center" style="width: 64px; height: 64px;">
@@ -862,7 +862,7 @@
         <div class="text-caption">
           <div class="bg-grey-lighten-4 pa-3.5 rounded-lg border mb-3" style="line-height: 1.55;">
             <span class="font-weight-black text-grey-darken-4 d-block mb-1.5 d-flex align-center ga-1">
-              <v-icon color="pink" size="small">mdi-lips</v-icon>
+              <v-icon color="pink" size="small">mdi-account-voice</v-icon>
               <span class="text-subtitle-2 font-weight-bold">1. Lips & Teeth Position:</span>
             </span>
             <span class="text-grey-darken-3 d-block pl-6">{{ selectedArticulation.mouth_position }}</span>
