@@ -26,22 +26,37 @@
                 Step 1: {{ practiceMode === 'reading' ? 'Choose Model Sentence' : 'Choose Speaking Topic' }}
               </div>
             </div>
-            <v-btn-toggle
-              v-model="practiceMode"
-              color="primary"
-              density="compact"
-              mandatory
-              rounded="pill"
-              variant="outlined"
-              class="w-100 w-sm-auto"
-            >
-              <v-btn value="speaking" size="small" class="text-none font-weight-bold flex-grow-1 flex-sm-grow-0" prepend-icon="mdi-account-voice">
-                Free Topic
-              </v-btn>
-              <v-btn value="reading" size="small" class="text-none font-weight-bold flex-grow-1 flex-sm-grow-0" prepend-icon="mdi-book-open-variant">
-                Sentence Reading
-              </v-btn>
-            </v-btn-toggle>
+            <div class="d-flex align-center ga-2 flex-wrap">
+              <v-switch
+                v-model="rememberSession"
+                color="primary"
+                density="compact"
+                hide-details
+                inset
+                class="ms-1"
+                @update:model-value="onRememberSessionToggle"
+              >
+                <template #label>
+                  <span class="text-caption font-weight-bold text-grey-darken-3">Remember Session Result</span>
+                </template>
+              </v-switch>
+              <v-btn-toggle
+                v-model="practiceMode"
+                color="primary"
+                density="compact"
+                mandatory
+                rounded="pill"
+                variant="outlined"
+                class="w-100 w-sm-auto"
+              >
+                <v-btn value="speaking" size="small" class="text-none font-weight-bold flex-grow-1 flex-sm-grow-0" prepend-icon="mdi-account-voice">
+                  Free Topic
+                </v-btn>
+                <v-btn value="reading" size="small" class="text-none font-weight-bold flex-grow-1 flex-sm-grow-0" prepend-icon="mdi-book-open-variant">
+                  Sentence Reading
+                </v-btn>
+              </v-btn-toggle>
+            </div>
           </div>
 
           <!-- Topic input with TTS button -->
@@ -921,7 +936,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted, onMounted } from 'vue'
+import { ref, computed, watch, onUnmounted, onMounted } from 'vue'
 import { GRADE_LEVELS, SPEAKING_TOPICS, READING_LIBRARY } from '../constants/topics.js'
 
 // State Modal Khẩu Hình 2D/3D
@@ -1045,19 +1060,44 @@ const loadingText = ref('Processing speech audio...')
 const results = ref(null)
 const errorMessage = ref(null)
 
+const rememberSession = ref(localStorage.getItem('fluent_remember_session_pref') !== 'false')
+
+const onRememberSessionToggle = (val) => {
+  localStorage.setItem('fluent_remember_session_pref', val ? 'true' : 'false')
+  if (!val) {
+    resetCurrentSession()
+  }
+}
+
+watch(topic, (newVal, oldVal) => {
+  if (oldVal !== undefined && newVal !== oldVal && results.value) {
+    resetCurrentSession()
+  }
+})
+
+watch(practiceMode, () => {
+  if (results.value) {
+    resetCurrentSession()
+  }
+})
+
 onMounted(() => {
-  try {
-    const saved = sessionStorage.getItem('fluent_latest_practice')
-    if (saved) {
-      const parsed = JSON.parse(saved)
-      if (parsed && parsed.results) {
-        results.value = parsed.results
-        if (parsed.topic) topic.value = parsed.topic
-        if (parsed.practiceMode) practiceMode.value = parsed.practiceMode
+  if (rememberSession.value) {
+    try {
+      const saved = sessionStorage.getItem('fluent_latest_practice')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (parsed && parsed.results) {
+          results.value = parsed.results
+          if (parsed.topic) topic.value = parsed.topic
+          if (parsed.practiceMode) practiceMode.value = parsed.practiceMode
+        }
       }
+    } catch (e) {
+      console.warn('Error reading saved session state', e)
     }
-  } catch (e) {
-    console.warn('Error reading saved session state', e)
+  } else {
+    resetCurrentSession()
   }
 })
 
@@ -1325,14 +1365,20 @@ const analyzeSpeech = async () => {
     const data = await response.json()
     if (data.success) {
       results.value = data
-      try {
-        sessionStorage.setItem('fluent_latest_practice', JSON.stringify({
-          results: data,
-          topic: topic.value,
-          practiceMode: practiceMode.value
-        }))
-      } catch (e) {
-        console.warn('Session storage write error', e)
+      if (rememberSession.value) {
+        try {
+          sessionStorage.setItem('fluent_latest_practice', JSON.stringify({
+            results: data,
+            topic: topic.value,
+            practiceMode: practiceMode.value
+          }))
+        } catch (e) {
+          console.warn('Session storage write error', e)
+        }
+      } else {
+        try {
+          sessionStorage.removeItem('fluent_latest_practice')
+        } catch (e) {}
       }
       emit('history-updated')
     }

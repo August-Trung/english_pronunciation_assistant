@@ -643,6 +643,9 @@ const handleLogout = () => {
   localStorage.removeItem('speak_user_email')
   localStorage.removeItem('speak_user_avatar')
   localStorage.removeItem('speak_user_name')
+  try {
+    sessionStorage.clear()
+  } catch (e) {}
   isLoggedIn.value = false
   currentUserId.value = null
   userEmail.value = ''
