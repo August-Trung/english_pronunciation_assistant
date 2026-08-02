@@ -268,14 +268,14 @@
 
               <v-col cols="3" class="pa-0 d-flex justify-start">
                 <v-btn
-                  v-if="!isRecording && audioUrl"
+                  v-if="!isRecording && (audioUrl || results)"
                   icon="mdi-delete-outline"
                   color="error"
                   variant="outlined"
                   density="comfortable"
-                  title="Delete current recording"
+                  title="Clear active practice results"
                   :disabled="isAnalyzing"
-                  @click="clearAudio"
+                  @click="resetCurrentSession"
                 />
               </v-col>
             </v-row>
@@ -360,11 +360,24 @@
       <!-- Right column: Analysis Results -->
       <v-col cols="12" md="6" class="pa-1">
         <v-card border flat class="pa-4 bg-white min-h-100 d-flex flex-column" rounded="lg">
-          <div class="d-flex align-center ga-2 mb-3">
-            <v-avatar color="success-lighten-5" size="36" class="text-success mr-1 border">
-              <v-icon size="small">mdi-trophy-outline</v-icon>
-            </v-avatar>
-            <div class="text-subtitle-1 font-weight-black text-secondary">Evaluation Results</div>
+          <div class="d-flex align-center justify-space-between ga-2 mb-3">
+            <div class="d-flex align-center ga-2">
+              <v-avatar color="success-lighten-5" size="36" class="text-success mr-1 border">
+                <v-icon size="small">mdi-trophy-outline</v-icon>
+              </v-avatar>
+              <div class="text-subtitle-1 font-weight-black text-secondary">Evaluation Results</div>
+            </div>
+            <v-btn
+              v-if="results"
+              variant="outlined"
+              color="grey-darken-2"
+              size="x-small"
+              class="text-none font-weight-bold"
+              prepend-icon="mdi-refresh"
+              @click="resetCurrentSession"
+            >
+              Reset Screen
+            </v-btn>
           </div>
 
           <!-- Error Alert Card -->
@@ -1248,7 +1261,15 @@ const clearAudio = () => {
   currentTime.value = 0
   isPlaying.value = false
   errorMessage.value = null
+}
+
+const resetCurrentSession = () => {
+  clearAudio()
   results.value = null
+  errorMessage.value = null
+  try {
+    sessionStorage.removeItem('fluent_latest_practice')
+  } catch (e) {}
 }
 
 const formatTime = (secs) => {
