@@ -1355,8 +1355,15 @@ const analyzeSpeech = async () => {
     })
     
     if (!response.ok) {
-      const errData = await response.json()
-      throw new Error(errData.detail || 'Failed to evaluate speech audio.')
+      let errMsg = 'Failed to evaluate speech audio.'
+      try {
+        const errData = await response.json()
+        errMsg = errData.detail || errMsg
+      } catch (e) {
+        const rawText = await response.text().catch(() => '')
+        if (rawText) errMsg = rawText
+      }
+      throw new Error(errMsg)
     }
     
     const data = await response.json()

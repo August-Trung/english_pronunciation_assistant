@@ -856,8 +856,15 @@ const analyzeShadowing = async () => {
     })
 
     if (!res.ok) {
-      const errData = await res.json()
-      throw new Error(errData.detail || 'Unable to analyze speech audio. Please speak louder and clearly!')
+      let errMsg = 'Unable to analyze speech audio. Please speak louder and clearly!'
+      try {
+        const errData = await res.json()
+        errMsg = errData.detail || errMsg
+      } catch (e) {
+        const rawText = await res.text().catch(() => '')
+        if (rawText) errMsg = rawText
+      }
+      throw new Error(errMsg)
     }
 
     const data = await res.json()
