@@ -14,7 +14,7 @@
 
     <v-row class="ma-0 ga-2">
       <!-- Left column: Input, Mode selection, Library and Recording -->
-      <v-col cols="12" md="6" class="pa-1">
+      <v-col cols="12" md="6" class="pa-1 sticky-left-col">
         <v-card border flat class="pa-4 bg-white" rounded="lg">
           <!-- Step 1 Header & Mode Toggle -->
           <div class="d-flex flex-column flex-sm-row align-start align-sm-center justify-space-between mb-3 ga-2">
@@ -1446,5 +1446,15 @@ onUnmounted(() => {
 
 .whitespace-pre-line {
   white-space: pre-line;
+}
+
+@media (min-width: 960px) {
+  .sticky-left-col {
+    position: sticky;
+    top: 72px;
+    align-self: flex-start;
+    max-height: calc(100vh - 88px);
+    overflow-y: auto;
+  }
 }
 </style>
