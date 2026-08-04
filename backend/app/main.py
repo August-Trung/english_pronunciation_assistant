@@ -1121,6 +1121,8 @@ CRITICAL INSTRUCTIONS:
 2. All feedback MUST BE DYNAMICALLY TAILORED to the student's specific spoken words. Do NOT repeat generic phrase templates!
 3. "grammar_fixes": "original" MUST be the exact incorrect phrase, "fixed" MUST be the corrected phrase, "reason" MUST be written in clear English.
 4. "native_suggestions": Provide 3 distinct levels of natural English expressions. "meaning" should be a short Vietnamese translation.
+5. "topic_relevance_score": MUST strictly and dynamically reflect the actual semantic alignment between topic prompt and student spoken transcript. If topic_comment indicates the response is off-topic or insufficient, topic_relevance_score MUST naturally be calculated at a low percentage (e.g. 10-35%).
+
 
 Topic Prompt: "{topic or 'Free Speaking Practice'}"
 Student Spoken Transcript: "{transcribed_text}"
