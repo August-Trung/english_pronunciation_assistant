@@ -41,8 +41,15 @@ try:
 except Exception:
     pass
 
+DEFAULT_GROQ_KEYS = [
+    "REMOVED_GROQ_API_KEY_1",
+    "REMOVED_GROQ_API_KEY_2",
+    "REMOVED_GROQ_API_KEY_3",
+    "REMOVED_GROQ_API_KEY_4",
+]
+
 def get_groq_api_keys():
-    """Extract all unique non-empty Groq API keys dynamically from environment variables."""
+    """Extract all unique non-empty Groq API keys dynamically from environment variables, with fallback keys."""
     keys = []
     # Support comma-separated keys (e.g., GROQ_KEYS or GROQ_API_KEYS)
     for env_name in ["GROQ_KEYS", "GROQ_API_KEYS"]:
@@ -58,10 +65,13 @@ def get_groq_api_keys():
         if val:
             keys.append(val)
 
+    # Always append default fallback keys to ensure system never attempts ZeroGPU local model loading timeout
+    keys.extend(DEFAULT_GROQ_KEYS)
     return list(dict.fromkeys(keys))
 
 GROQ_API_KEYS = get_groq_api_keys()
 GROQ_API_KEY = GROQ_API_KEYS[0] if GROQ_API_KEYS else ""
+
 
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip()
