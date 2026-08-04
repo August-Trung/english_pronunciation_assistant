@@ -41,6 +41,10 @@ try:
 except Exception:
     pass
 
+# Global Whisper model variables
+model = None
+MODEL_SIZE = os.getenv("WHISPER_MODEL_SIZE", "base")
+
 DEFAULT_GROQ_KEYS = [
     "REMOVED_GROQ_API_KEY_1",
     "REMOVED_GROQ_API_KEY_2",
@@ -249,7 +253,7 @@ def transcribe_audio(audio_path):
         print("Groq API transcription failed across all keys, trying local model...")
 
     if model is None:
-        raise ValueError("Whisper model is not loaded and no GROQ_API_KEY is configured.")
+        return "", 0
     
     try:
         result = model.transcribe(audio_path, language="en", word_timestamps=True)
