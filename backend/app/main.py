@@ -41,10 +41,28 @@ try:
 except Exception:
     pass
 
-# Global Whisper model variable
-model = None
-MODEL_SIZE = os.getenv("WHISPER_MODEL_SIZE", "base")
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
+def get_groq_api_keys():
+    """Extract all unique non-empty Groq API keys dynamically from environment variables."""
+    keys = []
+    # Support comma-separated keys (e.g., GROQ_KEYS or GROQ_API_KEYS)
+    for env_name in ["GROQ_KEYS", "GROQ_API_KEYS"]:
+        val = os.getenv(env_name, "").strip()
+        if val:
+            keys.extend([k.strip() for k in val.split(",") if k.strip()])
+
+    # Support individual indexed env vars (GROQ_API_KEY, GROQ_API_KEY_1..10, GROQ_API_KEY_01..05)
+    env_vars = ["GROQ_API_KEY", "GROQ_API_KEY_1", "GROQ_API_KEY_2", "GROQ_API_KEY_3", "GROQ_API_KEY_4", "GROQ_API_KEY_5",
+                "GROQ_API_KEY_01", "GROQ_API_KEY_02", "GROQ_API_KEY_03", "GROQ_API_KEY_04", "GROQ_API_KEY_05"]
+    for env_name in env_vars:
+        val = os.getenv(env_name, "").strip()
+        if val:
+            keys.append(val)
+
+    return list(dict.fromkeys(keys))
+
+GROQ_API_KEYS = get_groq_api_keys()
+GROQ_API_KEY = GROQ_API_KEYS[0] if GROQ_API_KEYS else ""
+
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip()
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "").strip()
@@ -208,12 +226,17 @@ def transcribe_audio(audio_path):
     """Transcribe audio using Groq API (if key exists) or fallback to local Whisper"""
     global model
     
-    if GROQ_API_KEY:
-        print("Transcribing via Groq API...")
-        text, confidence = transcribe_via_groq(audio_path, GROQ_API_KEY)
-        if text:
-            return text, confidence
-        print("Groq API transcription failed, trying local model...")
+    groq_keys = get_groq_api_keys()
+    if groq_keys:
+        for key in groq_keys:
+            try:
+                print(f"Transcribing via Groq API (key ...{key[-6:]})...")
+                text, confidence = transcribe_via_groq(audio_path, key)
+                if text:
+                    return text, confidence
+            except Exception as e:
+                print(f"Groq API transcription notice (key ...{key[-6:]}): {e}")
+        print("Groq API transcription failed across all keys, trying local model...")
 
     if model is None:
         raise ValueError("Whisper model is not loaded and no GROQ_API_KEY is configured.")
@@ -3220,16 +3243,7 @@ def agent_chat(req: AgentChatRequest):
         active_tools = [t for t in all_tools if t["function"]["name"] in ["generate_remedial_practice", "check_homework", "start_voice_roleplay"]]
 
     # Execute via Groq LLM Native Function Calling (Multi-Key Pool Rotational Engine)
-    candidate_keys = [
-        "REMOVED_GROQ_API_KEY_1",
-        "REMOVED_GROQ_API_KEY_2",
-        "REMOVED_GROQ_API_KEY_3",
-        "REMOVED_GROQ_API_KEY_4",
-        os.getenv("GROQ_API_KEY", "").strip(),
-        os.getenv("GROQ_API_KEY_2", "").strip(),
-        os.getenv("GROQ_API_KEY_3", "").strip(),
-    ]
-    groq_pool = list(dict.fromkeys([k for k in candidate_keys if k]))
+    groq_pool = get_groq_api_keys()
 
     if groq_pool:
         import urllib.request
