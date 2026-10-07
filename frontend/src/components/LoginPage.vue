@@ -136,13 +136,18 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 const props = defineProps({
   backendUrl: String
 })
 
 const emit = defineEmits(['login'])
+
+const resolvedBackendUrl = computed(() => {
+  const url = props.backendUrl || import.meta.env.VITE_BACKEND_URL || 'https://agrse-fluent-english-backend.hf.space'
+  return url.replace(/\/+$/, '')
+})
 
 const emailInput = ref('')
 const passwordInput = ref('')
@@ -161,7 +166,8 @@ const submitEmailPasswordLogin = async () => {
   isEmailLoading.value = true
   loginError.value = ''
   try {
-    const res = await fetch(`${props.backendUrl}/api/auth/login`, {
+    const base = resolvedBackendUrl.value
+    const res = await fetch(`${base}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -169,20 +175,26 @@ const submitEmailPasswordLogin = async () => {
         password: passwordInput.value.trim()
       })
     })
-    if (res.ok) {
+    const contentType = res.headers.get('content-type') || ''
+    if (contentType.includes('application/json')) {
       const data = await res.json()
-      emit('login', {
-        id: data.user.id,
-        user_id: data.user.id,
-        email: data.user.email,
-        name: data.user.name,
-        role: data.user.role,
-        tenant_id: data.user.tenant_id,
-        token: data.token
-      })
+      if (res.ok) {
+        emit('login', {
+          id: data.user.id,
+          user_id: data.user.id,
+          email: data.user.email,
+          name: data.user.name,
+          role: data.user.role,
+          tenant_id: data.user.tenant_id,
+          token: data.token
+        })
+      } else {
+        loginError.value = data.detail || 'Invalid email or password.'
+      }
     } else {
-      const err = await res.json()
-      loginError.value = err.detail || 'Invalid email or password.'
+      const textResp = await res.text()
+      console.error('Non-JSON server response on login:', textResp)
+      loginError.value = `Server error (${res.status}). Please try again later.`
     }
   } catch (e) {
     loginError.value = 'Login error: ' + e.message

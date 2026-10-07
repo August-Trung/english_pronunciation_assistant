@@ -47,7 +47,7 @@
     </template>
 
     <!-- Normal Student Flow: Login Screen when not logged in -->
-    <LoginPage v-else-if="!isLoggedIn" @login="handleLogin" />
+    <LoginPage v-else-if="!isLoggedIn" :backend-url="backendUrl" @login="handleLogin" />
 
     <!-- Main Workspace for logged in students -->
     <template v-else>
@@ -527,7 +527,7 @@ const handleAdminLogin = async () => {
 }
 
 // Dev configurations
-const backendUrl = ref(import.meta.env.VITE_BACKEND_URL || '')
+const backendUrl = ref(import.meta.env.VITE_BACKEND_URL || 'https://agrse-fluent-english-backend.hf.space')
 const isTestingConnection = ref(false)
 const connectionStatus = ref(null)
 
@@ -537,7 +537,7 @@ onMounted(async () => {
   if (storedUrl && storedUrl.startsWith('http') && !storedUrl.includes('august-trung-english-pronunciation-assistant')) {
     backendUrl.value = storedUrl
   } else {
-    backendUrl.value = import.meta.env.VITE_BACKEND_URL || ''
+    backendUrl.value = import.meta.env.VITE_BACKEND_URL || 'https://agrse-fluent-english-backend.hf.space'
   }
 
   const hash = window.location.hash
