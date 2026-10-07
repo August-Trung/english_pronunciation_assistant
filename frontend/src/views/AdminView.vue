@@ -1795,7 +1795,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 const props = defineProps({
@@ -1806,9 +1806,18 @@ const props = defineProps({
 const router = useRouter()
 
 // Authentication & Identity
-const activeUserRole = ref(localStorage.getItem('user_role') || 'student')
+const activeUserRole = ref(props.userRole || localStorage.getItem('user_role') || 'student')
 const userTenantId = ref(localStorage.getItem('user_tenant_id') || (activeUserRole.value === 'admin' ? '1' : ''))
 const isSuperAdmin = computed(() => activeUserRole.value === 'super_admin')
+
+watch(() => props.userRole, (newRole) => {
+  if (newRole) {
+    activeUserRole.value = newRole
+    if (['admin', 'super_admin'].includes(newRole)) {
+      fetchAllAdminData()
+    }
+  }
+})
 
 const loginEmail = ref('')
 const loginPassword = ref('')

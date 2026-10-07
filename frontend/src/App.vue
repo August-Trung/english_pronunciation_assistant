@@ -233,6 +233,7 @@
                 :user-name="userName"
                 :user-email="userEmail"
                 :user-avatar="userAvatar"
+                :user-role="userRole"
                 :equipped-badge-title="equippedBadgeTitle"
                 :streak="streak"
                 :daily-goal="dailyGoal"
@@ -719,6 +720,13 @@ const handleLogin = async (userData) => {
 
       isLoggedIn.value = true
       await fetchUserAllData()
+      if (route.path === '/') {
+        if (['admin', 'super_admin'].includes(userData.role)) {
+          router.push('/admin')
+        } else if (userData.role === 'teacher') {
+          router.push('/teacher')
+        }
+      }
       return
     }
 
@@ -761,6 +769,13 @@ const handleLogin = async (userData) => {
         isLoggedIn.value = true
         
         await fetchUserAllData()
+        if (route.path === '/') {
+          if (['admin', 'super_admin'].includes(effectiveRole)) {
+            router.push('/admin')
+          } else if (effectiveRole === 'teacher') {
+            router.push('/teacher')
+          }
+        }
       }
     }
   } catch (err) {

@@ -1440,17 +1440,28 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 const props = defineProps({
   backendUrl: String,
-  userId: Number
+  userId: Number,
+  userRole: String
 })
 
 const router = useRouter()
 
-const activeUserRole = ref(localStorage.getItem('user_role') || 'student')
+const activeUserRole = ref(props.userRole || localStorage.getItem('user_role') || 'student')
+
+watch(() => props.userRole, (newRole) => {
+  if (newRole) {
+    activeUserRole.value = newRole
+    if (['teacher', 'admin', 'super_admin'].includes(newRole)) {
+      fetchClasses()
+    }
+  }
+})
+
 const localTeacherId = ref(Number(localStorage.getItem('user_id')) || null)
 const loginEmail = ref('')
 const loginPassword = ref('')
