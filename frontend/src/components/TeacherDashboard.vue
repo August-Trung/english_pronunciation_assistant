@@ -68,81 +68,54 @@
 
     <!-- Main Educator Workspace -->
     <div v-else>
-      <!-- Header Title Banner -->
-      <v-card border flat class="pa-4 mb-4 bg-gradient-indigo text-white rounded-xl elevation-2">
-        <div class="d-flex align-center justify-space-between flex-wrap ga-3">
-          <div class="d-flex align-center ga-3">
-            <v-avatar color="white" size="48" class="elevation-2">
-              <v-icon color="indigo-darken-3" size="large">mdi-school-outline</v-icon>
-            </v-avatar>
-            <div>
-              <div class="text-h6 font-weight-black tracking-tight">TEACHER HUB & GRADEBOOK</div>
-              <div class="text-caption opacity-90 font-weight-medium">
-                Manage classes, monitor student IPA scores, listen to Supabase audio recordings, & assign homework
-              </div>
-            </div>
+      <!-- Sleek Minimalist Page Header Bar -->
+      <div class="d-flex align-center justify-space-between flex-wrap ga-2 mb-3 pb-2 border-b">
+        <div class="d-flex align-center ga-3 flex-wrap">
+          <div class="d-flex align-center ga-2">
+            <v-icon color="indigo-darken-3" size="26">mdi-school-outline</v-icon>
+            <span class="text-h6 font-weight-black text-grey-darken-4">Teacher Hub</span>
           </div>
 
-          <div class="d-flex align-center ga-2">
-            <v-btn
-              color="white"
-              variant="flat"
-              class="font-weight-black text-indigo-darken-3 text-none"
-              prepend-icon="mdi-plus-box"
-              @click="showCreateClassModal = true"
-            >
-              Create New Class
-            </v-btn>
-            <v-btn
-              color="white"
-              variant="outlined"
-              size="small"
-              class="font-weight-bold text-none"
-              prepend-icon="mdi-logout"
-              @click="showLogoutDialog = true"
-            >
-              Sign Out
-            </v-btn>
+          <!-- Micro Stats Badges (Replaces 3 Bulky Cards) -->
+          <div class="d-flex align-center ga-1.5 flex-wrap">
+            <v-chip size="small" variant="tonal" color="indigo" class="font-weight-bold">
+              <v-icon start size="14">mdi-google-classroom</v-icon>
+              {{ classes.length }} Classes
+            </v-chip>
+            <v-chip size="small" variant="tonal" color="teal" class="font-weight-bold">
+              <v-icon start size="14">mdi-account-group</v-icon>
+              {{ totalStudentsCount }} Students
+            </v-chip>
+            <v-chip size="small" variant="tonal" color="purple" class="font-weight-bold">
+              <v-icon start size="14">mdi-file-document-check</v-icon>
+              {{ totalSubmissionsCount }} Submissions
+            </v-chip>
           </div>
         </div>
-      </v-card>
 
-    <!-- Top KPI Cards -->
-    <v-row class="mb-4" density="comfortable">
-      <v-col cols="12" sm="4">
-        <v-card border flat class="pa-3 bg-white rounded-lg d-flex align-center ga-3">
-          <v-avatar color="indigo-lighten-5" size="42" class="text-indigo">
-            <v-icon size="default">mdi-google-classroom</v-icon>
-          </v-avatar>
-          <div>
-            <div class="text-caption font-weight-bold text-grey">Total Active Classes</div>
-            <div class="text-h6 font-weight-black text-secondary">{{ classes.length }}</div>
-          </div>
-        </v-card>
-      </v-col>
-      <v-col cols="12" sm="4">
-        <v-card border flat class="pa-3 bg-white rounded-lg d-flex align-center ga-3">
-          <v-avatar color="teal-lighten-5" size="42" class="text-teal-darken-3">
-            <v-icon size="default">mdi-account-group-outline</v-icon>
-          </v-avatar>
-          <div>
-            <div class="text-caption font-weight-bold text-grey">Enrolled Students</div>
-            <div class="text-h6 font-weight-black text-teal-darken-3">{{ totalStudentsCount }}</div>
-          </div>
-        </v-card>
-      </v-col>
-      <v-col cols="12" sm="4">
-        <v-card border flat class="pa-3 bg-white rounded-lg d-flex align-center ga-3">
-          <v-avatar color="purple-lighten-5" size="42" class="text-purple-darken-3">
-            <v-icon size="default">mdi-file-document-check-outline</v-icon>
-          </v-avatar>
-          <div>
-            <div class="text-caption font-weight-bold text-grey">Homework Submissions</div>
-            <div class="text-h6 font-weight-black text-purple-darken-3">{{ totalSubmissionsCount }}</div>
-          </div>
-        </v-card>
-      </v-col>
-    </v-row>
+        <div class="d-flex align-center ga-2">
+          <v-btn
+            color="primary"
+            variant="flat"
+            size="small"
+            class="font-weight-black text-none"
+            prepend-icon="mdi-plus"
+            @click="showCreateClassModal = true"
+          >
+            Create Class
+          </v-btn>
+          <v-btn
+            color="grey-darken-2"
+            variant="text"
+            size="small"
+            class="font-weight-bold text-none"
+            prepend-icon="mdi-logout"
+            @click="showLogoutDialog = true"
+          >
+            Sign Out
+          </v-btn>
+        </div>
+      </div>
 
     <!-- Main Content Area -->
     <v-row density="comfortable">
@@ -207,30 +180,27 @@
                 v-for="cls in filteredClasses"
                 :key="cls.id"
                 :active="selectedClassId === cls.id"
-                active-color="primary"
-                class="rounded-lg mb-2 border pa-2"
-                style="cursor: pointer;"
+                rounded="lg"
+                class="mb-1 pa-2 transition-all cursor-pointer"
+                :class="selectedClassId === cls.id ? 'bg-indigo-lighten-5 text-indigo-darken-4 font-weight-black' : 'text-grey-darken-3 hover-item'"
                 @click="selectClass(cls.id)"
               >
                 <template #prepend>
-                  <v-avatar color="indigo-lighten-5" size="34" class="mr-2 text-indigo font-weight-black text-caption border">
+                  <v-avatar
+                    :color="selectedClassId === cls.id ? 'indigo' : 'grey-lighten-3'"
+                    :class="selectedClassId === cls.id ? 'text-white' : 'text-grey-darken-3'"
+                    size="30"
+                    class="mr-2 font-weight-black text-caption"
+                  >
                     {{ cls.name.slice(0, 2).toUpperCase() }}
                   </v-avatar>
                 </template>
                 <v-list-item-title class="font-weight-black text-body-2 text-truncate">{{ cls.name }}</v-list-item-title>
-                <v-list-item-subtitle class="mt-1 d-flex align-center flex-wrap ga-1">
-                  <!-- Student Count Chip -->
-                  <v-chip size="x-small" color="teal-darken-1" variant="tonal" class="font-weight-bold" prepend-icon="mdi-account-group" style="height: 18px;">
-                    <span class="ml-0.5">{{ cls.student_count || 0 }} {{ (cls.student_count === 1) ? 'student' : 'students' }}</span>
-                  </v-chip>
-                  <!-- Join Code Chip -->
-                  <v-chip size="x-small" color="primary" variant="flat" class="font-weight-mono font-weight-black" style="height: 18px;">
-                    {{ cls.join_code }}
-                  </v-chip>
+                <v-list-item-subtitle class="text-caption text-grey-darken-1 d-flex align-center ga-1 mt-0.5">
+                  <span class="font-mono text-primary font-weight-bold">{{ cls.join_code }}</span>
+                  <span>•</span>
+                  <span>{{ cls.student_count || 0 }} {{ cls.student_count === 1 ? 'student' : 'students' }}</span>
                 </v-list-item-subtitle>
-                <div class="text-caption text-grey text-truncate mt-0.5" style="font-size: 0.7rem !important;">
-                  {{ cls.grade_level }}
-                </div>
               </v-list-item>
 
               <!-- Empty state for search -->
@@ -241,7 +211,7 @@
 
               <!-- Empty state for zero classes -->
               <div v-else-if="!classes.length" class="text-center pa-4 text-caption text-grey">
-                No classes created yet. Click "Create New Class" to start!
+                No classes created yet. Click "Create Class" to start!
               </div>
             </v-list>
           </div>
@@ -250,31 +220,39 @@
 
       <!-- Right Column: Gradebook & Assignments for Selected Class -->
       <v-col cols="12" md="9">
-        <v-card v-if="selectedClass" border flat class="pa-4 bg-white rounded-lg">
+        <v-card v-if="selectedClass" border flat class="pa-3 bg-white rounded-lg">
           <!-- Class Header Banner -->
-          <div class="d-flex align-center justify-space-between flex-wrap ga-2 border-b pb-3 mb-3">
+          <div class="d-flex align-center justify-space-between flex-wrap ga-2 border-b pb-2 mb-3">
             <div>
               <div class="d-flex align-center ga-2 flex-wrap">
-                <span class="text-h6 font-weight-black text-primary">{{ selectedClass.name }}</span>
-                <v-chip color="indigo" size="small" variant="flat" class="font-weight-bold">
+                <span class="text-h6 font-weight-black text-grey-darken-4">{{ selectedClass.name }}</span>
+                <v-chip color="indigo" size="x-small" variant="tonal" class="font-weight-bold">
                   {{ selectedClass.grade_level }}
                 </v-chip>
-                <v-btn icon="mdi-pencil-outline" size="x-small" color="primary" variant="tonal" title="Edit Class Information" @click="openEditClassModal" />
-                <v-btn icon="mdi-delete-outline" size="x-small" color="error" variant="tonal" title="Delete Classroom" @click="showDeleteClassModal = true" />
+                <v-btn icon="mdi-pencil-outline" size="x-small" color="grey-darken-2" variant="text" title="Edit Class Information" @click="openEditClassModal" />
+                <v-btn icon="mdi-delete-outline" size="x-small" color="error" variant="text" title="Delete Classroom" @click="showDeleteClassModal = true" />
               </div>
-              <div class="text-caption text-grey-darken-2 font-weight-bold d-flex align-center flex-wrap ga-2 mt-1">
-                <span>Student Join Code:</span>
-                <v-chip color="primary" size="small" variant="tonal" class="font-weight-mono font-weight-black" prepend-icon="mdi-key-variant">
-                  {{ selectedClass.join_code }}
+              <div class="text-caption text-grey-darken-2 d-flex align-center flex-wrap ga-2 mt-1">
+                <v-chip
+                  color="primary"
+                  size="small"
+                  variant="tonal"
+                  class="font-weight-mono font-weight-black cursor-pointer"
+                  prepend-icon="mdi-key-variant"
+                  title="Click to copy join code"
+                  @click="copyJoinCode(selectedClass.join_code)"
+                >
+                  Code: {{ selectedClass.join_code }}
+                  <v-icon end size="x-small">mdi-content-copy</v-icon>
                 </v-chip>
 
                 <!-- Full Domain Link & QR Code Buttons -->
-                <v-btn size="small" color="primary" variant="outlined" class="font-weight-bold text-none" prepend-icon="mdi-link-variant" @click="copyFullClassLink(selectedClass.join_code)">
-                  Copy Full Link
+                <v-btn size="small" color="grey-darken-3" variant="text" class="font-weight-bold text-none" prepend-icon="mdi-link-variant" @click="copyFullClassLink(selectedClass.join_code)">
+                  Copy Link
                 </v-btn>
 
-                <v-btn size="small" color="indigo-darken-2" variant="flat" class="font-weight-bold text-none" prepend-icon="mdi-qrcode" @click="openQrPosterModal(selectedClass)">
-                  Show Class QR Code
+                <v-btn size="small" color="indigo-darken-2" variant="text" class="font-weight-bold text-none" prepend-icon="mdi-qrcode" @click="openQrPosterModal(selectedClass)">
+                  Class QR
                 </v-btn>
               </div>
             </div>
@@ -283,12 +261,12 @@
               <v-btn
                 color="secondary"
                 variant="flat"
-                density="comfortable"
-                class="font-weight-bold text-caption text-none"
+                size="small"
+                class="font-weight-bold text-none"
                 prepend-icon="mdi-send-outline"
                 @click="showCreateAssignmentModal = true"
               >
-                1-Click Assign Homework
+                Assign Homework
               </v-btn>
             </div>
           </div>
@@ -1356,5 +1334,9 @@ onMounted(() => {
 
 .class-list-scroll::-webkit-scrollbar-thumb:hover {
   background-color: #94a3b8;
+}
+
+.hover-item:hover {
+  background-color: #f8fafc;
 }
 </style>
