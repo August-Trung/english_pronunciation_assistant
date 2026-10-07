@@ -2328,13 +2328,17 @@ const confirmAdminSignOut = () => {
 }
 
 const handleAdminSignOut = () => {
-  activeUserRole.value = 'student'
-  localStorage.setItem('user_role', 'student')
+  activeUserRole.value = 'none'
+  localStorage.removeItem('user_role')
   localStorage.removeItem('user_tenant_id')
   localStorage.removeItem('admin_auth_token')
+  localStorage.removeItem('admin_token')
+  localStorage.removeItem('speak_user_email')
+  localStorage.removeItem('speak_user_name')
   loginEmail.value = ''
   loginPassword.value = ''
   notify('Signed out from Administration Console.', 'info', 'mdi-logout')
+  window.location.href = '/'
 }
 
 // Provisioning & User Actions

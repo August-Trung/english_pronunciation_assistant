@@ -2409,7 +2409,7 @@ def google_login(req: GoogleLoginRequest):
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
         cursor.execute('''
-            SELECT u.id, u.email, u.name, u.avatar, COALESCE(s.daily_goal, 5)
+            SELECT u.id, u.email, u.name, u.avatar, COALESCE(s.daily_goal, 5), COALESCE(u.role, 'student'), u.tenant_id
             FROM users u
             LEFT JOIN user_settings s ON u.id = s.user_id
             WHERE u.email = ?
@@ -2419,12 +2419,14 @@ def google_login(req: GoogleLoginRequest):
         if not row:
             name = req.name if (req.name and req.name != "Học Sinh Google") else default_name
             avatar = req.avatar or ""
-            cursor.execute("INSERT INTO users (email, name, avatar) VALUES (?, ?, ?)", (email, name, avatar))
+            cursor.execute("INSERT INTO users (email, name, avatar, role) VALUES (?, ?, ?, 'student')", (email, name, avatar))
             conn.commit()
             user_id = cursor.lastrowid
             daily_goal_val = 5
+            user_role = "student"
+            user_tenant_id = None
         else:
-            user_id, email, existing_name, existing_avatar, daily_goal_val = row[0], row[1], row[2], row[3], row[4]
+            user_id, email, existing_name, existing_avatar, daily_goal_val, user_role, user_tenant_id = row[0], row[1], row[2], row[3], row[4], row[5], row[6]
             
             # Preserve or update name
             if req.name and req.name != "Học Sinh Google" and req.name != existing_name:
@@ -2447,15 +2449,20 @@ def google_login(req: GoogleLoginRequest):
                 avatar = existing_avatar or ""
                 
         streak_val = calculate_user_streak(user_id, cursor)
+        token = create_access_token(user_id, email, user_role, user_tenant_id)
         conn.close()
         export_db_to_json()
         
         return {
             "success": True,
+            "token": token,
             "user": {
                 "id": user_id,
                 "email": email,
                 "name": name,
+                "role": user_role,
+                "tenant_id": user_tenant_id,
+                "token": token,
                 "avatar": avatar,
                 "avatar_url": avatar,
                 "daily_goal": daily_goal_val or 5,
@@ -2467,10 +2474,14 @@ def google_login(req: GoogleLoginRequest):
         print(f"Google login error: {e}")
         return {
             "success": True,
+            "token": "",
             "user": {
                 "id": 1,
                 "email": req.email or "student@fluent.edu.vn",
                 "name": req.name or "Học sinh",
+                "role": "student",
+                "tenant_id": None,
+                "token": "",
                 "avatar": req.avatar or "",
                 "avatar_url": req.avatar or "",
                 "daily_goal": 5,
@@ -2478,6 +2489,94 @@ def google_login(req: GoogleLoginRequest):
                 "streak_count": 0
             }
         }
+
+class UniversalLoginRequest(BaseModel):
+    email: str
+    password: str
+
+@app.post("/api/auth/login")
+def universal_login(req: UniversalLoginRequest):
+    """Universal Authentication Endpoint for Students, Teachers, School Admins, and Super Admin."""
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        email_clean = req.email.strip().lower()
+        pwd_clean = req.password.strip()
+
+        cursor.execute("""
+            SELECT id, email, name, COALESCE(role, 'student'), tenant_id, password_hash, COALESCE(status, 'active')
+            FROM users
+            WHERE lower(email) = ? AND (IsXoa IS NULL OR IsXoa = 0)
+        """, (email_clean,))
+        user = cursor.fetchone()
+
+        # Seed initialization if first run
+        if not user:
+            if email_clean == "superadmin@fluent.edu.vn" and pwd_clean == "superadmin123":
+                hashed = hash_password("superadmin123")
+                cursor.execute(
+                    "INSERT INTO users (email, name, role, password_hash, tenant_id, status) VALUES (?, ?, ?, ?, ?, 'active')",
+                    ("superadmin@fluent.edu.vn", "Super Admin (Owner)", "super_admin", hashed, None)
+                )
+                conn.commit()
+                u_id = cursor.lastrowid
+                user = (u_id, "superadmin@fluent.edu.vn", "Super Admin (Owner)", "super_admin", None, hashed, "active")
+            elif email_clean == "admin@fluent.edu.vn" and pwd_clean == "admin123":
+                hashed = hash_password("admin123")
+                cursor.execute(
+                    "INSERT INTO users (email, name, role, password_hash, tenant_id, status) VALUES (?, ?, ?, ?, ?, 'active')",
+                    ("admin@fluent.edu.vn", "School Admin", "admin", hashed, "1")
+                )
+                conn.commit()
+                u_id = cursor.lastrowid
+                user = (u_id, "admin@fluent.edu.vn", "School Admin", "admin", "1", hashed, "active")
+            elif email_clean == "teacher@fluent.edu.vn" and pwd_clean == "teacher123":
+                hashed = hash_password("teacher123")
+                cursor.execute(
+                    "INSERT INTO users (email, name, role, password_hash, tenant_id, status) VALUES (?, ?, ?, ?, ?, 'active')",
+                    ("teacher@fluent.edu.vn", "Educator Lead", "teacher", hashed, "1")
+                )
+                conn.commit()
+                u_id = cursor.lastrowid
+                user = (u_id, "teacher@fluent.edu.vn", "Educator Lead", "teacher", "1", hashed, "active")
+
+        if not user or not user[5] or not verify_password(pwd_clean, user[5]):
+            conn.close()
+            raise HTTPException(status_code=401, detail="Invalid Email or Password.")
+
+        if user[6] == "suspended":
+            conn.close()
+            raise HTTPException(status_code=403, detail="Account is suspended. Please contact administrator.")
+
+        # Auto upgrade legacy plaintext to salted PBKDF2 hash
+        if user[5] and not user[5].startswith("pbkdf2:"):
+            new_hash = hash_password(pwd_clean)
+            cursor.execute("UPDATE users SET password_hash = ? WHERE id = ?", (new_hash, user[0]))
+            conn.commit()
+
+        u_id, u_email, u_name, u_role, u_tenant_id = user[0], user[1], user[2], user[3], user[4]
+        record_audit_log(cursor, u_id, "LOGIN", "session", str(u_id), u_tenant_id, f"User {u_name} ({u_role}) logged in")
+        conn.commit()
+        conn.close()
+        export_db_to_json()
+
+        token = create_access_token(u_id, u_email, u_role, u_tenant_id)
+
+        return {
+            "status": "success",
+            "token": token,
+            "user": {
+                "id": u_id,
+                "email": u_email,
+                "name": u_name,
+                "role": u_role,
+                "tenant_id": u_tenant_id
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 class GuestLoginRequest(BaseModel):
     name: str = None

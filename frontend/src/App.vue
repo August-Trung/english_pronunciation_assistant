@@ -184,6 +184,17 @@
                   </v-list-item>
 
                   <!-- Menu Actions -->
+                  <template v-if="['admin', 'super_admin'].includes(userRole)">
+                    <v-list-item class="rounded mb-1 bg-purple-lighten-5" prepend-icon="mdi-shield-crown" color="purple-darken-3" to="/admin">
+                      <v-list-item-title class="text-caption font-weight-black text-purple-darken-3">Admin Console</v-list-item-title>
+                    </v-list-item>
+                  </template>
+                  <template v-if="['teacher', 'admin', 'super_admin'].includes(userRole)">
+                    <v-list-item class="rounded mb-1 bg-indigo-lighten-5" prepend-icon="mdi-school" color="indigo-darken-3" to="/teacher">
+                      <v-list-item-title class="text-caption font-weight-black text-indigo-darken-3">Teacher Hub</v-list-item-title>
+                    </v-list-item>
+                  </template>
+
                   <v-list-item class="rounded mb-1" prepend-icon="mdi-account-circle-outline" to="/profile">
                     <v-list-item-title class="text-caption font-weight-bold">User Profile</v-list-item-title>
                   </v-list-item>
@@ -541,13 +552,10 @@ onMounted(async () => {
         })
         if (gRes.ok) {
           const googleUser = await gRes.json()
-          localStorage.setItem('user_role', 'student')
           await handleLogin({
-            user_id: 1,
             email: googleUser.email,
             name: googleUser.name || googleUser.email.split('@')[0],
-            avatar: googleUser.picture || '',
-            role: 'student'
+            avatar: googleUser.picture || ''
           })
         }
       }
@@ -650,6 +658,24 @@ const autoLoginByEmail = async (emailVal) => {
         userAvatar.value = data.user.avatar || data.user.avatar_url || cachedAvatar
         dailyGoal.value = data.user.daily_goal || 5
         streak.value = data.user.streak_count ?? 0
+
+        const effectiveRole = data.user.role || localStorage.getItem('user_role') || 'student'
+        userRole.value = effectiveRole
+        localStorage.setItem('user_role', effectiveRole)
+
+        const userToken = data.user.token || data.token
+        if (userToken) {
+          localStorage.setItem('token', userToken)
+          if (['admin', 'super_admin'].includes(effectiveRole)) {
+            localStorage.setItem('admin_token', userToken)
+            localStorage.setItem('admin_auth_token', userToken)
+          }
+          if (['teacher', 'admin', 'super_admin'].includes(effectiveRole)) {
+            localStorage.setItem('teacher_token', userToken)
+            localStorage.setItem('teacher_auth_token', userToken)
+          }
+        }
+
         isLoggedIn.value = true
         
         if (data.user.avatar) localStorage.setItem('speak_user_avatar', data.user.avatar)
@@ -666,6 +692,36 @@ const autoLoginByEmail = async (emailVal) => {
 // User Google / Email Login
 const handleLogin = async (userData) => {
   try {
+    // If incoming userData already authenticated from Universal Login on LoginPage
+    if (userData.token && userData.role) {
+      currentUserId.value = userData.id || userData.user_id
+      userName.value = userData.name || userData.email.split('@')[0]
+      userEmail.value = userData.email
+      userAvatar.value = userData.avatar || ''
+      userRole.value = userData.role
+      dailyGoal.value = userData.daily_goal || 5
+      streak.value = userData.streak ?? 0
+
+      localStorage.setItem('user_role', userData.role)
+      localStorage.setItem('speak_user_email', userData.email)
+      if (userData.name) localStorage.setItem('speak_user_name', userData.name)
+      if (userData.avatar) localStorage.setItem('speak_user_avatar', userData.avatar)
+
+      localStorage.setItem('token', userData.token)
+      if (['admin', 'super_admin'].includes(userData.role)) {
+        localStorage.setItem('admin_token', userData.token)
+        localStorage.setItem('admin_auth_token', userData.token)
+      }
+      if (['teacher', 'admin', 'super_admin'].includes(userData.role)) {
+        localStorage.setItem('teacher_token', userData.token)
+        localStorage.setItem('teacher_auth_token', userData.token)
+      }
+
+      isLoggedIn.value = true
+      await fetchUserAllData()
+      return
+    }
+
     const res = await fetch(`${backendUrl.value}/api/users/google-login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -680,6 +736,23 @@ const handleLogin = async (userData) => {
         userAvatar.value = userData.avatar || data.user.avatar || data.user.avatar_url || ''
         dailyGoal.value = data.user.daily_goal || 5
         streak.value = data.user.streak_count ?? 0
+
+        const effectiveRole = data.user.role || userData.role || 'student'
+        userRole.value = effectiveRole
+        localStorage.setItem('user_role', effectiveRole)
+
+        const userToken = data.user.token || data.token
+        if (userToken) {
+          localStorage.setItem('token', userToken)
+          if (['admin', 'super_admin'].includes(effectiveRole)) {
+            localStorage.setItem('admin_token', userToken)
+            localStorage.setItem('admin_auth_token', userToken)
+          }
+          if (['teacher', 'admin', 'super_admin'].includes(effectiveRole)) {
+            localStorage.setItem('teacher_token', userToken)
+            localStorage.setItem('teacher_auth_token', userToken)
+          }
+        }
         
         localStorage.setItem('speak_user_email', data.user.email)
         if (userAvatar.value) localStorage.setItem('speak_user_avatar', userAvatar.value)
@@ -791,6 +864,11 @@ const handleLogout = () => {
   localStorage.removeItem('speak_user_name')
   localStorage.removeItem('user_role')
   localStorage.removeItem('user_id')
+  localStorage.removeItem('token')
+  localStorage.removeItem('admin_token')
+  localStorage.removeItem('admin_auth_token')
+  localStorage.removeItem('teacher_token')
+  localStorage.removeItem('teacher_auth_token')
   try {
     sessionStorage.clear()
   } catch (e) {}

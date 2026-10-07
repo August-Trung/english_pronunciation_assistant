@@ -1483,13 +1483,17 @@ const getTeacherAuthHeaders = () => {
 }
 
 const handleTeacherSignOut = () => {
-  activeUserRole.value = 'student'
-  localStorage.setItem('user_role', 'student')
+  activeUserRole.value = 'none'
+  localStorage.removeItem('user_role')
   localStorage.removeItem('user_id')
   localStorage.removeItem('teacher_auth_token')
+  localStorage.removeItem('teacher_token')
+  localStorage.removeItem('speak_user_email')
+  localStorage.removeItem('speak_user_name')
   loginEmail.value = ''
   loginPassword.value = ''
   notify('Signed out from Teacher Hub.', 'info', 'mdi-logout')
+  window.location.href = '/'
 }
 
 const handleTeacherSignIn = async () => {

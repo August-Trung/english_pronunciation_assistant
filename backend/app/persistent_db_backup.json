@@ -449,24 +449,6 @@
       "max_classes": 3,
       "max_seats": 30,
       "license_expiry": "2027-12-31"
-    },
-    {
-      "id": 1026,
-      "email": "test_freelance_teacher@fluent.edu.vn",
-      "name": "Solo Tutor Dave",
-      "avatar": null,
-      "google_id": null,
-      "created_at": "2026-10-07 11:00:35",
-      "IsXoa": 0,
-      "role": "teacher",
-      "tenant_id": null,
-      "parent_code": null,
-      "password_hash": "pbkdf2:sha256:100000$8cf632cf2917ec6589cf245f7500ddd8$1270fa9f240edab94919101420aaa8760c24023f6ee1a8410bc736f2619c0039",
-      "status": "active",
-      "teacher_type": "freelance",
-      "max_classes": 2,
-      "max_seats": 2,
-      "license_expiry": "2028-12-31"
     }
   ],
   "history": [
@@ -869,7 +851,7 @@
     },
     {
       "id": 62,
-      "teacher_id": 1026,
+      "teacher_id": 7,
       "name": "IELTS Speaking Dave 1",
       "grade_level": "Adult",
       "join_code": "CLS-506-22",
@@ -880,7 +862,7 @@
     },
     {
       "id": 63,
-      "teacher_id": 1026,
+      "teacher_id": 7,
       "name": "IELTS Speaking Dave 2",
       "grade_level": "Adult",
       "join_code": "CLS-391-27",
@@ -5201,6 +5183,56 @@
       "tenant_id": null,
       "details": "Removed student 1021 from class IELTS Speaking Dave 1",
       "created_at": "2026-10-07 11:00:35"
+    },
+    {
+      "id": 303,
+      "user_id": 5,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "5",
+      "tenant_id": null,
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 11:11:57"
+    },
+    {
+      "id": 304,
+      "user_id": 5,
+      "action": "PROVISION_ACCOUNT",
+      "target_type": "users",
+      "target_id": "1027",
+      "tenant_id": null,
+      "details": "Provisioned teacher account test_freelance_prov@example.com (freelance with 45 seats, 4 classes)",
+      "created_at": "2026-10-07 11:11:57"
+    },
+    {
+      "id": 305,
+      "user_id": 5,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "5",
+      "tenant_id": null,
+      "details": "User Super Admin (Owner) (super_admin) logged in",
+      "created_at": "2026-10-07 11:25:47"
+    },
+    {
+      "id": 306,
+      "user_id": 7,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "7",
+      "tenant_id": "1",
+      "details": "User Educator Lead (teacher) logged in",
+      "created_at": "2026-10-07 11:25:47"
+    },
+    {
+      "id": 307,
+      "user_id": 6,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "6",
+      "tenant_id": "1",
+      "details": "User School Admin (admin) logged in",
+      "created_at": "2026-10-07 11:25:47"
     }
   ],
   "system_configs": [
