@@ -11,8 +11,12 @@
       "role": "super_admin",
       "tenant_id": null,
       "parent_code": "PA-8888",
-      "password_hash": "pbkdf2:sha256:100000$6c531355101ad4c747266f71d0251b2d$a0121779ec317ce23735f3bda011c1b70fb37e26bc42fbcc913daf9c40382666",
-      "status": "active"
+      "password_hash": "pbkdf2:sha256:100000$86b2bda4c726f8fc083ed0a2f441f031$1668ef055d9a7899243ced9a1c853e98d93dbaceb644b69fceb05e17dd1f9558",
+      "status": "active",
+      "teacher_type": "institutional",
+      "max_classes": 3,
+      "max_seats": 30,
+      "license_expiry": "2027-12-31"
     },
     {
       "id": 6,
@@ -26,7 +30,11 @@
       "tenant_id": "1",
       "parent_code": null,
       "password_hash": "pbkdf2:sha256:100000$aa0d9d5a8062e894c8b2f7eba6c336f3$7aba0fd4f1b393173b4029259c5d04e3d9741376d28132e30414849fabda3696",
-      "status": "active"
+      "status": "active",
+      "teacher_type": "institutional",
+      "max_classes": 3,
+      "max_seats": 30,
+      "license_expiry": "2027-12-31"
     },
     {
       "id": 7,
@@ -40,7 +48,11 @@
       "tenant_id": "1",
       "parent_code": null,
       "password_hash": "pbkdf2:sha256:100000$c7d1845e529650ec888204f7794a9a64$463e63c2de0630a25a64161f202792413ed2f21cdb5c9ba71bdb0bfd53ff9189",
-      "status": "active"
+      "status": "active",
+      "teacher_type": "institutional",
+      "max_classes": 3,
+      "max_seats": 30,
+      "license_expiry": "2027-12-31"
     },
     {
       "id": 8,
@@ -54,7 +66,11 @@
       "tenant_id": null,
       "parent_code": null,
       "password_hash": null,
-      "status": "active"
+      "status": "active",
+      "teacher_type": "institutional",
+      "max_classes": 3,
+      "max_seats": 30,
+      "license_expiry": "2027-12-31"
     },
     {
       "id": 10,
@@ -68,7 +84,11 @@
       "tenant_id": null,
       "parent_code": null,
       "password_hash": null,
-      "status": "active"
+      "status": "active",
+      "teacher_type": "institutional",
+      "max_classes": 3,
+      "max_seats": 30,
+      "license_expiry": "2027-12-31"
     },
     {
       "id": 201,
@@ -76,13 +96,17 @@
       "name": "School Admin One",
       "avatar": null,
       "google_id": null,
-      "created_at": "2026-10-07 10:05:28",
+      "created_at": "2026-10-07 10:46:38",
       "IsXoa": 0,
       "role": "admin",
       "tenant_id": "1",
       "parent_code": null,
-      "password_hash": "pbkdf2:sha256:100000$4f926142e7fa817bfb3299d1b01708d3$ce0ca6a3435d7be953840a36665779e44bb61ac1eeb2869fb0cade0a8f21aeae",
-      "status": "active"
+      "password_hash": "pbkdf2:sha256:100000$5eff16e4c04bee7e2b19c514a5066d55$6b8a32f35903c36a6fe6bf346a5fa50b7960d9ac6175b4f59b09a266a54d94b0",
+      "status": "active",
+      "teacher_type": "institutional",
+      "max_classes": 3,
+      "max_seats": 30,
+      "license_expiry": "2027-12-31"
     },
     {
       "id": 202,
@@ -90,13 +114,17 @@
       "name": "School Admin Two",
       "avatar": null,
       "google_id": null,
-      "created_at": "2026-10-07 10:05:28",
+      "created_at": "2026-10-07 10:46:38",
       "IsXoa": 0,
       "role": "admin",
       "tenant_id": "2",
       "parent_code": null,
-      "password_hash": "pbkdf2:sha256:100000$4f926142e7fa817bfb3299d1b01708d3$ce0ca6a3435d7be953840a36665779e44bb61ac1eeb2869fb0cade0a8f21aeae",
-      "status": "active"
+      "password_hash": "pbkdf2:sha256:100000$5eff16e4c04bee7e2b19c514a5066d55$6b8a32f35903c36a6fe6bf346a5fa50b7960d9ac6175b4f59b09a266a54d94b0",
+      "status": "active",
+      "teacher_type": "institutional",
+      "max_classes": 3,
+      "max_seats": 30,
+      "license_expiry": "2027-12-31"
     },
     {
       "id": 211,
@@ -104,13 +132,17 @@
       "name": "Teacher Alpha",
       "avatar": null,
       "google_id": null,
-      "created_at": "2026-10-07 10:05:28",
+      "created_at": "2026-10-07 10:46:38",
       "IsXoa": 0,
       "role": "teacher",
       "tenant_id": "1",
       "parent_code": null,
-      "password_hash": "pbkdf2:sha256:100000$23d0ff427b4d706c9be146da879ad7e6$1675633ac9e13968c4e97c01c2c0d6afa6527c793575be8507d2cc186cbe6f2b",
-      "status": "active"
+      "password_hash": "pbkdf2:sha256:100000$33de0f58713155867bc9fd751f54c5a5$723675256c74d306664b6805d2d11d775d7165477cc7d2870d4eff54668a0050",
+      "status": "active",
+      "teacher_type": "institutional",
+      "max_classes": 3,
+      "max_seats": 30,
+      "license_expiry": "2027-12-31"
     },
     {
       "id": 212,
@@ -118,13 +150,17 @@
       "name": "Teacher Beta",
       "avatar": null,
       "google_id": null,
-      "created_at": "2026-10-07 10:05:28",
+      "created_at": "2026-10-07 10:46:38",
       "IsXoa": 0,
       "role": "teacher",
       "tenant_id": "1",
       "parent_code": null,
-      "password_hash": "pbkdf2:sha256:100000$f5aed0cc67256eb86af64cf8102467a9$8f9a434d4594717558ca1a0e6d0b5db0b5594b1f4fb757d75bce1b335b05d5c7",
-      "status": "active"
+      "password_hash": "pbkdf2:sha256:100000$421bd80237ba2d12d512f660c1cac664$818d3d43d9991adfc540fc4938f43fb529cf0e3d4c90a16f504de4b7f32cc6a5",
+      "status": "active",
+      "teacher_type": "institutional",
+      "max_classes": 3,
+      "max_seats": 30,
+      "license_expiry": "2027-12-31"
     },
     {
       "id": 213,
@@ -132,13 +168,17 @@
       "name": "Teacher Rival",
       "avatar": null,
       "google_id": null,
-      "created_at": "2026-10-07 10:05:28",
+      "created_at": "2026-10-07 10:46:38",
       "IsXoa": 0,
       "role": "teacher",
       "tenant_id": "2",
       "parent_code": null,
-      "password_hash": "pbkdf2:sha256:100000$f5aed0cc67256eb86af64cf8102467a9$8f9a434d4594717558ca1a0e6d0b5db0b5594b1f4fb757d75bce1b335b05d5c7",
-      "status": "active"
+      "password_hash": "pbkdf2:sha256:100000$421bd80237ba2d12d512f660c1cac664$818d3d43d9991adfc540fc4938f43fb529cf0e3d4c90a16f504de4b7f32cc6a5",
+      "status": "active",
+      "teacher_type": "institutional",
+      "max_classes": 3,
+      "max_seats": 30,
+      "license_expiry": "2027-12-31"
     },
     {
       "id": 301,
@@ -146,13 +186,17 @@
       "name": "Student One",
       "avatar": null,
       "google_id": null,
-      "created_at": "2026-10-07 10:05:28",
+      "created_at": "2026-10-07 10:46:38",
       "IsXoa": 0,
       "role": "student",
       "tenant_id": "1",
       "parent_code": null,
-      "password_hash": "pbkdf2:sha256:100000$e2c2dc22e9f1873a756ba56972b7042a$b39d61a96b306904062f913b669cc4f0f4e7f652ee700857d8adf5bff867ca61",
-      "status": "active"
+      "password_hash": "pbkdf2:sha256:100000$86506ba5394290bb9d41d3ea01192821$c334449f41adc40a1382752a8d43037b72c887a7c09907ffaa5c5c44a9d3eb6c",
+      "status": "active",
+      "teacher_type": "institutional",
+      "max_classes": 3,
+      "max_seats": 30,
+      "license_expiry": "2027-12-31"
     },
     {
       "id": 302,
@@ -160,13 +204,17 @@
       "name": "Student Two",
       "avatar": null,
       "google_id": null,
-      "created_at": "2026-10-07 10:05:28",
+      "created_at": "2026-10-07 10:46:38",
       "IsXoa": 0,
       "role": "student",
       "tenant_id": null,
       "parent_code": null,
-      "password_hash": "pbkdf2:sha256:100000$e2c2dc22e9f1873a756ba56972b7042a$b39d61a96b306904062f913b669cc4f0f4e7f652ee700857d8adf5bff867ca61",
-      "status": "active"
+      "password_hash": "pbkdf2:sha256:100000$86506ba5394290bb9d41d3ea01192821$c334449f41adc40a1382752a8d43037b72c887a7c09907ffaa5c5c44a9d3eb6c",
+      "status": "active",
+      "teacher_type": "institutional",
+      "max_classes": 3,
+      "max_seats": 30,
+      "license_expiry": "2027-12-31"
     },
     {
       "id": 303,
@@ -174,13 +222,17 @@
       "name": "Student Three",
       "avatar": null,
       "google_id": null,
-      "created_at": "2026-10-07 10:05:28",
+      "created_at": "2026-10-07 10:46:38",
       "IsXoa": 0,
       "role": "student",
       "tenant_id": "1",
       "parent_code": null,
-      "password_hash": "pbkdf2:sha256:100000$e2c2dc22e9f1873a756ba56972b7042a$b39d61a96b306904062f913b669cc4f0f4e7f652ee700857d8adf5bff867ca61",
-      "status": "active"
+      "password_hash": "pbkdf2:sha256:100000$86506ba5394290bb9d41d3ea01192821$c334449f41adc40a1382752a8d43037b72c887a7c09907ffaa5c5c44a9d3eb6c",
+      "status": "active",
+      "teacher_type": "institutional",
+      "max_classes": 3,
+      "max_seats": 30,
+      "license_expiry": "2027-12-31"
     },
     {
       "id": 999,
@@ -194,7 +246,11 @@
       "tenant_id": null,
       "parent_code": null,
       "password_hash": null,
-      "status": "active"
+      "status": "active",
+      "teacher_type": "institutional",
+      "max_classes": 3,
+      "max_seats": 30,
+      "license_expiry": "2027-12-31"
     },
     {
       "id": 1009,
@@ -208,7 +264,11 @@
       "tenant_id": null,
       "parent_code": null,
       "password_hash": null,
-      "status": "active"
+      "status": "active",
+      "teacher_type": "institutional",
+      "max_classes": 3,
+      "max_seats": 30,
+      "license_expiry": "2027-12-31"
     },
     {
       "id": 1010,
@@ -222,7 +282,11 @@
       "tenant_id": "1",
       "parent_code": null,
       "password_hash": "pbkdf2:sha256:100000$0f1baf2136813bbdf4fccd6156724aa6$962ca62dc36088f651efd8773f31bf626f65f25c3fde0956b87fd2965e0ce054",
-      "status": "active"
+      "status": "active",
+      "teacher_type": "institutional",
+      "max_classes": 3,
+      "max_seats": 30,
+      "license_expiry": "2027-12-31"
     },
     {
       "id": 1011,
@@ -236,7 +300,11 @@
       "tenant_id": "1",
       "parent_code": null,
       "password_hash": "pbkdf2:sha256:100000$818af2cee0642569f1d17ffbb5f95028$9ec85087238bc68118db4f6057a9fe1aee4e7f33b4372a660565579830c86e94",
-      "status": "active"
+      "status": "active",
+      "teacher_type": "institutional",
+      "max_classes": 3,
+      "max_seats": 30,
+      "license_expiry": "2027-12-31"
     },
     {
       "id": 1012,
@@ -250,7 +318,11 @@
       "tenant_id": "1",
       "parent_code": null,
       "password_hash": "pbkdf2:sha256:100000$8f5e5fc029dd423698ad1f053d4190b2$ccbc2299912095afa25f8500725a93b0c40ac064c7a91dd3628a15bad397ebe7",
-      "status": "active"
+      "status": "active",
+      "teacher_type": "institutional",
+      "max_classes": 3,
+      "max_seats": 30,
+      "license_expiry": "2027-12-31"
     },
     {
       "id": 1013,
@@ -264,7 +336,11 @@
       "tenant_id": "2",
       "parent_code": null,
       "password_hash": "pbkdf2:sha256:100000$5c79b1b602193a7c9a30d5ac15a05162$9f979d49ac9a873bc1936ff37d3f9113907282fb9299e3de0f23147925fc4c8f",
-      "status": "active"
+      "status": "active",
+      "teacher_type": "institutional",
+      "max_classes": 3,
+      "max_seats": 30,
+      "license_expiry": "2027-12-31"
     },
     {
       "id": 1014,
@@ -278,7 +354,11 @@
       "tenant_id": "1",
       "parent_code": null,
       "password_hash": "pbkdf2:sha256:100000$e27665425e578cd6926e70cd4b0265b0$71dd120911062124ec835199f545da8a8f60c8efec2c2ddea0de21527874211d",
-      "status": "active"
+      "status": "active",
+      "teacher_type": "institutional",
+      "max_classes": 3,
+      "max_seats": 30,
+      "license_expiry": "2027-12-31"
     },
     {
       "id": 1015,
@@ -292,21 +372,83 @@
       "tenant_id": "1",
       "parent_code": null,
       "password_hash": "pbkdf2:sha256:100000$14dd5ecb7e47ff1e039642a879505ae2$ae6fcf8c2a48d670e491fad6877cbf1425a3c20fa92b38df23f972ee36cd63c2",
-      "status": "active"
+      "status": "active",
+      "teacher_type": "institutional",
+      "max_classes": 3,
+      "max_seats": 30,
+      "license_expiry": "2027-12-31"
     },
     {
-      "id": 1017,
+      "id": 1020,
+      "email": "fl_student_1@test.com",
+      "name": "Student 1",
+      "avatar": null,
+      "google_id": null,
+      "created_at": "2026-10-07 10:46:05",
+      "IsXoa": 0,
+      "role": "student",
+      "tenant_id": null,
+      "parent_code": null,
+      "password_hash": null,
+      "status": "active",
+      "teacher_type": "institutional",
+      "max_classes": 3,
+      "max_seats": 30,
+      "license_expiry": "2027-12-31"
+    },
+    {
+      "id": 1021,
+      "email": "fl_student_2@test.com",
+      "name": "Student 2",
+      "avatar": null,
+      "google_id": null,
+      "created_at": "2026-10-07 10:46:05",
+      "IsXoa": 0,
+      "role": "student",
+      "tenant_id": null,
+      "parent_code": null,
+      "password_hash": null,
+      "status": "active",
+      "teacher_type": "institutional",
+      "max_classes": 3,
+      "max_seats": 30,
+      "license_expiry": "2027-12-31"
+    },
+    {
+      "id": 1022,
+      "email": "fl_student_3@test.com",
+      "name": "Student 3",
+      "avatar": null,
+      "google_id": null,
+      "created_at": "2026-10-07 10:46:05",
+      "IsXoa": 0,
+      "role": "student",
+      "tenant_id": null,
+      "parent_code": null,
+      "password_hash": null,
+      "status": "active",
+      "teacher_type": "institutional",
+      "max_classes": 3,
+      "max_seats": 30,
+      "license_expiry": "2027-12-31"
+    },
+    {
+      "id": 1024,
       "email": "admin.olympia@fluent.edu.vn",
       "name": "Principal Dr. Vance Olympia",
       "avatar": null,
       "google_id": null,
-      "created_at": "2026-10-07 10:05:20",
+      "created_at": "2026-10-07 10:46:49",
       "IsXoa": 0,
       "role": "admin",
-      "tenant_id": "tenant_9597",
-      "parent_code": "PA-5914",
-      "password_hash": "pbkdf2:sha256:100000$47ec1b2ad4977751d838a6645527d752$89d027b192949cabfee469a6aadb5d555c08e0514a52058ff171ca907e86ae3a",
-      "status": "active"
+      "tenant_id": "tenant_7015",
+      "parent_code": "PA-4761",
+      "password_hash": "pbkdf2:sha256:100000$3e3ecb774bd620f76fba05d8f8e5516c$17d72824fc681db6302a5775e760caaba46acebf604eadbc627cb23b40a14872",
+      "status": "active",
+      "teacher_type": "institutional",
+      "max_classes": 3,
+      "max_seats": 30,
+      "license_expiry": "2027-12-31"
     }
   ],
   "history": [
@@ -409,13 +551,13 @@
       "IsXoa": 0
     },
     {
-      "id": 49,
+      "id": 50,
       "user_id": 1015,
       "word": "mouth",
       "ipa": "/maʊθ/",
       "meaning": null,
       "error_count": 3,
-      "created_at": "2026-10-07 10:05:32",
+      "created_at": "2026-10-07 10:46:44",
       "IsXoa": 0
     }
   ],
@@ -598,28 +740,6 @@
       "is_archived": 0
     },
     {
-      "id": 49,
-      "teacher_id": 212,
-      "name": "IELTS Band 7.5 Intensive",
-      "grade_level": "Advanced",
-      "join_code": "CLS-212-95",
-      "created_at": "2026-10-07 10:05:28",
-      "IsXoa": 0,
-      "tenant_id": "1",
-      "is_archived": 0
-    },
-    {
-      "id": 50,
-      "teacher_id": 212,
-      "name": "TOEIC Masterclass",
-      "grade_level": "Intermediate",
-      "join_code": "CLS-891-29",
-      "created_at": "2026-10-07 10:05:28",
-      "IsXoa": 0,
-      "tenant_id": "1",
-      "is_archived": 0
-    },
-    {
       "id": 51,
       "teacher_id": 1010,
       "name": "IELTS Academic Pronunciation 6A",
@@ -637,6 +757,94 @@
       "grade_level": "Elementary",
       "join_code": "CLS-629-96",
       "created_at": "2026-10-07 10:05:32",
+      "IsXoa": 0,
+      "tenant_id": "1",
+      "is_archived": 0
+    },
+    {
+      "id": 54,
+      "teacher_id": 7,
+      "name": "IELTS Speaking Dave 1",
+      "grade_level": "Adult",
+      "join_code": "CLS-331-24",
+      "created_at": "2026-10-07 10:46:04",
+      "IsXoa": 0,
+      "tenant_id": null,
+      "is_archived": 0
+    },
+    {
+      "id": 55,
+      "teacher_id": 7,
+      "name": "IELTS Speaking Dave 2",
+      "grade_level": "Adult",
+      "join_code": "CLS-279-69",
+      "created_at": "2026-10-07 10:46:05",
+      "IsXoa": 0,
+      "tenant_id": null,
+      "is_archived": 0
+    },
+    {
+      "id": 56,
+      "teacher_id": 7,
+      "name": "IELTS Speaking Dave 1",
+      "grade_level": "Adult",
+      "join_code": "CLS-133-25",
+      "created_at": "2026-10-07 10:46:22",
+      "IsXoa": 0,
+      "tenant_id": null,
+      "is_archived": 0
+    },
+    {
+      "id": 57,
+      "teacher_id": 7,
+      "name": "IELTS Speaking Dave 2",
+      "grade_level": "Adult",
+      "join_code": "CLS-724-27",
+      "created_at": "2026-10-07 10:46:22",
+      "IsXoa": 0,
+      "tenant_id": null,
+      "is_archived": 0
+    },
+    {
+      "id": 58,
+      "teacher_id": 212,
+      "name": "IELTS Band 7.5 Intensive",
+      "grade_level": "Advanced",
+      "join_code": "CLS-961-96",
+      "created_at": "2026-10-07 10:46:39",
+      "IsXoa": 0,
+      "tenant_id": "1",
+      "is_archived": 0
+    },
+    {
+      "id": 59,
+      "teacher_id": 212,
+      "name": "TOEIC Masterclass",
+      "grade_level": "Intermediate",
+      "join_code": "CLS-591-17",
+      "created_at": "2026-10-07 10:46:39",
+      "IsXoa": 0,
+      "tenant_id": "1",
+      "is_archived": 0
+    },
+    {
+      "id": 60,
+      "teacher_id": 1010,
+      "name": "IELTS Academic Pronunciation 6A",
+      "grade_level": "High School & IELTS (Grades 10 - 12)",
+      "join_code": "CLS-341-17",
+      "created_at": "2026-10-07 10:46:44",
+      "IsXoa": 0,
+      "tenant_id": "1",
+      "is_archived": 0
+    },
+    {
+      "id": 61,
+      "teacher_id": 1011,
+      "name": "Teacher 2 Class",
+      "grade_level": "Elementary",
+      "join_code": "CLS-147-12",
+      "created_at": "2026-10-07 10:46:44",
       "IsXoa": 0,
       "tenant_id": "1",
       "is_archived": 0
@@ -700,46 +908,6 @@
       "tenant_id": "1"
     },
     {
-      "id": 82,
-      "class_id": 49,
-      "student_id": 301,
-      "joined_at": "2026-10-07 10:05:28",
-      "IsXoa": 0,
-      "tenant_id": "1"
-    },
-    {
-      "id": 83,
-      "class_id": 49,
-      "student_id": 302,
-      "joined_at": "2026-10-07 10:05:28",
-      "IsXoa": 1,
-      "tenant_id": "1"
-    },
-    {
-      "id": 84,
-      "class_id": 50,
-      "student_id": 301,
-      "joined_at": "2026-10-07 10:05:28",
-      "IsXoa": 0,
-      "tenant_id": "1"
-    },
-    {
-      "id": 85,
-      "class_id": 50,
-      "student_id": 302,
-      "joined_at": "2026-10-07 10:05:28",
-      "IsXoa": 1,
-      "tenant_id": "1"
-    },
-    {
-      "id": 86,
-      "class_id": 49,
-      "student_id": 303,
-      "joined_at": "2026-10-07 10:05:29",
-      "IsXoa": 0,
-      "tenant_id": "1"
-    },
-    {
       "id": 87,
       "class_id": 51,
       "student_id": 1014,
@@ -752,6 +920,110 @@
       "class_id": 51,
       "student_id": 1015,
       "joined_at": "2026-10-07 10:05:32",
+      "IsXoa": 0,
+      "tenant_id": "1"
+    },
+    {
+      "id": 89,
+      "class_id": 54,
+      "student_id": 1020,
+      "joined_at": "2026-10-07 10:46:05",
+      "IsXoa": 0,
+      "tenant_id": null
+    },
+    {
+      "id": 90,
+      "class_id": 55,
+      "student_id": 1020,
+      "joined_at": "2026-10-07 10:46:05",
+      "IsXoa": 0,
+      "tenant_id": null
+    },
+    {
+      "id": 92,
+      "class_id": 54,
+      "student_id": 1022,
+      "joined_at": "2026-10-07 10:46:05",
+      "IsXoa": 0,
+      "tenant_id": null
+    },
+    {
+      "id": 93,
+      "class_id": 56,
+      "student_id": 1020,
+      "joined_at": "2026-10-07 10:46:22",
+      "IsXoa": 0,
+      "tenant_id": null
+    },
+    {
+      "id": 94,
+      "class_id": 57,
+      "student_id": 1020,
+      "joined_at": "2026-10-07 10:46:22",
+      "IsXoa": 0,
+      "tenant_id": null
+    },
+    {
+      "id": 96,
+      "class_id": 56,
+      "student_id": 1022,
+      "joined_at": "2026-10-07 10:46:22",
+      "IsXoa": 0,
+      "tenant_id": null
+    },
+    {
+      "id": 97,
+      "class_id": 58,
+      "student_id": 301,
+      "joined_at": "2026-10-07 10:46:39",
+      "IsXoa": 0,
+      "tenant_id": "1"
+    },
+    {
+      "id": 98,
+      "class_id": 58,
+      "student_id": 302,
+      "joined_at": "2026-10-07 10:46:39",
+      "IsXoa": 1,
+      "tenant_id": "1"
+    },
+    {
+      "id": 99,
+      "class_id": 59,
+      "student_id": 301,
+      "joined_at": "2026-10-07 10:46:39",
+      "IsXoa": 0,
+      "tenant_id": "1"
+    },
+    {
+      "id": 100,
+      "class_id": 59,
+      "student_id": 302,
+      "joined_at": "2026-10-07 10:46:39",
+      "IsXoa": 1,
+      "tenant_id": "1"
+    },
+    {
+      "id": 101,
+      "class_id": 58,
+      "student_id": 303,
+      "joined_at": "2026-10-07 10:46:39",
+      "IsXoa": 0,
+      "tenant_id": "1"
+    },
+    {
+      "id": 102,
+      "class_id": 60,
+      "student_id": 1014,
+      "joined_at": "2026-10-07 10:46:44",
+      "IsXoa": 0,
+      "tenant_id": "1"
+    },
+    {
+      "id": 103,
+      "class_id": 60,
+      "student_id": 1015,
+      "joined_at": "2026-10-07 10:46:44",
       "IsXoa": 0,
       "tenant_id": "1"
     }
@@ -1601,6 +1873,32 @@
       "IsXoa": 0,
       "tenant_id": "1",
       "status": "active"
+    },
+    {
+      "id": 71,
+      "class_id": 60,
+      "teacher_id": 1010,
+      "title": "Module 1: Dental Fricatives (Updated)",
+      "topic_sentence": "I think this healthy mouth produces perfect English rhythm.",
+      "target_ipa": "/θɪŋk/ /ðɪs/ /ˈhel.θi/ /maʊθ/",
+      "due_date": "2026-11-15",
+      "created_at": "2026-10-07 10:46:44",
+      "IsXoa": 0,
+      "tenant_id": "1",
+      "status": "active"
+    },
+    {
+      "id": 72,
+      "class_id": 60,
+      "teacher_id": 1010,
+      "title": "Module 1 Practice: Dental Fricatives Drill B",
+      "topic_sentence": "I think this healthy mouth produces perfect English rhythm.",
+      "target_ipa": "/θɪŋk/ /ðɪs/ /ˈhel.θi/ /maʊθ/",
+      "due_date": "2026-11-02",
+      "created_at": "2026-10-07 10:46:44",
+      "IsXoa": 0,
+      "tenant_id": "1",
+      "status": "active"
     }
   ],
   "submissions": [
@@ -1664,6 +1962,22 @@
       "teacher_feedback": null,
       "score_override": null,
       "submitted_at": "2026-10-07 10:05:32",
+      "IsXoa": 0,
+      "audio_size_bytes": 0,
+      "tenant_id": null
+    },
+    {
+      "id": 11,
+      "assignment_id": 71,
+      "student_id": 1014,
+      "student_name": "Alice Johnson",
+      "audio_url": "https://example.com/audio1.mp3",
+      "transcribed_text": "I think this healthy mouth produces perfect English rhythm.",
+      "score": 8.8,
+      "ipa_json": "{\"confidence\": 0.95}",
+      "teacher_feedback": null,
+      "score_override": null,
+      "submitted_at": "2026-10-07 10:46:44",
       "IsXoa": 0,
       "audio_size_bytes": 0,
       "tenant_id": null
@@ -1759,35 +2073,13 @@
       "status": "active"
     },
     {
-      "id": "tenant_9597",
-      "name": "Olympia International Academy",
-      "admin_id": 1017,
-      "logo_url": "",
-      "license_seats": 300,
-      "license_expiry": "2028-09-30",
-      "created_at": "2026-10-07 10:05:20",
-      "IsXoa": 1,
-      "status": "active"
-    },
-    {
-      "id": "tenant_4081",
-      "name": "High School Olympia",
-      "admin_id": null,
-      "logo_url": "",
-      "license_seats": 250,
-      "license_expiry": "2027-08-01",
-      "created_at": "2026-10-07 10:05:24",
-      "IsXoa": 0,
-      "status": "active"
-    },
-    {
       "id": "1",
       "name": "Fluent English Academy",
       "admin_id": null,
       "logo_url": null,
       "license_seats": 5,
       "license_expiry": "2028-12-31",
-      "created_at": "2026-10-07 10:05:28",
+      "created_at": "2026-10-07 10:46:38",
       "IsXoa": 0,
       "status": "active"
     },
@@ -1798,8 +2090,19 @@
       "logo_url": null,
       "license_seats": 5,
       "license_expiry": "2028-12-31",
-      "created_at": "2026-10-07 10:05:28",
+      "created_at": "2026-10-07 10:46:38",
       "IsXoa": 0,
+      "status": "active"
+    },
+    {
+      "id": "tenant_7015",
+      "name": "Olympia International Academy",
+      "admin_id": 1024,
+      "logo_url": "",
+      "license_seats": 300,
+      "license_expiry": "2028-09-30",
+      "created_at": "2026-10-07 10:46:49",
+      "IsXoa": 1,
       "status": "active"
     }
   ],
@@ -4273,6 +4576,466 @@
       "tenant_id": "1",
       "details": "Deleted announcement 12",
       "created_at": "2026-10-07 10:05:33"
+    },
+    {
+      "id": 248,
+      "user_id": 5,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "5",
+      "tenant_id": null,
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 10:45:49"
+    },
+    {
+      "id": 249,
+      "user_id": 5,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "5",
+      "tenant_id": null,
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 10:46:04"
+    },
+    {
+      "id": 250,
+      "user_id": 1019,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "1019",
+      "tenant_id": null,
+      "details": "Teacher authenticated successfully",
+      "created_at": "2026-10-07 10:46:04"
+    },
+    {
+      "id": 251,
+      "user_id": 5,
+      "action": "UPDATE_TEACHER_PLAN",
+      "target_type": "users",
+      "target_id": "1019",
+      "tenant_id": null,
+      "details": "Updated plan for teacher Solo Tutor Dave (test_freelance_teacher@fluent.edu.vn): freelance, max_classes=2, max_seats=2, expiry=2028-12-31",
+      "created_at": "2026-10-07 10:46:04"
+    },
+    {
+      "id": 252,
+      "user_id": 1019,
+      "action": "CREATE",
+      "target_type": "classroom",
+      "target_id": "54",
+      "tenant_id": null,
+      "details": "Created classroom IELTS Speaking Dave 1",
+      "created_at": "2026-10-07 10:46:04"
+    },
+    {
+      "id": 253,
+      "user_id": 1019,
+      "action": "CREATE",
+      "target_type": "classroom",
+      "target_id": "55",
+      "tenant_id": null,
+      "details": "Created classroom IELTS Speaking Dave 2",
+      "created_at": "2026-10-07 10:46:05"
+    },
+    {
+      "id": 254,
+      "user_id": 1019,
+      "action": "REMOVE_STUDENT",
+      "target_type": "classroom",
+      "target_id": "54",
+      "tenant_id": null,
+      "details": "Removed student 1021 from class IELTS Speaking Dave 1",
+      "created_at": "2026-10-07 10:46:05"
+    },
+    {
+      "id": 255,
+      "user_id": 5,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "5",
+      "tenant_id": null,
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 10:46:22"
+    },
+    {
+      "id": 256,
+      "user_id": 1023,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "1023",
+      "tenant_id": null,
+      "details": "Teacher authenticated successfully",
+      "created_at": "2026-10-07 10:46:22"
+    },
+    {
+      "id": 257,
+      "user_id": 5,
+      "action": "UPDATE_TEACHER_PLAN",
+      "target_type": "users",
+      "target_id": "1023",
+      "tenant_id": null,
+      "details": "Updated plan for teacher Solo Tutor Dave (test_freelance_teacher@fluent.edu.vn): freelance, max_classes=2, max_seats=2, expiry=2028-12-31",
+      "created_at": "2026-10-07 10:46:22"
+    },
+    {
+      "id": 258,
+      "user_id": 1023,
+      "action": "CREATE",
+      "target_type": "classroom",
+      "target_id": "56",
+      "tenant_id": null,
+      "details": "Created classroom IELTS Speaking Dave 1",
+      "created_at": "2026-10-07 10:46:22"
+    },
+    {
+      "id": 259,
+      "user_id": 1023,
+      "action": "CREATE",
+      "target_type": "classroom",
+      "target_id": "57",
+      "tenant_id": null,
+      "details": "Created classroom IELTS Speaking Dave 2",
+      "created_at": "2026-10-07 10:46:22"
+    },
+    {
+      "id": 260,
+      "user_id": 1023,
+      "action": "REMOVE_STUDENT",
+      "target_type": "classroom",
+      "target_id": "56",
+      "tenant_id": null,
+      "details": "Removed student 1021 from class IELTS Speaking Dave 1",
+      "created_at": "2026-10-07 10:46:22"
+    },
+    {
+      "id": 261,
+      "user_id": 5,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "5",
+      "tenant_id": null,
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 10:46:34"
+    },
+    {
+      "id": 262,
+      "user_id": 6,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "6",
+      "tenant_id": "1",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 10:46:34"
+    },
+    {
+      "id": 263,
+      "user_id": 7,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "7",
+      "tenant_id": "1",
+      "details": "Teacher authenticated successfully",
+      "created_at": "2026-10-07 10:46:34"
+    },
+    {
+      "id": 264,
+      "user_id": 5,
+      "action": "CREATE_TENANT",
+      "target_type": "tenants",
+      "target_id": "tenant_7780",
+      "tenant_id": "tenant_7780",
+      "details": "Super Admin created tenant: High School Olympia",
+      "created_at": "2026-10-07 10:46:34"
+    },
+    {
+      "id": 265,
+      "user_id": 201,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "201",
+      "tenant_id": "1",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 10:46:39"
+    },
+    {
+      "id": 266,
+      "user_id": 202,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "202",
+      "tenant_id": "2",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 10:46:39"
+    },
+    {
+      "id": 267,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "58",
+      "tenant_id": "1",
+      "details": "Created classroom 'IELTS Band 7.5 Intensive' assigned to teacher Teacher Alpha",
+      "created_at": "2026-10-07 10:46:39"
+    },
+    {
+      "id": 268,
+      "user_id": 201,
+      "action": "ASSIGN_TEACHER",
+      "target_type": "classrooms",
+      "target_id": "58",
+      "tenant_id": "1",
+      "details": "Reassigned classroom 'IELTS Band 7.5 Intensive' to teacher Teacher Beta",
+      "created_at": "2026-10-07 10:46:39"
+    },
+    {
+      "id": 269,
+      "user_id": 201,
+      "action": "ARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "58",
+      "tenant_id": "1",
+      "details": "Archived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 10:46:39"
+    },
+    {
+      "id": 270,
+      "user_id": 201,
+      "action": "UNARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "58",
+      "tenant_id": "1",
+      "details": "Unarchived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 10:46:39"
+    },
+    {
+      "id": 271,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "59",
+      "tenant_id": "1",
+      "details": "Created classroom 'TOEIC Masterclass' assigned to teacher Teacher Beta",
+      "created_at": "2026-10-07 10:46:39"
+    },
+    {
+      "id": 272,
+      "user_id": 201,
+      "action": "TRANSFER_STUDENT",
+      "target_type": "class_enrollments",
+      "target_id": "59:302",
+      "tenant_id": "1",
+      "details": "Transferred student Student Two from 'IELTS Band 7.5 Intensive' to 'TOEIC Masterclass'",
+      "created_at": "2026-10-07 10:46:39"
+    },
+    {
+      "id": 273,
+      "user_id": 201,
+      "action": "REVOKE_STUDENT_SEAT",
+      "target_type": "class_enrollments",
+      "target_id": "59:302",
+      "tenant_id": "1",
+      "details": "Revoked seat for student Student Two (student2@test.com) from class 'TOEIC Masterclass'",
+      "created_at": "2026-10-07 10:46:39"
+    },
+    {
+      "id": 274,
+      "user_id": 201,
+      "action": "SUSPEND_TEACHER",
+      "target_type": "users",
+      "target_id": "211",
+      "tenant_id": "1",
+      "details": "Suspended teacher Teacher Alpha (teacher_alpha@fluent.edu.vn)",
+      "created_at": "2026-10-07 10:46:39"
+    },
+    {
+      "id": 275,
+      "user_id": 201,
+      "action": "REACTIVATE_TEACHER",
+      "target_type": "users",
+      "target_id": "211",
+      "tenant_id": "1",
+      "details": "Reactivated teacher Teacher Alpha (teacher_alpha@fluent.edu.vn)",
+      "created_at": "2026-10-07 10:46:39"
+    },
+    {
+      "id": 276,
+      "user_id": 201,
+      "action": "RESET_TEACHER_PASSWORD",
+      "target_type": "users",
+      "target_id": "211",
+      "tenant_id": "1",
+      "details": "Reset password for teacher Teacher Alpha (teacher_alpha@fluent.edu.vn)",
+      "created_at": "2026-10-07 10:46:39"
+    },
+    {
+      "id": 277,
+      "user_id": 1010,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "1010",
+      "tenant_id": "1",
+      "details": "Teacher authenticated successfully",
+      "created_at": "2026-10-07 10:46:43"
+    },
+    {
+      "id": 278,
+      "user_id": 1010,
+      "action": "CREATE",
+      "target_type": "classroom",
+      "target_id": "60",
+      "tenant_id": "1",
+      "details": "Created classroom IELTS Academic Pronunciation 6A",
+      "created_at": "2026-10-07 10:46:44"
+    },
+    {
+      "id": 279,
+      "user_id": 1010,
+      "action": "CREATE",
+      "target_type": "assignment",
+      "target_id": "71",
+      "tenant_id": "1",
+      "details": "Created assignment Module 1: Dental Fricatives /θ/ & /ð/ for class IELTS Academic Pronunciation 6A",
+      "created_at": "2026-10-07 10:46:44"
+    },
+    {
+      "id": 280,
+      "user_id": 1010,
+      "action": "UPDATE",
+      "target_type": "assignment",
+      "target_id": "71",
+      "tenant_id": "1",
+      "details": "Updated assignment Module 1: Dental Fricatives (Updated)",
+      "created_at": "2026-10-07 10:46:44"
+    },
+    {
+      "id": 281,
+      "user_id": 1010,
+      "action": "DUPLICATE",
+      "target_type": "assignment",
+      "target_id": "72",
+      "tenant_id": "1",
+      "details": "Duplicated assignment Module 1: Dental Fricatives (Updated) -> Module 1 Practice: Dental Fricatives Drill B",
+      "created_at": "2026-10-07 10:46:44"
+    },
+    {
+      "id": 282,
+      "user_id": 1011,
+      "action": "CREATE",
+      "target_type": "classroom",
+      "target_id": "61",
+      "tenant_id": "1",
+      "details": "Created classroom Teacher 2 Class",
+      "created_at": "2026-10-07 10:46:44"
+    },
+    {
+      "id": 283,
+      "user_id": 1010,
+      "action": "REOPEN",
+      "target_type": "assignment",
+      "target_id": "71",
+      "tenant_id": "1",
+      "details": "Extended deadline to 2026-11-15 for Module 1: Dental Fricatives (Updated)",
+      "created_at": "2026-10-07 10:46:44"
+    },
+    {
+      "id": 284,
+      "user_id": 1010,
+      "action": "REMIND",
+      "target_type": "assignment",
+      "target_id": "71",
+      "tenant_id": "1",
+      "details": "Sent reminder to 1 students for assignment Module 1: Dental Fricatives (Updated)",
+      "created_at": "2026-10-07 10:46:44"
+    },
+    {
+      "id": 285,
+      "user_id": 1010,
+      "action": "CREATE",
+      "target_type": "announcement",
+      "target_id": "15",
+      "tenant_id": "1",
+      "details": "Posted announcement: Welcome to Semester 1",
+      "created_at": "2026-10-07 10:46:44"
+    },
+    {
+      "id": 286,
+      "user_id": 1010,
+      "action": "DELETE",
+      "target_type": "announcement",
+      "target_id": "15",
+      "tenant_id": "1",
+      "details": "Deleted announcement 15",
+      "created_at": "2026-10-07 10:46:44"
+    },
+    {
+      "id": 287,
+      "user_id": 5,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "5",
+      "tenant_id": null,
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 10:46:49"
+    },
+    {
+      "id": 288,
+      "user_id": 5,
+      "action": "ONBOARD_TENANT",
+      "target_type": "tenants",
+      "target_id": "tenant_7015",
+      "tenant_id": "tenant_7015",
+      "details": "Super Admin onboarded school 'Olympia International Academy' with admin admin.olympia@fluent.edu.vn (seats: 250, status: active)",
+      "created_at": "2026-10-07 10:46:49"
+    },
+    {
+      "id": 289,
+      "user_id": 1024,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "1024",
+      "tenant_id": "tenant_7015",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 10:46:49"
+    },
+    {
+      "id": 290,
+      "user_id": 5,
+      "action": "UPDATE_TENANT_LIFECYCLE",
+      "target_type": "tenants",
+      "target_id": "tenant_7015",
+      "tenant_id": "tenant_7015",
+      "details": "Super Admin updated lifecycle of tenant tenant_7015 to suspended (seats: 250, expiry: 2028-09-30)",
+      "created_at": "2026-10-07 10:46:49"
+    },
+    {
+      "id": 291,
+      "user_id": 5,
+      "action": "IMPERSONATE_TENANT",
+      "target_type": "tenants",
+      "target_id": "tenant_7015",
+      "tenant_id": "tenant_7015",
+      "details": "Super Admin started inspection mode for school 'Olympia International Academy' as School Admin 'admin.olympia@fluent.edu.vn'",
+      "created_at": "2026-10-07 10:46:49"
+    },
+    {
+      "id": 292,
+      "user_id": 5,
+      "action": "UPDATE_TENANT_LIFECYCLE",
+      "target_type": "tenants",
+      "target_id": "tenant_7015",
+      "tenant_id": "tenant_7015",
+      "details": "Super Admin updated lifecycle of tenant tenant_7015 to active (seats: 300, expiry: 2028-09-30)",
+      "created_at": "2026-10-07 10:46:49"
+    },
+    {
+      "id": 293,
+      "user_id": 5,
+      "action": "DELETE_TENANT",
+      "target_type": "tenants",
+      "target_id": "tenant_7015",
+      "tenant_id": "tenant_7015",
+      "details": "Super Admin deleted tenant tenant_7015",
+      "created_at": "2026-10-07 10:46:49"
     }
   ],
   "system_configs": [

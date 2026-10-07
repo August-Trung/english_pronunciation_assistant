@@ -1840,6 +1840,20 @@ def init_db():
             pass
         cursor.execute("UPDATE tenants SET status = 'active' WHERE status IS NULL OR status = ''")
 
+        # Independent / Freelance Educator Quota Migrations
+        freelance_user_cols = [
+            ("teacher_type", "TEXT DEFAULT 'institutional'"),
+            ("max_classes", "INTEGER DEFAULT 3"),
+            ("max_seats", "INTEGER DEFAULT 30"),
+            ("license_expiry", "TEXT DEFAULT '2027-12-31'")
+        ]
+        for col, col_type in freelance_user_cols:
+            try:
+                cursor.execute(f"ALTER TABLE users ADD COLUMN {col} {col_type}")
+            except Exception:
+                pass
+        cursor.execute("UPDATE users SET teacher_type = 'institutional' WHERE teacher_type IS NULL OR teacher_type = ''")
+
         # Super Admin Default Initialization (Owner Account)
         cursor.execute("SELECT id FROM users WHERE role = 'super_admin'")
         if not cursor.fetchone():
@@ -2060,6 +2074,72 @@ def verify_assignment_access(assignment_id: int, current_user: dict, require_wri
         return asg_dict
 
     raise HTTPException(status_code=403, detail="Forbidden: Insufficient privileges.")
+
+def get_teacher_quota_info(cursor, teacher_id: int) -> Optional[dict]:
+    """Retrieves and calculates plan limits and real-time usage for a teacher."""
+    cursor.execute("""
+        SELECT u.id, u.name, u.email, u.role, u.tenant_id,
+               COALESCE(u.teacher_type, 'institutional') as teacher_type,
+               COALESCE(u.max_classes, 3) as max_classes,
+               COALESCE(u.max_seats, 30) as max_seats,
+               COALESCE(u.license_expiry, '2027-12-31') as license_expiry,
+               COALESCE(t.name, 'Independent Educator') as tenant_name
+        FROM users u
+        LEFT JOIN tenants t ON u.tenant_id = t.id
+        WHERE u.id = ? AND (u.IsXoa IS NULL OR u.IsXoa = 0)
+    """, (teacher_id,))
+    t_row = cursor.fetchone()
+    if not t_row:
+        return None
+
+    teacher_type = t_row[5]
+    max_classes = t_row[6]
+    max_seats = t_row[7]
+    license_expiry = t_row[8]
+    tenant_name = t_row[9]
+
+    # Count active classes for this teacher
+    cursor.execute("""
+        SELECT COUNT(*) FROM classrooms
+        WHERE teacher_id = ? AND (IsXoa IS NULL OR IsXoa = 0) AND (is_archived IS NULL OR is_archived = 0)
+    """, (teacher_id,))
+    used_classes = cursor.fetchone()[0]
+
+    # Count distinct active enrolled students across all classes taught by this teacher
+    cursor.execute("""
+        SELECT COUNT(DISTINCT ce.student_id)
+        FROM class_enrollments ce
+        JOIN classrooms c ON ce.class_id = c.id
+        WHERE c.teacher_id = ? AND (ce.IsXoa IS NULL OR ce.IsXoa = 0)
+    """, (teacher_id,))
+    used_seats = cursor.fetchone()[0]
+
+    is_expired = False
+    if license_expiry:
+        try:
+            today_str = datetime.now().strftime("%Y-%m-%d")
+            is_expired = license_expiry < today_str
+        except Exception:
+            pass
+
+    return {
+        "teacher_id": teacher_id,
+        "teacher_name": t_row[1],
+        "teacher_email": t_row[2],
+        "role": t_row[3],
+        "tenant_id": t_row[4],
+        "tenant_name": tenant_name,
+        "teacher_type": teacher_type,
+        "max_classes": max_classes,
+        "used_classes": used_classes,
+        "available_classes": max(0, max_classes - used_classes) if max_classes else 999,
+        "max_seats": max_seats,
+        "used_seats": used_seats,
+        "available_seats": max(0, max_seats - used_seats) if max_seats else 999,
+        "usage_percentage": round((used_seats / max_seats * 100), 1) if max_seats else 0.0,
+        "license_expiry": license_expiry,
+        "is_expired": is_expired
+    }
 
 def calculate_user_streak(user_id: int, cursor) -> int:
     """Calculate the consecutive day learning streak for a user from their practice history."""
@@ -2548,6 +2628,23 @@ def create_class(
         join_code = f"CLS-{random.randint(100, 999)}-{random.randint(10, 99)}"
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
+
+        # Enforce freelance educator class quota & expiration
+        quota = get_teacher_quota_info(cursor, teacher_id)
+        if quota and quota["teacher_type"] == "freelance":
+            if quota["is_expired"]:
+                conn.close()
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"Educator plan expired on {quota['license_expiry']}. Please renew your plan to create classrooms."
+                )
+            if quota["used_classes"] >= quota["max_classes"]:
+                conn.close()
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"Classroom limit reached ({quota['used_classes']}/{quota['max_classes']} active classes). Please archive an unused class or upgrade your educator plan."
+                )
+
         cursor.execute(
             "INSERT INTO classrooms (teacher_id, tenant_id, name, grade_level, join_code, is_archived) VALUES (?, ?, ?, ?, ?, 0)",
             (teacher_id, tenant_id, req.name.strip(), req.grade_level.strip(), join_code)
@@ -2665,7 +2762,7 @@ def join_class(req: JoinClassRequest):
         cursor = conn.cursor()
         code_clean = req.join_code.strip().upper()
         cursor.execute("""
-            SELECT id, name, tenant_id, COALESCE(is_archived, 0)
+            SELECT id, name, tenant_id, COALESCE(is_archived, 0), teacher_id
             FROM classrooms
             WHERE UPPER(join_code) = ? AND (IsXoa IS NULL OR IsXoa = 0)
         """, (code_clean,))
@@ -2674,10 +2771,36 @@ def join_class(req: JoinClassRequest):
             conn.close()
             raise HTTPException(status_code=404, detail="Invalid Class Join Code. Please verify with your teacher.")
         
-        class_id, class_name, tenant_id, is_archived = cls[0], cls[1], cls[2], cls[3]
+        class_id, class_name, tenant_id, is_archived, teacher_id = cls[0], cls[1], cls[2], cls[3], cls[4]
         if is_archived == 1:
             conn.close()
             raise HTTPException(status_code=400, detail="This classroom is archived and no longer accepting enrollments.")
+
+        # Enforce freelance educator student seat quota & expiration
+        if teacher_id:
+            t_quota = get_teacher_quota_info(cursor, teacher_id)
+            if t_quota and t_quota["teacher_type"] == "freelance":
+                if t_quota["is_expired"]:
+                    conn.close()
+                    raise HTTPException(
+                        status_code=403,
+                        detail="This instructor's educator plan has expired. Please contact your instructor."
+                    )
+                cursor.execute("""
+                    SELECT ce.id FROM class_enrollments ce
+                    JOIN classrooms c ON ce.class_id = c.id
+                    WHERE c.teacher_id = ? AND ce.student_id = ? AND (ce.IsXoa IS NULL OR ce.IsXoa = 0)
+                    LIMIT 1
+                """, (teacher_id, req.student_id))
+                already_enrolled_with_teacher = cursor.fetchone() is not None
+                
+                if not already_enrolled_with_teacher:
+                    if t_quota["used_seats"] >= t_quota["max_seats"]:
+                        conn.close()
+                        raise HTTPException(
+                            status_code=403,
+                            detail=f"Student seat quota full for this instructor ({t_quota['used_seats']}/{t_quota['max_seats']} seats used). Please contact your instructor."
+                        )
 
         # Enforce multi-tenant license seats quota
         if tenant_id:
@@ -2790,6 +2913,7 @@ def get_teacher_classes(
             ORDER BY c.id DESC
         """, (teacher_id,))
         rows = cursor.fetchall()
+        quota = get_teacher_quota_info(cursor, teacher_id)
         conn.close()
         
         classes = []
@@ -2802,9 +2926,30 @@ def get_teacher_classes(
                 "created_at": r[4],
                 "student_count": r[5]
             })
-        return {"classes": classes}
+        return {"classes": classes, "quota": quota}
     except Exception as e:
-        return {"classes": [], "error": str(e)}
+        return {"classes": [], "quota": None, "error": str(e)}
+
+@app.get("/api/teacher/{teacher_id}/quota")
+def get_teacher_quota_endpoint(
+    teacher_id: int,
+    current_user: dict = Depends(require_educator_or_admin)
+):
+    try:
+        if current_user.get("role") == "teacher" and current_user.get("id") != teacher_id:
+            raise HTTPException(status_code=403, detail="Forbidden: You can only view your own quota.")
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        quota = get_teacher_quota_info(cursor, teacher_id)
+        conn.close()
+        if not quota:
+            raise HTTPException(status_code=404, detail="Teacher not found.")
+        return quota
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 
 @app.get("/api/classes/student/{student_id}")
 def get_student_classes(student_id: int):
@@ -4476,7 +4621,11 @@ def get_admin_teachers(
             SELECT u.id, u.name, u.email, u.avatar, COALESCE(u.status, 'active') as status, u.created_at, u.tenant_id,
                    COALESCE(t.name, 'Independent / Global') as school_name,
                    (SELECT COUNT(*) FROM classrooms c WHERE c.teacher_id = u.id AND (c.IsXoa IS NULL OR c.IsXoa = 0) AND (c.is_archived IS NULL OR c.is_archived = 0)) as active_classes_count,
-                   (SELECT COUNT(DISTINCT ce.student_id) FROM classrooms c JOIN class_enrollments ce ON c.id = ce.class_id WHERE c.teacher_id = u.id AND (c.IsXoa IS NULL OR c.IsXoa = 0) AND (ce.IsXoa IS NULL OR ce.IsXoa = 0)) as students_count
+                   (SELECT COUNT(DISTINCT ce.student_id) FROM classrooms c JOIN class_enrollments ce ON c.id = ce.class_id WHERE c.teacher_id = u.id AND (c.IsXoa IS NULL OR c.IsXoa = 0) AND (ce.IsXoa IS NULL OR ce.IsXoa = 0)) as students_count,
+                   COALESCE(u.teacher_type, 'institutional') as teacher_type,
+                   COALESCE(u.max_classes, 3) as max_classes,
+                   COALESCE(u.max_seats, 30) as max_seats,
+                   COALESCE(u.license_expiry, '2027-12-31') as license_expiry
             FROM users u
             LEFT JOIN tenants t ON u.tenant_id = t.id
             WHERE u.role = 'teacher' AND (u.IsXoa IS NULL OR u.IsXoa = 0)
@@ -4501,7 +4650,11 @@ def get_admin_teachers(
                 "tenant_id": r[6],
                 "school_name": r[7],
                 "active_classes_count": r[8],
-                "students_count": r[9]
+                "students_count": r[9],
+                "teacher_type": r[10],
+                "max_classes": r[11],
+                "max_seats": r[12],
+                "license_expiry": r[13]
             }
             for r in rows
         ]
@@ -4577,6 +4730,61 @@ def reset_teacher_password(
         raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+class UpdateTeacherPlanRequest(BaseModel):
+    teacher_type: str # 'institutional' or 'freelance'
+    max_classes: Optional[int] = 3
+    max_seats: Optional[int] = 30
+    license_expiry: Optional[str] = "2027-12-31"
+
+@app.post("/api/admin/teachers/{teacher_id}/plan")
+def update_teacher_plan(
+    teacher_id: int,
+    req: UpdateTeacherPlanRequest,
+    current_user: dict = Depends(require_super_admin_only)
+):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, name, email, tenant_id FROM users WHERE id = ? AND role = 'teacher' AND (IsXoa IS NULL OR IsXoa = 0)", (teacher_id,))
+        t = cursor.fetchone()
+        if not t:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Teacher not found.")
+            
+        new_type = req.teacher_type.strip().lower()
+        if new_type not in ["institutional", "freelance"]:
+            new_type = "freelance"
+            
+        m_classes = req.max_classes if req.max_classes is not None else 3
+        m_seats = req.max_seats if req.max_seats is not None else 30
+        l_expiry = req.license_expiry.strip() if req.license_expiry else "2027-12-31"
+
+        new_tenant_id = t[3]
+        if new_type == "freelance":
+            new_tenant_id = None
+        elif new_type == "institutional" and not new_tenant_id:
+            new_tenant_id = "1"
+
+        cursor.execute("""
+            UPDATE users
+            SET teacher_type = ?, max_classes = ?, max_seats = ?, license_expiry = ?, tenant_id = ?
+            WHERE id = ?
+        """, (new_type, m_classes, m_seats, l_expiry, new_tenant_id, teacher_id))
+        
+        record_audit_log(cursor, current_user["id"], "UPDATE_TEACHER_PLAN", "users", str(teacher_id), new_tenant_id, 
+                         f"Updated plan for teacher {t[1]} ({t[2]}): {new_type}, max_classes={m_classes}, max_seats={m_seats}, expiry={l_expiry}")
+        conn.commit()
+        
+        updated_quota = get_teacher_quota_info(cursor, teacher_id)
+        conn.close()
+        export_db_to_json()
+        return {"status": "success", "message": f"Updated educator plan for {t[1]} successfully.", "quota": updated_quota}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 
 @app.get("/api/admin/seats-summary")
 def get_seats_summary(
@@ -5030,7 +5238,11 @@ def get_admin_users(
                    COALESCE(t.name, 'Independent / Global') as school_name,
                    (SELECT COUNT(*) FROM class_enrollments ce WHERE ce.student_id = u.id AND (ce.IsXoa IS NULL OR ce.IsXoa = 0)) as enrolled_count,
                    (SELECT c.name FROM classrooms c JOIN class_enrollments ce ON c.id = ce.class_id WHERE ce.student_id = u.id AND (ce.IsXoa IS NULL OR ce.IsXoa = 0) LIMIT 1) as primary_class,
-                   COALESCE(u.status, 'active') as status
+                   COALESCE(u.status, 'active') as status,
+                   COALESCE(u.teacher_type, 'institutional') as teacher_type,
+                   COALESCE(u.max_classes, 3) as max_classes,
+                   COALESCE(u.max_seats, 30) as max_seats,
+                   COALESCE(u.license_expiry, '2027-12-31') as license_expiry
             FROM users u
             LEFT JOIN tenants t ON u.tenant_id = t.id
             WHERE (u.IsXoa IS NULL OR u.IsXoa = 0)
@@ -5065,7 +5277,11 @@ def get_admin_users(
                 "enrolled_count": r[9],
                 "primary_class": r[10] or "None",
                 "status": r[11],
-                "streak": stk
+                "streak": stk,
+                "teacher_type": r[12],
+                "max_classes": r[13],
+                "max_seats": r[14],
+                "license_expiry": r[15]
             })
             
         conn.close()

@@ -626,7 +626,25 @@
                     </v-chip>
                   </td>
                   <td v-if="isSuperAdmin">
-                    <span class="text-caption font-weight-bold text-grey-darken-2">{{ usr.school_name }}</span>
+                    <template v-if="usr.role === 'teacher'">
+                      <v-chip
+                        v-if="usr.teacher_type === 'freelance'"
+                        size="x-small"
+                        color="purple-lighten-5"
+                        class="text-purple-darken-3 font-weight-bold"
+                      >
+                        🎓 Freelance ({{ usr.max_seats || 30 }} seats / {{ usr.max_classes || 3 }} cls)
+                      </v-chip>
+                      <v-chip
+                        v-else
+                        size="x-small"
+                        color="indigo-lighten-5"
+                        class="text-indigo-darken-3 font-weight-bold"
+                      >
+                        🏫 {{ usr.school_name }}
+                      </v-chip>
+                    </template>
+                    <span v-else class="text-caption font-weight-bold text-grey-darken-2">{{ usr.school_name }}</span>
                   </td>
                   <td class="text-center text-caption font-weight-medium">
                     <v-chip v-if="usr.primary_class && usr.primary_class !== 'None'" size="x-small" color="blue-lighten-5" class="text-blue-darken-3 font-weight-bold">
@@ -648,6 +666,15 @@
                     <div class="d-flex align-center justify-center ga-1">
                       <!-- Teacher Specific Operations -->
                       <template v-if="usr.role === 'teacher'">
+                        <v-btn
+                          v-if="isSuperAdmin"
+                          size="x-small"
+                          icon="mdi-license"
+                          color="indigo"
+                          variant="tonal"
+                          title="Configure Educator Plan & Quotas"
+                          @click="openConfigureTeacherPlan(usr)"
+                        />
                         <v-btn
                           size="x-small"
                           :icon="usr.status === 'suspended' ? 'mdi-account-check' : 'mdi-account-lock'"
@@ -1534,6 +1561,92 @@
             <v-spacer />
             <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showResetTeacherPassModal = false">Cancel</v-btn>
             <v-btn color="teal" variant="flat" class="text-none font-weight-bold" :loading="isResettingTeacherPass" @click="submitResetTeacherPassword">Save New Password</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Modal: Configure Educator Plan & Quotas (Super Admin Only) -->
+      <v-dialog v-model="showConfigurePlanModal" max-width="480">
+        <v-card border rounded="lg" class="pa-4 bg-white">
+          <div class="text-subtitle-1 font-weight-black text-indigo-darken-3 mb-2 d-flex align-center ga-2">
+            <v-icon color="indigo">mdi-license</v-icon>
+            <span>Configure Educator Plan & Quotas</span>
+          </div>
+          <div class="text-caption text-grey-darken-1 mb-3">
+            Manage licensing model and capacity limits for <strong>{{ teacherToConfigurePlan?.name }}</strong> ({{ teacherToConfigurePlan?.email }}).
+          </div>
+
+          <v-select
+            v-model="editTeacherType"
+            :items="[
+              { title: '🏫 Institutional (School Managed)', value: 'institutional' },
+              { title: '🎓 Freelance / Independent (Self-Managed)', value: 'freelance' }
+            ]"
+            item-title="title"
+            item-value="value"
+            label="Educator Licensing Model:"
+            variant="outlined"
+            density="comfortable"
+            class="mb-3"
+          />
+
+          <template v-if="editTeacherType === 'freelance'">
+            <v-row density="compact">
+              <v-col cols="6">
+                <v-text-field
+                  v-model.number="editMaxSeats"
+                  label="Student Seats Limit:"
+                  type="number"
+                  variant="outlined"
+                  density="comfortable"
+                  prepend-inner-icon="mdi-seat-passenger"
+                  min="1"
+                  class="mb-2"
+                />
+              </v-col>
+              <v-col cols="6">
+                <v-text-field
+                  v-model.number="editMaxClasses"
+                  label="Max Classrooms:"
+                  type="number"
+                  variant="outlined"
+                  density="comfortable"
+                  prepend-inner-icon="mdi-google-classroom"
+                  min="1"
+                  class="mb-2"
+                />
+              </v-col>
+            </v-row>
+
+            <v-text-field
+              v-model="editPlanExpiry"
+              label="Plan Expiration Date (YYYY-MM-DD):"
+              placeholder="2028-12-31"
+              variant="outlined"
+              density="comfortable"
+              prepend-inner-icon="mdi-calendar"
+              class="mb-2"
+            />
+          </template>
+
+          <v-alert v-else type="info" variant="tonal" density="compact" class="text-caption mb-3">
+            Institutional teachers share their school's student seat license pool and classroom capacity.
+          </v-alert>
+
+          <v-card-actions class="px-0 pb-0">
+            <v-spacer />
+            <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showConfigurePlanModal = false">
+              Cancel
+            </v-btn>
+            <v-btn
+              color="indigo-darken-3"
+              variant="flat"
+              class="text-none font-weight-bold"
+              :loading="isSavingPlan"
+              @click="submitSaveTeacherPlan"
+            >
+              Save Educator Plan
+            </v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -2480,6 +2593,54 @@ const submitResetTeacherPassword = async () => {
     notify('Reset password error: ' + e.message, 'error')
   } finally {
     isResettingTeacherPass.value = false
+  }
+}
+
+// Independent / Freelance Educator Plan Management (Super Admin Only)
+const showConfigurePlanModal = ref(false)
+const teacherToConfigurePlan = ref(null)
+const editTeacherType = ref('freelance')
+const editMaxSeats = ref(30)
+const editMaxClasses = ref(3)
+const editPlanExpiry = ref('2028-12-31')
+const isSavingPlan = ref(false)
+
+const openConfigureTeacherPlan = (usr) => {
+  teacherToConfigurePlan.value = usr
+  editTeacherType.value = usr.teacher_type || 'institutional'
+  editMaxSeats.value = usr.max_seats || 30
+  editMaxClasses.value = usr.max_classes || 3
+  editPlanExpiry.value = usr.license_expiry || '2028-12-31'
+  showConfigurePlanModal.value = true
+}
+
+const submitSaveTeacherPlan = async () => {
+  if (!teacherToConfigurePlan.value) return
+  isSavingPlan.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/admin/teachers/${teacherToConfigurePlan.value.id}/plan`, {
+      method: 'POST',
+      headers: getAdminAuthHeaders(),
+      body: JSON.stringify({
+        teacher_type: editTeacherType.value,
+        max_seats: Number(editMaxSeats.value) || 30,
+        max_classes: Number(editMaxClasses.value) || 3,
+        license_expiry: editPlanExpiry.value.trim()
+      })
+    })
+    if (res.ok) {
+      showConfigurePlanModal.value = false
+      notify('Educator plan updated successfully!', 'success', 'mdi-check-decagram')
+      await fetchUsers()
+      await fetchTeachers()
+    } else {
+      const err = await res.json()
+      notify(err.detail || 'Failed to update plan.', 'error')
+    }
+  } catch (e) {
+    notify('Update plan error: ' + e.message, 'error')
+  } finally {
+    isSavingPlan.value = false
   }
 }
 

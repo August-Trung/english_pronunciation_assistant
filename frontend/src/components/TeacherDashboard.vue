@@ -117,6 +117,79 @@
         </div>
       </div>
 
+      <!-- Freelance Educator License Plan Card -->
+      <v-card
+        v-if="teacherQuota && teacherQuota.teacher_type === 'freelance'"
+        border
+        flat
+        class="pa-3 mb-3 bg-indigo-lighten-5 rounded-lg border-indigo-lighten-4 elevation-1"
+      >
+        <div class="d-flex align-center justify-space-between flex-wrap ga-3">
+          <div class="d-flex align-center ga-3 flex-wrap">
+            <div class="d-flex align-center ga-2">
+              <v-avatar size="34" color="indigo-darken-3" class="text-white elevation-1">
+                <v-icon size="18">mdi-account-star</v-icon>
+              </v-avatar>
+              <div>
+                <div class="d-flex align-center ga-2">
+                  <span class="text-subtitle-2 font-weight-black text-indigo-darken-4">Freelance Educator Plan</span>
+                  <v-chip size="x-small" :color="teacherQuota.is_expired ? 'error' : 'success'" variant="flat" class="font-weight-black">
+                    {{ teacherQuota.is_expired ? 'EXPIRED' : 'ACTIVE' }}
+                  </v-chip>
+                </div>
+                <div class="text-caption text-grey-darken-2">
+                  License Expiry: <strong>{{ teacherQuota.license_expiry || '2028-12-31' }}</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Student Seats Meter -->
+            <div class="bg-white px-3 py-1.5 rounded-lg border" style="min-width: 190px;">
+              <div class="d-flex justify-space-between text-caption font-weight-bold text-grey-darken-3 mb-1">
+                <span class="d-flex align-center ga-1"><v-icon size="14" color="indigo">mdi-seat</v-icon> Student Seats</span>
+                <span :class="teacherQuota.used_seats >= teacherQuota.max_seats ? 'text-error font-weight-black' : 'text-indigo-darken-3'">
+                  {{ teacherQuota.used_seats }} / {{ teacherQuota.max_seats }}
+                </span>
+              </div>
+              <v-progress-linear
+                :model-value="teacherQuota.usage_percentage"
+                :color="teacherQuota.used_seats >= teacherQuota.max_seats ? 'error' : 'indigo'"
+                height="6"
+                rounded
+              />
+            </div>
+
+            <!-- Classrooms Meter -->
+            <div class="bg-white px-3 py-1.5 rounded-lg border" style="min-width: 170px;">
+              <div class="d-flex justify-space-between text-caption font-weight-bold text-grey-darken-3 mb-1">
+                <span class="d-flex align-center ga-1"><v-icon size="14" color="teal">mdi-google-classroom</v-icon> Classrooms</span>
+                <span :class="teacherQuota.used_classes >= teacherQuota.max_classes ? 'text-warning font-weight-black' : 'text-teal-darken-3'">
+                  {{ teacherQuota.used_classes }} / {{ teacherQuota.max_classes }}
+                </span>
+              </div>
+              <v-progress-linear
+                :model-value="(teacherQuota.used_classes / (teacherQuota.max_classes || 1)) * 100"
+                :color="teacherQuota.used_classes >= teacherQuota.max_classes ? 'warning' : 'teal'"
+                height="6"
+                rounded
+              />
+            </div>
+          </div>
+
+          <!-- Upgrade / Manage Plan Button -->
+          <v-btn
+            color="indigo-darken-3"
+            variant="flat"
+            size="small"
+            class="font-weight-black text-none"
+            prepend-icon="mdi-arrow-up-bold-circle-outline"
+            @click="showPlanDetailsModal = true"
+          >
+            Upgrade Plan
+          </v-btn>
+        </div>
+      </v-card>
+
     <!-- Main Content Area -->
     <v-row density="comfortable">
       <!-- Mobile Horizontal Class Switcher Bar (Visible on mobile/tablet) -->
@@ -727,11 +800,94 @@
           prepend-inner-icon="mdi-notebook"
         />
 
+        <!-- Freelance Quota Warning in Create Class -->
+        <v-alert
+          v-if="teacherQuota && teacherQuota.teacher_type === 'freelance' && teacherQuota.used_classes >= teacherQuota.max_classes"
+          type="warning"
+          variant="tonal"
+          density="compact"
+          class="mb-3 text-caption font-weight-bold"
+        >
+          Class limit reached ({{ teacherQuota.used_classes }}/{{ teacherQuota.max_classes }} active classes). Please archive an unused classroom or upgrade your plan.
+        </v-alert>
+        <v-alert
+          v-else-if="teacherQuota && teacherQuota.teacher_type === 'freelance' && teacherQuota.is_expired"
+          type="error"
+          variant="tonal"
+          density="compact"
+          class="mb-3 text-caption font-weight-bold"
+        >
+          Educator plan expired on {{ teacherQuota.license_expiry }}. Please renew your plan.
+        </v-alert>
+
         <v-card-actions class="px-0 pb-0">
           <v-spacer />
           <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showCreateClassModal = false">Cancel</v-btn>
-          <v-btn color="primary" variant="flat" class="text-none font-weight-bold" :loading="isCreatingClass" @click="submitCreateClass">
+          <v-btn
+            color="primary"
+            variant="flat"
+            class="text-none font-weight-bold"
+            :loading="isCreatingClass"
+            :disabled="Boolean(teacherQuota && teacherQuota.teacher_type === 'freelance' && (teacherQuota.used_classes >= teacherQuota.max_classes || teacherQuota.is_expired))"
+            @click="submitCreateClass"
+          >
             Generate Class & Join Code
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Modal: Plan Details & Upgrade Support -->
+    <v-dialog v-model="showPlanDetailsModal" max-width="480">
+      <v-card border rounded="lg" class="pa-5 bg-white">
+        <div class="text-center mb-4">
+          <v-avatar color="indigo-lighten-5" size="56" class="text-indigo-darken-3 mb-2 elevation-1">
+            <v-icon size="28">mdi-account-star</v-icon>
+          </v-avatar>
+          <div class="text-h6 font-weight-black text-indigo-darken-4">Independent Educator Plan</div>
+          <div class="text-caption text-grey-darken-1">Manage your solo educator subscription & quota</div>
+        </div>
+
+        <v-list density="compact" class="border rounded-lg mb-4 pa-2 bg-grey-lighten-5">
+          <v-list-item>
+            <template #prepend><v-icon color="indigo">mdi-seat-passenger</v-icon></template>
+            <v-list-item-title class="font-weight-bold text-caption">Student License Seats</v-list-item-title>
+            <template #append>
+              <span class="text-caption font-weight-black text-indigo-darken-3">{{ teacherQuota?.used_seats }} / {{ teacherQuota?.max_seats }} Used</span>
+            </template>
+          </v-list-item>
+          <v-divider />
+          <v-list-item>
+            <template #prepend><v-icon color="teal">mdi-google-classroom</v-icon></template>
+            <v-list-item-title class="font-weight-bold text-caption">Active Classrooms</v-list-item-title>
+            <template #append>
+              <span class="text-caption font-weight-black text-teal-darken-3">{{ teacherQuota?.used_classes }} / {{ teacherQuota?.max_classes }} Classes</span>
+            </template>
+          </v-list-item>
+          <v-divider />
+          <v-list-item>
+            <template #prepend><v-icon color="amber-darken-3">mdi-calendar-clock</v-icon></template>
+            <v-list-item-title class="font-weight-bold text-caption">Expiration Date</v-list-item-title>
+            <template #append>
+              <span class="text-caption font-weight-bold">{{ teacherQuota?.license_expiry }}</span>
+            </template>
+          </v-list-item>
+        </v-list>
+
+        <v-alert type="info" variant="tonal" density="compact" class="text-caption mb-4">
+          Need more student seats or additional classrooms? Contact Platform Administration to upgrade your educator plan.
+        </v-alert>
+
+        <div class="bg-indigo-lighten-5 pa-3 rounded-lg border border-indigo-lighten-4 mb-4">
+          <div class="text-caption font-weight-bold text-indigo-darken-4 mb-1">Direct Platform Support:</div>
+          <div class="text-caption text-grey-darken-3 font-weight-medium">📧 Email: <strong>support@fluent.edu.vn</strong></div>
+          <div class="text-caption text-grey-darken-3 font-weight-medium">📞 Hotline / Zalo: <strong>+84 901 888 999</strong></div>
+        </div>
+
+        <v-card-actions class="px-0 pb-0">
+          <v-spacer />
+          <v-btn color="indigo-darken-3" variant="flat" class="text-none font-weight-bold" block @click="showPlanDetailsModal = false">
+            Close
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -1388,6 +1544,8 @@ const showCreateClassModal = ref(false)
 const newClassName = ref('')
 const newClassGrade = ref('Elementary (Grades 1 - 5)')
 const isCreatingClass = ref(false)
+const teacherQuota = ref(null)
+const showPlanDetailsModal = ref(false)
 
 // P2 Analytics & Insights state
 const analyticsData = ref(null)
@@ -1725,6 +1883,7 @@ const fetchClasses = async () => {
     if (res.ok) {
       const data = await res.json()
       classes.value = data.classes || []
+      teacherQuota.value = data.quota || null
       if (classes.value.length && !selectedClassId.value) {
         selectClass(classes.value[0].id)
       }
