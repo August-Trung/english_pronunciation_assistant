@@ -4069,6 +4069,10 @@ class ProvisionAccountRequest(BaseModel):
     role: str # 'admin', 'teacher', 'student'
     tenant_id: Optional[str] = None
     password: str = "password123"
+    teacher_type: Optional[str] = "institutional" # "institutional" or "freelance"
+    max_classes: Optional[int] = 3
+    max_seats: Optional[int] = 30
+    license_expiry: Optional[str] = "2028-12-31"
 
 @app.post("/api/admin/provision-account")
 def provision_account(req: ProvisionAccountRequest, current_user: dict = Depends(require_admin_or_super_admin)):
@@ -4076,28 +4080,65 @@ def provision_account(req: ProvisionAccountRequest, current_user: dict = Depends
         req_email = req.email.strip().lower()
         req_role = req.role.strip()
         
-        # RBAC Check: School Admin can only provision teacher or student in their own tenant
-        if current_user["role"] == "admin":
-            if req_role in ["super_admin", "admin"]:
-                raise HTTPException(status_code=403, detail="School Admins can only provision 'teacher' or 'student' accounts.")
-            target_tenant = current_user.get("tenant_id") or "1"
-        else:
-            target_tenant = req.tenant_id
+        if not req_email or not req.name.strip():
+            raise HTTPException(status_code=400, detail="Email and name are required.")
+
+        if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", req_email):
+            raise HTTPException(status_code=400, detail="Invalid email format.")
 
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
+        cursor.execute("SELECT id FROM users WHERE email = ? AND (IsXoa IS NULL OR IsXoa = 0)", (req_email,))
+        if cursor.fetchone():
+            conn.close()
+            raise HTTPException(status_code=400, detail=f"Email '{req_email}' is already registered.")
+
+        # RBAC Check: School Admin can only provision teacher or student in their own tenant
+        t_type = "institutional"
+        m_classes = None
+        m_seats = None
+        l_expiry = None
+
+        if req_role == "teacher":
+            t_type = (req.teacher_type or "institutional").strip().lower()
+            if t_type not in ["institutional", "freelance"]:
+                t_type = "institutional"
+
+        if current_user["role"] == "admin":
+            if req_role in ["super_admin", "admin"]:
+                conn.close()
+                raise HTTPException(status_code=403, detail="School Admins can only provision 'teacher' or 'student' accounts.")
+            target_tenant = current_user.get("tenant_id") or "1"
+            t_type = "institutional"
+        else:
+            if req_role == "teacher" and t_type == "freelance":
+                target_tenant = None
+                m_classes = req.max_classes if req.max_classes is not None else 3
+                m_seats = req.max_seats if req.max_seats is not None else 30
+                l_expiry = req.license_expiry.strip() if req.license_expiry else "2028-12-31"
+            else:
+                target_tenant = req.tenant_id
+
         parent_code = f"PA-{random.randint(1000, 9999)}"
         hashed_password = hash_password(req.password.strip() if req.password else "password123")
         cursor.execute("""
-            INSERT INTO users (email, name, role, tenant_id, parent_code, password_hash)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (req_email, req.name.strip(), req_role, target_tenant, parent_code, hashed_password))
+            INSERT INTO users (email, name, role, tenant_id, parent_code, password_hash, teacher_type, max_classes, max_seats, license_expiry, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
+        """, (req_email, req.name.strip(), req_role, target_tenant, parent_code, hashed_password, t_type if req_role == 'teacher' else None, m_classes, m_seats, l_expiry))
         user_id = cursor.lastrowid
-        record_audit_log(cursor, current_user["id"], "PROVISION_ACCOUNT", "users", str(user_id), target_tenant, f"Provisioned {req_role} account {req_email}")
+        audit_note = f" (freelance with {m_seats} seats, {m_classes} classes)" if t_type == "freelance" else ""
+        record_audit_log(cursor, current_user["id"], "PROVISION_ACCOUNT", "users", str(user_id), target_tenant, f"Provisioned {req_role} account {req_email}{audit_note}")
         conn.commit()
         conn.close()
         export_db_to_json()
-        return {"status": "success", "user_id": user_id, "email": req.email, "role": req.role}
+        return {
+            "status": "success",
+            "user_id": user_id,
+            "email": req_email,
+            "role": req_role,
+            "teacher_type": t_type,
+            "tenant_id": target_tenant
+        }
     except HTTPException:
         raise
     except Exception as e:

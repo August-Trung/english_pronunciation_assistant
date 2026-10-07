@@ -882,7 +882,7 @@
 
       <!-- MODALS SECTION -->
       <!-- Modal: Provision Account -->
-      <v-dialog v-model="showProvisionModal" max-width="480">
+      <v-dialog v-model="showProvisionModal" max-width="500">
         <v-card border rounded="lg" class="pa-4">
           <div class="text-subtitle-1 font-weight-black text-primary mb-3">Provision Educator or Admin Account</div>
           <v-text-field
@@ -911,8 +911,26 @@
             density="comfortable"
             class="mb-2"
           />
+
+          <!-- If Super Admin provisioning a Teacher: choose Institutional vs Freelance -->
           <v-select
-            v-if="isSuperAdmin"
+            v-if="isSuperAdmin && newProvRole === 'teacher'"
+            v-model="newProvTeacherType"
+            :items="[
+              { title: '🎓 Independent Educator (Freelance / Solo Tutor)', value: 'freelance' },
+              { title: '🏫 Institutional Educator (Affiliated with School)', value: 'institutional' }
+            ]"
+            item-title="title"
+            item-value="value"
+            label="Educator Licensing Model:"
+            variant="outlined"
+            density="comfortable"
+            class="mb-2"
+          />
+
+          <!-- If Institutional Teacher or other roles (Admin/Student): choose School -->
+          <v-select
+            v-if="isSuperAdmin && (newProvRole !== 'teacher' || newProvTeacherType === 'institutional')"
             v-model="newProvTenantId"
             :items="tenantSelectOptions"
             item-title="title"
@@ -922,6 +940,46 @@
             density="comfortable"
             class="mb-2"
           />
+
+          <!-- If Freelance Teacher: show Quotas -->
+          <template v-if="isSuperAdmin && newProvRole === 'teacher' && newProvTeacherType === 'freelance'">
+            <v-row density="compact">
+              <v-col cols="6">
+                <v-text-field
+                  v-model.number="newProvMaxSeats"
+                  label="Student Seats Limit:"
+                  type="number"
+                  variant="outlined"
+                  density="comfortable"
+                  prepend-inner-icon="mdi-seat-passenger"
+                  min="1"
+                  class="mb-2"
+                />
+              </v-col>
+              <v-col cols="6">
+                <v-text-field
+                  v-model.number="newProvMaxClasses"
+                  label="Max Classrooms:"
+                  type="number"
+                  variant="outlined"
+                  density="comfortable"
+                  prepend-inner-icon="mdi-google-classroom"
+                  min="1"
+                  class="mb-2"
+                />
+              </v-col>
+            </v-row>
+            <v-text-field
+              v-model="newProvPlanExpiry"
+              label="Plan Expiration Date (YYYY-MM-DD):"
+              placeholder="2028-12-31"
+              variant="outlined"
+              density="comfortable"
+              prepend-inner-icon="mdi-calendar"
+              class="mb-2"
+            />
+          </template>
+
           <v-text-field
             v-model="newProvPassword"
             label="Default Password:"
@@ -1854,6 +1912,10 @@ const tenantToDelete = ref(null)
 const newProvEmail = ref('')
 const newProvName = ref('')
 const newProvRole = ref('teacher')
+const newProvTeacherType = ref('freelance')
+const newProvMaxSeats = ref(30)
+const newProvMaxClasses = ref(3)
+const newProvPlanExpiry = ref('2028-12-31')
 const newProvPassword = ref('password123')
 const newProvTenantId = ref('1')
 const isProvisioning = ref(false)
@@ -2277,25 +2339,40 @@ const handleAdminSignOut = () => {
 
 // Provisioning & User Actions
 const submitProvisioning = async () => {
-  if (!newProvEmail.value.trim() || !newProvName.value.trim()) return
+  if (!newProvEmail.value.trim() || !newProvName.value.trim()) {
+    notify('Please fill in email and full name.', 'warning')
+    return
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(newProvEmail.value.trim())) {
+    notify('Please enter a valid email address.', 'warning')
+    return
+  }
   isProvisioning.value = true
   try {
+    const isFreelance = isSuperAdmin.value && newProvRole.value === 'teacher' && newProvTeacherType.value === 'freelance'
+    const payload = {
+      email: newProvEmail.value.trim(),
+      name: newProvName.value.trim(),
+      role: newProvRole.value,
+      tenant_id: isFreelance ? null : (isSuperAdmin.value ? newProvTenantId.value : (userTenantId.value || '1')),
+      password: newProvPassword.value.trim() || 'password123',
+      teacher_type: isFreelance ? 'freelance' : 'institutional',
+      max_seats: isFreelance ? (Number(newProvMaxSeats.value) || 30) : null,
+      max_classes: isFreelance ? (Number(newProvMaxClasses.value) || 3) : null,
+      license_expiry: isFreelance ? newProvPlanExpiry.value.trim() : null
+    }
     const res = await fetch(`${props.backendUrl}/api/admin/provision-account`, {
       method: 'POST',
       headers: getAdminAuthHeaders(),
-      body: JSON.stringify({
-        email: newProvEmail.value.trim(),
-        name: newProvName.value.trim(),
-        role: newProvRole.value,
-        tenant_id: isSuperAdmin.value ? newProvTenantId.value : (userTenantId.value || '1'),
-        password: newProvPassword.value.trim()
-      })
+      body: JSON.stringify(payload)
     })
     if (res.ok) {
       showProvisionModal.value = false
-      notify('Account provisioned successfully!', 'success', 'mdi-account-check')
+      notify(`Account provisioned successfully${isFreelance ? ' as Freelance Educator' : ''}!`, 'success', 'mdi-account-check')
       newProvEmail.value = ''
       newProvName.value = ''
+      newProvPassword.value = 'password123'
       await fetchAllAdminData()
     } else {
       const err = await res.json()
