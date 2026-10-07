@@ -271,13 +271,19 @@
             </div>
           </div>
 
-          <!-- Class Tabs: Gradebook Roster vs Assignments List -->
+          <!-- Class Tabs: Gradebook Roster vs Assignments vs Analytics vs Noticeboard -->
           <v-tabs v-model="activeTab" color="primary" density="compact" class="mb-3">
             <v-tab value="gradebook" class="font-weight-black text-none" prepend-icon="mdi-table-account">
               Gradebook Roster ({{ filteredStudents.length }})
             </v-tab>
             <v-tab value="assignments" class="font-weight-black text-none" prepend-icon="mdi-clipboard-text-outline">
               Assignments ({{ gradebook.assignments?.length || 0 }})
+            </v-tab>
+            <v-tab value="analytics" class="font-weight-black text-none" prepend-icon="mdi-chart-box-outline">
+              Analytics & Insights
+            </v-tab>
+            <v-tab value="noticeboard" class="font-weight-black text-none" prepend-icon="mdi-bullhorn-outline">
+              Noticeboard ({{ announcements.length }})
             </v-tab>
           </v-tabs>
 
@@ -386,7 +392,20 @@
                 >
                   <div class="d-flex align-center justify-space-between flex-wrap ga-2">
                     <div>
-                      <div class="text-subtitle-2 font-weight-black text-primary">{{ asg.title }}</div>
+                      <div class="d-flex align-center ga-2 flex-wrap">
+                        <span class="text-subtitle-2 font-weight-black text-primary">{{ asg.title }}</span>
+                        <v-chip
+                          size="x-small"
+                          :color="asg.status === 'closed' ? 'grey-darken-1' : 'teal'"
+                          variant="flat"
+                          class="font-weight-bold"
+                        >
+                          {{ asg.status === 'closed' ? 'CLOSED' : 'ACTIVE' }}
+                        </v-chip>
+                        <v-chip v-if="asg.target_ipa" size="x-small" color="indigo" variant="tonal" class="font-weight-mono font-weight-bold">
+                          {{ asg.target_ipa }}
+                        </v-chip>
+                      </div>
                       <div class="text-caption font-weight-bold text-grey-darken-3 font-italic mt-0.5">
                         "{{ asg.topic_sentence }}"
                       </div>
@@ -395,18 +414,277 @@
                       </div>
                     </div>
 
-                    <div class="d-flex align-center ga-2">
-                      <v-btn size="x-small" icon="mdi-pencil-outline" color="primary" variant="tonal" title="Edit Assignment" @click="openEditAssignmentModal(asg)" />
-                      <v-btn size="x-small" icon="mdi-delete-outline" color="error" variant="tonal" title="Delete Assignment" @click="confirmDeleteAssignment(asg)" />
-                      <v-chip color="teal" size="small" variant="flat" class="font-weight-bold">
+                    <div class="d-flex align-center flex-wrap ga-1">
+                      <v-chip color="teal" size="small" variant="flat" class="font-weight-bold mr-1">
                         Submissions: {{ getAssignmentSubmissionsCount(asg.id) }}/{{ gradebook.students?.length || 0 }}
                       </v-chip>
+                      <v-btn
+                        size="x-small"
+                        icon="mdi-bell-ring-outline"
+                        color="amber-darken-3"
+                        variant="tonal"
+                        title="Remind Non-Submitters"
+                        @click="openRemindModal(asg)"
+                      />
+                      <v-btn
+                        size="x-small"
+                        icon="mdi-content-copy"
+                        color="teal"
+                        variant="tonal"
+                        title="Duplicate Assignment"
+                        @click="openDuplicateModal(asg)"
+                      />
+                      <v-btn
+                        size="x-small"
+                        icon="mdi-clock-fast"
+                        color="indigo"
+                        variant="tonal"
+                        title="Re-open / Extend Deadline"
+                        @click="openReopenModal(asg)"
+                      />
+                      <v-btn
+                        size="x-small"
+                        icon="mdi-pencil-outline"
+                        color="primary"
+                        variant="tonal"
+                        title="Edit Assignment"
+                        @click="openEditAssignmentModal(asg)"
+                      />
+                      <v-btn
+                        size="x-small"
+                        icon="mdi-delete-outline"
+                        color="error"
+                        variant="tonal"
+                        title="Delete Assignment"
+                        @click="confirmDeleteAssignment(asg)"
+                      />
                     </div>
                   </div>
                 </v-card>
 
                 <div v-if="!gradebook.assignments?.length" class="text-center pa-6 text-caption text-grey border rounded-lg">
-                  No assignments posted for this class yet. Click "1-Click Assign Homework" above!
+                  No assignments posted for this class yet. Click "Assign Homework" above!
+                </div>
+              </div>
+            </v-window-item>
+
+            <!-- Tab 3: Class Analytics & Pronunciation Insights -->
+            <v-window-item value="analytics">
+              <div v-if="isFetchingAnalytics" class="text-center pa-8">
+                <v-progress-circular indeterminate color="primary" />
+                <div class="text-caption font-weight-bold text-grey mt-2">Computing class pronunciation analytics...</div>
+              </div>
+
+              <div v-else-if="analyticsData" class="d-flex flex-column ga-3">
+                <!-- KPI Stat Cards Row -->
+                <v-row dense>
+                  <v-col cols="12" sm="6" md="3">
+                    <div class="pa-3 border rounded-lg bg-indigo-lighten-5">
+                      <div class="text-caption font-weight-bold text-indigo-darken-3">COMPLETION RATE</div>
+                      <div class="text-h5 font-weight-black text-indigo-darken-4 mt-1">
+                        {{ analyticsData.summary?.completion_rate || 0 }}%
+                      </div>
+                      <div class="text-caption text-grey-darken-1 mt-0.5">
+                        {{ analyticsData.summary?.total_submissions || 0 }} total audio recordings
+                      </div>
+                    </div>
+                  </v-col>
+
+                  <v-col cols="12" sm="6" md="3">
+                    <div class="pa-3 border rounded-lg bg-teal-lighten-5">
+                      <div class="text-caption font-weight-bold text-teal-darken-3">CLASS AVERAGE SCORE</div>
+                      <div class="text-h5 font-weight-black text-teal-darken-4 mt-1">
+                        {{ (analyticsData.summary?.class_avg_score || 0).toFixed(1) }}/10
+                      </div>
+                      <div class="text-caption text-grey-darken-1 mt-0.5">
+                        Across {{ analyticsData.summary?.total_assignments || 0 }} active assignments
+                      </div>
+                    </div>
+                  </v-col>
+
+                  <v-col cols="12" sm="6" md="3">
+                    <div class="pa-3 border rounded-lg bg-amber-lighten-5">
+                      <div class="text-caption font-weight-bold text-amber-darken-4">AT-RISK STUDENTS</div>
+                      <div class="text-h5 font-weight-black text-amber-darken-4 mt-1">
+                        {{ analyticsData.summary?.at_risk_count || 0 }}
+                      </div>
+                      <div class="text-caption text-grey-darken-1 mt-0.5">
+                        Missing >= 2 or score &lt; 6.0
+                      </div>
+                    </div>
+                  </v-col>
+
+                  <v-col cols="12" sm="6" md="3">
+                    <div class="pa-3 border rounded-lg bg-purple-lighten-5">
+                      <div class="text-caption font-weight-bold text-purple-darken-3">COHORT SIZE</div>
+                      <div class="text-h5 font-weight-black text-purple-darken-4 mt-1">
+                        {{ analyticsData.summary?.total_students || 0 }}
+                      </div>
+                      <div class="text-caption text-grey-darken-1 mt-0.5">
+                        Enrolled learners in class
+                      </div>
+                    </div>
+                  </v-col>
+                </v-row>
+
+                <!-- Weak Phonemes Diagnostic Breakdown Section -->
+                <div class="border rounded-lg pa-3 bg-white">
+                  <div class="d-flex align-center justify-space-between mb-2">
+                    <div>
+                      <div class="text-subtitle-2 font-weight-black text-secondary d-flex align-center ga-1">
+                        <v-icon size="small" color="secondary">mdi-waveform</v-icon>
+                        <span>PRONUNCIATION TROUBLE SPOTS (TOP WEAK PHONEMES)</span>
+                      </div>
+                      <div class="text-caption text-grey">
+                        Aggregated friction points identified from student audio transcription and phonetic error logs.
+                      </div>
+                    </div>
+                    <v-chip color="indigo" size="small" variant="tonal" class="font-weight-bold">
+                      Diagnostic Insights
+                    </v-chip>
+                  </div>
+
+                  <v-row dense>
+                    <v-col v-for="ph in analyticsData.weak_phonemes" :key="ph.phoneme" cols="12" sm="6" md="4">
+                      <div class="pa-3 border rounded-lg bg-grey-lighten-5 h-100 d-flex flex-column justify-space-between">
+                        <div>
+                          <div class="d-flex align-center justify-space-between mb-1">
+                            <span class="text-h6 font-weight-black text-primary font-mono">{{ ph.phoneme }}</span>
+                            <v-chip size="x-small" :color="ph.error_count > 5 ? 'error' : 'warning'" variant="flat" class="font-weight-bold">
+                              {{ ph.error_count }} Errors
+                            </v-chip>
+                          </div>
+                          <div class="text-caption font-weight-bold text-grey-darken-3">{{ ph.name }}</div>
+                          <div class="d-flex align-center ga-1 flex-wrap my-1.5">
+                            <span class="text-caption text-grey font-weight-bold">Focus:</span>
+                            <v-chip v-for="w in ph.example_words" :key="w" size="x-small" variant="tonal" color="grey-darken-3" class="font-weight-bold">
+                              {{ w }}
+                            </v-chip>
+                          </div>
+                        </div>
+                        <div class="text-caption text-indigo-darken-3 font-weight-medium border-t pt-1 mt-1 bg-white pa-1.5 rounded">
+                          💡 <em>Tip:</em> {{ ph.tip }}
+                        </div>
+                      </div>
+                    </v-col>
+                  </v-row>
+                </div>
+
+                <!-- At-Risk Students Action Table -->
+                <div class="border rounded-lg pa-3 bg-white">
+                  <div class="text-subtitle-2 font-weight-black text-error d-flex align-center ga-1 mb-2">
+                    <v-icon size="small" color="error">mdi-alert-circle</v-icon>
+                    <span>STUDENTS REQUIRING PEDAGOGICAL SUPPORT ({{ analyticsData.at_risk_students?.length || 0 }})</span>
+                  </div>
+
+                  <v-table density="compact" class="border rounded-lg">
+                    <thead>
+                      <tr class="bg-grey-lighten-4">
+                        <th class="font-weight-black text-caption text-secondary">STUDENT</th>
+                        <th class="font-weight-black text-caption text-secondary text-center">MISSING ASSIGNMENTS</th>
+                        <th class="font-weight-black text-caption text-secondary text-center">AVERAGE SCORE</th>
+                        <th class="font-weight-black text-caption text-secondary text-center">RISK LEVEL</th>
+                        <th class="font-weight-black text-caption text-secondary">DIAGNOSTIC REASON</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="st in analyticsData.at_risk_students" :key="st.id">
+                        <td class="font-weight-bold text-body-2">
+                          <div>{{ st.name }}</div>
+                          <div class="text-caption text-grey font-weight-regular">{{ st.email }}</div>
+                        </td>
+                        <td class="text-center font-weight-black text-error">
+                          {{ st.missing_count }}
+                        </td>
+                        <td class="text-center font-weight-black">
+                          {{ st.submitted_count > 0 ? (st.avg_score.toFixed(1) + '/10') : 'No Submissions' }}
+                        </td>
+                        <td class="text-center">
+                          <v-chip size="x-small" :color="st.risk_level === 'HIGH' ? 'error' : 'warning'" variant="flat" class="font-weight-bold">
+                            {{ st.risk_level }}
+                          </v-chip>
+                        </td>
+                        <td class="text-caption text-grey-darken-2">
+                          {{ st.reasons?.join(', ') || 'Needs attention' }}
+                        </td>
+                      </tr>
+                      <tr v-if="!analyticsData.at_risk_students?.length">
+                        <td colspan="5" class="text-center pa-4 text-caption text-success font-weight-bold">
+                          🎉 Excellent! All learners in this class are actively completing homework with strong progress.
+                        </td>
+                      </tr>
+                    </tbody>
+                  </v-table>
+                </div>
+              </div>
+            </v-window-item>
+
+            <!-- Tab 4: Class Noticeboard -->
+            <v-window-item value="noticeboard">
+              <div class="d-flex align-center justify-space-between mb-3">
+                <div>
+                  <div class="text-subtitle-2 font-weight-black text-secondary">CLASS NOTICEBOARD & ANNOUNCEMENTS</div>
+                  <div class="text-caption text-grey">Broadcast homework instructions, schedule updates, and reminders to all students.</div>
+                </div>
+                <v-btn
+                  color="primary"
+                  variant="flat"
+                  size="small"
+                  class="font-weight-black text-none"
+                  prepend-icon="mdi-plus"
+                  @click="showPostAnnouncementModal = true"
+                >
+                  Post Notice
+                </v-btn>
+              </div>
+
+              <div class="d-flex flex-column ga-2">
+                <v-card
+                  v-for="ann in announcements"
+                  :key="ann.id"
+                  border
+                  flat
+                  class="pa-3 rounded-lg"
+                  :class="ann.announcement_type === 'urgent' ? 'bg-red-lighten-5 border-error' : (ann.announcement_type === 'reminder' ? 'bg-amber-lighten-5' : 'bg-grey-lighten-5')"
+                >
+                  <div class="d-flex align-center justify-space-between flex-wrap ga-2">
+                    <div class="d-flex align-center ga-2 flex-wrap">
+                      <span class="text-subtitle-2 font-weight-black text-grey-darken-4">{{ ann.title }}</span>
+                      <v-chip
+                        size="x-small"
+                        :color="ann.announcement_type === 'urgent' ? 'error' : (ann.announcement_type === 'reminder' ? 'amber-darken-4' : 'primary')"
+                        variant="flat"
+                        class="font-weight-bold uppercase"
+                      >
+                        {{ (ann.announcement_type || 'general').toUpperCase() }}
+                      </v-chip>
+                    </div>
+
+                    <div class="d-flex align-center ga-2">
+                      <span class="text-caption text-grey">{{ ann.created_at }}</span>
+                      <v-btn
+                        size="x-small"
+                        icon="mdi-delete-outline"
+                        color="error"
+                        variant="text"
+                        title="Delete Announcement"
+                        @click="confirmDeleteAnnouncement(ann)"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="text-body-2 text-grey-darken-3 mt-1" style="white-space: pre-wrap;">
+                    {{ ann.content }}
+                  </div>
+
+                  <div class="text-caption text-grey mt-2 d-flex align-center ga-1">
+                    <v-icon size="x-small">mdi-account-tie</v-icon>
+                    <span>Posted by {{ ann.teacher_name || 'Teacher Lead' }}</span>
+                  </div>
+                </v-card>
+
+                <div v-if="!announcements.length" class="text-center pa-6 text-caption text-grey border rounded-lg bg-white">
+                  No announcements posted on the noticeboard yet. Click "Post Notice" above to send an update!
                 </div>
               </div>
             </v-window-item>
@@ -783,6 +1061,224 @@
         </div>
       </v-card>
     </v-dialog>
+
+    <!-- Modal: Remind Non-Submitters -->
+    <v-dialog v-model="showRemindModal" max-width="500">
+      <v-card border rounded="lg" class="pa-4 bg-white">
+        <div class="text-subtitle-1 font-weight-black text-amber-darken-4 mb-2 d-flex align-center ga-2">
+          <v-icon color="amber-darken-4">mdi-bell-ring</v-icon>
+          <span>Remind Non-Submitters</span>
+        </div>
+        <div class="text-caption text-grey mb-3">
+          Broadcast a homework submission alert to enrolled students who have not yet submitted recordings for <strong>{{ remindAsg?.title }}</strong>.
+        </div>
+        <v-textarea
+          v-model="remindCustomMessage"
+          label="Custom Reminder Message (Optional):"
+          placeholder="Friendly reminder to submit your pronunciation audio before the deadline..."
+          rows="3"
+          variant="outlined"
+          density="comfortable"
+          class="mb-3"
+        />
+        <div class="d-flex align-center justify-end ga-2">
+          <v-btn variant="text" size="small" class="font-weight-bold text-none" @click="showRemindModal = false">
+            Cancel
+          </v-btn>
+          <v-btn
+            color="amber-darken-4"
+            variant="flat"
+            size="small"
+            class="font-weight-black text-none"
+            :loading="isSendingRemind"
+            @click="submitRemind"
+          >
+            Dispatch Reminder Alert
+          </v-btn>
+        </div>
+      </v-card>
+    </v-dialog>
+
+    <!-- Modal: Duplicate Assignment -->
+    <v-dialog v-model="showDuplicateModal" max-width="500">
+      <v-card border rounded="lg" class="pa-4 bg-white">
+        <div class="text-subtitle-1 font-weight-black text-teal-darken-3 mb-2 d-flex align-center ga-2">
+          <v-icon color="teal">mdi-content-copy</v-icon>
+          <span>Duplicate Assignment</span>
+        </div>
+        <div class="text-caption text-grey mb-3">
+          Clone this assignment prompt and target IPA to the current class or another class you teach.
+        </div>
+        <v-select
+          v-model="dupTargetClassId"
+          :items="classes"
+          item-title="name"
+          item-value="id"
+          label="Target Classroom:"
+          variant="outlined"
+          density="comfortable"
+          class="mb-2"
+        />
+        <v-text-field
+          v-model="dupTitle"
+          label="New Assignment Title:"
+          variant="outlined"
+          density="comfortable"
+          class="mb-2"
+        />
+        <v-text-field
+          v-model="dupDueDate"
+          label="New Due Date (YYYY-MM-DD):"
+          type="date"
+          variant="outlined"
+          density="comfortable"
+          class="mb-3"
+        />
+        <div class="d-flex align-center justify-end ga-2">
+          <v-btn variant="text" size="small" class="font-weight-bold text-none" @click="showDuplicateModal = false">
+            Cancel
+          </v-btn>
+          <v-btn
+            color="teal"
+            variant="flat"
+            size="small"
+            class="font-weight-black text-none"
+            :loading="isDuplicating"
+            @click="submitDuplicate"
+          >
+            Clone Assignment
+          </v-btn>
+        </div>
+      </v-card>
+    </v-dialog>
+
+    <!-- Modal: Re-open / Extend Deadline -->
+    <v-dialog v-model="showReopenModal" max-width="500">
+      <v-card border rounded="lg" class="pa-4 bg-white">
+        <div class="text-subtitle-1 font-weight-black text-indigo-darken-3 mb-2 d-flex align-center ga-2">
+          <v-icon color="indigo">mdi-clock-fast</v-icon>
+          <span>Re-open / Extend Deadline</span>
+        </div>
+        <div class="text-caption text-grey mb-3">
+          Extend the submission window for <strong>{{ reopenAsg?.title }}</strong>. A deadline notice will automatically be posted to the class noticeboard.
+        </div>
+        <v-text-field
+          v-model="reopenDueDate"
+          label="Extended Due Date (YYYY-MM-DD):"
+          type="date"
+          variant="outlined"
+          density="comfortable"
+          class="mb-2"
+        />
+        <v-text-field
+          v-model="reopenNote"
+          label="Extension Note for Students (Optional):"
+          placeholder="Example: Extended by 3 days for revision."
+          variant="outlined"
+          density="comfortable"
+          class="mb-3"
+        />
+        <div class="d-flex align-center justify-end ga-2">
+          <v-btn variant="text" size="small" class="font-weight-bold text-none" @click="showReopenModal = false">
+            Cancel
+          </v-btn>
+          <v-btn
+            color="indigo"
+            variant="flat"
+            size="small"
+            class="font-weight-black text-none"
+            :loading="isReopening"
+            @click="submitReopen"
+          >
+            Confirm Extension
+          </v-btn>
+        </div>
+      </v-card>
+    </v-dialog>
+
+    <!-- Modal: Post Noticeboard Announcement -->
+    <v-dialog v-model="showPostAnnouncementModal" max-width="500">
+      <v-card border rounded="lg" class="pa-4 bg-white">
+        <div class="text-subtitle-1 font-weight-black text-primary mb-2 d-flex align-center ga-2">
+          <v-icon color="primary">mdi-bullhorn</v-icon>
+          <span>Post Class Announcement</span>
+        </div>
+        <v-text-field
+          v-model="postAnnTitle"
+          label="Notice Title:"
+          placeholder="Example: Homework Schedule Update"
+          variant="outlined"
+          density="comfortable"
+          class="mb-2"
+        />
+        <v-select
+          v-model="postAnnType"
+          :items="[
+            { title: 'General Notice', value: 'general' },
+            { title: 'Urgent Alert', value: 'urgent' },
+            { title: 'Homework Reminder', value: 'reminder' }
+          ]"
+          item-title="title"
+          item-value="value"
+          label="Category:"
+          variant="outlined"
+          density="comfortable"
+          class="mb-2"
+        />
+        <v-textarea
+          v-model="postAnnContent"
+          label="Announcement Content:"
+          placeholder="Write your announcement message for students..."
+          rows="4"
+          variant="outlined"
+          density="comfortable"
+          class="mb-3"
+        />
+        <div class="d-flex align-center justify-end ga-2">
+          <v-btn variant="text" size="small" class="font-weight-bold text-none" @click="showPostAnnouncementModal = false">
+            Cancel
+          </v-btn>
+          <v-btn
+            color="primary"
+            variant="flat"
+            size="small"
+            class="font-weight-black text-none"
+            :loading="isPostingAnn"
+            @click="submitPostAnnouncement"
+          >
+            Publish Notice
+          </v-btn>
+        </div>
+      </v-card>
+    </v-dialog>
+
+    <!-- Modal: Delete Announcement Confirmation -->
+    <v-dialog v-model="showDeleteAnnouncementModal" max-width="420">
+      <v-card border rounded="lg" class="pa-4 bg-white">
+        <div class="text-subtitle-1 font-weight-black text-error mb-2 d-flex align-center ga-2">
+          <v-icon color="error">mdi-alert</v-icon>
+          <span>Confirm Delete Notice</span>
+        </div>
+        <div class="text-body-2 text-grey-darken-3 mb-4">
+          Are you sure you want to delete this notice? It will no longer appear on the student noticeboard.
+        </div>
+        <div class="d-flex align-center justify-end ga-2">
+          <v-btn variant="text" size="small" class="font-weight-bold text-none" @click="showDeleteAnnouncementModal = false">
+            Cancel
+          </v-btn>
+          <v-btn
+            color="error"
+            variant="flat"
+            size="small"
+            class="font-weight-black text-none"
+            :loading="isDeletingAnn"
+            @click="submitDeleteAnnouncement"
+          >
+            Delete Notice
+          </v-btn>
+        </div>
+      </v-card>
+    </v-dialog>
     </div>
   </v-container>
 </template>
@@ -893,6 +1389,43 @@ const newClassName = ref('')
 const newClassGrade = ref('Elementary (Grades 1 - 5)')
 const isCreatingClass = ref(false)
 
+// P2 Analytics & Insights state
+const analyticsData = ref(null)
+const isFetchingAnalytics = ref(false)
+
+// P2 Noticeboard state
+const announcements = ref([])
+const isFetchingAnnouncements = ref(false)
+const showPostAnnouncementModal = ref(false)
+const postAnnTitle = ref('')
+const postAnnContent = ref('')
+const postAnnType = ref('general')
+const isPostingAnn = ref(false)
+const showDeleteAnnouncementModal = ref(false)
+const annToDelete = ref(null)
+const isDeletingAnn = ref(false)
+
+// P2 Remind Non-Submitters state
+const showRemindModal = ref(false)
+const remindAsg = ref(null)
+const remindCustomMessage = ref('')
+const isSendingRemind = ref(false)
+
+// P2 Duplicate Assignment state
+const showDuplicateModal = ref(false)
+const duplicateAsg = ref(null)
+const dupTargetClassId = ref(null)
+const dupTitle = ref('')
+const dupDueDate = ref('')
+const isDuplicating = ref(false)
+
+// P2 Reopen / Extend Deadline state
+const showReopenModal = ref(false)
+const reopenAsg = ref(null)
+const reopenDueDate = ref('')
+const reopenNote = ref('')
+const isReopening = ref(false)
+
 const showQrModal = ref(false)
 const qrClass = ref(null)
 
@@ -906,40 +1439,57 @@ const getQrCodeUrl = (joinCode) => {
   return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(fullLink)}`
 }
 
-const exportGradebookCSV = () => {
-  if (!filteredStudents.value || filteredStudents.value.length === 0) {
-    notify('No student roster records to export.', 'warning', 'mdi-alert-circle')
+const exportGradebookCSV = async () => {
+  if (!selectedClassId.value) {
+    notify('Please select a classroom first.', 'warning')
     return
   }
-
   const selectedClassName = selectedClass.value ? selectedClass.value.name : 'Class'
-  const headers = ['"Họ và Tên"', '"Email"', '"Số Bài Nộp"', '"Điểm Trung Bình (10)"', '"Đánh Giá Xếp Loại"']
-  
-  const rows = filteredStudents.value.map(std => {
-    const name = `"${(std.name || 'Học sinh').replace(/"/g, '""')}"`
+
+  try {
+    const res = await fetch(`${props.backendUrl}/api/classes/${selectedClassId.value}/export-gradebook`, {
+      headers: getTeacherAuthHeaders()
+    })
+    if (res.ok) {
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      const dateStr = new Date().toISOString().slice(0, 10)
+      link.setAttribute('href', url)
+      link.setAttribute('download', `Gradebook_${selectedClassName.replace(/[^a-zA-Z0-9]/g, '_')}_${dateStr}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      notify(`Official Gradebook exported for ${selectedClassName}!`, 'success', 'mdi-file-excel')
+      return
+    }
+  } catch (err) {
+    console.warn('Backend CSV export failed, falling back to client generation', err)
+  }
+
+  // Fallback client CSV in 100% Academic English
+  const headers = ['"Student Name"', '"Email"', '"Submissions"', '"Average Score (/10)"', '"Academic Standing"']
+  const rows = (filteredStudents.value || []).map(std => {
+    const name = `"${(std.name || 'Learner').replace(/"/g, '""')}"`
     const email = `"${(std.email || '--').replace(/"/g, '""')}"`
     const count = std.submission_count || std.total_submissions || 0
     const scoreNum = std.avg_score || 0
-    const scoreVal = scoreNum.toFixed(1).replace('.', ',')
-    let tier = '"Cần cố gắng"'
-    if (scoreNum >= 8.5) tier = '"Xuất sắc"'
-    else if (scoreNum >= 7.0) tier = '"Giỏi"'
-    else if (scoreNum >= 5.0) tier = '"Khá"'
-    
-    return [name, email, count, `"${scoreVal}"`, tier].join(',')
+    let standing = '"Needs Support"'
+    if (scoreNum >= 8.5) standing = '"High Distinction"'
+    else if (scoreNum >= 7.0) standing = '"Proficient"'
+    else if (scoreNum >= 5.0) standing = '"Developing"'
+    return [name, email, count, `"${scoreNum.toFixed(1)}"`, standing].join(',')
   })
-
   const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n')
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   const dateStr = new Date().toISOString().slice(0, 10)
   link.setAttribute('href', url)
-  link.setAttribute('download', `BangDiem_${selectedClassName.replace(/[^a-zA-Z0-9]/g, '_')}_${dateStr}.csv`)
+  link.setAttribute('download', `Gradebook_${selectedClassName.replace(/[^a-zA-Z0-9]/g, '_')}_${dateStr}.csv`)
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
-
   notify(`Gradebook exported successfully for ${selectedClassName}!`, 'success', 'mdi-file-excel')
 }
 
@@ -1184,6 +1734,41 @@ const fetchClasses = async () => {
   }
 }
 
+const fetchClassAnalytics = async (classId) => {
+  if (!classId) return
+  isFetchingAnalytics.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/classes/${classId}/analytics`, {
+      headers: getTeacherAuthHeaders()
+    })
+    if (res.ok) {
+      analyticsData.value = await res.json()
+    }
+  } catch (err) {
+    console.error('Fetch analytics error:', err)
+  } finally {
+    isFetchingAnalytics.value = false
+  }
+}
+
+const fetchClassAnnouncements = async (classId) => {
+  if (!classId) return
+  isFetchingAnnouncements.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/classes/${classId}/announcements`, {
+      headers: getTeacherAuthHeaders()
+    })
+    if (res.ok) {
+      const data = await res.json()
+      announcements.value = data.announcements || []
+    }
+  } catch (err) {
+    console.error('Fetch announcements error:', err)
+  } finally {
+    isFetchingAnnouncements.value = false
+  }
+}
+
 const selectClass = async (classId) => {
   selectedClassId.value = classId
   try {
@@ -1199,6 +1784,177 @@ const selectClass = async (classId) => {
     }
   } catch (err) {
     console.error('Fetch gradebook error:', err)
+  }
+  await Promise.all([
+    fetchClassAnalytics(classId),
+    fetchClassAnnouncements(classId)
+  ])
+}
+
+// Remind handlers
+const openRemindModal = (asg) => {
+  remindAsg.value = asg
+  remindCustomMessage.value = ''
+  showRemindModal.value = true
+}
+
+const submitRemind = async () => {
+  if (!remindAsg.value) return
+  isSendingRemind.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/assignments/${remindAsg.value.id}/remind`, {
+      method: 'POST',
+      headers: getTeacherAuthHeaders(),
+      body: JSON.stringify({ custom_message: remindCustomMessage.value.trim() })
+    })
+    if (res.ok) {
+      const data = await res.json()
+      showRemindModal.value = false
+      notify(`Reminder sent to ${data.reminded_count} non-submitter students!`, 'success', 'mdi-bell-ring')
+      await fetchClassAnnouncements(selectedClassId.value)
+    } else {
+      const err = await res.json()
+      notify(err.detail || 'Failed to dispatch reminders.', 'error')
+    }
+  } catch (e) {
+    notify('Reminder dispatch error: ' + e.message, 'error')
+  } finally {
+    isSendingRemind.value = false
+  }
+}
+
+// Duplicate handlers
+const openDuplicateModal = (asg) => {
+  duplicateAsg.value = asg
+  dupTargetClassId.value = selectedClassId.value
+  dupTitle.value = `Copy of ${asg.title}`
+  const future = new Date()
+  future.setDate(future.getDate() + 7)
+  dupDueDate.value = future.toISOString().slice(0, 10)
+  showDuplicateModal.value = true
+}
+
+const submitDuplicate = async () => {
+  if (!duplicateAsg.value || !dupTitle.value.trim()) return
+  isDuplicating.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/assignments/${duplicateAsg.value.id}/duplicate`, {
+      method: 'POST',
+      headers: getTeacherAuthHeaders(),
+      body: JSON.stringify({
+        target_class_id: dupTargetClassId.value,
+        new_title: dupTitle.value.trim(),
+        new_due_date: dupDueDate.value
+      })
+    })
+    if (res.ok) {
+      showDuplicateModal.value = false
+      notify('Assignment duplicated successfully!', 'success', 'mdi-content-copy')
+      await selectClass(selectedClassId.value)
+    } else {
+      const err = await res.json()
+      notify(err.detail || 'Failed to duplicate assignment.', 'error')
+    }
+  } catch (e) {
+    notify('Duplicate error: ' + e.message, 'error')
+  } finally {
+    isDuplicating.value = false
+  }
+}
+
+// Re-open handlers
+const openReopenModal = (asg) => {
+  reopenAsg.value = asg
+  const future = new Date()
+  future.setDate(future.getDate() + 3)
+  reopenDueDate.value = asg.due_date || future.toISOString().slice(0, 10)
+  reopenNote.value = ''
+  showReopenModal.value = true
+}
+
+const submitReopen = async () => {
+  if (!reopenAsg.value || !reopenDueDate.value) return
+  isReopening.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/assignments/${reopenAsg.value.id}/reopen`, {
+      method: 'POST',
+      headers: getTeacherAuthHeaders(),
+      body: JSON.stringify({
+        new_due_date: reopenDueDate.value,
+        extension_note: reopenNote.value.trim()
+      })
+    })
+    if (res.ok) {
+      showReopenModal.value = false
+      notify(`Deadline extended to ${reopenDueDate.value}!`, 'success', 'mdi-clock-fast')
+      await selectClass(selectedClassId.value)
+    } else {
+      const err = await res.json()
+      notify(err.detail || 'Failed to extend deadline.', 'error')
+    }
+  } catch (e) {
+    notify('Extension error: ' + e.message, 'error')
+  } finally {
+    isReopening.value = false
+  }
+}
+
+// Noticeboard handlers
+const submitPostAnnouncement = async () => {
+  if (!postAnnTitle.value.trim() || !postAnnContent.value.trim() || !selectedClassId.value) return
+  isPostingAnn.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/classes/${selectedClassId.value}/announcements`, {
+      method: 'POST',
+      headers: getTeacherAuthHeaders(),
+      body: JSON.stringify({
+        title: postAnnTitle.value.trim(),
+        content: postAnnContent.value.trim(),
+        announcement_type: postAnnType.value
+      })
+    })
+    if (res.ok) {
+      showPostAnnouncementModal.value = false
+      postAnnTitle.value = ''
+      postAnnContent.value = ''
+      notify('Notice posted to classroom noticeboard!', 'success', 'mdi-bullhorn')
+      await fetchClassAnnouncements(selectedClassId.value)
+    } else {
+      const err = await res.json()
+      notify(err.detail || 'Failed to publish notice.', 'error')
+    }
+  } catch (e) {
+    notify('Publish notice error: ' + e.message, 'error')
+  } finally {
+    isPostingAnn.value = false
+  }
+}
+
+const confirmDeleteAnnouncement = (ann) => {
+  annToDelete.value = ann
+  showDeleteAnnouncementModal.value = true
+}
+
+const submitDeleteAnnouncement = async () => {
+  if (!annToDelete.value || !selectedClassId.value) return
+  isDeletingAnn.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/classes/${selectedClassId.value}/announcements/${annToDelete.value.id}`, {
+      method: 'DELETE',
+      headers: getTeacherAuthHeaders()
+    })
+    if (res.ok) {
+      showDeleteAnnouncementModal.value = false
+      notify('Announcement deleted from noticeboard.', 'info')
+      await fetchClassAnnouncements(selectedClassId.value)
+    } else {
+      const err = await res.json()
+      notify(err.detail || 'Failed to delete announcement.', 'error')
+    }
+  } catch (e) {
+    notify('Delete error: ' + e.message, 'error')
+  } finally {
+    isDeletingAnn.value = false
   }
 }
 

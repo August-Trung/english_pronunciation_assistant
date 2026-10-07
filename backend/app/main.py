@@ -17,7 +17,7 @@ except ImportError:
         hash_password, verify_password, create_access_token, decode_access_token,
         extract_bearer_token, get_current_user_from_db, record_audit_log
     )
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydub import AudioSegment
@@ -1806,6 +1806,32 @@ def init_db():
         cursor.execute("UPDATE classrooms SET is_archived = 0 WHERE is_archived IS NULL")
         cursor.execute("UPDATE users SET status = 'active' WHERE status IS NULL OR status = ''")
 
+        # P2: Class Announcements & Noticeboard
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS class_announcements (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                class_id INTEGER NOT NULL,
+                teacher_id INTEGER NOT NULL,
+                title TEXT NOT NULL,
+                content TEXT NOT NULL,
+                announcement_type TEXT DEFAULT 'general',
+                assignment_id INTEGER,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                IsXoa INTEGER DEFAULT 0
+            )
+        ''')
+
+        # P2 Migrations: Assignment status & class_announcements IsXoa
+        try:
+            cursor.execute("ALTER TABLE assignments ADD COLUMN status TEXT DEFAULT 'active'")
+        except Exception:
+            pass
+        try:
+            cursor.execute("ALTER TABLE class_announcements ADD COLUMN IsXoa INTEGER DEFAULT 0")
+        except Exception:
+            pass
+        cursor.execute("UPDATE assignments SET status = 'active' WHERE status IS NULL OR status = ''")
+
         # Super Admin Default Initialization (Owner Account)
         cursor.execute("SELECT id FROM users WHERE role = 'super_admin'")
         if not cursor.fetchone():
@@ -1921,6 +1947,111 @@ def require_educator_or_admin(current_user: dict = Depends(get_current_authentic
     if current_user.get("role") not in ["teacher", "admin", "super_admin"]:
         raise HTTPException(status_code=403, detail="Educator privileges required.")
     return current_user
+
+def verify_class_access(class_id: int, current_user: dict, require_write: bool = False) -> dict:
+    """
+    Verifies that current_user has legitimate access to classroom class_id:
+    - super_admin: access to all classes across all schools
+    - admin: access to all classes in their tenant
+    - teacher: access to classrooms where teacher_id == current_user.id
+    Raises HTTPException(404) if not found or deleted.
+    Raises HTTPException(403) if unauthorized or cross-tenant.
+    Returns classroom dictionary.
+    """
+    conn = sqlite3.connect(DB_PATH, timeout=20.0)
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id, name, teacher_id, tenant_id, COALESCE(is_archived, 0), join_code, grade_level
+        FROM classrooms
+        WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)
+    """, (class_id,))
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail=f"Classroom {class_id} not found.")
+
+    cls_dict = {
+        "id": row[0],
+        "name": row[1],
+        "teacher_id": row[2],
+        "tenant_id": str(row[3]) if row[3] is not None else None,
+        "is_archived": row[4],
+        "join_code": row[5],
+        "grade_level": row[6]
+    }
+
+    role = current_user.get("role")
+    u_id = current_user.get("id")
+    u_tenant = current_user.get("tenant_id")
+
+    if role == "super_admin":
+        return cls_dict
+
+    if role == "admin":
+        if cls_dict["tenant_id"] and u_tenant and str(cls_dict["tenant_id"]) != str(u_tenant):
+            raise HTTPException(status_code=403, detail="Forbidden: Classroom belongs to another school institution.")
+        return cls_dict
+
+    if role == "teacher":
+        if cls_dict["teacher_id"] != u_id:
+            raise HTTPException(status_code=403, detail="Forbidden: You do not have ownership of this classroom.")
+        return cls_dict
+
+    raise HTTPException(status_code=403, detail="Forbidden: Insufficient privileges.")
+
+def verify_assignment_access(assignment_id: int, current_user: dict, require_write: bool = False) -> dict:
+    """
+    Verifies access to an assignment by checking permissions on its parent classroom.
+    Raises HTTPException(404) if not found or deleted.
+    Raises HTTPException(403) if unauthorized.
+    Returns assignment dict with classroom details.
+    """
+    conn = sqlite3.connect(DB_PATH, timeout=20.0)
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT a.id, a.class_id, a.teacher_id, a.title, a.topic_sentence, a.target_ipa, a.due_date,
+               COALESCE(a.status, 'active'), c.tenant_id, c.name, COALESCE(c.is_archived, 0)
+        FROM assignments a
+        JOIN classrooms c ON a.class_id = c.id
+        WHERE a.id = ? AND (a.IsXoa IS NULL OR a.IsXoa = 0) AND (c.IsXoa IS NULL OR c.IsXoa = 0)
+    """, (assignment_id,))
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail=f"Assignment {assignment_id} not found.")
+
+    asg_dict = {
+        "id": row[0],
+        "class_id": row[1],
+        "teacher_id": row[2],
+        "title": row[3],
+        "topic_sentence": row[4],
+        "target_ipa": row[5],
+        "due_date": row[6],
+        "status": row[7],
+        "tenant_id": str(row[8]) if row[8] is not None else None,
+        "class_name": row[9],
+        "is_archived": row[10]
+    }
+
+    role = current_user.get("role")
+    u_id = current_user.get("id")
+    u_tenant = current_user.get("tenant_id")
+
+    if role == "super_admin":
+        return asg_dict
+
+    if role == "admin":
+        if asg_dict["tenant_id"] and u_tenant and str(asg_dict["tenant_id"]) != str(u_tenant):
+            raise HTTPException(status_code=403, detail="Forbidden: Assignment belongs to another school institution.")
+        return asg_dict
+
+    if role == "teacher":
+        if asg_dict["teacher_id"] != u_id:
+            raise HTTPException(status_code=403, detail="Forbidden: You do not have ownership of this assignment.")
+        return asg_dict
+
+    raise HTTPException(status_code=403, detail="Forbidden: Insufficient privileges.")
 
 def calculate_user_streak(user_id: int, cursor) -> int:
     """Calculate the consecutive day learning streak for a user from their practice history."""
@@ -2390,25 +2521,38 @@ def get_recommended_practice(user_id: int):
 # ==========================================
 
 class CreateClassRequest(BaseModel):
-    teacher_id: int
+    teacher_id: Optional[int] = None
     name: str
     grade_level: str = "Elementary (Grades 1 - 5)"
 
 @app.post("/api/classes/create")
-def create_class(req: CreateClassRequest):
+def create_class(
+    req: CreateClassRequest,
+    current_user: dict = Depends(require_educator_or_admin)
+):
     try:
+        if current_user.get("role") == "teacher":
+            teacher_id = current_user.get("id")
+        else:
+            teacher_id = req.teacher_id or current_user.get("id")
+            
+        tenant_id = current_user.get("tenant_id")
         join_code = f"CLS-{random.randint(100, 999)}-{random.randint(10, 99)}"
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
         cursor.execute(
-            "INSERT INTO classrooms (teacher_id, name, grade_level, join_code) VALUES (?, ?, ?, ?)",
-            (req.teacher_id, req.name, req.grade_level, join_code)
+            "INSERT INTO classrooms (teacher_id, tenant_id, name, grade_level, join_code, is_archived) VALUES (?, ?, ?, ?, ?, 0)",
+            (teacher_id, tenant_id, req.name.strip(), req.grade_level.strip(), join_code)
         )
         conn.commit()
         class_id = cursor.lastrowid
+        record_audit_log(cursor, current_user.get("id"), "CREATE", "classroom", str(class_id), tenant_id, f"Created classroom {req.name}")
+        conn.commit()
         conn.close()
         export_db_to_json()
         return {"status": "success", "class_id": class_id, "join_code": join_code, "name": req.name}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -2417,32 +2561,48 @@ class UpdateClassRequest(BaseModel):
     grade_level: str = "Elementary (Grades 1 - 5)"
 
 @app.post("/api/classes/{class_id}/update")
-def update_class(class_id: int, req: UpdateClassRequest):
+def update_class(
+    class_id: int,
+    req: UpdateClassRequest,
+    current_user: dict = Depends(require_educator_or_admin)
+):
     try:
+        cls_info = verify_class_access(class_id, current_user, require_write=True)
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
         cursor.execute(
             "UPDATE classrooms SET name = ?, grade_level = ? WHERE id = ?",
             (req.name.strip(), req.grade_level.strip(), class_id)
         )
+        record_audit_log(cursor, current_user.get("id"), "UPDATE", "classroom", str(class_id), cls_info.get("tenant_id"), f"Updated classroom {req.name}")
         conn.commit()
         conn.close()
         export_db_to_json()
         return {"status": "success", "class_id": class_id, "name": req.name, "grade_level": req.grade_level}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.delete("/api/classes/{class_id}")
-def delete_class(class_id: int):
+def delete_class(
+    class_id: int,
+    current_user: dict = Depends(require_educator_or_admin)
+):
     try:
+        cls_info = verify_class_access(class_id, current_user, require_write=True)
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
         cursor.execute("UPDATE classrooms SET IsXoa = 1 WHERE id = ?", (class_id,))
         cursor.execute("UPDATE class_enrollments SET IsXoa = 1 WHERE class_id = ?", (class_id,))
+        cursor.execute("UPDATE assignments SET IsXoa = 1 WHERE class_id = ?", (class_id,))
+        record_audit_log(cursor, current_user.get("id"), "DELETE", "classroom", str(class_id), cls_info.get("tenant_id"), f"Deleted classroom {cls_info['name']}")
         conn.commit()
         conn.close()
         export_db_to_json()
         return {"status": "success", "message": f"Classroom {class_id} deleted."}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -2450,18 +2610,39 @@ class RemoveStudentRequest(BaseModel):
     student_id: int
 
 @app.post("/api/classes/{class_id}/remove-student")
-def remove_student_from_class(class_id: int, req: RemoveStudentRequest):
+def remove_student_from_class(
+    class_id: int,
+    req: RemoveStudentRequest,
+    current_user: dict = Depends(require_educator_or_admin)
+):
     try:
+        cls_info = verify_class_access(class_id, current_user, require_write=True)
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
         cursor.execute(
             "DELETE FROM class_enrollments WHERE class_id = ? AND student_id = ?",
             (class_id, req.student_id)
         )
+        
+        # Free seat if no remaining classes in this tenant
+        tenant_id = cls_info.get("tenant_id")
+        if tenant_id:
+            cursor.execute("""
+                SELECT ce.id FROM class_enrollments ce
+                JOIN classrooms c ON ce.class_id = c.id
+                WHERE ce.student_id = ? AND c.tenant_id = ? AND (ce.IsXoa IS NULL OR ce.IsXoa = 0)
+                LIMIT 1
+            """, (req.student_id, tenant_id))
+            if not cursor.fetchone():
+                cursor.execute("UPDATE users SET tenant_id = NULL WHERE id = ? AND tenant_id = ?", (req.student_id, tenant_id))
+
+        record_audit_log(cursor, current_user.get("id"), "REMOVE_STUDENT", "classroom", str(class_id), tenant_id, f"Removed student {req.student_id} from class {cls_info['name']}")
         conn.commit()
         conn.close()
         export_db_to_json()
         return {"status": "success", "message": f"Student {req.student_id} removed from classroom {class_id}."}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -2652,27 +2833,26 @@ def get_student_classes(student_id: int):
         return {"classes": [], "error": str(e)}
 
 @app.get("/api/classes/{class_id}/gradebook")
-def get_class_gradebook(class_id: int):
+def get_class_gradebook(
+    class_id: int,
+    current_user: dict = Depends(require_educator_or_admin)
+):
     try:
+        cls_info = verify_class_access(class_id, current_user)
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
         
-        cursor.execute("SELECT id, name, grade_level, join_code FROM classrooms WHERE id = ?", (class_id,))
-        cls_row = cursor.fetchone()
-        if not cls_row:
-            conn.close()
-            raise HTTPException(status_code=404, detail="Classroom not found")
-            
         cursor.execute("""
             SELECT u.id, u.name, u.email, u.avatar
             FROM class_enrollments e
             JOIN users u ON e.student_id = u.id
             WHERE e.class_id = ? AND (e.IsXoa IS NULL OR e.IsXoa = 0)
+            ORDER BY u.name ASC
         """, (class_id,))
         students_rows = cursor.fetchall()
         
         cursor.execute("""
-            SELECT id, title, topic_sentence, target_ipa, due_date, created_at
+            SELECT id, title, topic_sentence, target_ipa, due_date, created_at, COALESCE(status, 'active')
             FROM assignments
             WHERE class_id = ? AND (IsXoa IS NULL OR IsXoa = 0)
             ORDER BY id DESC
@@ -2690,7 +2870,7 @@ def get_class_gradebook(class_id: int):
         conn.close()
         
         students = [{"id": r[0], "name": r[1] or f"Learner #{r[0]}", "email": r[2], "avatar": r[3]} for r in students_rows]
-        assignments = [{"id": r[0], "title": r[1], "topic_sentence": r[2], "target_ipa": r[3], "due_date": r[4], "created_at": r[5]} for r in assignment_rows]
+        assignments = [{"id": r[0], "title": r[1], "topic_sentence": r[2], "target_ipa": r[3], "due_date": r[4], "created_at": r[5], "status": r[6]} for r in assignment_rows]
         submissions = [{
             "id": r[0], "assignment_id": r[1], "student_id": r[2], "student_name": r[3],
             "audio_url": r[4], "transcribed_text": r[5], "score": r[6], "ipa_json": r[7],
@@ -2698,7 +2878,13 @@ def get_class_gradebook(class_id: int):
         } for r in sub_rows]
         
         return {
-            "classroom": {"id": cls_row[0], "name": cls_row[1], "grade_level": cls_row[2], "join_code": cls_row[3]},
+            "classroom": {
+                "id": cls_info["id"],
+                "name": cls_info["name"],
+                "grade_level": cls_info["grade_level"],
+                "join_code": cls_info["join_code"],
+                "is_archived": cls_info["is_archived"]
+            },
             "students": students,
             "assignments": assignments,
             "submissions": submissions
@@ -2710,26 +2896,37 @@ def get_class_gradebook(class_id: int):
 
 class CreateAssignmentRequest(BaseModel):
     class_id: int
-    teacher_id: int
+    teacher_id: Optional[int] = None
     title: str
     topic_sentence: str
     target_ipa: str = ""
     due_date: str = ""
 
 @app.post("/api/assignments/create")
-def create_assignment(req: CreateAssignmentRequest):
+def create_assignment(
+    req: CreateAssignmentRequest,
+    current_user: dict = Depends(require_educator_or_admin)
+):
     try:
+        cls_info = verify_class_access(req.class_id, current_user, require_write=True)
+        teacher_id = current_user.get("id") if current_user.get("role") == "teacher" else (req.teacher_id or cls_info["teacher_id"])
+        tenant_id = cls_info.get("tenant_id")
+        
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
         cursor.execute(
-            "INSERT INTO assignments (class_id, teacher_id, title, topic_sentence, target_ipa, due_date) VALUES (?, ?, ?, ?, ?, ?)",
-            (req.class_id, req.teacher_id, req.title, req.topic_sentence, req.target_ipa, req.due_date)
+            "INSERT INTO assignments (class_id, teacher_id, tenant_id, title, topic_sentence, target_ipa, due_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'active')",
+            (req.class_id, teacher_id, tenant_id, req.title.strip(), req.topic_sentence.strip(), req.target_ipa.strip(), req.due_date.strip())
         )
         conn.commit()
         assignment_id = cursor.lastrowid
+        record_audit_log(cursor, current_user.get("id"), "CREATE", "assignment", str(assignment_id), tenant_id, f"Created assignment {req.title} for class {cls_info['name']}")
+        conn.commit()
         conn.close()
         export_db_to_json()
         return {"status": "success", "assignment_id": assignment_id}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -2740,8 +2937,13 @@ class UpdateAssignmentRequest(BaseModel):
     due_date: str = ""
 
 @app.post("/api/assignments/{assignment_id}/update")
-def update_assignment(assignment_id: int, req: UpdateAssignmentRequest):
+def update_assignment(
+    assignment_id: int,
+    req: UpdateAssignmentRequest,
+    current_user: dict = Depends(require_educator_or_admin)
+):
     try:
+        asg_info = verify_assignment_access(assignment_id, current_user, require_write=True)
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
         cursor.execute("""
@@ -2749,25 +2951,592 @@ def update_assignment(assignment_id: int, req: UpdateAssignmentRequest):
             SET title = ?, topic_sentence = ?, target_ipa = ?, due_date = ?
             WHERE id = ?
         """, (req.title.strip(), req.topic_sentence.strip(), req.target_ipa.strip(), req.due_date.strip(), assignment_id))
+        record_audit_log(cursor, current_user.get("id"), "UPDATE", "assignment", str(assignment_id), asg_info.get("tenant_id"), f"Updated assignment {req.title}")
         conn.commit()
         conn.close()
         export_db_to_json()
         return {"status": "success", "assignment_id": assignment_id}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.delete("/api/assignments/{assignment_id}")
-def delete_assignment(assignment_id: int):
+def delete_assignment(
+    assignment_id: int,
+    current_user: dict = Depends(require_educator_or_admin)
+):
     try:
+        asg_info = verify_assignment_access(assignment_id, current_user, require_write=True)
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
         cursor.execute("UPDATE assignments SET IsXoa = 1 WHERE id = ?", (assignment_id,))
+        record_audit_log(cursor, current_user.get("id"), "DELETE", "assignment", str(assignment_id), asg_info.get("tenant_id"), f"Deleted assignment {asg_info['title']}")
         conn.commit()
         conn.close()
         export_db_to_json()
         return {"status": "success", "message": f"Assignment {assignment_id} deleted."}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+# ==========================================
+# P2: TEACHER ANALYTICS & INSIGHTS ENGINE
+# ==========================================
+
+COMMON_PHONEMIC_PROFILES = [
+    {"phoneme": "/θ/", "symbol": "θ", "name": "Voiceless dental fricative", "keywords": ["think", "mouth", "healthy", "three", "both", "path", "thought"], "tip": "Place tip of tongue between upper and lower teeth without biting, blow air softly."},
+    {"phoneme": "/ð/", "symbol": "ð", "name": "Voiced dental fricative", "keywords": ["this", "that", "brother", "breathe", "weather", "together", "father"], "tip": "Touch upper teeth with tongue tip and vibrate vocal cords."},
+    {"phoneme": "/r/", "symbol": "r", "name": "Alveolar approximant (r)", "keywords": ["right", "world", "read", "practice", "pronounce", "great", "correct"], "tip": "Curl tongue tip back towards palate without touching the roof of mouth."},
+    {"phoneme": "/æ/", "symbol": "æ", "name": "Near-open front vowel (short a)", "keywords": ["cat", "apple", "standard", "practice", "academic", "habit", "action"], "tip": "Drop jaw wide, flatten tongue low in mouth."},
+    {"phoneme": "/ʃ/", "symbol": "ʃ", "name": "Voiceless postalveolar fricative (sh)", "keywords": ["she", "ship", "nation", "action", "special", "english", "sure"], "tip": "Round lips slightly, arch middle of tongue and release friction."},
+    {"phoneme": "/tʃ/", "symbol": "tʃ", "name": "Voiceless postalveolar affricate (ch)", "keywords": ["chair", "child", "nature", "catch", "teach", "future", "choose"], "tip": "Press tongue firmly on alveolar ridge and release with sharp burst."},
+    {"phoneme": "/dʒ/", "symbol": "dʒ", "name": "Voiced postalveolar affricate (j)", "keywords": ["job", "jump", "general", "language", "bridge", "age", "major"], "tip": "Voiced counterpart of /tʃ/, vibrate vocal cords on release."},
+    {"phoneme": "/ŋ/", "symbol": "ŋ", "name": "Velar nasal (ng)", "keywords": ["sing", "morning", "english", "talking", "reading", "working", "ring"], "tip": "Raise back of tongue against soft palate, let air resonate through nose."},
+    {"phoneme": "/v/", "symbol": "v", "name": "Voiced labiodental fricative (v)", "keywords": ["very", "voice", "live", "every", "give", "improve", "value"], "tip": "Place top teeth gently on bottom lip and voice continuously."},
+    {"phoneme": "/z/", "symbol": "z", "name": "Voiced alveolar fricative (z)", "keywords": ["is", "was", "music", "easy", "these", "reason", "phrase"], "tip": "Like /s/ but with vocal chords humming continuously."}
+]
+
+@app.get("/api/classes/{class_id}/analytics")
+def get_class_analytics(
+    class_id: int,
+    current_user: dict = Depends(require_educator_or_admin)
+):
+    try:
+        cls_info = verify_class_access(class_id, current_user)
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        
+        # 1. Enrolled students
+        cursor.execute("""
+            SELECT u.id, u.name, u.email
+            FROM class_enrollments e
+            JOIN users u ON e.student_id = u.id
+            WHERE e.class_id = ? AND (e.IsXoa IS NULL OR e.IsXoa = 0)
+            ORDER BY u.name ASC
+        """, (class_id,))
+        students = cursor.fetchall()
+        total_students = len(students)
+        student_ids = [s[0] for s in students]
+        
+        # 2. Active assignments
+        cursor.execute("""
+            SELECT id, title, topic_sentence, target_ipa, due_date
+            FROM assignments
+            WHERE class_id = ? AND (IsXoa IS NULL OR IsXoa = 0)
+            ORDER BY id DESC
+        """, (class_id,))
+        assignments = cursor.fetchall()
+        total_assignments = len(assignments)
+        
+        # 3. Submissions in this class
+        cursor.execute("""
+            SELECT s.id, s.assignment_id, s.student_id, s.student_name, s.score,
+                   s.transcribed_text, s.submitted_at
+            FROM submissions s
+            JOIN assignments a ON s.assignment_id = a.id
+            WHERE a.class_id = ? AND (s.IsXoa IS NULL OR s.IsXoa = 0)
+        """, (class_id,))
+        submissions = cursor.fetchall()
+        total_submissions = len(submissions)
+        
+        # Calculate completion rate and class average score
+        expected_subs = total_students * total_assignments
+        completion_rate = round((total_submissions / max(1, expected_subs)) * 100, 1) if expected_subs > 0 else 0.0
+        scores = [s[4] for s in submissions if s[4] is not None]
+        class_avg_score = round(sum(scores) / len(scores), 1) if scores else 0.0
+        
+        # 4. Per-assignment breakdown
+        assignments_breakdown = []
+        for asg in assignments:
+            asg_id = asg[0]
+            asg_subs = [s for s in submissions if s[1] == asg_id]
+            sub_count = len(set(s[2] for s in asg_subs))
+            miss_count = max(0, total_students - sub_count)
+            asg_scores = [s[4] for s in asg_subs if s[4] is not None]
+            asg_avg = round(sum(asg_scores) / len(asg_scores), 1) if asg_scores else 0.0
+            asg_rate = round((sub_count / max(1, total_students)) * 100, 1) if total_students > 0 else 0.0
+            
+            assignments_breakdown.append({
+                "id": asg_id,
+                "title": asg[1],
+                "topic_sentence": asg[2],
+                "target_ipa": asg[3],
+                "due_date": asg[4],
+                "submitted_count": sub_count,
+                "missing_count": miss_count,
+                "average_score": asg_avg,
+                "completion_rate": asg_rate
+            })
+            
+        # 5. At-risk students analysis
+        at_risk_students = []
+        for st_id, st_name, st_email in students:
+            st_subs = [s for s in submissions if s[2] == st_id]
+            st_sub_count = len(st_subs)
+            st_miss_count = max(0, total_assignments - st_sub_count)
+            st_scores = [s[4] for s in st_subs if s[4] is not None]
+            st_avg = round(sum(st_scores) / len(st_scores), 1) if st_scores else 0.0
+            
+            is_at_risk = False
+            risk_level = "LOW"
+            reasons = []
+            
+            if st_miss_count >= 2:
+                is_at_risk = True
+                risk_level = "HIGH"
+                reasons.append(f"Missing {st_miss_count} assignments")
+            elif st_sub_count > 0 and st_avg < 6.0:
+                is_at_risk = True
+                risk_level = "MEDIUM" if st_avg >= 5.0 else "HIGH"
+                reasons.append(f"Low average score ({st_avg}/10)")
+                
+            if is_at_risk:
+                at_risk_students.append({
+                    "id": st_id,
+                    "name": st_name or f"Learner #{st_id}",
+                    "email": st_email or "--",
+                    "submitted_count": st_sub_count,
+                    "missing_count": st_miss_count,
+                    "avg_score": st_avg,
+                    "risk_level": risk_level,
+                    "reasons": reasons
+                })
+                
+        # 6. Weak Phonemes diagnostic distribution
+        # Scan student weak_words and low-scoring submissions text
+        phoneme_counts = {p["phoneme"]: 0 for p in COMMON_PHONEMIC_PROFILES}
+        sample_words_map = {p["phoneme"]: set() for p in COMMON_PHONEMIC_PROFILES}
+        
+        # Check enrolled students' weak_words
+        if student_ids:
+            placeholders = ",".join("?" for _ in student_ids)
+            cursor.execute(f"""
+                SELECT word, COALESCE(ipa, ''), error_count
+                FROM weak_words
+                WHERE user_id IN ({placeholders}) AND (IsXoa IS NULL OR IsXoa = 0)
+            """, student_ids)
+            for w, ipa, cnt in cursor.fetchall():
+                w_lower = w.lower()
+                for prof in COMMON_PHONEMIC_PROFILES:
+                    if prof["symbol"] in ipa or any(kw in w_lower for kw in prof["keywords"]):
+                        phoneme_counts[prof["phoneme"]] += cnt or 1
+                        sample_words_map[prof["phoneme"]].add(w)
+                        
+        # Check low-scoring submissions in this class
+        for s in submissions:
+            sc = s[4]
+            txt = (s[5] or "").lower()
+            if sc is not None and sc < 7.5 and txt:
+                words = re.findall(r'\b[a-z]{3,}\b', txt)
+                for w in words:
+                    for prof in COMMON_PHONEMIC_PROFILES:
+                        if any(kw == w or kw in w for kw in prof["keywords"]):
+                            phoneme_counts[prof["phoneme"]] += 1
+                            sample_words_map[prof["phoneme"]].add(w)
+                            
+        conn.close()
+        
+        weak_phonemes = []
+        for prof in COMMON_PHONEMIC_PROFILES:
+            ph = prof["phoneme"]
+            cnt = phoneme_counts[ph]
+            words = list(sample_words_map[ph])[:4] if sample_words_map[ph] else prof["keywords"][:3]
+            weak_phonemes.append({
+                "phoneme": prof["phoneme"],
+                "symbol": prof["symbol"],
+                "name": prof["name"],
+                "error_count": cnt,
+                "example_words": words,
+                "tip": prof["tip"]
+            })
+            
+        weak_phonemes.sort(key=lambda x: x["error_count"], reverse=True)
+        
+        return {
+            "classroom": {
+                "id": cls_info["id"],
+                "name": cls_info["name"],
+                "grade_level": cls_info["grade_level"],
+                "join_code": cls_info["join_code"]
+            },
+            "summary": {
+                "total_students": total_students,
+                "total_assignments": total_assignments,
+                "total_submissions": total_submissions,
+                "completion_rate": completion_rate,
+                "class_avg_score": class_avg_score,
+                "at_risk_count": len(at_risk_students)
+            },
+            "assignments_breakdown": assignments_breakdown,
+            "weak_phonemes": weak_phonemes[:6],
+            "at_risk_students": at_risk_students
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# ==========================================
+# P2: REMINDER & RE-OPEN & DUPLICATION SUITE
+# ==========================================
+
+class RemindAssignmentRequest(BaseModel):
+    custom_message: Optional[str] = ""
+
+@app.post("/api/assignments/{assignment_id}/remind")
+def remind_assignment_non_submitters(
+    assignment_id: int,
+    req: RemindAssignmentRequest = RemindAssignmentRequest(),
+    current_user: dict = Depends(require_educator_or_admin)
+):
+    try:
+        asg_info = verify_assignment_access(assignment_id, current_user, require_write=True)
+        class_id = asg_info["class_id"]
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        
+        # Query non-submitters
+        cursor.execute("""
+            SELECT u.id, u.name, u.email
+            FROM class_enrollments e
+            JOIN users u ON e.student_id = u.id
+            LEFT JOIN submissions s ON e.student_id = s.student_id AND s.assignment_id = ? AND (s.IsXoa IS NULL OR s.IsXoa = 0)
+            WHERE e.class_id = ? AND (e.IsXoa IS NULL OR e.IsXoa = 0) AND s.id IS NULL
+            ORDER BY u.name ASC
+        """, (assignment_id, class_id))
+        missing_students = [{"id": r[0], "name": r[1] or f"Learner #{r[0]}", "email": r[2]} for r in cursor.fetchall()]
+        
+        due_info = f"Due date: {asg_info['due_date']}" if asg_info.get("due_date") else "Deadline approaching"
+        msg_content = req.custom_message.strip() if req.custom_message and req.custom_message.strip() else f"Friendly reminder to submit your pronunciation recording for '{asg_info['title']}'. {due_info}."
+        
+        cursor.execute("""
+            INSERT INTO class_announcements (class_id, teacher_id, title, content, announcement_type, assignment_id)
+            VALUES (?, ?, ?, ?, 'reminder', ?)
+        """, (class_id, current_user.get("id"), f"Action Required: Homework '{asg_info['title']}'", msg_content, assignment_id))
+        announcement_id = cursor.lastrowid
+        
+        record_audit_log(cursor, current_user.get("id"), "REMIND", "assignment", str(assignment_id), asg_info.get("tenant_id"), f"Sent reminder to {len(missing_students)} students for assignment {asg_info['title']}")
+        conn.commit()
+        conn.close()
+        export_db_to_json()
+        
+        return {
+            "status": "success",
+            "assignment_id": assignment_id,
+            "reminded_count": len(missing_students),
+            "reminded_students": missing_students,
+            "announcement_id": announcement_id
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+class ReopenAssignmentRequest(BaseModel):
+    new_due_date: str
+    extension_note: Optional[str] = ""
+
+@app.post("/api/assignments/{assignment_id}/reopen")
+def reopen_assignment(
+    assignment_id: int,
+    req: ReopenAssignmentRequest,
+    current_user: dict = Depends(require_educator_or_admin)
+):
+    try:
+        asg_info = verify_assignment_access(assignment_id, current_user, require_write=True)
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE assignments
+            SET due_date = ?, status = 'active'
+            WHERE id = ?
+        """, (req.new_due_date.strip(), assignment_id))
+        
+        note = f" Note: {req.extension_note.strip()}" if req.extension_note and req.extension_note.strip() else ""
+        cursor.execute("""
+            INSERT INTO class_announcements (class_id, teacher_id, title, content, announcement_type, assignment_id)
+            VALUES (?, ?, ?, ?, 'general', ?)
+        """, (asg_info["class_id"], current_user.get("id"), f"Deadline Extended: '{asg_info['title']}'", f"The submission deadline has been extended to {req.new_due_date}.{note}", assignment_id))
+        
+        record_audit_log(cursor, current_user.get("id"), "REOPEN", "assignment", str(assignment_id), asg_info.get("tenant_id"), f"Extended deadline to {req.new_due_date} for {asg_info['title']}")
+        conn.commit()
+        conn.close()
+        export_db_to_json()
+        
+        return {
+            "status": "success",
+            "assignment_id": assignment_id,
+            "new_due_date": req.new_due_date,
+            "status": "active"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+class DuplicateAssignmentRequest(BaseModel):
+    target_class_id: Optional[int] = None
+    new_title: Optional[str] = None
+    new_due_date: Optional[str] = None
+
+@app.post("/api/assignments/{assignment_id}/duplicate")
+def duplicate_assignment(
+    assignment_id: int,
+    req: DuplicateAssignmentRequest = DuplicateAssignmentRequest(),
+    current_user: dict = Depends(require_educator_or_admin)
+):
+    try:
+        asg_info = verify_assignment_access(assignment_id, current_user, require_write=True)
+        target_class_id = req.target_class_id or asg_info["class_id"]
+        target_cls = verify_class_access(target_class_id, current_user, require_write=True)
+        
+        new_title = req.new_title.strip() if req.new_title and req.new_title.strip() else f"Copy of {asg_info['title']}"
+        new_due = req.new_due_date.strip() if req.new_due_date and req.new_due_date.strip() else (datetime.now() + timedelta(days=7)).strftime("%Y-%m-%d")
+        
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO assignments (class_id, teacher_id, tenant_id, title, topic_sentence, target_ipa, due_date, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'active')
+        """, (target_class_id, current_user.get("id"), target_cls.get("tenant_id"), new_title, asg_info["topic_sentence"], asg_info["target_ipa"], new_due))
+        new_asg_id = cursor.lastrowid
+        
+        record_audit_log(cursor, current_user.get("id"), "DUPLICATE", "assignment", str(new_asg_id), target_cls.get("tenant_id"), f"Duplicated assignment {asg_info['title']} -> {new_title}")
+        conn.commit()
+        conn.close()
+        export_db_to_json()
+        
+        return {
+            "status": "success",
+            "new_assignment_id": new_asg_id,
+            "target_class_id": target_class_id,
+            "title": new_title,
+            "due_date": new_due
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# ==========================================
+# P2: GRADEBOOK CSV EXPORT ENGINE
+# ==========================================
+
+@app.get("/api/classes/{class_id}/export-gradebook")
+def export_class_gradebook_csv(
+    class_id: int,
+    current_user: dict = Depends(require_educator_or_admin)
+):
+    try:
+        cls_info = verify_class_access(class_id, current_user)
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT u.id, u.name, u.email, e.joined_at
+            FROM class_enrollments e
+            JOIN users u ON e.student_id = u.id
+            WHERE e.class_id = ? AND (e.IsXoa IS NULL OR e.IsXoa = 0)
+            ORDER BY u.name ASC
+        """, (class_id,))
+        students = cursor.fetchall()
+        
+        cursor.execute("""
+            SELECT id, title
+            FROM assignments
+            WHERE class_id = ? AND (IsXoa IS NULL OR IsXoa = 0)
+            ORDER BY id ASC
+        """, (class_id,))
+        assignments = cursor.fetchall()
+        
+        cursor.execute("""
+            SELECT s.student_id, s.assignment_id, s.score
+            FROM submissions s
+            JOIN assignments a ON s.assignment_id = a.id
+            WHERE a.class_id = ? AND (s.IsXoa IS NULL OR s.IsXoa = 0)
+        """, (class_id,))
+        sub_map = {}
+        for st_id, asg_id, sc in cursor.fetchall():
+            sub_map[(st_id, asg_id)] = sc
+        conn.close()
+        
+        import io, csv
+        output = io.StringIO()
+        writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
+        
+        asg_headers = [f"Assignment: {a[1]}" for a in assignments]
+        headers = ["Student ID", "Student Name", "Email", "Enrollment Date"] + asg_headers + ["Total Submissions", "Completion Rate (%)", "Average Pronunciation Score (/10)", "Academic Standing"]
+        writer.writerow(headers)
+        
+        asg_scores_col = {a[0]: [] for a in assignments}
+        student_avgs = []
+        
+        for s_id, s_name, s_email, s_date in students:
+            row = [s_id, s_name or f"Learner #{s_id}", s_email or "--", s_date or "--"]
+            std_scores = []
+            for asg_id, _ in assignments:
+                if (s_id, asg_id) in sub_map:
+                    sc = sub_map[(s_id, asg_id)]
+                    std_scores.append(sc)
+                    asg_scores_col[asg_id].append(sc)
+                    row.append(f"{sc:.1f}")
+                else:
+                    row.append("--")
+            
+            sub_count = len(std_scores)
+            comp_rate = (sub_count / max(1, len(assignments))) * 100 if assignments else 0.0
+            avg_score = (sum(std_scores) / max(1, sub_count)) if sub_count > 0 else 0.0
+            if sub_count > 0:
+                student_avgs.append(avg_score)
+                
+            if avg_score >= 8.5:
+                standing = "High Distinction"
+            elif avg_score >= 7.0:
+                standing = "Proficient"
+            elif avg_score >= 5.0:
+                standing = "Developing"
+            else:
+                standing = "Needs Support"
+                
+            row.extend([sub_count, f"{comp_rate:.1f}%", f"{avg_score:.1f}" if sub_count > 0 else "--", standing])
+            writer.writerow(row)
+            
+        # Class Summary Row
+        if students:
+            summary_row = ["CLASS AVERAGE", f"{len(students)} Students", "--", "--"]
+            for asg_id, _ in assignments:
+                col_sc = asg_scores_col[asg_id]
+                if col_sc:
+                    summary_row.append(f"{sum(col_sc)/len(col_sc):.1f}")
+                else:
+                    summary_row.append("--")
+            total_class_subs = sum(len(v) for v in asg_scores_col.values())
+            class_overall_avg = (sum(student_avgs) / max(1, len(student_avgs))) if student_avgs else 0.0
+            summary_row.extend([total_class_subs, "--", f"{class_overall_avg:.1f}" if student_avgs else "--", "Cohort Benchmark"])
+            writer.writerow(summary_row)
+            
+        csv_str = output.getvalue()
+        csv_bytes = b'\xef\xbb\xbf' + csv_str.encode('utf-8')
+        date_str = datetime.now().strftime("%Y%m%d")
+        class_clean = "".join(c for c in cls_info["name"] if c.isalnum() or c in (' ', '_', '-')).strip().replace(' ', '_')
+        
+        return Response(
+            content=csv_bytes,
+            media_type="text/csv",
+            headers={"Content-Disposition": f'attachment; filename="Gradebook_{class_clean}_{date_str}.csv"'}
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# ==========================================
+# P2: CLASS ANNOUNCEMENTS & NOTICEBOARD
+# ==========================================
+
+class CreateAnnouncementRequest(BaseModel):
+    title: str
+    content: str
+    announcement_type: str = "general"
+
+@app.get("/api/classes/{class_id}/announcements")
+def get_class_announcements(class_id: int):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT a.id, a.class_id, a.teacher_id, COALESCE(u.name, 'Educator'), a.title, a.content,
+                   a.announcement_type, a.assignment_id, a.created_at
+            FROM class_announcements a
+            LEFT JOIN users u ON a.teacher_id = u.id
+            WHERE a.class_id = ? AND (a.IsXoa IS NULL OR a.IsXoa = 0)
+            ORDER BY a.id DESC
+        """, (class_id,))
+        rows = cursor.fetchall()
+        conn.close()
+        announcements = [{
+            "id": r[0], "class_id": r[1], "teacher_id": r[2], "teacher_name": r[3],
+            "title": r[4], "content": r[5], "announcement_type": r[6],
+            "assignment_id": r[7], "created_at": r[8]
+        } for r in rows]
+        return {"announcements": announcements}
+    except Exception as e:
+        return {"announcements": [], "error": str(e)}
+
+@app.post("/api/classes/{class_id}/announcements")
+def create_class_announcement(
+    class_id: int,
+    req: CreateAnnouncementRequest,
+    current_user: dict = Depends(require_educator_or_admin)
+):
+    try:
+        cls_info = verify_class_access(class_id, current_user, require_write=True)
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO class_announcements (class_id, teacher_id, title, content, announcement_type)
+            VALUES (?, ?, ?, ?, ?)
+        """, (class_id, current_user.get("id"), req.title.strip(), req.content.strip(), req.announcement_type.strip()))
+        ann_id = cursor.lastrowid
+        record_audit_log(cursor, current_user.get("id"), "CREATE", "announcement", str(ann_id), cls_info.get("tenant_id"), f"Posted announcement: {req.title}")
+        conn.commit()
+        conn.close()
+        export_db_to_json()
+        return {"status": "success", "announcement_id": ann_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.delete("/api/classes/{class_id}/announcements/{announcement_id}")
+def delete_class_announcement(
+    class_id: int,
+    announcement_id: int,
+    current_user: dict = Depends(require_educator_or_admin)
+):
+    try:
+        cls_info = verify_class_access(class_id, current_user, require_write=True)
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute("UPDATE class_announcements SET IsXoa = 1 WHERE id = ? AND class_id = ?", (announcement_id, class_id))
+        record_audit_log(cursor, current_user.get("id"), "DELETE", "announcement", str(announcement_id), cls_info.get("tenant_id"), f"Deleted announcement {announcement_id}")
+        conn.commit()
+        conn.close()
+        export_db_to_json()
+        return {"status": "success", "message": f"Announcement {announcement_id} deleted."}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/api/notifications/student/{student_id}")
+def get_student_notifications(student_id: int):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT a.id, a.class_id, c.name, COALESCE(u.name, 'Teacher'), a.title, a.content,
+                   a.announcement_type, a.assignment_id, a.created_at
+            FROM class_announcements a
+            JOIN classrooms c ON a.class_id = c.id
+            JOIN class_enrollments e ON c.id = e.class_id
+            LEFT JOIN users u ON a.teacher_id = u.id
+            WHERE e.student_id = ? AND (e.IsXoa IS NULL OR e.IsXoa = 0)
+              AND (a.IsXoa IS NULL OR a.IsXoa = 0) AND (c.IsXoa IS NULL OR c.IsXoa = 0)
+            ORDER BY a.id DESC
+            LIMIT 50
+        """, (student_id,))
+        rows = cursor.fetchall()
+        conn.close()
+        notifications = [{
+            "id": r[0], "class_id": r[1], "class_name": r[2], "teacher_name": r[3],
+            "title": r[4], "content": r[5], "type": r[6], "assignment_id": r[7], "created_at": r[8]
+        } for r in rows]
+        return {"notifications": notifications}
+    except Exception as e:
+        return {"notifications": [], "error": str(e)}
 
 @app.get("/api/assignments/student/{student_id}")
 def get_student_assignments(student_id: int):

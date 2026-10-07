@@ -76,12 +76,12 @@
       "name": "School Admin One",
       "avatar": null,
       "google_id": null,
-      "created_at": "2026-10-07 09:24:14",
+      "created_at": "2026-10-07 09:38:21",
       "IsXoa": 0,
       "role": "admin",
       "tenant_id": "1",
       "parent_code": null,
-      "password_hash": "pbkdf2:sha256:100000$3cdb7de4948661d0c1e0a72bfe26848a$86eefe01f36939c07657da5b2cfcf547f8bd7d7f3e1553b9c419e9ffd15db373",
+      "password_hash": "pbkdf2:sha256:100000$58bbe8e65a56fa2c9a3a7d4b2a2e9449$8d8664979d70925e568fe4a20273450962f4c8f762baf00425fb1b743c1398d0",
       "status": "active"
     },
     {
@@ -90,12 +90,12 @@
       "name": "School Admin Two",
       "avatar": null,
       "google_id": null,
-      "created_at": "2026-10-07 09:24:14",
+      "created_at": "2026-10-07 09:38:21",
       "IsXoa": 0,
       "role": "admin",
       "tenant_id": "2",
       "parent_code": null,
-      "password_hash": "pbkdf2:sha256:100000$3cdb7de4948661d0c1e0a72bfe26848a$86eefe01f36939c07657da5b2cfcf547f8bd7d7f3e1553b9c419e9ffd15db373",
+      "password_hash": "pbkdf2:sha256:100000$58bbe8e65a56fa2c9a3a7d4b2a2e9449$8d8664979d70925e568fe4a20273450962f4c8f762baf00425fb1b743c1398d0",
       "status": "active"
     },
     {
@@ -104,12 +104,12 @@
       "name": "Teacher Alpha",
       "avatar": null,
       "google_id": null,
-      "created_at": "2026-10-07 09:24:14",
+      "created_at": "2026-10-07 09:38:21",
       "IsXoa": 0,
       "role": "teacher",
       "tenant_id": "1",
       "parent_code": null,
-      "password_hash": "pbkdf2:sha256:100000$398a981b3528515df1dd1ce309efb3c4$a2eaea0bb55876fe567d6eb1a949ca524b2a99c10ac9521b227c94dd30465824",
+      "password_hash": "pbkdf2:sha256:100000$6f202aa88a543e39f39c41e4ab4b9a52$b52d8dabaafeb0858311968b8b79b7edf847deab29b34efce6985f75ce18f8bb",
       "status": "active"
     },
     {
@@ -118,12 +118,12 @@
       "name": "Teacher Beta",
       "avatar": null,
       "google_id": null,
-      "created_at": "2026-10-07 09:24:14",
+      "created_at": "2026-10-07 09:38:21",
       "IsXoa": 0,
       "role": "teacher",
       "tenant_id": "1",
       "parent_code": null,
-      "password_hash": "pbkdf2:sha256:100000$38ab7e6042d38173fea468efdcf0dfb8$03edb33e11674cfaa9b0901db505c47332c6210d8401a39fe93cba0133f50a55",
+      "password_hash": "pbkdf2:sha256:100000$b0fb531b8c2415d6a41cd7fd8e67992d$e8cf3cfc1003a7eebe046d633dd2d2e4426ceb836d7ad028709db3e7bdae86c4",
       "status": "active"
     },
     {
@@ -132,12 +132,12 @@
       "name": "Teacher Rival",
       "avatar": null,
       "google_id": null,
-      "created_at": "2026-10-07 09:24:14",
+      "created_at": "2026-10-07 09:38:21",
       "IsXoa": 0,
       "role": "teacher",
       "tenant_id": "2",
       "parent_code": null,
-      "password_hash": "pbkdf2:sha256:100000$38ab7e6042d38173fea468efdcf0dfb8$03edb33e11674cfaa9b0901db505c47332c6210d8401a39fe93cba0133f50a55",
+      "password_hash": "pbkdf2:sha256:100000$b0fb531b8c2415d6a41cd7fd8e67992d$e8cf3cfc1003a7eebe046d633dd2d2e4426ceb836d7ad028709db3e7bdae86c4",
       "status": "active"
     },
     {
@@ -146,12 +146,12 @@
       "name": "Student One",
       "avatar": null,
       "google_id": null,
-      "created_at": "2026-10-07 09:24:15",
+      "created_at": "2026-10-07 09:38:21",
       "IsXoa": 0,
       "role": "student",
       "tenant_id": "1",
       "parent_code": null,
-      "password_hash": "pbkdf2:sha256:100000$1f251cc7a9ac8c4ac59474181335e240$c8c73303685852d4574a902143613761e678294e10a3ffc643f1a641d068fca7",
+      "password_hash": "pbkdf2:sha256:100000$32d05566b5156305953274981c5774b3$6af5f8d2603d5f0b7fdfa227a51fd1e6ec19a04605c76dc07de3692729726147",
       "status": "active"
     },
     {
@@ -160,12 +160,12 @@
       "name": "Student Two",
       "avatar": null,
       "google_id": null,
-      "created_at": "2026-10-07 09:24:15",
+      "created_at": "2026-10-07 09:38:21",
       "IsXoa": 0,
       "role": "student",
       "tenant_id": null,
       "parent_code": null,
-      "password_hash": "pbkdf2:sha256:100000$1f251cc7a9ac8c4ac59474181335e240$c8c73303685852d4574a902143613761e678294e10a3ffc643f1a641d068fca7",
+      "password_hash": "pbkdf2:sha256:100000$32d05566b5156305953274981c5774b3$6af5f8d2603d5f0b7fdfa227a51fd1e6ec19a04605c76dc07de3692729726147",
       "status": "active"
     },
     {
@@ -174,12 +174,12 @@
       "name": "Student Three",
       "avatar": null,
       "google_id": null,
-      "created_at": "2026-10-07 09:24:15",
+      "created_at": "2026-10-07 09:38:21",
       "IsXoa": 0,
       "role": "student",
       "tenant_id": "1",
       "parent_code": null,
-      "password_hash": "pbkdf2:sha256:100000$1f251cc7a9ac8c4ac59474181335e240$c8c73303685852d4574a902143613761e678294e10a3ffc643f1a641d068fca7",
+      "password_hash": "pbkdf2:sha256:100000$32d05566b5156305953274981c5774b3$6af5f8d2603d5f0b7fdfa227a51fd1e6ec19a04605c76dc07de3692729726147",
       "status": "active"
     },
     {
@@ -208,6 +208,90 @@
       "tenant_id": null,
       "parent_code": null,
       "password_hash": null,
+      "status": "active"
+    },
+    {
+      "id": 1010,
+      "email": "teacher1_p2@fluent.edu.vn",
+      "name": "Prof. Arthur Pendelton",
+      "avatar": null,
+      "google_id": null,
+      "created_at": "2026-10-07 09:38:05",
+      "IsXoa": 0,
+      "role": "teacher",
+      "tenant_id": "1",
+      "parent_code": null,
+      "password_hash": "pbkdf2:sha256:100000$0f1baf2136813bbdf4fccd6156724aa6$962ca62dc36088f651efd8773f31bf626f65f25c3fde0956b87fd2965e0ce054",
+      "status": "active"
+    },
+    {
+      "id": 1011,
+      "email": "teacher2_p2@fluent.edu.vn",
+      "name": "Dr. Beatrice Wright",
+      "avatar": null,
+      "google_id": null,
+      "created_at": "2026-10-07 09:38:05",
+      "IsXoa": 0,
+      "role": "teacher",
+      "tenant_id": "1",
+      "parent_code": null,
+      "password_hash": "pbkdf2:sha256:100000$818af2cee0642569f1d17ffbb5f95028$9ec85087238bc68118db4f6057a9fe1aee4e7f33b4372a660565579830c86e94",
+      "status": "active"
+    },
+    {
+      "id": 1012,
+      "email": "admin1_p2@fluent.edu.vn",
+      "name": "Admin School 1",
+      "avatar": null,
+      "google_id": null,
+      "created_at": "2026-10-07 09:38:05",
+      "IsXoa": 0,
+      "role": "admin",
+      "tenant_id": "1",
+      "parent_code": null,
+      "password_hash": "pbkdf2:sha256:100000$8f5e5fc029dd423698ad1f053d4190b2$ccbc2299912095afa25f8500725a93b0c40ac064c7a91dd3628a15bad397ebe7",
+      "status": "active"
+    },
+    {
+      "id": 1013,
+      "email": "admin2_p2@global.edu.vn",
+      "name": "Admin School 2",
+      "avatar": null,
+      "google_id": null,
+      "created_at": "2026-10-07 09:38:05",
+      "IsXoa": 0,
+      "role": "admin",
+      "tenant_id": "2",
+      "parent_code": null,
+      "password_hash": "pbkdf2:sha256:100000$5c79b1b602193a7c9a30d5ac15a05162$9f979d49ac9a873bc1936ff37d3f9113907282fb9299e3de0f23147925fc4c8f",
+      "status": "active"
+    },
+    {
+      "id": 1014,
+      "email": "std_alice_p2@fluent.edu.vn",
+      "name": "Alice Johnson",
+      "avatar": null,
+      "google_id": null,
+      "created_at": "2026-10-07 09:38:05",
+      "IsXoa": 0,
+      "role": "student",
+      "tenant_id": "1",
+      "parent_code": null,
+      "password_hash": "pbkdf2:sha256:100000$e27665425e578cd6926e70cd4b0265b0$71dd120911062124ec835199f545da8a8f60c8efec2c2ddea0de21527874211d",
+      "status": "active"
+    },
+    {
+      "id": 1015,
+      "email": "std_bob_p2@fluent.edu.vn",
+      "name": "Bob Smith",
+      "avatar": null,
+      "google_id": null,
+      "created_at": "2026-10-07 09:38:05",
+      "IsXoa": 0,
+      "role": "student",
+      "tenant_id": "1",
+      "parent_code": null,
+      "password_hash": "pbkdf2:sha256:100000$14dd5ecb7e47ff1e039642a879505ae2$ae6fcf8c2a48d670e491fad6877cbf1425a3c20fa92b38df23f972ee36cd63c2",
       "status": "active"
     }
   ],
@@ -308,6 +392,16 @@
       "meaning": "Bảo vệ",
       "error_count": 3,
       "created_at": "2026-08-02 15:16:11",
+      "IsXoa": 0
+    },
+    {
+      "id": 47,
+      "user_id": 1015,
+      "word": "mouth",
+      "ipa": "/maʊθ/",
+      "meaning": null,
+      "error_count": 3,
+      "created_at": "2026-10-07 09:43:01",
       "IsXoa": 0
     }
   ],
@@ -424,23 +518,67 @@
       "is_archived": 0
     },
     {
-      "id": 37,
-      "teacher_id": 212,
-      "name": "IELTS Band 7.5 Intensive",
-      "grade_level": "Advanced",
-      "join_code": "CLS-842-14",
-      "created_at": "2026-10-07 09:24:15",
+      "id": 39,
+      "teacher_id": 1010,
+      "name": "IELTS Academic Pronunciation 6A",
+      "grade_level": "High School & IELTS (Grades 10 - 12)",
+      "join_code": "CLS-457-88",
+      "created_at": "2026-10-07 09:38:06",
       "IsXoa": 0,
       "tenant_id": "1",
       "is_archived": 0
     },
     {
-      "id": 38,
+      "id": 40,
+      "teacher_id": 1011,
+      "name": "Teacher 2 Class",
+      "grade_level": "Elementary",
+      "join_code": "CLS-175-87",
+      "created_at": "2026-10-07 09:38:06",
+      "IsXoa": 0,
+      "tenant_id": "1",
+      "is_archived": 0
+    },
+    {
+      "id": 41,
+      "teacher_id": 212,
+      "name": "IELTS Band 7.5 Intensive",
+      "grade_level": "Advanced",
+      "join_code": "CLS-255-63",
+      "created_at": "2026-10-07 09:38:21",
+      "IsXoa": 0,
+      "tenant_id": "1",
+      "is_archived": 0
+    },
+    {
+      "id": 42,
       "teacher_id": 212,
       "name": "TOEIC Masterclass",
       "grade_level": "Intermediate",
-      "join_code": "CLS-472-45",
-      "created_at": "2026-10-07 09:24:15",
+      "join_code": "CLS-755-46",
+      "created_at": "2026-10-07 09:38:22",
+      "IsXoa": 0,
+      "tenant_id": "1",
+      "is_archived": 0
+    },
+    {
+      "id": 43,
+      "teacher_id": 1010,
+      "name": "IELTS Academic Pronunciation 6A",
+      "grade_level": "High School & IELTS (Grades 10 - 12)",
+      "join_code": "CLS-944-67",
+      "created_at": "2026-10-07 09:43:01",
+      "IsXoa": 0,
+      "tenant_id": "1",
+      "is_archived": 0
+    },
+    {
+      "id": 44,
+      "teacher_id": 1011,
+      "name": "Teacher 2 Class",
+      "grade_level": "Elementary",
+      "join_code": "CLS-911-39",
+      "created_at": "2026-10-07 09:43:01",
       "IsXoa": 0,
       "tenant_id": "1",
       "is_archived": 0
@@ -456,42 +594,74 @@
       "tenant_id": "1"
     },
     {
-      "id": 61,
-      "class_id": 37,
-      "student_id": 301,
-      "joined_at": "2026-10-07 09:24:15",
+      "id": 66,
+      "class_id": 39,
+      "student_id": 1014,
+      "joined_at": "2026-10-07 09:38:06",
       "IsXoa": 0,
       "tenant_id": "1"
     },
     {
-      "id": 62,
-      "class_id": 37,
-      "student_id": 302,
-      "joined_at": "2026-10-07 09:24:15",
-      "IsXoa": 1,
-      "tenant_id": "1"
-    },
-    {
-      "id": 63,
-      "class_id": 38,
-      "student_id": 301,
-      "joined_at": "2026-10-07 09:24:15",
+      "id": 67,
+      "class_id": 39,
+      "student_id": 1015,
+      "joined_at": "2026-10-07 09:38:06",
       "IsXoa": 0,
       "tenant_id": "1"
     },
     {
-      "id": 64,
-      "class_id": 38,
+      "id": 68,
+      "class_id": 41,
+      "student_id": 301,
+      "joined_at": "2026-10-07 09:38:22",
+      "IsXoa": 0,
+      "tenant_id": "1"
+    },
+    {
+      "id": 69,
+      "class_id": 41,
       "student_id": 302,
-      "joined_at": "2026-10-07 09:24:15",
+      "joined_at": "2026-10-07 09:38:22",
       "IsXoa": 1,
       "tenant_id": "1"
     },
     {
-      "id": 65,
-      "class_id": 37,
+      "id": 70,
+      "class_id": 42,
+      "student_id": 301,
+      "joined_at": "2026-10-07 09:38:22",
+      "IsXoa": 0,
+      "tenant_id": "1"
+    },
+    {
+      "id": 71,
+      "class_id": 42,
+      "student_id": 302,
+      "joined_at": "2026-10-07 09:38:22",
+      "IsXoa": 1,
+      "tenant_id": "1"
+    },
+    {
+      "id": 72,
+      "class_id": 41,
       "student_id": 303,
-      "joined_at": "2026-10-07 09:24:15",
+      "joined_at": "2026-10-07 09:38:22",
+      "IsXoa": 0,
+      "tenant_id": "1"
+    },
+    {
+      "id": 73,
+      "class_id": 43,
+      "student_id": 1014,
+      "joined_at": "2026-10-07 09:43:01",
+      "IsXoa": 0,
+      "tenant_id": "1"
+    },
+    {
+      "id": 74,
+      "class_id": 43,
+      "student_id": 1015,
+      "joined_at": "2026-10-07 09:43:01",
       "IsXoa": 0,
       "tenant_id": "1"
     }
@@ -507,7 +677,8 @@
       "due_date": "2026-10-31",
       "created_at": "2026-10-07 04:48:00",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 6,
@@ -519,7 +690,8 @@
       "due_date": "2026-09-01",
       "created_at": "2026-07-31 19:40:50",
       "IsXoa": 1,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 7,
@@ -531,7 +703,8 @@
       "due_date": "2026-09-01",
       "created_at": "2026-07-31 19:41:12",
       "IsXoa": 1,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 8,
@@ -543,7 +716,8 @@
       "due_date": "2026-09-01",
       "created_at": "2026-07-31 19:42:07",
       "IsXoa": 1,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 9,
@@ -555,7 +729,8 @@
       "due_date": "2026-09-01",
       "created_at": "2026-07-31 20:12:32",
       "IsXoa": 1,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 10,
@@ -567,7 +742,8 @@
       "due_date": "2026-09-01",
       "created_at": "2026-07-31 20:12:39",
       "IsXoa": 1,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 11,
@@ -579,7 +755,8 @@
       "due_date": "2026-09-01",
       "created_at": "2026-08-02 13:27:21",
       "IsXoa": 1,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 12,
@@ -591,7 +768,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 13:27:21",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 13,
@@ -603,7 +781,8 @@
       "due_date": "2026-09-15",
       "created_at": "2026-08-02 13:29:44",
       "IsXoa": 1,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 14,
@@ -615,7 +794,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 13:29:44",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 15,
@@ -627,7 +807,8 @@
       "due_date": "2026-09-15",
       "created_at": "2026-08-02 13:29:54",
       "IsXoa": 1,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 16,
@@ -639,7 +820,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 13:29:54",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 17,
@@ -651,7 +833,8 @@
       "due_date": "2026-09-15",
       "created_at": "2026-08-02 13:30:06",
       "IsXoa": 1,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 18,
@@ -663,7 +846,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 13:30:06",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 19,
@@ -675,7 +859,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 13:54:16",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 20,
@@ -687,7 +872,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 13:54:16",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 21,
@@ -699,7 +885,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 13:54:27",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 22,
@@ -711,7 +898,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 13:54:27",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 23,
@@ -723,7 +911,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 13:54:51",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 24,
@@ -735,7 +924,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 13:54:51",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 25,
@@ -747,7 +937,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 13:55:01",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 26,
@@ -759,7 +950,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 13:55:01",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 27,
@@ -771,7 +963,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 13:58:34",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 28,
@@ -783,7 +976,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 14:15:37",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 29,
@@ -795,7 +989,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 14:22:38",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 30,
@@ -807,7 +1002,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 14:22:39",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 31,
@@ -819,7 +1015,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 14:22:52",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 32,
@@ -831,7 +1028,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 14:22:52",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 33,
@@ -843,7 +1041,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 14:23:01",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 34,
@@ -855,7 +1054,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 14:23:13",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 35,
@@ -867,7 +1067,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 14:36:11",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 36,
@@ -879,7 +1080,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 14:36:11",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 37,
@@ -891,7 +1093,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 14:36:20",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 38,
@@ -903,7 +1106,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 14:47:58",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 39,
@@ -915,7 +1119,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 14:47:58",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 40,
@@ -927,7 +1132,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 14:48:06",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 41,
@@ -939,7 +1145,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 14:52:51",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 42,
@@ -951,7 +1158,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 14:52:51",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 43,
@@ -963,7 +1171,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 14:58:03",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 44,
@@ -975,7 +1184,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 14:58:04",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 45,
@@ -987,7 +1197,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 14:58:29",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 46,
@@ -999,7 +1210,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 14:58:29",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 47,
@@ -1011,7 +1223,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 14:58:31",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 48,
@@ -1023,7 +1236,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 14:59:00",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 49,
@@ -1035,7 +1249,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 14:59:13",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 50,
@@ -1047,7 +1262,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 14:59:14",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 51,
@@ -1059,7 +1275,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 14:59:46",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 52,
@@ -1071,7 +1288,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 14:59:47",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 53,
@@ -1083,7 +1301,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 14:59:50",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 54,
@@ -1095,7 +1314,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 15:00:13",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 55,
@@ -1107,7 +1327,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 15:00:14",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 56,
@@ -1119,7 +1340,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 15:14:35",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 57,
@@ -1131,7 +1353,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 15:14:35",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 58,
@@ -1143,7 +1366,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 15:14:59",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 59,
@@ -1155,7 +1379,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 15:15:18",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 60,
@@ -1167,7 +1392,8 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 15:15:49",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
     },
     {
       "id": 61,
@@ -1179,10 +1405,96 @@
       "due_date": "2026-08-15",
       "created_at": "2026-08-02 15:16:12",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "status": "active"
+    },
+    {
+      "id": 62,
+      "class_id": 39,
+      "teacher_id": 1010,
+      "title": "Module 1: Dental Fricatives (Updated)",
+      "topic_sentence": "I think this healthy mouth produces perfect English rhythm.",
+      "target_ipa": "/θɪŋk/ /ðɪs/ /ˈhel.θi/ /maʊθ/",
+      "due_date": "2026-11-15",
+      "created_at": "2026-10-07 09:38:06",
+      "IsXoa": 0,
+      "tenant_id": "1",
+      "status": "active"
+    },
+    {
+      "id": 63,
+      "class_id": 39,
+      "teacher_id": 1010,
+      "title": "Module 1 Practice: Dental Fricatives Drill B",
+      "topic_sentence": "I think this healthy mouth produces perfect English rhythm.",
+      "target_ipa": "/θɪŋk/ /ðɪs/ /ˈhel.θi/ /maʊθ/",
+      "due_date": "2026-11-02",
+      "created_at": "2026-10-07 09:38:06",
+      "IsXoa": 0,
+      "tenant_id": "1",
+      "status": "active"
+    },
+    {
+      "id": 64,
+      "class_id": 43,
+      "teacher_id": 1010,
+      "title": "Module 1: Dental Fricatives (Updated)",
+      "topic_sentence": "I think this healthy mouth produces perfect English rhythm.",
+      "target_ipa": "/θɪŋk/ /ðɪs/ /ˈhel.θi/ /maʊθ/",
+      "due_date": "2026-11-15",
+      "created_at": "2026-10-07 09:43:01",
+      "IsXoa": 0,
+      "tenant_id": "1",
+      "status": "active"
+    },
+    {
+      "id": 65,
+      "class_id": 43,
+      "teacher_id": 1010,
+      "title": "Module 1 Practice: Dental Fricatives Drill B",
+      "topic_sentence": "I think this healthy mouth produces perfect English rhythm.",
+      "target_ipa": "/θɪŋk/ /ðɪs/ /ˈhel.θi/ /maʊθ/",
+      "due_date": "2026-11-02",
+      "created_at": "2026-10-07 09:43:01",
+      "IsXoa": 0,
+      "tenant_id": "1",
+      "status": "active"
     }
   ],
-  "submissions": [],
+  "submissions": [
+    {
+      "id": 6,
+      "assignment_id": 62,
+      "student_id": 1014,
+      "student_name": "Alice Johnson",
+      "audio_url": "https://example.com/audio1.mp3",
+      "transcribed_text": "I think this healthy mouth produces perfect English rhythm.",
+      "score": 8.8,
+      "ipa_json": "{\"confidence\": 0.95}",
+      "teacher_feedback": null,
+      "score_override": null,
+      "submitted_at": "2026-10-07 09:38:06",
+      "IsXoa": 0,
+      "audio_size_bytes": 0,
+      "tenant_id": null
+    },
+    {
+      "id": 7,
+      "assignment_id": 64,
+      "student_id": 1014,
+      "student_name": "Alice Johnson",
+      "audio_url": "https://example.com/audio1.mp3",
+      "transcribed_text": "I think this healthy mouth produces perfect English rhythm.",
+      "score": 8.8,
+      "ipa_json": "{\"confidence\": 0.95}",
+      "teacher_feedback": null,
+      "score_override": null,
+      "submitted_at": "2026-10-07 09:43:01",
+      "IsXoa": 0,
+      "audio_size_bytes": 0,
+      "tenant_id": null
+    }
+  ],
   "tenants": [
     {
       "id": "tenant_test_1234",
@@ -1315,13 +1627,23 @@
       "IsXoa": 0
     },
     {
+      "id": "tenant_4861",
+      "name": "High School Olympia",
+      "admin_id": null,
+      "logo_url": "",
+      "license_seats": 250,
+      "license_expiry": "2027-08-01",
+      "created_at": "2026-10-07 09:24:31",
+      "IsXoa": 0
+    },
+    {
       "id": "1",
       "name": "Fluent English Academy",
       "admin_id": null,
       "logo_url": null,
-      "license_seats": 3,
+      "license_seats": 5,
       "license_expiry": "2028-12-31",
-      "created_at": "2026-10-07 09:24:14",
+      "created_at": "2026-10-07 09:38:21",
       "IsXoa": 0
     },
     {
@@ -1331,17 +1653,17 @@
       "logo_url": null,
       "license_seats": 5,
       "license_expiry": "2028-12-31",
-      "created_at": "2026-10-07 09:24:14",
+      "created_at": "2026-10-07 09:38:21",
       "IsXoa": 0
     },
     {
-      "id": "tenant_4861",
+      "id": "tenant_8163",
       "name": "High School Olympia",
       "admin_id": null,
       "logo_url": "",
       "license_seats": 250,
       "license_expiry": "2027-08-01",
-      "created_at": "2026-10-07 09:24:31",
+      "created_at": "2026-10-07 09:38:32",
       "IsXoa": 0
     }
   ],
@@ -2795,6 +3117,366 @@
       "tenant_id": "tenant_4861",
       "details": "Super Admin created tenant: High School Olympia",
       "created_at": "2026-10-07 09:24:31"
+    },
+    {
+      "id": 146,
+      "user_id": 1010,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "1010",
+      "tenant_id": "1",
+      "details": "Teacher authenticated successfully",
+      "created_at": "2026-10-07 09:38:06"
+    },
+    {
+      "id": 147,
+      "user_id": 1010,
+      "action": "CREATE",
+      "target_type": "classroom",
+      "target_id": "39",
+      "tenant_id": "1",
+      "details": "Created classroom IELTS Academic Pronunciation 6A",
+      "created_at": "2026-10-07 09:38:06"
+    },
+    {
+      "id": 148,
+      "user_id": 1010,
+      "action": "CREATE",
+      "target_type": "assignment",
+      "target_id": "62",
+      "tenant_id": "1",
+      "details": "Created assignment Module 1: Dental Fricatives /θ/ & /ð/ for class IELTS Academic Pronunciation 6A",
+      "created_at": "2026-10-07 09:38:06"
+    },
+    {
+      "id": 149,
+      "user_id": 1010,
+      "action": "UPDATE",
+      "target_type": "assignment",
+      "target_id": "62",
+      "tenant_id": "1",
+      "details": "Updated assignment Module 1: Dental Fricatives (Updated)",
+      "created_at": "2026-10-07 09:38:06"
+    },
+    {
+      "id": 150,
+      "user_id": 1010,
+      "action": "DUPLICATE",
+      "target_type": "assignment",
+      "target_id": "63",
+      "tenant_id": "1",
+      "details": "Duplicated assignment Module 1: Dental Fricatives (Updated) -> Module 1 Practice: Dental Fricatives Drill B",
+      "created_at": "2026-10-07 09:38:06"
+    },
+    {
+      "id": 151,
+      "user_id": 1011,
+      "action": "CREATE",
+      "target_type": "classroom",
+      "target_id": "40",
+      "tenant_id": "1",
+      "details": "Created classroom Teacher 2 Class",
+      "created_at": "2026-10-07 09:38:06"
+    },
+    {
+      "id": 152,
+      "user_id": 1010,
+      "action": "REOPEN",
+      "target_type": "assignment",
+      "target_id": "62",
+      "tenant_id": "1",
+      "details": "Extended deadline to 2026-11-15 for Module 1: Dental Fricatives (Updated)",
+      "created_at": "2026-10-07 09:38:06"
+    },
+    {
+      "id": 153,
+      "user_id": 1010,
+      "action": "REMIND",
+      "target_type": "assignment",
+      "target_id": "62",
+      "tenant_id": "1",
+      "details": "Sent reminder to 1 students for assignment Module 1: Dental Fricatives (Updated)",
+      "created_at": "2026-10-07 09:38:06"
+    },
+    {
+      "id": 154,
+      "user_id": 1010,
+      "action": "CREATE",
+      "target_type": "announcement",
+      "target_id": "3",
+      "tenant_id": "1",
+      "details": "Posted announcement: Welcome to Semester 1",
+      "created_at": "2026-10-07 09:38:06"
+    },
+    {
+      "id": 155,
+      "user_id": 1010,
+      "action": "DELETE",
+      "target_type": "announcement",
+      "target_id": "3",
+      "tenant_id": "1",
+      "details": "Deleted announcement 3",
+      "created_at": "2026-10-07 09:38:06"
+    },
+    {
+      "id": 156,
+      "user_id": 201,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "201",
+      "tenant_id": "1",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:38:21"
+    },
+    {
+      "id": 157,
+      "user_id": 202,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "202",
+      "tenant_id": "2",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:38:21"
+    },
+    {
+      "id": 158,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "41",
+      "tenant_id": "1",
+      "details": "Created classroom 'IELTS Band 7.5 Intensive' assigned to teacher Teacher Alpha",
+      "created_at": "2026-10-07 09:38:21"
+    },
+    {
+      "id": 159,
+      "user_id": 201,
+      "action": "ASSIGN_TEACHER",
+      "target_type": "classrooms",
+      "target_id": "41",
+      "tenant_id": "1",
+      "details": "Reassigned classroom 'IELTS Band 7.5 Intensive' to teacher Teacher Beta",
+      "created_at": "2026-10-07 09:38:21"
+    },
+    {
+      "id": 160,
+      "user_id": 201,
+      "action": "ARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "41",
+      "tenant_id": "1",
+      "details": "Archived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 09:38:21"
+    },
+    {
+      "id": 161,
+      "user_id": 201,
+      "action": "UNARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "41",
+      "tenant_id": "1",
+      "details": "Unarchived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 09:38:21"
+    },
+    {
+      "id": 162,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "42",
+      "tenant_id": "1",
+      "details": "Created classroom 'TOEIC Masterclass' assigned to teacher Teacher Beta",
+      "created_at": "2026-10-07 09:38:22"
+    },
+    {
+      "id": 163,
+      "user_id": 201,
+      "action": "TRANSFER_STUDENT",
+      "target_type": "class_enrollments",
+      "target_id": "42:302",
+      "tenant_id": "1",
+      "details": "Transferred student Student Two from 'IELTS Band 7.5 Intensive' to 'TOEIC Masterclass'",
+      "created_at": "2026-10-07 09:38:22"
+    },
+    {
+      "id": 164,
+      "user_id": 201,
+      "action": "REVOKE_STUDENT_SEAT",
+      "target_type": "class_enrollments",
+      "target_id": "42:302",
+      "tenant_id": "1",
+      "details": "Revoked seat for student Student Two (student2@test.com) from class 'TOEIC Masterclass'",
+      "created_at": "2026-10-07 09:38:22"
+    },
+    {
+      "id": 165,
+      "user_id": 201,
+      "action": "SUSPEND_TEACHER",
+      "target_type": "users",
+      "target_id": "211",
+      "tenant_id": "1",
+      "details": "Suspended teacher Teacher Alpha (teacher_alpha@fluent.edu.vn)",
+      "created_at": "2026-10-07 09:38:22"
+    },
+    {
+      "id": 166,
+      "user_id": 201,
+      "action": "REACTIVATE_TEACHER",
+      "target_type": "users",
+      "target_id": "211",
+      "tenant_id": "1",
+      "details": "Reactivated teacher Teacher Alpha (teacher_alpha@fluent.edu.vn)",
+      "created_at": "2026-10-07 09:38:22"
+    },
+    {
+      "id": 167,
+      "user_id": 201,
+      "action": "RESET_TEACHER_PASSWORD",
+      "target_type": "users",
+      "target_id": "211",
+      "tenant_id": "1",
+      "details": "Reset password for teacher Teacher Alpha (teacher_alpha@fluent.edu.vn)",
+      "created_at": "2026-10-07 09:38:22"
+    },
+    {
+      "id": 168,
+      "user_id": 5,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "5",
+      "tenant_id": null,
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:38:32"
+    },
+    {
+      "id": 169,
+      "user_id": 6,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "6",
+      "tenant_id": "1",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:38:32"
+    },
+    {
+      "id": 170,
+      "user_id": 7,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "7",
+      "tenant_id": "1",
+      "details": "Teacher authenticated successfully",
+      "created_at": "2026-10-07 09:38:32"
+    },
+    {
+      "id": 171,
+      "user_id": 5,
+      "action": "CREATE_TENANT",
+      "target_type": "tenants",
+      "target_id": "tenant_8163",
+      "tenant_id": "tenant_8163",
+      "details": "Super Admin created tenant: High School Olympia",
+      "created_at": "2026-10-07 09:38:32"
+    },
+    {
+      "id": 172,
+      "user_id": 1010,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "1010",
+      "tenant_id": "1",
+      "details": "Teacher authenticated successfully",
+      "created_at": "2026-10-07 09:43:01"
+    },
+    {
+      "id": 173,
+      "user_id": 1010,
+      "action": "CREATE",
+      "target_type": "classroom",
+      "target_id": "43",
+      "tenant_id": "1",
+      "details": "Created classroom IELTS Academic Pronunciation 6A",
+      "created_at": "2026-10-07 09:43:01"
+    },
+    {
+      "id": 174,
+      "user_id": 1010,
+      "action": "CREATE",
+      "target_type": "assignment",
+      "target_id": "64",
+      "tenant_id": "1",
+      "details": "Created assignment Module 1: Dental Fricatives /θ/ & /ð/ for class IELTS Academic Pronunciation 6A",
+      "created_at": "2026-10-07 09:43:01"
+    },
+    {
+      "id": 175,
+      "user_id": 1010,
+      "action": "UPDATE",
+      "target_type": "assignment",
+      "target_id": "64",
+      "tenant_id": "1",
+      "details": "Updated assignment Module 1: Dental Fricatives (Updated)",
+      "created_at": "2026-10-07 09:43:01"
+    },
+    {
+      "id": 176,
+      "user_id": 1010,
+      "action": "DUPLICATE",
+      "target_type": "assignment",
+      "target_id": "65",
+      "tenant_id": "1",
+      "details": "Duplicated assignment Module 1: Dental Fricatives (Updated) -> Module 1 Practice: Dental Fricatives Drill B",
+      "created_at": "2026-10-07 09:43:01"
+    },
+    {
+      "id": 177,
+      "user_id": 1011,
+      "action": "CREATE",
+      "target_type": "classroom",
+      "target_id": "44",
+      "tenant_id": "1",
+      "details": "Created classroom Teacher 2 Class",
+      "created_at": "2026-10-07 09:43:01"
+    },
+    {
+      "id": 178,
+      "user_id": 1010,
+      "action": "REOPEN",
+      "target_type": "assignment",
+      "target_id": "64",
+      "tenant_id": "1",
+      "details": "Extended deadline to 2026-11-15 for Module 1: Dental Fricatives (Updated)",
+      "created_at": "2026-10-07 09:43:01"
+    },
+    {
+      "id": 179,
+      "user_id": 1010,
+      "action": "REMIND",
+      "target_type": "assignment",
+      "target_id": "64",
+      "tenant_id": "1",
+      "details": "Sent reminder to 1 students for assignment Module 1: Dental Fricatives (Updated)",
+      "created_at": "2026-10-07 09:43:01"
+    },
+    {
+      "id": 180,
+      "user_id": 1010,
+      "action": "CREATE",
+      "target_type": "announcement",
+      "target_id": "6",
+      "tenant_id": "1",
+      "details": "Posted announcement: Welcome to Semester 1",
+      "created_at": "2026-10-07 09:43:01"
+    },
+    {
+      "id": 181,
+      "user_id": 1010,
+      "action": "DELETE",
+      "target_type": "announcement",
+      "target_id": "6",
+      "tenant_id": "1",
+      "details": "Deleted announcement 6",
+      "created_at": "2026-10-07 09:43:01"
     }
   ],
   "system_configs": [
