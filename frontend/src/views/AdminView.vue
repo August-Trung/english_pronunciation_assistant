@@ -70,6 +70,36 @@
 
     <!-- Authenticated Administration Workspace -->
     <div v-else>
+      <!-- SUPPORT INSPECTION MODE BANNER -->
+      <v-alert
+        v-if="isSupportMode"
+        color="amber-darken-3"
+        theme="dark"
+        variant="flat"
+        density="comfortable"
+        class="mb-4 rounded-lg font-weight-bold elevation-2"
+        icon="mdi-shield-account"
+      >
+        <div class="d-flex align-center justify-space-between flex-wrap ga-2">
+          <div>
+            <span class="text-subtitle-2 font-weight-black">SUPPORT & INSPECTION MODE ACTIVE</span>
+            <div class="text-caption font-weight-medium text-amber-lighten-4">
+              Currently inspecting <strong>{{ supportSchoolName }}</strong> as School Admin (<strong>{{ supportAdminEmail }}</strong>). Actions are scoped to this school organization.
+            </div>
+          </div>
+          <v-btn
+            color="black"
+            size="small"
+            variant="flat"
+            class="text-none font-weight-black text-white"
+            prepend-icon="mdi-logout-variant"
+            @click="exitSupportMode"
+          >
+            Exit Support Mode
+          </v-btn>
+        </div>
+      </v-alert>
+
       <!-- HEADER BANNER: Super Admin vs School Admin -->
       <!-- Case A: SUPER ADMIN Header -->
       <v-card
@@ -288,43 +318,110 @@
             <div class="d-flex align-center justify-space-between mb-3 flex-wrap ga-2">
               <div>
                 <span class="text-subtitle-2 font-weight-black text-secondary">B2B SCHOOL TENANTS DIRECTORY</span>
-                <span class="text-caption text-grey ml-2">({{ overview.tenants?.length || 0 }} organizations registered)</span>
+                <span class="text-caption text-grey ml-2">({{ (tenantsList.length || overview.tenants?.length || 0) }} organizations registered)</span>
               </div>
-              <v-btn color="primary" size="small" variant="flat" class="font-weight-bold text-none" prepend-icon="mdi-plus" @click="showCreateTenantModal = true">
-                Create New School Tenant
-              </v-btn>
+              <div class="d-flex align-center ga-2 flex-wrap">
+                <v-btn color="secondary" size="small" variant="outlined" class="font-weight-bold text-none" prepend-icon="mdi-database-export-outline" :loading="isExportingSnapshot" @click="downloadBackupSnapshot">
+                  Export DB Snapshot
+                </v-btn>
+                <v-btn color="primary" size="small" variant="flat" class="font-weight-bold text-none" prepend-icon="mdi-school" @click="showOnboardModal = true">
+                  Onboard School
+                </v-btn>
+              </div>
             </div>
 
             <v-table density="comfortable" hover class="border rounded-lg">
               <thead>
                 <tr class="bg-grey-lighten-4">
                   <th class="font-weight-black text-caption text-secondary">TENANT ID</th>
-                  <th class="font-weight-black text-caption text-secondary">SCHOOL NAME</th>
+                  <th class="font-weight-black text-caption text-secondary">SCHOOL & ADMINISTRATOR</th>
                   <th class="font-weight-black text-caption text-secondary text-center">SEAT LICENSES</th>
-                  <th class="font-weight-black text-caption text-secondary text-center">EXPIRY DATE</th>
+                  <th class="font-weight-black text-caption text-secondary text-center">CAMPUS ACTIVITY</th>
+                  <th class="font-weight-black text-caption text-secondary text-center">AUDIO STORAGE</th>
                   <th class="font-weight-black text-caption text-secondary text-center">STATUS</th>
-                  <th class="font-weight-black text-caption text-secondary text-center">ACTION</th>
+                  <th class="font-weight-black text-caption text-secondary text-center">ACTIONS</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="t in overview.tenants" :key="t.id">
+                <tr v-for="t in (tenantsList.length ? tenantsList : overview.tenants)" :key="t.id">
                   <td class="font-weight-bold text-caption font-weight-mono text-primary">{{ t.id }}</td>
-                  <td class="font-weight-black text-body-2">{{ t.name }}</td>
-                  <td class="text-center font-weight-bold text-caption">{{ t.license_seats }} Seats</td>
-                  <td class="text-center text-caption text-grey">{{ t.license_expiry }}</td>
+                  <td>
+                    <div class="font-weight-black text-body-2">{{ t.name }}</div>
+                    <div class="text-caption text-grey-darken-1 d-flex align-center ga-1" v-if="t.admin_email">
+                      <v-icon size="x-small" color="grey">mdi-account-tie</v-icon>
+                      <span>{{ t.admin_email }}</span>
+                    </div>
+                  </td>
                   <td class="text-center">
-                    <v-chip size="x-small" color="success" variant="flat" class="font-weight-black">ACTIVE</v-chip>
+                    <div class="font-weight-black text-caption">
+                      {{ t.student_count ?? t.used_seats ?? 0 }} / {{ t.license_seats }} Seats
+                    </div>
+                    <v-progress-linear
+                      :model-value="t.license_seats ? Math.min(100, Math.round(((t.student_count ?? t.used_seats ?? 0) / t.license_seats) * 100)) : 0"
+                      :color="(t.student_count ?? t.used_seats ?? 0) >= t.license_seats ? 'error' : ((t.student_count ?? t.used_seats ?? 0) / t.license_seats > 0.8 ? 'warning' : 'primary')"
+                      height="5"
+                      rounded
+                      class="mt-1"
+                      style="max-width: 120px; margin: 0 auto;"
+                    />
+                    <div class="text-caption text-grey" style="font-size: 11px !important;">
+                      Exp: {{ t.license_expiry }}
+                    </div>
+                  </td>
+                  <td class="text-center text-caption font-weight-medium">
+                    <div><strong>{{ t.teacher_count ?? 0 }}</strong> Teachers</div>
+                    <div class="text-grey"><strong>{{ t.active_class_count ?? t.class_count ?? 0 }}</strong> Active Classes</div>
+                  </td>
+                  <td class="text-center text-caption">
+                    <v-chip size="x-small" color="blue-lighten-4" class="text-blue-darken-4 font-weight-bold">
+                      {{ t.audio_storage_mb ?? 0 }} MB
+                    </v-chip>
+                    <div class="text-grey" style="font-size: 11px !important;">
+                      {{ t.submission_count ?? 0 }} Submissions
+                    </div>
+                  </td>
+                  <td class="text-center">
+                    <v-chip
+                      size="x-small"
+                      :color="t.status === 'suspended' ? 'error' : (t.status === 'expired' ? 'warning' : (t.status === 'trial' ? 'info' : 'success'))"
+                      variant="flat"
+                      class="font-weight-black"
+                    >
+                      {{ (t.status || 'active').toUpperCase() }}
+                    </v-chip>
                   </td>
                   <td class="text-center">
                     <div class="d-flex align-center justify-center ga-1">
-                      <v-btn size="x-small" icon="mdi-pencil-outline" color="primary" variant="tonal" title="Edit Tenant" @click="openEditTenantModal(t)" />
-                      <v-btn size="x-small" icon="mdi-delete-outline" color="error" variant="tonal" title="Delete Tenant" @click="confirmDeleteTenant(t)" />
+                      <v-btn
+                        size="x-small"
+                        icon="mdi-account-eye-outline"
+                        color="secondary"
+                        variant="tonal"
+                        title="Inspect School (Support Mode)"
+                        @click="openInspectSchoolModal(t)"
+                      />
+                      <v-btn
+                        size="x-small"
+                        icon="mdi-tune"
+                        color="primary"
+                        variant="tonal"
+                        title="Manage Lifecycle & Quota"
+                        @click="openLifecycleModal(t)"
+                      />
+                      <v-btn
+                        size="x-small"
+                        icon="mdi-delete-outline"
+                        color="error"
+                        variant="tonal"
+                        title="Archive School"
+                        @click="confirmDeleteTenant(t)"
+                      />
                     </div>
                   </td>
                 </tr>
-                <tr v-if="!overview.tenants?.length">
-                  <td colspan="6" class="text-center pa-6 text-caption text-grey">
-                    No school organizations created yet. Click "Create New School Tenant" above!
+                <tr v-if="!tenantsList.length && !overview.tenants?.length">
+                  <td colspan="7" class="text-center pa-6 text-caption text-grey">
+                    No school organizations created yet. Click "Onboard School" above!
                   </td>
                 </tr>
               </tbody>
@@ -686,16 +783,35 @@
             </v-card>
           </v-window-item>
 
-          <!-- TAB 6: Security & Audit Logs (P0) -->
+          <!-- TAB 6: Security & Audit Logs (P0/P3) -->
           <v-window-item value="audit_logs">
             <div class="d-flex align-center justify-space-between mb-3 flex-wrap ga-2">
               <div>
                 <span class="text-subtitle-2 font-weight-black text-secondary">IMMUTABLE SYSTEM AUDIT TRAIL</span>
-                <span class="text-caption text-grey ml-2">({{ auditLogsList.length }} logged security events)</span>
+                <span class="text-caption text-grey ml-2">({{ filteredAuditLogs.length }} recorded events)</span>
               </div>
-              <v-btn color="primary" size="small" variant="outlined" class="font-weight-bold text-none" prepend-icon="mdi-refresh" :loading="isFetchingLogs" @click="fetchAuditLogs">
-                Refresh Logs
-              </v-btn>
+              <div class="d-flex align-center ga-2 flex-wrap">
+                <v-text-field
+                  v-model="searchAuditText"
+                  placeholder="Search operator, details..."
+                  variant="outlined"
+                  density="compact"
+                  hide-details
+                  prepend-inner-icon="mdi-magnify"
+                  style="min-width: 200px; max-width: 240px;"
+                />
+                <v-select
+                  v-model="selectedAuditAction"
+                  :items="auditActionOptions"
+                  density="compact"
+                  variant="outlined"
+                  hide-details
+                  style="min-width: 170px; max-width: 210px;"
+                />
+                <v-btn color="primary" size="small" variant="outlined" class="font-weight-bold text-none" prepend-icon="mdi-refresh" :loading="isFetchingLogs" @click="fetchAuditLogs">
+                  Refresh Logs
+                </v-btn>
+              </div>
             </div>
 
             <v-table density="comfortable" hover class="border rounded-lg">
@@ -710,7 +826,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="log in auditLogsList" :key="log.id">
+                <tr v-for="log in filteredAuditLogs" :key="log.id">
                   <td class="text-caption font-weight-mono text-grey-darken-1">{{ log.created_at }}</td>
                   <td>
                     <v-chip size="x-small" :color="getAuditActionColor(log.action)" variant="flat" class="font-weight-black">
@@ -722,9 +838,9 @@
                   <td class="text-caption font-weight-bold text-primary">{{ log.tenant_id ? `School ${log.tenant_id}` : 'Global' }}</td>
                   <td class="text-caption text-grey-darken-2">{{ log.details || '—' }}</td>
                 </tr>
-                <tr v-if="!auditLogsList.length">
+                <tr v-if="!filteredAuditLogs.length">
                   <td colspan="6" class="text-center pa-6 text-caption text-grey">
-                    No security audit logs recorded yet.
+                    No security audit logs found matching criteria.
                   </td>
                 </tr>
               </tbody>
@@ -830,6 +946,158 @@
             <v-spacer />
             <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showDeleteClassModal = false">Cancel</v-btn>
             <v-btn color="error" variant="flat" class="text-none font-weight-bold" :loading="isDeletingClass" @click="submitDeleteClassroom">Delete Classroom</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Modal: Atomic School Onboarding (Super Admin Only) -->
+      <v-dialog v-model="showOnboardModal" max-width="500">
+        <v-card border rounded="lg" class="pa-4">
+          <div class="d-flex align-center ga-2 mb-2">
+            <v-icon color="primary">mdi-school</v-icon>
+            <span class="text-subtitle-1 font-weight-black text-primary">Onboard B2B School Organization</span>
+          </div>
+          <div class="text-caption text-grey-darken-1 mb-3">
+            Creates school tenant and provisions initial School Administrator account atomically.
+          </div>
+          <v-text-field
+            v-model="onboardSchoolName"
+            label="School Organization Name:"
+            placeholder="e.g. Olympia International Academy"
+            variant="outlined"
+            density="comfortable"
+            class="mb-2"
+          />
+          <v-row density="compact">
+            <v-col cols="12" sm="6">
+              <v-text-field
+                v-model="onboardAdminName"
+                label="Administrator Full Name:"
+                placeholder="Dr. Vance Olympia"
+                variant="outlined"
+                density="comfortable"
+              />
+            </v-col>
+            <v-col cols="12" sm="6">
+              <v-text-field
+                v-model="onboardAdminEmail"
+                label="Administrator Email:"
+                placeholder="admin@olympia.edu.vn"
+                variant="outlined"
+                density="comfortable"
+              />
+            </v-col>
+          </v-row>
+          <v-text-field
+            v-model="onboardAdminPassword"
+            label="Initial Admin Password:"
+            variant="outlined"
+            density="comfortable"
+            class="mb-2"
+          />
+          <v-row density="compact">
+            <v-col cols="12" sm="6">
+              <v-text-field
+                v-model.number="onboardSeats"
+                label="Seat Licenses Quota:"
+                type="number"
+                variant="outlined"
+                density="comfortable"
+              />
+            </v-col>
+            <v-col cols="12" sm="6">
+              <v-text-field
+                v-model="onboardExpiry"
+                label="License Expiry Date:"
+                placeholder="2028-12-31"
+                variant="outlined"
+                density="comfortable"
+              />
+            </v-col>
+          </v-row>
+          <v-select
+            v-model="onboardStatus"
+            :items="[
+              { title: 'Active (Production)', value: 'active' },
+              { title: 'Trial (Evaluation)', value: 'trial' }
+            ]"
+            label="Initial Organization Status:"
+            variant="outlined"
+            density="comfortable"
+            class="mb-2"
+          />
+          <v-card-actions class="px-0 pb-0">
+            <v-spacer />
+            <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showOnboardModal = false">Cancel</v-btn>
+            <v-btn color="primary" variant="flat" class="text-none font-weight-bold" :loading="isOnboarding" @click="submitOnboardTenant">Onboard Organization</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Modal: Manage Tenant Lifecycle & Quota (Super Admin Only) -->
+      <v-dialog v-model="showLifecycleModal" max-width="450">
+        <v-card border rounded="lg" class="pa-4">
+          <div class="d-flex align-center ga-2 mb-2">
+            <v-icon color="primary">mdi-tune</v-icon>
+            <span class="text-subtitle-1 font-weight-black text-primary">Manage School Lifecycle & Quota</span>
+          </div>
+          <div class="text-body-2 font-weight-bold text-secondary mb-3">
+            {{ tenantForLifecycle?.name }} ({{ tenantForLifecycle?.id }})
+          </div>
+          <v-select
+            v-model="lifecycleStatus"
+            :items="[
+              { title: 'ACTIVE (Operational)', value: 'active' },
+              { title: 'TRIAL (Limited Evaluation)', value: 'trial' },
+              { title: 'SUSPENDED (Locked Out)', value: 'suspended' },
+              { title: 'EXPIRED (License Expired)', value: 'expired' }
+            ]"
+            label="Lifecycle State:"
+            variant="outlined"
+            density="comfortable"
+            class="mb-2"
+          />
+          <v-text-field
+            v-model.number="lifecycleSeats"
+            label="Purchased Seat Licenses:"
+            type="number"
+            variant="outlined"
+            density="comfortable"
+            class="mb-2"
+          />
+          <v-text-field
+            v-model="lifecycleExpiry"
+            label="License Expiry Date:"
+            placeholder="2028-12-31"
+            variant="outlined"
+            density="comfortable"
+            class="mb-3"
+          />
+          <v-card-actions class="px-0 pb-0">
+            <v-spacer />
+            <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showLifecycleModal = false">Cancel</v-btn>
+            <v-btn color="primary" variant="flat" class="text-none font-weight-bold" :loading="isUpdatingLifecycle" @click="submitLifecycle">Update Lifecycle</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Modal: Support Mode / Inspect Confirmation (Super Admin Only) -->
+      <v-dialog v-model="showInspectSchoolModal" max-width="440">
+        <v-card border rounded="lg" class="pa-4">
+          <div class="d-flex align-center ga-2 mb-2">
+            <v-icon color="amber-darken-3">mdi-shield-account</v-icon>
+            <span class="text-subtitle-1 font-weight-black text-amber-darken-4">Inspect School (Support Mode)</span>
+          </div>
+          <div class="text-body-2 text-grey-darken-2 mb-3">
+            Enter Support & Inspection mode for <strong>{{ tenantToInspect?.name }}</strong>?
+          </div>
+          <div class="text-caption text-grey-darken-1 pa-3 bg-grey-lighten-4 rounded mb-4">
+            You will inspect this school with the scoped privileges of its administrator ({{ tenantToInspect?.admin_email || 'Assigned Admin' }}). An exit button will remain available to return to Super Admin governance anytime.
+          </div>
+          <v-card-actions class="px-0 pb-0">
+            <v-spacer />
+            <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showInspectSchoolModal = false">Cancel</v-btn>
+            <v-btn color="amber-darken-4" variant="flat" class="text-none font-weight-bold text-white" :loading="isEnteringSupportMode" @click="submitEnterSupportMode">Enter Support Mode</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -1415,6 +1683,50 @@ const isSavingSettings = ref(false)
 const isUpdatingTenant = ref(false)
 const isDeletingTenant = ref(false)
 
+// P3 Super Admin Governance States
+const tenantsList = ref([])
+const isFetchingTenants = ref(false)
+
+// Support / Inspection Mode
+const isSupportMode = ref(false)
+const supportSchoolName = ref('')
+const supportAdminEmail = ref('')
+const tenantToInspect = ref(null)
+const showInspectSchoolModal = ref(false)
+const isEnteringSupportMode = ref(false)
+
+// Onboard School Modal State
+const showOnboardModal = ref(false)
+const onboardSchoolName = ref('')
+const onboardAdminName = ref('')
+const onboardAdminEmail = ref('')
+const onboardAdminPassword = ref('Admin@12345')
+const onboardSeats = ref(100)
+const onboardExpiry = ref('2028-12-31')
+const onboardStatus = ref('active')
+const isOnboarding = ref(false)
+
+// Lifecycle Management Modal State
+const showLifecycleModal = ref(false)
+const tenantForLifecycle = ref(null)
+const lifecycleStatus = ref('active')
+const lifecycleSeats = ref(100)
+const lifecycleExpiry = ref('2028-12-31')
+const isUpdatingLifecycle = ref(false)
+
+// Snapshot Export State
+const isExportingSnapshot = ref(false)
+
+// Audit Log Search & Action Filters
+const searchAuditText = ref('')
+const selectedAuditAction = ref('ALL')
+const auditActionOptions = [
+  'ALL', 'LOGIN', 'ONBOARD_TENANT', 'UPDATE_TENANT_LIFECYCLE', 'CREATE_CLASSROOM',
+  'ASSIGN_TEACHER', 'ARCHIVE_CLASS', 'RESTORE_CLASS', 'TRANSFER_STUDENT',
+  'REVOKE_SEAT', 'PROVISION_ACCOUNT', 'CHANGE_ROLE', 'UPDATE_USER', 'DELETE_USER',
+  'IMPERSONATE_TENANT', 'UPDATE_SETTINGS'
+]
+
 // Computed Filters
 const availableTeachers = computed(() => {
   return usersList.value
@@ -1507,6 +1819,23 @@ const filteredAssignments = computed(() => {
     a.class_name?.toLowerCase().includes(q) ||
     a.teacher_name?.toLowerCase().includes(q)
   )
+})
+
+const filteredAuditLogs = computed(() => {
+  let logs = auditLogsList.value || []
+  if (selectedAuditAction.value && selectedAuditAction.value !== 'ALL') {
+    logs = logs.filter(l => l.action === selectedAuditAction.value)
+  }
+  if (searchAuditText.value?.trim()) {
+    const q = searchAuditText.value.toLowerCase().trim()
+    logs = logs.filter(l =>
+      (l.user_email || '').toLowerCase().includes(q) ||
+      (l.user_name || '').toLowerCase().includes(q) ||
+      (l.details || '').toLowerCase().includes(q) ||
+      (l.action || '').toLowerCase().includes(q)
+    )
+  }
+  return logs
 })
 
 const getUserRoleColor = (role) => {
@@ -1609,10 +1938,40 @@ const fetchAssignments = async () => {
   }
 }
 
+const fetchTenants = async () => {
+  if (!isSuperAdmin.value) return
+  isFetchingTenants.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/admin/tenants`, {
+      headers: getAdminAuthHeaders()
+    })
+    if (res.status === 401) {
+      handleAdminSignOut()
+      return
+    }
+    if (res.ok) {
+      const data = await res.json()
+      tenantsList.value = data.tenants || []
+      overview.value.tenants = tenantsList.value
+    }
+  } catch (e) {
+    console.error('Fetch tenants error:', e)
+  } finally {
+    isFetchingTenants.value = false
+  }
+}
+
 const fetchAuditLogs = async () => {
   isFetchingLogs.value = true
   try {
-    const res = await fetch(`${props.backendUrl}/api/admin/audit-logs`, {
+    let url = `${props.backendUrl}/api/admin/audit-logs?limit=250`
+    if (selectedAuditAction.value && selectedAuditAction.value !== 'ALL') {
+      url += `&action=${encodeURIComponent(selectedAuditAction.value)}`
+    }
+    if (searchAuditText.value?.trim()) {
+      url += `&search=${encodeURIComponent(searchAuditText.value.trim())}`
+    }
+    const res = await fetch(url, {
       headers: getAdminAuthHeaders()
     })
     if (res.status === 401) {
@@ -1631,16 +1990,17 @@ const fetchAuditLogs = async () => {
 }
 
 const getAuditActionColor = (action) => {
-  if (action?.includes('DELETE') || action?.includes('CLEAR')) return 'error'
-  if (action?.includes('CREATE') || action?.includes('PROVISION')) return 'success'
-  if (action?.includes('UPDATE') || action?.includes('CHANGE')) return 'warning'
-  if (action === 'LOGIN') return 'info'
+  if (action?.includes('DELETE') || action?.includes('CLEAR') || action?.includes('SUSPEND')) return 'error'
+  if (action?.includes('CREATE') || action?.includes('PROVISION') || action?.includes('ONBOARD')) return 'success'
+  if (action?.includes('UPDATE') || action?.includes('CHANGE') || action?.includes('LIFECYCLE')) return 'warning'
+  if (action === 'LOGIN' || action?.includes('IMPERSONATE')) return 'info'
   return 'primary'
 }
 
 const fetchAllAdminData = async () => {
   await Promise.all([
     fetchOverview(),
+    fetchTenants(),
     fetchClassrooms(),
     fetchUsers(),
     fetchAssignments(),
@@ -2251,6 +2611,172 @@ const saveSystemSettings = async () => {
     notify('Failed to update settings: ' + e.message, 'error')
   } finally {
     isSavingSettings.value = false
+  }
+}
+
+// P3 Super Admin Governance Actions
+const submitOnboardTenant = async () => {
+  if (!onboardSchoolName.value.trim() || !onboardAdminEmail.value.trim() || !onboardAdminName.value.trim()) {
+    notify('Please fill in school name, admin email, and admin name.', 'warning')
+    return
+  }
+  isOnboarding.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/admin/tenants/onboard`, {
+      method: 'POST',
+      headers: getAdminAuthHeaders(),
+      body: JSON.stringify({
+        school_name: onboardSchoolName.value.trim(),
+        admin_email: onboardAdminEmail.value.trim(),
+        admin_name: onboardAdminName.value.trim(),
+        admin_password: onboardAdminPassword.value.trim() || 'Admin@12345',
+        license_seats: Number(onboardSeats.value) || 100,
+        license_expiry: onboardExpiry.value.trim() || '2028-12-31',
+        status: onboardStatus.value || 'active'
+      })
+    })
+    if (res.ok) {
+      const data = await res.json()
+      showOnboardModal.value = false
+      onboardSchoolName.value = ''
+      onboardAdminEmail.value = ''
+      onboardAdminName.value = ''
+      onboardAdminPassword.value = 'Admin@12345'
+      onboardSeats.value = 100
+      notify(`School '${data.school_name}' onboarded successfully with School Admin ${data.admin_email}!`, 'success', 'mdi-check-decagram')
+      await fetchAllAdminData()
+    } else {
+      const err = await res.json()
+      notify(err.detail || 'Failed to onboard school.', 'error')
+    }
+  } catch (e) {
+    notify('Onboarding error: ' + e.message, 'error')
+  } finally {
+    isOnboarding.value = false
+  }
+}
+
+const openLifecycleModal = (t) => {
+  tenantForLifecycle.value = t
+  lifecycleStatus.value = t.status || 'active'
+  lifecycleSeats.value = t.license_seats || 100
+  lifecycleExpiry.value = t.license_expiry || '2028-12-31'
+  showLifecycleModal.value = true
+}
+
+const submitLifecycle = async () => {
+  if (!tenantForLifecycle.value) return
+  isUpdatingLifecycle.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/admin/tenants/${tenantForLifecycle.value.id}/lifecycle`, {
+      method: 'POST',
+      headers: getAdminAuthHeaders(),
+      body: JSON.stringify({
+        status: lifecycleStatus.value,
+        license_seats: Number(lifecycleSeats.value) || 100,
+        license_expiry: lifecycleExpiry.value.trim()
+      })
+    })
+    if (res.ok) {
+      const data = await res.json()
+      showLifecycleModal.value = false
+      notify(`Lifecycle for ${tenantForLifecycle.value.name} updated to ${data.tenant_status.toUpperCase()}!`, 'success')
+      await fetchAllAdminData()
+    } else {
+      const err = await res.json()
+      notify(err.detail || 'Failed to update tenant lifecycle.', 'error')
+    }
+  } catch (e) {
+    notify('Lifecycle update error: ' + e.message, 'error')
+  } finally {
+    isUpdatingLifecycle.value = false
+  }
+}
+
+const openInspectSchoolModal = (t) => {
+  tenantToInspect.value = t
+  showInspectSchoolModal.value = true
+}
+
+const submitEnterSupportMode = async () => {
+  if (!tenantToInspect.value) return
+  isEnteringSupportMode.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/admin/impersonate-tenant/${tenantToInspect.value.id}`, {
+      method: 'POST',
+      headers: getAdminAuthHeaders()
+    })
+    if (res.ok) {
+      const data = await res.json()
+      showInspectSchoolModal.value = false
+
+      const originalToken = localStorage.getItem('admin_auth_token')
+      if (originalToken) {
+        localStorage.setItem('super_admin_backup_token', originalToken)
+      }
+      localStorage.setItem('admin_auth_token', data.token)
+      activeUserRole.value = 'admin'
+      userTenantId.value = String(data.user.tenant_id)
+      supportSchoolName.value = data.tenant.name
+      supportAdminEmail.value = data.user.email
+      isSupportMode.value = true
+      activeTab.value = 'classrooms'
+      notify(`Entered Support Inspection Mode for ${data.tenant.name}`, 'info', 'mdi-shield-account')
+      await fetchAllAdminData()
+    } else {
+      const err = await res.json()
+      notify(err.detail || 'Failed to enter support mode.', 'error')
+    }
+  } catch (e) {
+    notify('Support mode error: ' + e.message, 'error')
+  } finally {
+    isEnteringSupportMode.value = false
+  }
+}
+
+const exitSupportMode = async () => {
+  const originalToken = localStorage.getItem('super_admin_backup_token')
+  if (originalToken) {
+    localStorage.setItem('admin_auth_token', originalToken)
+    localStorage.removeItem('super_admin_backup_token')
+  }
+  activeUserRole.value = 'super_admin'
+  userTenantId.value = ''
+  isSupportMode.value = false
+  selectedTenantScope.value = 'all'
+  activeTab.value = 'tenants'
+  notify('Exited Support Mode. Returned to Super Admin Platform Governance.', 'success', 'mdi-shield-check')
+  await fetchAllAdminData()
+}
+
+const downloadBackupSnapshot = async () => {
+  isExportingSnapshot.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/admin/backup-snapshot`, {
+      headers: getAdminAuthHeaders()
+    })
+    if (res.ok) {
+      const data = await res.json()
+      const jsonStr = JSON.stringify(data, null, 2)
+      const blob = new Blob([jsonStr], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+      a.href = url
+      a.download = `fluent_platform_backup_${timestamp}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      notify(`Platform backup snapshot downloaded! Total records: ${data.total_records}`, 'success', 'mdi-download')
+    } else {
+      const err = await res.json()
+      notify(err.detail || 'Failed to export backup.', 'error')
+    }
+  } catch (e) {
+    notify('Failed to export backup snapshot: ' + e.message, 'error')
+  } finally {
+    isExportingSnapshot.value = false
   }
 }
 

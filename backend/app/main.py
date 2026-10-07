@@ -1662,6 +1662,7 @@ def init_db():
                 logo_url TEXT,
                 license_seats INTEGER DEFAULT 100,
                 license_expiry TEXT,
+                status TEXT DEFAULT 'active',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 IsXoa INTEGER DEFAULT 0
             )
@@ -1831,6 +1832,13 @@ def init_db():
         except Exception:
             pass
         cursor.execute("UPDATE assignments SET status = 'active' WHERE status IS NULL OR status = ''")
+
+        # P3 Migrations: Tenant status (active, trial, suspended, expired)
+        try:
+            cursor.execute("ALTER TABLE tenants ADD COLUMN status TEXT DEFAULT 'active'")
+        except Exception:
+            pass
+        cursor.execute("UPDATE tenants SET status = 'active' WHERE status IS NULL OR status = ''")
 
         # Super Admin Default Initialization (Owner Account)
         cursor.execute("SELECT id FROM users WHERE role = 'super_admin'")
@@ -3827,6 +3835,86 @@ def create_tenant(req: CreateTenantRequest, current_user: dict = Depends(require
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+class OnboardTenantRequest(BaseModel):
+    school_name: str
+    admin_email: str
+    admin_name: str
+    admin_password: str = "Admin@12345"
+    license_seats: int = 100
+    license_expiry: str = "2027-12-31"
+    status: str = "active" # active, trial
+    logo_url: str = ""
+
+@app.post("/api/admin/tenants/onboard")
+def onboard_tenant(req: OnboardTenantRequest, current_user: dict = Depends(require_super_admin_only)):
+    """Atomic B2B School Onboarding: creates tenant and initial School Admin in a single transaction."""
+    try:
+        school_name = req.school_name.strip()
+        admin_email = req.admin_email.strip().lower()
+        admin_name = req.admin_name.strip()
+        admin_password = req.admin_password.strip() if req.admin_password else "Admin@12345"
+        status = req.status.strip().lower() if req.status else "active"
+        if status not in ["active", "trial", "suspended", "expired"]:
+            status = "active"
+        
+        if not school_name or not admin_email or not admin_name:
+            raise HTTPException(status_code=400, detail="School name, admin email, and admin name are required.")
+            
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        
+        # Check if admin email already exists
+        cursor.execute("SELECT id FROM users WHERE email = ? AND (IsXoa IS NULL OR IsXoa = 0)", (admin_email,))
+        if cursor.fetchone():
+            conn.close()
+            raise HTTPException(status_code=400, detail=f"Email '{admin_email}' is already registered.")
+            
+        tenant_id = f"tenant_{random.randint(1000, 9999)}"
+        while True:
+            cursor.execute("SELECT id FROM tenants WHERE id = ?", (tenant_id,))
+            if not cursor.fetchone():
+                break
+            tenant_id = f"tenant_{random.randint(1000, 9999)}"
+            
+        hashed_password = hash_password(admin_password)
+        parent_code = f"PA-{random.randint(1000, 9999)}"
+        
+        # 1. Insert School Admin user
+        cursor.execute("""
+            INSERT INTO users (email, name, role, tenant_id, parent_code, password_hash, status)
+            VALUES (?, ?, 'admin', ?, ?, ?, 'active')
+        """, (admin_email, admin_name, tenant_id, parent_code, hashed_password))
+        admin_user_id = cursor.lastrowid
+        
+        # 2. Insert Tenant record with admin_id linked
+        cursor.execute("""
+            INSERT INTO tenants (id, name, admin_id, logo_url, license_seats, license_expiry, status, IsXoa)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+        """, (tenant_id, school_name, admin_user_id, req.logo_url or "", req.license_seats, req.license_expiry.strip(), status))
+        
+        record_audit_log(
+            cursor, current_user["id"], "ONBOARD_TENANT", "tenants", tenant_id, tenant_id,
+            f"Super Admin onboarded school '{school_name}' with admin {admin_email} (seats: {req.license_seats}, status: {status})"
+        )
+        conn.commit()
+        conn.close()
+        export_db_to_json()
+        
+        return {
+            "status": "success",
+            "tenant_id": tenant_id,
+            "school_name": school_name,
+            "admin_id": admin_user_id,
+            "admin_email": admin_email,
+            "license_seats": req.license_seats,
+            "license_expiry": req.license_expiry,
+            "tenant_status": status
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 class ProvisionAccountRequest(BaseModel):
     email: str
     name: str
@@ -3921,8 +4009,8 @@ def get_admin_overview(
             """, (target_tenant,))
             total_submissions = cursor.fetchone()[0]
             
-            cursor.execute("SELECT id, name, license_seats, license_expiry, created_at FROM tenants WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (target_tenant,))
-            tenants = [{"id": r[0], "name": r[1], "license_seats": r[2], "license_expiry": r[3], "created_at": r[4]} for r in cursor.fetchall()]
+            cursor.execute("SELECT id, name, license_seats, license_expiry, created_at, COALESCE(status, 'active') FROM tenants WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (target_tenant,))
+            tenants = [{"id": r[0], "name": r[1], "license_seats": r[2], "license_expiry": r[3], "created_at": r[4], "status": r[5]} for r in cursor.fetchall()]
             
             conn.close()
             return {
@@ -3963,8 +4051,8 @@ def get_admin_overview(
             total_bytes = cursor.fetchone()[0] or 0
             used_mb = round(total_bytes / (1024.0 * 1024.0), 3)
             
-            cursor.execute("SELECT id, name, license_seats, license_expiry, created_at FROM tenants WHERE (IsXoa IS NULL OR IsXoa = 0)")
-            tenants = [{"id": r[0], "name": r[1], "license_seats": r[2], "license_expiry": r[3], "created_at": r[4]} for r in cursor.fetchall()]
+            cursor.execute("SELECT id, name, license_seats, license_expiry, created_at, COALESCE(status, 'active') FROM tenants WHERE (IsXoa IS NULL OR IsXoa = 0)")
+            tenants = [{"id": r[0], "name": r[1], "license_seats": r[2], "license_expiry": r[3], "created_at": r[4], "status": r[5]} for r in cursor.fetchall()]
             
             conn.close()
             return {
@@ -4666,6 +4754,253 @@ def delete_tenant(tenant_id: str, current_user: dict = Depends(require_super_adm
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+class TenantLifecycleRequest(BaseModel):
+    status: str # "active", "trial", "suspended", "expired"
+    license_seats: Optional[int] = None
+    license_expiry: Optional[str] = None
+
+@app.post("/api/admin/tenants/{tenant_id}/lifecycle")
+def update_tenant_lifecycle(
+    tenant_id: str,
+    req: TenantLifecycleRequest,
+    current_user: dict = Depends(require_super_admin_only)
+):
+    """Super Admin Tenant Lifecycle Control: active, trial, suspended, expired."""
+    try:
+        new_status = req.status.strip().lower()
+        if new_status not in ["active", "trial", "suspended", "expired"]:
+            raise HTTPException(status_code=400, detail="Invalid status. Must be active, trial, suspended, or expired.")
+            
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, name, status, license_seats, license_expiry FROM tenants WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (tenant_id,))
+        row = cursor.fetchone()
+        if not row:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Tenant organization not found.")
+            
+        current_seats = row[3] if row[3] is not None else 100
+        current_expiry = row[4] or "2028-12-31"
+        
+        updated_seats = req.license_seats if req.license_seats is not None else current_seats
+        updated_expiry = req.license_expiry.strip() if req.license_expiry else current_expiry
+        
+        cursor.execute("""
+            UPDATE tenants
+            SET status = ?, license_seats = ?, license_expiry = ?
+            WHERE id = ?
+        """, (new_status, updated_seats, updated_expiry, tenant_id))
+        
+        record_audit_log(
+            cursor, current_user["id"], "UPDATE_TENANT_LIFECYCLE", "tenants", tenant_id, tenant_id,
+            f"Super Admin updated lifecycle of tenant {tenant_id} to {new_status} (seats: {updated_seats}, expiry: {updated_expiry})"
+        )
+        conn.commit()
+        conn.close()
+        export_db_to_json()
+        
+        return {
+            "status": "success",
+            "tenant_id": tenant_id,
+            "tenant_status": new_status,
+            "license_seats": updated_seats,
+            "license_expiry": updated_expiry
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/api/admin/tenants")
+def get_all_tenants_with_metrics(current_user: dict = Depends(require_super_admin_only)):
+    """Deep Multi-Tenant Metrics Aggregation for Super Admin Platform Governance"""
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, name, COALESCE(status, 'active') as status, license_seats, license_expiry, created_at, admin_id
+            FROM tenants
+            WHERE (IsXoa IS NULL OR IsXoa = 0)
+            ORDER BY id ASC
+        """)
+        tenant_rows = cursor.fetchall()
+        
+        result = []
+        for t in tenant_rows:
+            tid = t[0]
+            t_name = t[1]
+            t_status = t[2]
+            t_seats = t[3] if t[3] is not None else 100
+            t_expiry = t[4] or ""
+            t_created = t[5]
+            admin_id = t[6]
+            
+            # School Admin info
+            admin_email = ""
+            admin_name = ""
+            if admin_id:
+                cursor.execute("SELECT email, name FROM users WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (admin_id,))
+                a_row = cursor.fetchone()
+                if a_row:
+                    admin_email = a_row[0]
+                    admin_name = a_row[1]
+            if not admin_email:
+                cursor.execute("SELECT email, name FROM users WHERE tenant_id = ? AND role = 'admin' AND (IsXoa IS NULL OR IsXoa = 0) LIMIT 1", (tid,))
+                a_row = cursor.fetchone()
+                if a_row:
+                    admin_email = a_row[0]
+                    admin_name = a_row[1]
+                    
+            # Teachers count
+            cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'teacher' AND tenant_id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (tid,))
+            teacher_count = cursor.fetchone()[0]
+            
+            # Enrolled Students count
+            cursor.execute("""
+                SELECT COUNT(DISTINCT ce.student_id)
+                FROM class_enrollments ce
+                JOIN classrooms c ON ce.class_id = c.id
+                WHERE c.tenant_id = ? AND (ce.IsXoa IS NULL OR ce.IsXoa = 0)
+            """, (tid,))
+            student_count = cursor.fetchone()[0]
+            
+            # Classrooms breakdown
+            cursor.execute("SELECT COUNT(*) FROM classrooms WHERE tenant_id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (tid,))
+            class_count = cursor.fetchone()[0]
+            cursor.execute("SELECT COUNT(*) FROM classrooms WHERE tenant_id = ? AND COALESCE(is_archived, 0) = 0 AND (IsXoa IS NULL OR IsXoa = 0)", (tid,))
+            active_class_count = cursor.fetchone()[0]
+            archived_class_count = class_count - active_class_count
+            
+            # Submissions count
+            cursor.execute("""
+                SELECT COUNT(*) FROM submissions s
+                JOIN assignments a ON s.assignment_id = a.id
+                JOIN classrooms c ON a.class_id = c.id
+                WHERE c.tenant_id = ? AND (s.IsXoa IS NULL OR s.IsXoa = 0)
+            """, (tid,))
+            submission_count = cursor.fetchone()[0]
+            
+            # Audio storage in MB
+            cursor.execute("""
+                SELECT COALESCE(SUM(s.audio_size_bytes), 0) FROM submissions s
+                JOIN assignments a ON s.assignment_id = a.id
+                JOIN classrooms c ON a.class_id = c.id
+                WHERE c.tenant_id = ? AND (s.IsXoa IS NULL OR s.IsXoa = 0)
+            """, (tid,))
+            audio_bytes = cursor.fetchone()[0] or 0
+            audio_storage_mb = round(audio_bytes / (1024.0 * 1024.0), 3)
+            
+            # Last active timestamp
+            cursor.execute("""
+                SELECT MAX(s.submitted_at) FROM submissions s
+                JOIN assignments a ON s.assignment_id = a.id
+                JOIN classrooms c ON a.class_id = c.id
+                WHERE c.tenant_id = ? AND (s.IsXoa IS NULL OR s.IsXoa = 0)
+            """, (tid,))
+            last_sub = cursor.fetchone()[0]
+            
+            result.append({
+                "id": tid,
+                "name": t_name,
+                "status": t_status,
+                "license_seats": t_seats,
+                "license_expiry": t_expiry,
+                "created_at": t_created,
+                "admin_email": admin_email,
+                "admin_name": admin_name,
+                "teacher_count": teacher_count,
+                "student_count": student_count,
+                "class_count": class_count,
+                "active_class_count": active_class_count,
+                "archived_class_count": archived_class_count,
+                "submission_count": submission_count,
+                "audio_storage_mb": audio_storage_mb,
+                "last_active_at": last_sub or t_created
+            })
+            
+        conn.close()
+        return {"status": "success", "tenants": result}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/admin/impersonate-tenant/{tenant_id}")
+def impersonate_tenant(tenant_id: str, current_user: dict = Depends(require_super_admin_only)):
+    """Generate a scoped Support / Inspection session token to view school data as its School Admin."""
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, name, COALESCE(status, 'active') FROM tenants WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (tenant_id,))
+        t_row = cursor.fetchone()
+        if not t_row:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Tenant organization not found.")
+            
+        tenant_name = t_row[1]
+        
+        # Find the School Admin account
+        cursor.execute("""
+            SELECT id, email, name, role, tenant_id, COALESCE(status, 'active')
+            FROM users
+            WHERE tenant_id = ? AND role = 'admin' AND (IsXoa IS NULL OR IsXoa = 0)
+            LIMIT 1
+        """, (tenant_id,))
+        admin_row = cursor.fetchone()
+        
+        if not admin_row:
+            conn.close()
+            raise HTTPException(
+                status_code=400, 
+                detail=f"School '{tenant_name}' does not have an assigned School Administrator account yet. Please onboard or provision an admin first."
+            )
+            
+        admin_id = admin_row[0]
+        admin_email = admin_row[1]
+        admin_name = admin_row[2]
+        
+        # Generate inspection token (2 hour expiry)
+        extra_claims = {
+            "is_impersonation": True,
+            "impersonated_by": current_user["id"]
+        }
+        token = create_access_token(
+            user_id=admin_id,
+            email=admin_email,
+            role="admin",
+            tenant_id=str(tenant_id),
+            expires_hours=2,
+            extra_claims=extra_claims
+        )
+        
+        record_audit_log(
+            cursor, current_user["id"], "IMPERSONATE_TENANT", "tenants", tenant_id, tenant_id,
+            f"Super Admin started inspection mode for school '{tenant_name}' as School Admin '{admin_email}'"
+        )
+        conn.commit()
+        conn.close()
+        
+        return {
+            "status": "success",
+            "token": token,
+            "user": {
+                "id": admin_id,
+                "email": admin_email,
+                "name": admin_name,
+                "role": "admin",
+                "tenant_id": str(tenant_id),
+                "school_name": tenant_name,
+                "is_support_mode": True,
+                "impersonated_by": current_user["id"]
+            },
+            "tenant": {
+                "id": str(tenant_id),
+                "name": tenant_name
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @app.get("/api/admin/users")
 def get_admin_users(
     tenant_id: Optional[str] = None,
@@ -4866,29 +5201,50 @@ def delete_user(user_id: int, current_user: dict = Depends(require_admin_or_supe
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/api/admin/audit-logs")
-def get_admin_audit_logs(current_user: dict = Depends(require_admin_or_super_admin)):
+def get_admin_audit_logs(
+    tenant_id: Optional[str] = None,
+    action: Optional[str] = None,
+    search: Optional[str] = None,
+    limit: int = 100,
+    current_user: dict = Depends(require_admin_or_super_admin)
+):
+    """Searchable & Filterable System Audit Log Viewer."""
     try:
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
+        
+        query = """
+            SELECT a.id, a.user_id, COALESCE(u.email, 'system') as user_email,
+                   COALESCE(u.name, 'System') as user_name, a.action, a.target_type,
+                   a.target_id, a.tenant_id, a.details, a.created_at
+            FROM audit_logs a
+            LEFT JOIN users u ON a.user_id = u.id
+            WHERE 1=1
+        """
+        params = []
+        
+        # Multi-tenant isolation: School Admin can ONLY see their own school's audit logs
         if current_user["role"] == "admin":
-            cursor.execute("""
-                SELECT a.id, a.user_id, COALESCE(u.email, 'system') as user_email,
-                       COALESCE(u.name, 'System') as user_name, a.action, a.target_type,
-                       a.target_id, a.tenant_id, a.details, a.created_at
-                FROM audit_logs a
-                LEFT JOIN users u ON a.user_id = u.id
-                WHERE a.tenant_id = ?
-                ORDER BY a.id DESC LIMIT 100
-            """, (current_user.get("tenant_id") or "1",))
+            query += " AND a.tenant_id = ?"
+            params.append(current_user.get("tenant_id") or "1")
         else:
-            cursor.execute("""
-                SELECT a.id, a.user_id, COALESCE(u.email, 'system') as user_email,
-                       COALESCE(u.name, 'System') as user_name, a.action, a.target_type,
-                       a.target_id, a.tenant_id, a.details, a.created_at
-                FROM audit_logs a
-                LEFT JOIN users u ON a.user_id = u.id
-                ORDER BY a.id DESC LIMIT 200
-            """)
+            if tenant_id and tenant_id != 'all':
+                query += " AND a.tenant_id = ?"
+                params.append(tenant_id)
+                
+        if action and action != 'all':
+            query += " AND a.action = ?"
+            params.append(action)
+            
+        if search and search.strip():
+            s = f"%{search.strip()}%"
+            query += " AND (a.details LIKE ? OR u.email LIKE ? OR u.name LIKE ? OR a.target_id LIKE ?)"
+            params.extend([s, s, s, s])
+            
+        safe_limit = max(10, min(int(limit), 500))
+        query += f" ORDER BY a.id DESC LIMIT {safe_limit}"
+        
+        cursor.execute(query, tuple(params))
         rows = cursor.fetchall()
         conn.close()
         logs = [
@@ -4909,6 +5265,48 @@ def get_admin_audit_logs(current_user: dict = Depends(require_admin_or_super_adm
         return {"logs": logs}
     except Exception as e:
         return {"logs": [], "error": str(e)}
+
+@app.get("/api/admin/backup-snapshot")
+def get_backup_snapshot(current_user: dict = Depends(require_super_admin_only)):
+    """Export complete platform database snapshot as JSON for disaster recovery & compliance."""
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        backup_data = {}
+        tables = [
+            "tenants", "users", "classrooms", "class_enrollments", 
+            "assignments", "submissions", "audit_logs", "system_configs"
+        ]
+        stats = {}
+        for table in tables:
+            try:
+                cursor.execute(f"SELECT * FROM {table}")
+                columns = [desc[0] for desc in cursor.description]
+                rows = cursor.fetchall()
+                table_records = []
+                for r in rows:
+                    rec = dict(zip(columns, r))
+                    if table == "users" and "password_hash" in rec:
+                        rec["password_hash"] = "[PROTECTED_PBKDF2_HASH]"
+                    table_records.append(rec)
+                backup_data[table] = table_records
+                stats[table] = len(rows)
+            except Exception as te:
+                stats[table] = f"Error: {str(te)}"
+        conn.close()
+        
+        export_db_to_json()
+        
+        return {
+            "status": "success",
+            "timestamp": datetime.now().isoformat(),
+            "exported_by": current_user["email"],
+            "stats": stats,
+            "total_records": sum(v for v in stats.values() if isinstance(v, int)),
+            "data": backup_data
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Backup export failed: {str(e)}")
 
 class UpdateSystemSettingsRequest(BaseModel):
     retention_days: int = 60

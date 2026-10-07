@@ -47,7 +47,7 @@ def verify_password(plain_password: str, hashed: str) -> bool:
     except Exception:
         return False
 
-def create_access_token(user_id: int, email: str, role: str, tenant_id: Optional[str] = None, expires_hours: int = 72) -> str:
+def create_access_token(user_id: int, email: str, role: str, tenant_id: Optional[str] = None, expires_hours: int = 72, extra_claims: Optional[dict] = None) -> str:
     """Create a tamper-proof signed JWT token using HMAC-SHA256."""
     header = {"alg": "HS256", "typ": "JWT"}
     exp_time = int(time.time()) + (expires_hours * 3600)
@@ -60,6 +60,8 @@ def create_access_token(user_id: int, email: str, role: str, tenant_id: Optional
         "iat": int(time.time()),
         "exp": exp_time
     }
+    if extra_claims:
+        payload.update(extra_claims)
     
     header_b64 = _base64url_encode(json.dumps(header, separators=(',', ':')).encode('utf-8'))
     payload_b64 = _base64url_encode(json.dumps(payload, separators=(',', ':')).encode('utf-8'))
@@ -133,14 +135,40 @@ def get_current_user_from_db(db_path: str, token: str) -> dict:
         
     if row[5] == "suspended":
         raise HTTPException(status_code=403, detail="Account is suspended. Please contact your school administrator.")
+
+    role = row[3]
+    tenant_id = str(row[4]) if row[4] is not None else None
+    is_impersonation = bool(payload.get("is_impersonation"))
+    impersonated_by = payload.get("impersonated_by")
+
+    # P3: Enforce Tenant Lifecycle (Suspended / Expired) for all non-super-admins (unless in authorized support inspection mode)
+    if role != "super_admin" and tenant_id and not is_impersonation:
+        try:
+            conn2 = sqlite3.connect(db_path, timeout=5.0)
+            cur2 = conn2.cursor()
+            cur2.execute("SELECT COALESCE(status, 'active') FROM tenants WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (tenant_id,))
+            t_row = cur2.fetchone()
+            conn2.close()
+            if t_row:
+                t_status = t_row[0]
+                if t_status == "suspended":
+                    raise HTTPException(status_code=403, detail="School institution is suspended. Please contact platform support.")
+                elif t_status == "expired":
+                    raise HTTPException(status_code=403, detail="School institution license has expired. Please contact your administrator to renew.")
+        except HTTPException:
+            raise
+        except Exception:
+            pass
         
     return {
         "id": row[0],
         "email": row[1],
         "name": row[2],
         "role": row[3],
-        "tenant_id": str(row[4]) if row[4] is not None else None,
-        "status": row[5]
+        "tenant_id": tenant_id,
+        "status": row[5],
+        "is_impersonation": is_impersonation,
+        "impersonated_by": impersonated_by
     }
 
 def record_audit_log(cursor, user_id: int, action: str, target_type: str, target_id: str, tenant_id: Optional[str], details: str = ""):
