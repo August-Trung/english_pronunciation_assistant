@@ -16,17 +16,17 @@
     <template v-else-if="isStandalonePortalRoute">
       <v-app-bar color="white" flat border class="px-4 px-md-8 px-lg-12">
         <div class="d-flex align-center w-100">
-          <router-link to="/" class="d-flex align-center ga-1 ga-sm-2 text-decoration-none text-grey-darken-4" style="cursor: pointer;">
+          <router-link :to="portalHomeRoute" class="d-flex align-center ga-1 ga-sm-2 text-decoration-none text-grey-darken-4" style="cursor: pointer;">
             <img src="/logo-augusttrung.png" alt="August Trung Logo" height="34" class="mr-1 d-block" />
             <div>
               <span class="text-subtitle-1 font-weight-black text-primary tracking-tight">FLUENT</span>
               <span class="d-none d-md-inline text-caption font-weight-bold text-grey-darken-1 border-s ps-2 ml-2">
-                Academic English Pronunciation Studio
+                {{ portalSubtitle }}
               </span>
             </div>
           </router-link>
           <v-spacer />
-          <v-btn color="primary" variant="outlined" size="small" class="text-none font-weight-bold" prepend-icon="mdi-home" to="/">
+          <v-btn color="primary" variant="outlined" size="small" class="text-none font-weight-bold" prepend-icon="mdi-home" @click="handleReturnToStudio">
             Return to Learning Studio
           </v-btn>
         </div>
@@ -422,6 +422,33 @@ const isStandalonePortalRoute = computed(() => {
   return ['/teacher', '/admin', '/parent'].includes(route.path)
 })
 
+const portalHomeRoute = computed(() => {
+  if (route.path.startsWith('/teacher')) return '/teacher'
+  if (route.path.startsWith('/admin')) return '/admin'
+  if (route.path.startsWith('/parent')) return '/parent'
+  return '/'
+})
+
+const portalSubtitle = computed(() => {
+  if (route.path.startsWith('/teacher')) return 'Educator Classroom Hub'
+  if (route.path.startsWith('/admin')) return 'System Administration Portal'
+  if (route.path.startsWith('/parent')) return 'Parent Progress Portal'
+  return 'Academic English Pronunciation Studio'
+})
+
+const handleReturnToStudio = async () => {
+  if (isLoggedIn.value) {
+    router.push('/')
+    return
+  }
+  const storedRole = localStorage.getItem('user_role')
+  const storedEmail = localStorage.getItem('speak_user_email') || (storedRole === 'teacher' ? 'teacher@fluent.edu.vn' : (['admin', 'super_admin'].includes(storedRole) ? 'superadmin@fluent.edu.vn' : ''))
+  if (storedEmail) {
+    await autoLoginByEmail(storedEmail)
+  }
+  router.push('/')
+}
+
 const goToHome = () => {
   router.push('/')
 }
@@ -534,12 +561,19 @@ onMounted(async () => {
       }
     }
   } else {
-    // Normal auto login check by stored email
+    // Normal auto login check by stored email or educator role
     try {
       const storedEmail = localStorage.getItem('speak_user_email')
       if (storedEmail) {
         userEmail.value = storedEmail
         await autoLoginByEmail(storedEmail)
+      } else {
+        const storedRole = localStorage.getItem('user_role')
+        if (storedRole === 'teacher') {
+          await autoLoginByEmail('teacher@fluent.edu.vn')
+        } else if (storedRole === 'admin' || storedRole === 'super_admin') {
+          await autoLoginByEmail('superadmin@fluent.edu.vn')
+        }
       }
     } finally {
       isCheckingAuth.value = false
@@ -755,10 +789,13 @@ const handleLogout = () => {
   localStorage.removeItem('speak_user_email')
   localStorage.removeItem('speak_user_avatar')
   localStorage.removeItem('speak_user_name')
+  localStorage.removeItem('user_role')
+  localStorage.removeItem('user_id')
   try {
     sessionStorage.clear()
   } catch (e) {}
   isLoggedIn.value = false
+  userRole.value = 'student'
   currentUserId.value = null
   userEmail.value = ''
   userName.value = ''
