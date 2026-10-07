@@ -4012,6 +4012,15 @@ def get_admin_overview(
             cursor.execute("SELECT id, name, license_seats, license_expiry, created_at, COALESCE(status, 'active') FROM tenants WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (target_tenant,))
             tenants = [{"id": r[0], "name": r[1], "license_seats": r[2], "license_expiry": r[3], "created_at": r[4], "status": r[5]} for r in cursor.fetchall()]
             
+            cursor.execute("""
+                SELECT COALESCE(SUM(s.audio_size_bytes), 0) FROM submissions s
+                JOIN assignments a ON s.assignment_id = a.id
+                JOIN classrooms c ON a.class_id = c.id
+                WHERE c.tenant_id = ? AND (s.IsXoa IS NULL OR s.IsXoa = 0)
+            """, (target_tenant,))
+            school_bytes = cursor.fetchone()[0] or 0
+            school_mb = round(school_bytes / (1024.0 * 1024.0), 3)
+
             conn.close()
             return {
                 "total_tenants": 1,
@@ -4023,7 +4032,7 @@ def get_admin_overview(
                 "total_submissions": total_submissions,
                 "license_seats": tenant_info["license_seats"],
                 "used_seats": total_students,
-                "supabase_storage_used_mb": 0.0,
+                "supabase_storage_used_mb": school_mb,
                 "supabase_storage_limit_mb": 1000,
                 "tenants": tenants
             }
