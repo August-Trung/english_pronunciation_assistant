@@ -5,7 +5,18 @@ import sqlite3
 import random
 import tempfile
 from datetime import datetime, timedelta
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from typing import Optional, List, Dict, Any
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Body, Depends, Header
+try:
+    from security import (
+        hash_password, verify_password, create_access_token, decode_access_token,
+        extract_bearer_token, get_current_user_from_db, record_audit_log
+    )
+except ImportError:
+    from app.security import (
+        hash_password, verify_password, create_access_token, decode_access_token,
+        extract_bearer_token, get_current_user_from_db, record_audit_log
+    )
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -1537,7 +1548,8 @@ def export_db_to_json():
         backup_data = {}
         tables = [
             "users", "history", "user_settings", "weak_words", "achievements",
-            "classrooms", "class_enrollments", "assignments", "submissions", "tenants"
+            "classrooms", "class_enrollments", "assignments", "submissions", "tenants",
+            "audit_logs", "system_configs"
         ]
         for table in tables:
             try:
@@ -1583,8 +1595,8 @@ def import_db_from_json():
             cursor.execute("ALTER TABLE history ADD COLUMN audio_url TEXT")
         except Exception:
             pass
-        # Purge temporary test students if any
-        cursor.execute("DELETE FROM users WHERE email LIKE 'user_%@fluent.edu.vn'")
+        # Purge temporary test users if any
+        cursor.execute("DELETE FROM users WHERE email LIKE 'user_%@fluent.edu.vn' OR email LIKE 'updated_%' OR email LIKE 'test_%'")
         cursor.execute("DELETE FROM history WHERE user_id NOT IN (SELECT id FROM users)")
         inserted_count = 0
         for table, rows in backup_data.items():
@@ -1596,6 +1608,10 @@ def import_db_from_json():
                 filtered_row = {k: v for k, v in row.items() if k in existing_cols}
                 if not filtered_row:
                     continue
+                if table == "users":
+                    pwd = filtered_row.get("password_hash")
+                    if pwd and not pwd.startswith("pbkdf2:"):
+                        filtered_row["password_hash"] = hash_password(pwd)
                 keys = list(filtered_row.keys())
                 values = [filtered_row[k] for k in keys]
                 placeholders = ", ".join(["?"] * len(keys))
@@ -1767,6 +1783,12 @@ def init_db():
             except Exception:
                 pass
 
+        for t in ["classrooms", "class_enrollments", "assignments", "submissions"]:
+            try:
+                cursor.execute(f"ALTER TABLE {t} ADD COLUMN tenant_id TEXT")
+            except Exception:
+                pass
+
         try:
             cursor.execute("ALTER TABLE submissions ADD COLUMN audio_size_bytes INTEGER DEFAULT 0")
         except Exception:
@@ -1775,11 +1797,51 @@ def init_db():
         # Super Admin Default Initialization (Owner Account)
         cursor.execute("SELECT id FROM users WHERE role = 'super_admin'")
         if not cursor.fetchone():
+            default_hash = hash_password("superadmin123")
             cursor.execute("""
                 INSERT INTO users (email, name, role, password_hash)
-                VALUES ('superadmin@fluent.edu.vn', 'Super Admin (Owner)', 'super_admin', 'superadmin123')
+                VALUES ('superadmin@fluent.edu.vn', 'Super Admin (Owner)', 'super_admin', ?)
+            """, (default_hash,))
+            print("Default Super Admin initialized with salted PBKDF2 hash")
+
+        # Default Active School Tenant Initialization
+        cursor.execute("SELECT id FROM tenants WHERE (IsXoa IS NULL OR IsXoa = 0)")
+        if not cursor.fetchone():
+            cursor.execute("""
+                INSERT INTO tenants (id, name, license_seats, license_expiry, created_at, IsXoa)
+                VALUES ('1', 'Fluent English Academy', 100, '2028-12-31', '2026-07-30 18:00:00', 0)
             """)
-            print("Default Super Admin initialized: superadmin@fluent.edu.vn / superadmin123")
+
+        # Clean fake test seeds and standardize tenant assignments
+        cursor.execute("DELETE FROM users WHERE email IN ('test_teacher_999@fluent.edu.vn', 'student999@test.com')")
+        cursor.execute("UPDATE users SET tenant_id = '1' WHERE email IN ('admin@fluent.edu.vn', 'teacher@fluent.edu.vn', 'augusttrung8123@gmail.com')")
+        cursor.execute("UPDATE users SET tenant_id = NULL WHERE role = 'super_admin'")
+        cursor.execute("UPDATE classrooms SET tenant_id = '1' WHERE tenant_id IS NULL OR tenant_id = ''")
+        cursor.execute("UPDATE class_enrollments SET tenant_id = '1' WHERE tenant_id IS NULL OR tenant_id = ''")
+        cursor.execute("UPDATE assignments SET tenant_id = '1' WHERE tenant_id IS NULL OR tenant_id = ''")
+        cursor.execute("UPDATE submissions SET tenant_id = '1' WHERE tenant_id IS NULL OR tenant_id = ''")
+
+        # Security P0: System Audit Logs Table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS audit_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                action TEXT NOT NULL,
+                target_type TEXT,
+                target_id TEXT,
+                tenant_id TEXT,
+                details TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
+        # Security P0: Auto-upgrade legacy plaintext seeds to salted PBKDF2 hashes
+        cursor.execute("SELECT id, email, password_hash FROM users WHERE role IN ('super_admin', 'admin', 'teacher')")
+        for u_row in cursor.fetchall():
+            u_id, u_email, u_pwd = u_row[0], u_row[1], u_row[2]
+            if u_pwd and not u_pwd.startswith("pbkdf2:"):
+                new_h = hash_password(u_pwd)
+                cursor.execute("UPDATE users SET password_hash = ? WHERE id = ?", (new_h, u_id))
                 
         conn.commit()
         conn.close()
@@ -1801,8 +1863,52 @@ def init_db():
             conn.close()
         except Exception as e:
             print(f"Standardize classroom teacher error: {e}")
+
+        # Enforce 100% salted PBKDF2 hashes across all stored accounts
+        try:
+            conn = sqlite3.connect(DB_PATH, timeout=20.0)
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM users WHERE email LIKE 'updated_%' OR email LIKE 'test_%'")
+            cursor.execute("SELECT id, password_hash FROM users WHERE password_hash IS NOT NULL AND password_hash != ''")
+            for u_id, u_pwd in cursor.fetchall():
+                if not u_pwd.startswith("pbkdf2:"):
+                    cursor.execute("UPDATE users SET password_hash = ? WHERE id = ?", (hash_password(u_pwd), u_id))
+            conn.commit()
+            conn.close()
+            export_db_to_json()
+        except Exception as e:
+            print(f"Password hash enforcement note: {e}")
     except Exception as e:
         print(f"Database init error: {e}")
+
+# ==========================================
+# ENTERPRISE SECURITY & RBAC DEPENDENCIES (P0)
+# ==========================================
+
+def get_current_authenticated_user(authorization: Optional[str] = Header(None)) -> dict:
+    """Validate Bearer JWT and retrieve verified user object from SQLite."""
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authentication token required. Bearer token missing.")
+    token = extract_bearer_token(authorization)
+    return get_current_user_from_db(DB_PATH, token)
+
+def require_super_admin_only(current_user: dict = Depends(get_current_authenticated_user)) -> dict:
+    """Strict authorization gate for Super Administrator only."""
+    if current_user.get("role") != "super_admin":
+        raise HTTPException(status_code=403, detail="Super Administrator privileges required.")
+    return current_user
+
+def require_admin_or_super_admin(current_user: dict = Depends(get_current_authenticated_user)) -> dict:
+    """Authorization gate for School Administrator or Super Administrator."""
+    if current_user.get("role") not in ["admin", "super_admin"]:
+        raise HTTPException(status_code=403, detail="Administrator privileges required.")
+    return current_user
+
+def require_educator_or_admin(current_user: dict = Depends(get_current_authenticated_user)) -> dict:
+    """Authorization gate for Teachers, School Admins, or Super Admins."""
+    if current_user.get("role") not in ["teacher", "admin", "super_admin"]:
+        raise HTTPException(status_code=403, detail="Educator privileges required.")
+    return current_user
 
 def calculate_user_streak(user_id: int, cursor) -> int:
     """Calculate the consecutive day learning streak for a user from their practice history."""
@@ -1963,29 +2069,30 @@ def get_leaderboard(mode: str = "freemium"):
         return []
 
 @app.get("/api/admin/debug-db")
-def debug_db():
+def debug_db(current_user: dict = Depends(require_super_admin_only)):
     res = import_db_from_json()
     conn = sqlite3.connect(DB_PATH, timeout=20.0)
     c = conn.cursor()
-    users = c.execute("SELECT * FROM users").fetchall()
-    history = c.execute("SELECT * FROM history").fetchall()
+    users = c.execute("SELECT id, email, name, role, tenant_id FROM users").fetchall()
+    history = c.execute("SELECT id, user_id, topic, score, date FROM history LIMIT 100").fetchall()
     conn.close()
     return {"import_res": res, "users": users, "history": history, "db_path": DB_PATH}
 
 @app.api_route("/api/admin/clear-all-data", methods=["GET", "DELETE", "POST"])
-def clear_all_data():
+def clear_all_data(current_user: dict = Depends(require_super_admin_only)):
     try:
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
-        tables = ["users", "history", "user_settings", "weak_words", "achievements"]
+        tables = ["history", "user_settings", "weak_words", "achievements", "submissions"]
         for t in tables:
             try:
                 cursor.execute(f"DELETE FROM {t}")
             except Exception:
                 pass
+        record_audit_log(cursor, current_user["id"], "CLEAR_DATA", "system", "all", None, f"Super Admin {current_user['email']} cleared system tables")
         conn.commit()
         conn.close()
-        return {"status": "success", "message": "Đã xóa cứng 100% dữ liệu trong database thành công!"}
+        return {"status": "success", "message": "Đã dọn dẹp dữ liệu học tập thành công!"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -2731,41 +2838,59 @@ def admin_login(req: AdminLoginRequest):
     try:
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
-        email_clean = req.email.strip()
+        email_clean = req.email.strip().lower()
         pwd_clean = req.password.strip()
 
         cursor.execute("""
-            SELECT id, email, name, role, tenant_id
+            SELECT id, email, name, role, tenant_id, password_hash
             FROM users
-            WHERE email = ? AND (password_hash = ? OR ? IN ('superadmin123', 'admin123')) AND role IN ('admin', 'super_admin') AND (IsXoa IS NULL OR IsXoa = 0)
-        """, (email_clean, pwd_clean, pwd_clean))
+            WHERE lower(email) = ? AND role IN ('admin', 'super_admin') AND (IsXoa IS NULL OR IsXoa = 0)
+        """, (email_clean,))
         user = cursor.fetchone()
 
         if not user:
+            # Seed initialization if first run
             if email_clean == "superadmin@fluent.edu.vn" and pwd_clean == "superadmin123":
+                hashed = hash_password("superadmin123")
                 cursor.execute(
                     "INSERT INTO users (email, name, role, password_hash, tenant_id) VALUES (?, ?, ?, ?, ?)",
-                    ("superadmin@fluent.edu.vn", "Super Admin (Owner)", "super_admin", "superadmin123", 1)
+                    ("superadmin@fluent.edu.vn", "Super Admin (Owner)", "super_admin", hashed, None)
                 )
                 conn.commit()
                 u_id = cursor.lastrowid
-                user = (u_id, "superadmin@fluent.edu.vn", "Super Admin (Owner)", "super_admin", 1)
+                user = (u_id, "superadmin@fluent.edu.vn", "Super Admin (Owner)", "super_admin", None, hashed)
             elif email_clean == "admin@fluent.edu.vn" and pwd_clean == "admin123":
+                hashed = hash_password("admin123")
                 cursor.execute(
                     "INSERT INTO users (email, name, role, password_hash, tenant_id) VALUES (?, ?, ?, ?, ?)",
-                    ("admin@fluent.edu.vn", "School Admin", "admin", "admin123", 1)
+                    ("admin@fluent.edu.vn", "School Admin", "admin", hashed, "1")
                 )
                 conn.commit()
                 u_id = cursor.lastrowid
-                user = (u_id, "admin@fluent.edu.vn", "School Admin", "admin", 1)
+                user = (u_id, "admin@fluent.edu.vn", "School Admin", "admin", "1", hashed)
 
+        if not user or not verify_password(pwd_clean, user[5]):
+            conn.close()
+            raise HTTPException(status_code=401, detail="Invalid Administrator Credentials.")
+
+        # If user password was plaintext legacy, auto upgrade to salted PBKDF2 hash
+        if user[5] and not user[5].startswith("pbkdf2:"):
+            new_hash = hash_password(pwd_clean)
+            cursor.execute("UPDATE users SET password_hash = ? WHERE id = ?", (new_hash, user[0]))
+            conn.commit()
+
+        # Record audit log
+        record_audit_log(cursor, user[0], "LOGIN", "session", str(user[0]), user[4], "Admin authenticated successfully")
+        conn.commit()
         conn.close()
+
+        # Issue secure cryptographic token
+        token = create_access_token(user[0], user[1], user[3], user[4])
+        export_db_to_json()
         
-        if not user:
-            raise HTTPException(status_code=401, detail="Invalid Admin Credentials. Only provisioned accounts can access /admin.")
-            
         return {
             "status": "success",
+            "token": token,
             "user": {
                 "id": user[0],
                 "email": user[1],
@@ -2788,32 +2913,46 @@ def teacher_login(req: TeacherLoginRequest):
     try:
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
-        email_clean = req.email.strip()
+        email_clean = req.email.strip().lower()
         pwd_clean = req.password.strip()
 
         cursor.execute("""
-            SELECT id, email, name, role, tenant_id
+            SELECT id, email, name, role, tenant_id, password_hash
             FROM users
-            WHERE email = ? AND (password_hash = ? OR password_hash = '' OR ? = 'teacher123') AND role IN ('teacher', 'admin', 'super_admin') AND (IsXoa IS NULL OR IsXoa = 0)
-        """, (email_clean, pwd_clean, pwd_clean))
+            WHERE lower(email) = ? AND role IN ('teacher', 'admin', 'super_admin') AND (IsXoa IS NULL OR IsXoa = 0)
+        """, (email_clean,))
         user = cursor.fetchone()
 
         if not user and email_clean == "teacher@fluent.edu.vn" and pwd_clean == "teacher123":
+            hashed = hash_password("teacher123")
             cursor.execute(
                 "INSERT INTO users (email, name, role, password_hash, tenant_id) VALUES (?, ?, ?, ?, ?)",
-                ("teacher@fluent.edu.vn", "Educator Lead", "teacher", "teacher123", 1)
+                ("teacher@fluent.edu.vn", "Educator Lead", "teacher", hashed, "1")
             )
             conn.commit()
             u_id = cursor.lastrowid
-            user = (u_id, "teacher@fluent.edu.vn", "Educator Lead", "teacher", 1)
+            user = (u_id, "teacher@fluent.edu.vn", "Educator Lead", "teacher", "1", hashed)
 
+        if not user or not verify_password(pwd_clean, user[5]):
+            conn.close()
+            raise HTTPException(status_code=401, detail="Invalid Educator Credentials.")
+
+        # Auto upgrade legacy plaintext to salted PBKDF2 hash
+        if user[5] and not user[5].startswith("pbkdf2:"):
+            new_hash = hash_password(pwd_clean)
+            cursor.execute("UPDATE users SET password_hash = ? WHERE id = ?", (new_hash, user[0]))
+            conn.commit()
+
+        record_audit_log(cursor, user[0], "LOGIN", "session", str(user[0]), user[4], "Teacher authenticated successfully")
+        conn.commit()
         conn.close()
-        
-        if not user:
-            raise HTTPException(status_code=401, detail="Invalid Educator Credentials. Please use your provisioned Teacher account.")
-            
+
+        token = create_access_token(user[0], user[1], user[3], user[4])
+        export_db_to_json()
+
         return {
             "status": "success",
+            "token": token,
             "user": {
                 "id": user[0],
                 "email": user[1],
@@ -2829,13 +2968,13 @@ def teacher_login(req: TeacherLoginRequest):
 
 class CreateTenantRequest(BaseModel):
     name: str
-    admin_id: int = None
+    admin_id: Optional[int] = None
     license_seats: int = 350
     license_expiry: str = "2027-08-01"
     logo_url: str = ""
 
 @app.post("/api/admin/tenants/create")
-def create_tenant(req: CreateTenantRequest):
+def create_tenant(req: CreateTenantRequest, current_user: dict = Depends(require_super_admin_only)):
     try:
         tenant_id = f"tenant_{random.randint(1000, 9999)}"
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
@@ -2843,7 +2982,8 @@ def create_tenant(req: CreateTenantRequest):
         cursor.execute("""
             INSERT INTO tenants (id, name, admin_id, logo_url, license_seats, license_expiry)
             VALUES (?, ?, ?, ?, ?, ?)
-        """, (tenant_id, req.name, req.admin_id, req.logo_url, req.license_seats, req.license_expiry))
+        """, (tenant_id, req.name.strip(), req.admin_id, req.logo_url, req.license_seats, req.license_expiry.strip()))
+        record_audit_log(cursor, current_user["id"], "CREATE_TENANT", "tenants", tenant_id, tenant_id, f"Super Admin created tenant: {req.name}")
         conn.commit()
         conn.close()
         export_db_to_json()
@@ -2854,69 +2994,310 @@ def create_tenant(req: CreateTenantRequest):
 class ProvisionAccountRequest(BaseModel):
     email: str
     name: str
-    role: str # 'admin' or 'teacher'
-    tenant_id: str = None
+    role: str # 'admin', 'teacher', 'student'
+    tenant_id: Optional[str] = None
     password: str = "password123"
 
 @app.post("/api/admin/provision-account")
-def provision_account(req: ProvisionAccountRequest):
+def provision_account(req: ProvisionAccountRequest, current_user: dict = Depends(require_admin_or_super_admin)):
     try:
+        req_email = req.email.strip().lower()
+        req_role = req.role.strip()
+        
+        # RBAC Check: School Admin can only provision teacher or student in their own tenant
+        if current_user["role"] == "admin":
+            if req_role in ["super_admin", "admin"]:
+                raise HTTPException(status_code=403, detail="School Admins can only provision 'teacher' or 'student' accounts.")
+            target_tenant = current_user.get("tenant_id") or "1"
+        else:
+            target_tenant = req.tenant_id
+
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
         parent_code = f"PA-{random.randint(1000, 9999)}"
+        hashed_password = hash_password(req.password.strip() if req.password else "password123")
         cursor.execute("""
             INSERT INTO users (email, name, role, tenant_id, parent_code, password_hash)
             VALUES (?, ?, ?, ?, ?, ?)
-        """, (req.email.strip(), req.name.strip(), req.role, req.tenant_id, parent_code, req.password))
-        conn.commit()
+        """, (req_email, req.name.strip(), req_role, target_tenant, parent_code, hashed_password))
         user_id = cursor.lastrowid
+        record_audit_log(cursor, current_user["id"], "PROVISION_ACCOUNT", "users", str(user_id), target_tenant, f"Provisioned {req_role} account {req_email}")
+        conn.commit()
         conn.close()
         export_db_to_json()
         return {"status": "success", "user_id": user_id, "email": req.email, "role": req.role}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/api/admin/overview")
-def get_admin_overview():
+def get_admin_overview(
+    tenant_id: Optional[str] = None,
+    current_user: dict = Depends(require_admin_or_super_admin)
+):
     try:
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM tenants WHERE (IsXoa IS NULL OR IsXoa = 0)")
-        total_tenants = cursor.fetchone()[0]
         
-        cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'teacher' AND (IsXoa IS NULL OR IsXoa = 0)")
-        total_teachers = cursor.fetchone()[0]
+        # Strict Multi-tenant isolation: School Admin can ONLY see their own tenant
+        if current_user["role"] == "admin":
+            target_tenant = current_user.get("tenant_id") or "1"
+        else:
+            target_tenant = tenant_id if tenant_id and tenant_id != 'all' else None
+            
+        if target_tenant:
+            cursor.execute("SELECT id, name, license_seats, license_expiry FROM tenants WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (target_tenant,))
+            t_row = cursor.fetchone()
+            tenant_info = {
+                "id": t_row[0] if t_row else target_tenant,
+                "name": t_row[1] if t_row else "Fluent English Academy",
+                "license_seats": t_row[2] if t_row else 100,
+                "license_expiry": t_row[3] if t_row else "2028-12-31"
+            } if t_row else {"id": target_tenant, "name": "Fluent English Academy", "license_seats": 100, "license_expiry": "2028-12-31"}
+            
+            cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'teacher' AND tenant_id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (target_tenant,))
+            total_teachers = cursor.fetchone()[0]
+            
+            cursor.execute("""
+                SELECT COUNT(DISTINCT u.id)
+                FROM users u
+                WHERE (u.tenant_id = ? OR u.id IN (
+                    SELECT ce.student_id FROM class_enrollments ce
+                    JOIN classrooms c ON ce.class_id = c.id
+                    WHERE c.tenant_id = ? AND (ce.IsXoa IS NULL OR ce.IsXoa = 0)
+                ))
+                AND u.role = 'student' AND (u.IsXoa IS NULL OR u.IsXoa = 0)
+            """, (target_tenant, target_tenant))
+            total_students = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT COUNT(*) FROM classrooms WHERE tenant_id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (target_tenant,))
+            total_classrooms = cursor.fetchone()[0]
+            
+            cursor.execute("""
+                SELECT COUNT(*) FROM assignments a
+                JOIN classrooms c ON a.class_id = c.id
+                WHERE c.tenant_id = ? AND (a.IsXoa IS NULL OR a.IsXoa = 0)
+            """, (target_tenant,))
+            total_assignments = cursor.fetchone()[0]
+            
+            cursor.execute("""
+                SELECT COUNT(*) FROM submissions s
+                JOIN assignments a ON s.assignment_id = a.id
+                JOIN classrooms c ON a.class_id = c.id
+                WHERE c.tenant_id = ? AND (s.IsXoa IS NULL OR s.IsXoa = 0)
+            """, (target_tenant,))
+            total_submissions = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT id, name, license_seats, license_expiry, created_at FROM tenants WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (target_tenant,))
+            tenants = [{"id": r[0], "name": r[1], "license_seats": r[2], "license_expiry": r[3], "created_at": r[4]} for r in cursor.fetchall()]
+            
+            conn.close()
+            return {
+                "total_tenants": 1,
+                "current_tenant": tenant_info,
+                "total_teachers": total_teachers,
+                "total_students": total_students,
+                "total_classrooms": total_classrooms,
+                "total_assignments": total_assignments,
+                "total_submissions": total_submissions,
+                "license_seats": tenant_info["license_seats"],
+                "used_seats": total_students,
+                "supabase_storage_used_mb": 0.0,
+                "supabase_storage_limit_mb": 1000,
+                "tenants": tenants
+            }
+        else:
+            # Super Admin Global Overview
+            cursor.execute("SELECT COUNT(*) FROM tenants WHERE (IsXoa IS NULL OR IsXoa = 0)")
+            total_tenants = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'teacher' AND (IsXoa IS NULL OR IsXoa = 0)")
+            total_teachers = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'student' AND (IsXoa IS NULL OR IsXoa = 0)")
+            total_students = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT COUNT(*) FROM classrooms WHERE (IsXoa IS NULL OR IsXoa = 0)")
+            total_classrooms = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT COUNT(*) FROM assignments WHERE (IsXoa IS NULL OR IsXoa = 0)")
+            total_assignments = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT COUNT(*) FROM submissions WHERE (IsXoa IS NULL OR IsXoa = 0)")
+            total_submissions = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT COALESCE(SUM(audio_size_bytes), 0) FROM submissions WHERE (IsXoa IS NULL OR IsXoa = 0)")
+            total_bytes = cursor.fetchone()[0] or 0
+            used_mb = round(total_bytes / (1024.0 * 1024.0), 3)
+            
+            cursor.execute("SELECT id, name, license_seats, license_expiry, created_at FROM tenants WHERE (IsXoa IS NULL OR IsXoa = 0)")
+            tenants = [{"id": r[0], "name": r[1], "license_seats": r[2], "license_expiry": r[3], "created_at": r[4]} for r in cursor.fetchall()]
+            
+            conn.close()
+            return {
+                "total_tenants": total_tenants,
+                "total_teachers": total_teachers,
+                "total_students": total_students,
+                "total_classrooms": total_classrooms,
+                "total_assignments": total_assignments,
+                "total_submissions": total_submissions,
+                "supabase_storage_used_mb": used_mb,
+                "supabase_storage_limit_mb": 1000,
+                "tenants": tenants
+            }
+    except Exception as e:
+        return {"total_tenants": 0, "total_teachers": 0, "total_students": 0, "total_classrooms": 0, "total_assignments": 0, "total_submissions": 0, "tenants": [], "error": str(e)}
+
+@app.get("/api/admin/classes")
+def get_admin_classes(
+    tenant_id: Optional[str] = None,
+    current_user: dict = Depends(require_admin_or_super_admin)
+):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
         
-        cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'student' AND (IsXoa IS NULL OR IsXoa = 0)")
-        total_students = cursor.fetchone()[0]
+        if current_user["role"] == "admin":
+            target_tenant = current_user.get("tenant_id") or "1"
+        else:
+            target_tenant = tenant_id if tenant_id and tenant_id != 'all' else None
+            
+        if target_tenant:
+            cursor.execute("""
+                SELECT c.id, c.name, c.grade_level, c.join_code, c.created_at, c.tenant_id,
+                       COALESCE(t.name, 'Fluent English Academy') as school_name,
+                       COALESCE(u.name, 'Educator Lead') as teacher_name,
+                       COALESCE(u.email, 'teacher@fluent.edu.vn') as teacher_email,
+                       (SELECT COUNT(*) FROM class_enrollments ce WHERE ce.class_id = c.id AND (ce.IsXoa IS NULL OR ce.IsXoa = 0)) as student_count
+                FROM classrooms c
+                LEFT JOIN tenants t ON c.tenant_id = t.id
+                LEFT JOIN users u ON c.teacher_id = u.id
+                WHERE (c.IsXoa IS NULL OR c.IsXoa = 0) AND c.tenant_id = ?
+                ORDER BY c.id DESC
+            """, (target_tenant,))
+        else:
+            cursor.execute("""
+                SELECT c.id, c.name, c.grade_level, c.join_code, c.created_at, c.tenant_id,
+                       COALESCE(t.name, 'Fluent English Academy') as school_name,
+                       COALESCE(u.name, 'Educator Lead') as teacher_name,
+                       COALESCE(u.email, 'teacher@fluent.edu.vn') as teacher_email,
+                       (SELECT COUNT(*) FROM class_enrollments ce WHERE ce.class_id = c.id AND (ce.IsXoa IS NULL OR ce.IsXoa = 0)) as student_count
+                FROM classrooms c
+                LEFT JOIN tenants t ON c.tenant_id = t.id
+                LEFT JOIN users u ON c.teacher_id = u.id
+                WHERE (c.IsXoa IS NULL OR c.IsXoa = 0)
+                ORDER BY c.id DESC
+            """)
+            
+        rows = cursor.fetchall()
+        conn.close()
+        classes = [
+            {
+                "id": r[0],
+                "name": r[1],
+                "grade_level": r[2],
+                "join_code": r[3],
+                "created_at": r[4],
+                "tenant_id": r[5],
+                "school_name": r[6],
+                "teacher_name": r[7],
+                "teacher_email": r[8],
+                "student_count": r[9]
+            }
+            for r in rows
+        ]
+        return {"classes": classes}
+    except Exception as e:
+        return {"classes": [], "error": str(e)}
+
+@app.post("/api/admin/classes/{class_id}/delete")
+def delete_class_admin(
+    class_id: int,
+    current_user: dict = Depends(require_admin_or_super_admin)
+):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, tenant_id FROM classrooms WHERE id = ?", (class_id,))
+        cls = cursor.fetchone()
+        if not cls:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Classroom not found.")
+            
+        if current_user["role"] == "admin" and str(cls[1]) != str(current_user.get("tenant_id")):
+            conn.close()
+            raise HTTPException(status_code=403, detail="Forbidden: Cannot delete classroom of another school.")
+            
+        cursor.execute("UPDATE classrooms SET IsXoa = 1 WHERE id = ?", (class_id,))
+        record_audit_log(cursor, current_user["id"], "DELETE_CLASSROOM", "classrooms", str(class_id), cls[1], f"Admin deleted classroom {class_id}")
+        conn.commit()
+        conn.close()
+        export_db_to_json()
+        return {"status": "success", "message": f"Classroom {class_id} deleted."}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/api/admin/assignments")
+def get_admin_assignments(
+    tenant_id: Optional[str] = None,
+    current_user: dict = Depends(require_admin_or_super_admin)
+):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
         
-        cursor.execute("SELECT COUNT(*) FROM submissions WHERE (IsXoa IS NULL OR IsXoa = 0)")
-        total_submissions = cursor.fetchone()[0]
-        
-        cursor.execute("SELECT COALESCE(SUM(audio_size_bytes), 0) FROM submissions WHERE (IsXoa IS NULL OR IsXoa = 0)")
-        total_bytes = cursor.fetchone()[0] or 0
-        used_mb = round(total_bytes / (1024.0 * 1024.0), 3)
-        
-        cursor.execute("SELECT id, name, license_seats, license_expiry, created_at FROM tenants WHERE (IsXoa IS NULL OR IsXoa = 0)")
-        tenants_rows = cursor.fetchall()
+        if current_user["role"] == "admin":
+            target_tenant = current_user.get("tenant_id") or "1"
+        else:
+            target_tenant = tenant_id if tenant_id and tenant_id != 'all' else None
+            
+        query = """
+            SELECT a.id, a.title, a.topic_sentence, a.due_date, a.created_at,
+                   COALESCE(c.name, 'Class') as class_name,
+                   COALESCE(u.name, 'Teacher') as teacher_name,
+                   COALESCE(t.name, 'Fluent English Academy') as school_name,
+                   (SELECT COUNT(*) FROM submissions s WHERE s.assignment_id = a.id AND (s.IsXoa IS NULL OR s.IsXoa = 0)) as submission_count,
+                   (SELECT ROUND(AVG(s.score), 1) FROM submissions s WHERE s.assignment_id = a.id AND (s.IsXoa IS NULL OR s.IsXoa = 0)) as avg_score
+            FROM assignments a
+            LEFT JOIN classrooms c ON a.class_id = c.id
+            LEFT JOIN users u ON a.teacher_id = u.id
+            LEFT JOIN tenants t ON c.tenant_id = t.id
+            WHERE (a.IsXoa IS NULL OR a.IsXoa = 0)
+        """
+        params = []
+        if target_tenant:
+            query += " AND c.tenant_id = ?"
+            params.append(target_tenant)
+            
+        query += " ORDER BY a.id DESC"
+        cursor.execute(query, tuple(params))
+        rows = cursor.fetchall()
         conn.close()
         
-        tenants = [{"id": r[0], "name": r[1], "license_seats": r[2], "license_expiry": r[3], "created_at": r[4]} for r in tenants_rows]
-        
-        return {
-            "total_tenants": total_tenants,
-            "total_teachers": total_teachers,
-            "total_students": total_students,
-            "total_submissions": total_submissions,
-            "supabase_storage_used_mb": used_mb,
-            "supabase_storage_limit_mb": 1000,
-            "tenants": tenants
-        }
+        assignments = [
+            {
+                "id": r[0],
+                "title": r[1],
+                "topic_sentence": r[2],
+                "due_date": r[3],
+                "created_at": r[4],
+                "class_name": r[5],
+                "teacher_name": r[6],
+                "school_name": r[7],
+                "submission_count": r[8],
+                "avg_score": r[9] or 0.0
+            }
+            for r in rows
+        ]
+        return {"assignments": assignments}
     except Exception as e:
-        return {"total_tenants": 0, "total_teachers": 0, "total_students": 0, "total_submissions": 0, "tenants": []}
+        return {"assignments": [], "error": str(e)}
 
 @app.post("/api/admin/auto-cleanup")
-def trigger_auto_cleanup():
+def trigger_auto_cleanup(current_user: dict = Depends(require_super_admin_only)):
     """Background worker logic: purges audio files older than retention policy from Supabase while preserving scores in DB"""
     try:
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
@@ -2924,6 +3305,8 @@ def trigger_auto_cleanup():
         cursor.execute("SELECT config_value FROM system_configs WHERE config_key = 'storage_retention_days'")
         row = cursor.fetchone()
         retention_days = int(row[0]) if row and row[0] else 60
+        record_audit_log(cursor, current_user["id"], "AUTO_CLEANUP", "storage", "supabase", None, f"Executed audio cleanup worker with retention {retention_days} days")
+        conn.commit()
         conn.close()
         return {
             "status": "success",
@@ -2940,28 +3323,44 @@ class UpdateTenantRequest(BaseModel):
     license_expiry: str = "2027-08-01"
 
 @app.post("/api/admin/tenants/{tenant_id}/update")
-def update_tenant(tenant_id: str, req: UpdateTenantRequest):
+def update_tenant(
+    tenant_id: str,
+    req: UpdateTenantRequest,
+    current_user: dict = Depends(require_admin_or_super_admin)
+):
     try:
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
-        cursor.execute("""
-            UPDATE tenants
-            SET name = ?, license_seats = ?, license_expiry = ?
-            WHERE id = ?
-        """, (req.name.strip(), req.license_seats, req.license_expiry.strip(), tenant_id))
+        
+        if current_user["role"] == "admin":
+            if str(tenant_id) != str(current_user.get("tenant_id")):
+                conn.close()
+                raise HTTPException(status_code=403, detail="Forbidden: You cannot edit another school tenant.")
+            cursor.execute("UPDATE tenants SET name = ? WHERE id = ?", (req.name.strip(), tenant_id))
+        else:
+            cursor.execute("""
+                UPDATE tenants
+                SET name = ?, license_seats = ?, license_expiry = ?
+                WHERE id = ?
+            """, (req.name.strip(), req.license_seats, req.license_expiry.strip(), tenant_id))
+            
+        record_audit_log(cursor, current_user["id"], "UPDATE_TENANT", "tenants", tenant_id, tenant_id, f"Updated tenant info for {tenant_id}")
         conn.commit()
         conn.close()
         export_db_to_json()
         return {"status": "success", "tenant_id": tenant_id, "name": req.name}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.delete("/api/admin/tenants/{tenant_id}")
-def delete_tenant(tenant_id: str):
+def delete_tenant(tenant_id: str, current_user: dict = Depends(require_super_admin_only)):
     try:
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
         cursor.execute("UPDATE tenants SET IsXoa = 1 WHERE id = ?", (tenant_id,))
+        record_audit_log(cursor, current_user["id"], "DELETE_TENANT", "tenants", tenant_id, tenant_id, f"Super Admin deleted tenant {tenant_id}")
         conn.commit()
         conn.close()
         export_db_to_json()
@@ -2970,33 +3369,110 @@ def delete_tenant(tenant_id: str):
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/api/admin/users")
-def get_admin_users():
+def get_admin_users(
+    tenant_id: Optional[str] = None,
+    role_filter: Optional[str] = None,
+    current_user: dict = Depends(require_admin_or_super_admin)
+):
     try:
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
-        cursor.execute("""
-            SELECT id, email, name, role, tenant_id, parent_code, created_at
-            FROM users
-            WHERE role IN ('teacher', 'admin', 'super_admin') AND (IsXoa IS NULL OR IsXoa = 0)
-            ORDER BY id DESC
-        """)
+        
+        if current_user["role"] == "admin":
+            target_tenant = current_user.get("tenant_id") or "1"
+        else:
+            target_tenant = tenant_id if tenant_id and tenant_id != 'all' else None
+            
+        query = """
+            SELECT u.id, u.email, u.name, u.role, u.tenant_id, u.parent_code, u.created_at, u.avatar,
+                   COALESCE(t.name, 'Independent / Global') as school_name,
+                   (SELECT COUNT(*) FROM class_enrollments ce WHERE ce.student_id = u.id AND (ce.IsXoa IS NULL OR ce.IsXoa = 0)) as enrolled_count,
+                   (SELECT c.name FROM classrooms c JOIN class_enrollments ce ON c.id = ce.class_id WHERE ce.student_id = u.id AND (ce.IsXoa IS NULL OR ce.IsXoa = 0) LIMIT 1) as primary_class
+            FROM users u
+            LEFT JOIN tenants t ON u.tenant_id = t.id
+            WHERE (u.IsXoa IS NULL OR u.IsXoa = 0)
+        """
+        params = []
+        if target_tenant:
+            query += " AND (u.tenant_id = ? OR u.id IN (SELECT ce.student_id FROM class_enrollments ce JOIN classrooms c ON ce.class_id = c.id WHERE c.tenant_id = ? AND (ce.IsXoa IS NULL OR ce.IsXoa = 0)))"
+            params.extend([target_tenant, target_tenant])
+            
+        if role_filter and role_filter != 'all':
+            query += " AND u.role = ?"
+            params.append(role_filter)
+            
+        query += " ORDER BY u.id DESC"
+        cursor.execute(query, tuple(params))
         rows = cursor.fetchall()
-        conn.close()
-        users = [
-            {
+        
+        users = []
+        for r in rows:
+            u_id = r[0]
+            stk = calculate_user_streak(u_id, cursor)
+            users.append({
                 "id": r[0],
                 "email": r[1],
                 "name": r[2],
                 "role": r[3],
                 "tenant_id": r[4],
                 "parent_code": r[5],
-                "created_at": r[6]
-            }
-            for r in rows
-        ]
+                "created_at": r[6],
+                "avatar": r[7] or "",
+                "school_name": r[8],
+                "enrolled_count": r[9],
+                "primary_class": r[10] or "None",
+                "streak": stk
+            })
+            
+        conn.close()
         return {"users": users}
     except Exception as e:
         return {"users": [], "error": str(e)}
+
+class ChangeRoleRequest(BaseModel):
+    new_role: str # 'student', 'teacher', 'admin'
+    tenant_id: Optional[str] = None
+
+@app.post("/api/admin/users/{user_id}/change-role")
+def change_user_role(
+    user_id: int,
+    req: ChangeRoleRequest,
+    current_user: dict = Depends(require_admin_or_super_admin)
+):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT id, role, tenant_id FROM users WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (user_id,))
+        usr = cursor.fetchone()
+        if not usr:
+            conn.close()
+            raise HTTPException(status_code=404, detail="User not found.")
+            
+        if current_user["role"] == "admin":
+            if req.new_role in ["super_admin", "admin"]:
+                conn.close()
+                raise HTTPException(status_code=403, detail="School Admins cannot grant Administrator or Super Administrator roles.")
+            if usr[1] == "super_admin":
+                conn.close()
+                raise HTTPException(status_code=403, detail="Cannot modify Super Admin accounts.")
+            if str(usr[2]) != str(current_user.get("tenant_id")):
+                conn.close()
+                raise HTTPException(status_code=403, detail="Forbidden: You cannot modify users from other school organizations.")
+            target_tenant = current_user.get("tenant_id")
+        else:
+            target_tenant = req.tenant_id if req.tenant_id else usr[2]
+            
+        cursor.execute("UPDATE users SET role = ?, tenant_id = ? WHERE id = ?", (req.new_role, target_tenant, user_id))
+        record_audit_log(cursor, current_user["id"], "CHANGE_ROLE", "users", str(user_id), target_tenant, f"Changed role of user {user_id} to {req.new_role}")
+        conn.commit()
+        conn.close()
+        export_db_to_json()
+        return {"status": "success", "user_id": user_id, "new_role": req.new_role}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 class UpdateUserRequest(BaseModel):
     name: str
@@ -3005,47 +3481,140 @@ class UpdateUserRequest(BaseModel):
     password: str = ""
 
 @app.post("/api/admin/users/{user_id}/update")
-def update_user(user_id: int, req: UpdateUserRequest):
+def update_user(
+    user_id: int,
+    req: UpdateUserRequest,
+    current_user: dict = Depends(require_admin_or_super_admin)
+):
     try:
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
+        cursor.execute("SELECT id, role, tenant_id FROM users WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (user_id,))
+        usr = cursor.fetchone()
+        if not usr:
+            conn.close()
+            raise HTTPException(status_code=404, detail="User not found.")
+            
+        if current_user["role"] == "admin":
+            if str(usr[2]) != str(current_user.get("tenant_id")):
+                conn.close()
+                raise HTTPException(status_code=403, detail="Forbidden: Cannot edit users belonging to another school.")
+            if req.role in ["super_admin", "admin"] and usr[1] != req.role:
+                conn.close()
+                raise HTTPException(status_code=403, detail="Forbidden: School Admins cannot elevate users to Administrator or Super Administrator.")
+
         if req.password.strip():
+            hashed_pwd = hash_password(req.password.strip())
             cursor.execute("""
                 UPDATE users
                 SET name = ?, email = ?, role = ?, password_hash = ?
                 WHERE id = ?
-            """, (req.name.strip(), req.email.strip(), req.role.strip(), req.password.strip(), user_id))
+            """, (req.name.strip(), req.email.strip().lower(), req.role.strip(), hashed_pwd, user_id))
         else:
             cursor.execute("""
                 UPDATE users
                 SET name = ?, email = ?, role = ?
                 WHERE id = ?
-            """, (req.name.strip(), req.email.strip(), req.role.strip(), user_id))
+            """, (req.name.strip(), req.email.strip().lower(), req.role.strip(), user_id))
+            
+        record_audit_log(cursor, current_user["id"], "UPDATE_USER", "users", str(user_id), usr[2], f"Updated user profile for {user_id}")
         conn.commit()
         conn.close()
         export_db_to_json()
         return {"status": "success", "user_id": user_id}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.delete("/api/admin/users/{user_id}")
-def delete_user(user_id: int):
+def delete_user(user_id: int, current_user: dict = Depends(require_admin_or_super_admin)):
     try:
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
+        cursor.execute("SELECT id, email, role, tenant_id FROM users WHERE id = ?", (user_id,))
+        usr = cursor.fetchone()
+        if not usr:
+            conn.close()
+            raise HTTPException(status_code=404, detail="User not found.")
+            
+        if usr[0] == current_user["id"]:
+            conn.close()
+            raise HTTPException(status_code=400, detail="Cannot delete your own account.")
+            
+        if usr[2] == "super_admin":
+            conn.close()
+            raise HTTPException(status_code=403, detail="Cannot delete Super Administrator accounts.")
+            
+        if current_user["role"] == "admin":
+            if str(usr[3]) != str(current_user.get("tenant_id")):
+                conn.close()
+                raise HTTPException(status_code=403, detail="Forbidden: Cannot delete users from another school.")
+            if usr[2] in ["admin", "super_admin"]:
+                conn.close()
+                raise HTTPException(status_code=403, detail="Forbidden: Cannot delete Administrator accounts.")
+                
         cursor.execute("UPDATE users SET IsXoa = 1 WHERE id = ?", (user_id,))
+        record_audit_log(cursor, current_user["id"], "DELETE_USER", "users", str(user_id), usr[3], f"Admin deleted user {user_id} ({usr[1]})")
         conn.commit()
         conn.close()
         export_db_to_json()
         return {"status": "success", "message": f"User {user_id} deleted."}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/api/admin/audit-logs")
+def get_admin_audit_logs(current_user: dict = Depends(require_admin_or_super_admin)):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        if current_user["role"] == "admin":
+            cursor.execute("""
+                SELECT a.id, a.user_id, COALESCE(u.email, 'system') as user_email,
+                       COALESCE(u.name, 'System') as user_name, a.action, a.target_type,
+                       a.target_id, a.tenant_id, a.details, a.created_at
+                FROM audit_logs a
+                LEFT JOIN users u ON a.user_id = u.id
+                WHERE a.tenant_id = ?
+                ORDER BY a.id DESC LIMIT 100
+            """, (current_user.get("tenant_id") or "1",))
+        else:
+            cursor.execute("""
+                SELECT a.id, a.user_id, COALESCE(u.email, 'system') as user_email,
+                       COALESCE(u.name, 'System') as user_name, a.action, a.target_type,
+                       a.target_id, a.tenant_id, a.details, a.created_at
+                FROM audit_logs a
+                LEFT JOIN users u ON a.user_id = u.id
+                ORDER BY a.id DESC LIMIT 200
+            """)
+        rows = cursor.fetchall()
+        conn.close()
+        logs = [
+            {
+                "id": r[0],
+                "user_id": r[1],
+                "user_email": r[2],
+                "user_name": r[3],
+                "action": r[4],
+                "target_type": r[5],
+                "target_id": r[6],
+                "tenant_id": r[7],
+                "details": r[8],
+                "created_at": r[9]
+            }
+            for r in rows
+        ]
+        return {"logs": logs}
+    except Exception as e:
+        return {"logs": [], "error": str(e)}
 
 class UpdateSystemSettingsRequest(BaseModel):
     retention_days: int = 60
 
 @app.get("/api/admin/settings")
-def get_system_settings():
+def get_system_settings(current_user: dict = Depends(require_admin_or_super_admin)):
     try:
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
@@ -3059,7 +3628,7 @@ def get_system_settings():
         return {"retention_days": 60, "error": str(e)}
 
 @app.post("/api/admin/settings/update")
-def update_system_settings(req: UpdateSystemSettingsRequest):
+def update_system_settings(req: UpdateSystemSettingsRequest, current_user: dict = Depends(require_super_admin_only)):
     try:
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
@@ -3069,6 +3638,7 @@ def update_system_settings(req: UpdateSystemSettingsRequest):
             VALUES ('storage_retention_days', ?)
             ON CONFLICT(config_key) DO UPDATE SET config_value = excluded.config_value
         """, (str(req.retention_days),))
+        record_audit_log(cursor, current_user["id"], "UPDATE_SETTINGS", "config", "storage_retention_days", None, f"Updated retention days to {req.retention_days}")
         conn.commit()
         conn.close()
         export_db_to_json()

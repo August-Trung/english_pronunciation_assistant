@@ -821,14 +821,23 @@ const confirmSignOut = () => {
   handleTeacherSignOut()
 }
 
+const getTeacherAuthHeaders = () => {
+  const token = localStorage.getItem('teacher_auth_token') || ''
+  const headers = { 'Content-Type': 'application/json' }
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+  return headers
+}
+
 const handleTeacherSignOut = () => {
   activeUserRole.value = 'student'
   localStorage.setItem('user_role', 'student')
   localStorage.removeItem('user_id')
+  localStorage.removeItem('teacher_auth_token')
   loginEmail.value = ''
   loginPassword.value = ''
   notify('Signed out from Teacher Hub.', 'info', 'mdi-logout')
-  router.push('/')
 }
 
 const handleTeacherSignIn = async () => {
@@ -846,11 +855,20 @@ const handleTeacherSignIn = async () => {
     })
     if (res.ok) {
       const data = await res.json()
+      if (data.token) {
+        localStorage.setItem('teacher_auth_token', data.token)
+      }
       activeUserRole.value = data.user.role || 'teacher'
       localStorage.setItem('user_role', data.user.role || 'teacher')
       if (data.user?.id) {
         localTeacherId.value = data.user.id
         localStorage.setItem('user_id', data.user.id)
+      }
+      if (data.user?.email) {
+        localStorage.setItem('speak_user_email', data.user.email)
+      }
+      if (data.user?.name) {
+        localStorage.setItem('speak_user_name', data.user.name)
       }
       notify(`Welcome! Signed in as ${data.user.name}`, 'success', 'mdi-school')
       await fetchClasses()
@@ -1008,7 +1026,7 @@ const submitEditClass = async () => {
   try {
     const res = await fetch(`${props.backendUrl}/api/classes/${selectedClassId.value}/update`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getTeacherAuthHeaders(),
       body: JSON.stringify({
         name: editClassName.value.trim(),
         grade_level: editClassGrade.value
@@ -1031,7 +1049,8 @@ const submitDeleteClass = async () => {
   isDeletingClass.value = true
   try {
     const res = await fetch(`${props.backendUrl}/api/classes/${selectedClassId.value}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: getTeacherAuthHeaders()
     })
     if (res.ok) {
       showDeleteClassModal.value = false
@@ -1057,7 +1076,7 @@ const submitRemoveStudent = async () => {
   try {
     const res = await fetch(`${props.backendUrl}/api/classes/${selectedClassId.value}/remove-student`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getTeacherAuthHeaders(),
       body: JSON.stringify({ student_id: studentToRemove.value.id })
     })
     if (res.ok) {
@@ -1086,7 +1105,7 @@ const submitEditAssignment = async () => {
   try {
     const res = await fetch(`${props.backendUrl}/api/assignments/${editingAsg.value.id}/update`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getTeacherAuthHeaders(),
       body: JSON.stringify({
         title: editAsgTitle.value.trim(),
         topic_sentence: editAsgSentence.value.trim(),
@@ -1115,7 +1134,8 @@ const submitDeleteAssignment = async () => {
   isDeletingAsg.value = true
   try {
     const res = await fetch(`${props.backendUrl}/api/assignments/${asgToDelete.value.id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: getTeacherAuthHeaders()
     })
     if (res.ok) {
       showDeleteAssignmentModal.value = false
@@ -1145,7 +1165,13 @@ const fetchClasses = async () => {
   const tid = getActiveTeacherId()
   if (!tid) return
   try {
-    const res = await fetch(`${props.backendUrl}/api/classes/teacher/${tid}`)
+    const res = await fetch(`${props.backendUrl}/api/classes/teacher/${tid}`, {
+      headers: getTeacherAuthHeaders()
+    })
+    if (res.status === 401) {
+      handleTeacherSignOut()
+      return
+    }
     if (res.ok) {
       const data = await res.json()
       classes.value = data.classes || []
@@ -1161,7 +1187,13 @@ const fetchClasses = async () => {
 const selectClass = async (classId) => {
   selectedClassId.value = classId
   try {
-    const res = await fetch(`${props.backendUrl}/api/classes/${classId}/gradebook`)
+    const res = await fetch(`${props.backendUrl}/api/classes/${classId}/gradebook`, {
+      headers: getTeacherAuthHeaders()
+    })
+    if (res.status === 401) {
+      handleTeacherSignOut()
+      return
+    }
     if (res.ok) {
       gradebook.value = await res.json()
     }
@@ -1181,7 +1213,7 @@ const submitCreateClass = async () => {
   try {
     const res = await fetch(`${props.backendUrl}/api/classes/create`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getTeacherAuthHeaders(),
       body: JSON.stringify({
         teacher_id: tid,
         name: newClassName.value.trim(),
@@ -1193,6 +1225,9 @@ const submitCreateClass = async () => {
       showCreateClassModal.value = false
       notify('New class created successfully!', 'success')
       await fetchClasses()
+    } else {
+      const err = await res.json()
+      notify(err.detail || 'Failed to create class.', 'error')
     }
   } catch (err) {
     notify('Failed to create class: ' + err.message, 'error', 'mdi-alert-circle')
@@ -1212,7 +1247,7 @@ const submitCreateAssignment = async () => {
   try {
     const res = await fetch(`${props.backendUrl}/api/assignments/create`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getTeacherAuthHeaders(),
       body: JSON.stringify({
         class_id: selectedClassId.value,
         teacher_id: tid,
@@ -1228,6 +1263,9 @@ const submitCreateAssignment = async () => {
       showCreateAssignmentModal.value = false
       notify('Homework assigned to classroom!', 'success')
       await selectClass(selectedClassId.value)
+    } else {
+      const err = await res.json()
+      notify(err.detail || 'Failed to create assignment.', 'error')
     }
   } catch (err) {
     notify('Failed to create assignment: ' + err.message, 'error', 'mdi-alert-circle')
@@ -1274,7 +1312,7 @@ const saveFeedback = async (subId) => {
   try {
     const res = await fetch(`${props.backendUrl}/api/submissions/feedback`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getTeacherAuthHeaders(),
       body: JSON.stringify({
         submission_id: subId,
         feedback: feedbackInputs.value[subId] || ''
@@ -1283,6 +1321,9 @@ const saveFeedback = async (subId) => {
     if (res.ok) {
       notify('Pedagogical feedback saved successfully!', 'success')
       await selectClass(selectedClassId.value)
+    } else {
+      const err = await res.json()
+      notify(err.detail || 'Failed to save feedback.', 'error')
     }
   } catch (err) {
     notify('Failed to save feedback: ' + err.message, 'error', 'mdi-alert-circle')
