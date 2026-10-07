@@ -449,6 +449,24 @@
       "max_classes": 3,
       "max_seats": 30,
       "license_expiry": "2027-12-31"
+    },
+    {
+      "id": 1026,
+      "email": "test_freelance_teacher@fluent.edu.vn",
+      "name": "Solo Tutor Dave",
+      "avatar": null,
+      "google_id": null,
+      "created_at": "2026-10-07 11:00:35",
+      "IsXoa": 0,
+      "role": "teacher",
+      "tenant_id": null,
+      "parent_code": null,
+      "password_hash": "pbkdf2:sha256:100000$8cf632cf2917ec6589cf245f7500ddd8$1270fa9f240edab94919101420aaa8760c24023f6ee1a8410bc736f2619c0039",
+      "status": "active",
+      "teacher_type": "freelance",
+      "max_classes": 2,
+      "max_seats": 2,
+      "license_expiry": "2028-12-31"
     }
   ],
   "history": [
@@ -848,6 +866,28 @@
       "IsXoa": 0,
       "tenant_id": "1",
       "is_archived": 0
+    },
+    {
+      "id": 62,
+      "teacher_id": 1026,
+      "name": "IELTS Speaking Dave 1",
+      "grade_level": "Adult",
+      "join_code": "CLS-506-22",
+      "created_at": "2026-10-07 11:00:35",
+      "IsXoa": 0,
+      "tenant_id": null,
+      "is_archived": 0
+    },
+    {
+      "id": 63,
+      "teacher_id": 1026,
+      "name": "IELTS Speaking Dave 2",
+      "grade_level": "Adult",
+      "join_code": "CLS-391-27",
+      "created_at": "2026-10-07 11:00:35",
+      "IsXoa": 0,
+      "tenant_id": null,
+      "is_archived": 0
     }
   ],
   "class_enrollments": [
@@ -1026,6 +1066,30 @@
       "joined_at": "2026-10-07 10:46:44",
       "IsXoa": 0,
       "tenant_id": "1"
+    },
+    {
+      "id": 104,
+      "class_id": 62,
+      "student_id": 1020,
+      "joined_at": "2026-10-07 11:00:35",
+      "IsXoa": 0,
+      "tenant_id": null
+    },
+    {
+      "id": 105,
+      "class_id": 63,
+      "student_id": 1020,
+      "joined_at": "2026-10-07 11:00:35",
+      "IsXoa": 0,
+      "tenant_id": null
+    },
+    {
+      "id": 107,
+      "class_id": 62,
+      "student_id": 1022,
+      "joined_at": "2026-10-07 11:00:35",
+      "IsXoa": 0,
+      "tenant_id": null
     }
   ],
   "assignments": [
@@ -2104,6 +2168,17 @@
       "created_at": "2026-10-07 10:46:49",
       "IsXoa": 1,
       "status": "active"
+    },
+    {
+      "id": "tenant_test_lifecycle_999",
+      "name": "Olympia Academy Final",
+      "admin_id": 1025,
+      "logo_url": null,
+      "license_seats": 250,
+      "license_expiry": "2029-01-01",
+      "created_at": "2026-10-07 11:00:19",
+      "IsXoa": 0,
+      "status": "trial"
     }
   ],
   "audit_logs": [
@@ -5036,6 +5111,96 @@
       "tenant_id": "tenant_7015",
       "details": "Super Admin deleted tenant tenant_7015",
       "created_at": "2026-10-07 10:46:49"
+    },
+    {
+      "id": 294,
+      "user_id": 5,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "5",
+      "tenant_id": null,
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 11:00:19"
+    },
+    {
+      "id": 295,
+      "user_id": 5,
+      "action": "UPDATE_TENANT_LIFECYCLE",
+      "target_type": "tenants",
+      "target_id": "tenant_test_lifecycle_999",
+      "tenant_id": "tenant_test_lifecycle_999",
+      "details": "Super Admin updated school Olympia Academy Renamed (tenant_test_lifecycle_999) to active (seats: 200, expiry: 2029-01-01), provisioned new School Admin test_no_admin@school.com (Headmaster Olympia)",
+      "created_at": "2026-10-07 11:00:20"
+    },
+    {
+      "id": 296,
+      "user_id": 5,
+      "action": "UPDATE_TENANT_LIFECYCLE",
+      "target_type": "tenants",
+      "target_id": "tenant_test_lifecycle_999",
+      "tenant_id": "tenant_test_lifecycle_999",
+      "details": "Super Admin updated school Olympia Academy Final (tenant_test_lifecycle_999) to trial (seats: 250, expiry: 2029-01-01), updated admin to test_admin_updated@school.com (Headmaster Updated) and reset password",
+      "created_at": "2026-10-07 11:00:20"
+    },
+    {
+      "id": 297,
+      "user_id": 5,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "5",
+      "tenant_id": null,
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 11:00:35"
+    },
+    {
+      "id": 298,
+      "user_id": 1026,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "1026",
+      "tenant_id": null,
+      "details": "Teacher authenticated successfully",
+      "created_at": "2026-10-07 11:00:35"
+    },
+    {
+      "id": 299,
+      "user_id": 5,
+      "action": "UPDATE_TEACHER_PLAN",
+      "target_type": "users",
+      "target_id": "1026",
+      "tenant_id": null,
+      "details": "Updated plan for teacher Solo Tutor Dave (test_freelance_teacher@fluent.edu.vn): freelance, max_classes=2, max_seats=2, expiry=2028-12-31",
+      "created_at": "2026-10-07 11:00:35"
+    },
+    {
+      "id": 300,
+      "user_id": 1026,
+      "action": "CREATE",
+      "target_type": "classroom",
+      "target_id": "62",
+      "tenant_id": null,
+      "details": "Created classroom IELTS Speaking Dave 1",
+      "created_at": "2026-10-07 11:00:35"
+    },
+    {
+      "id": 301,
+      "user_id": 1026,
+      "action": "CREATE",
+      "target_type": "classroom",
+      "target_id": "63",
+      "tenant_id": null,
+      "details": "Created classroom IELTS Speaking Dave 2",
+      "created_at": "2026-10-07 11:00:35"
+    },
+    {
+      "id": 302,
+      "user_id": 1026,
+      "action": "REMOVE_STUDENT",
+      "target_type": "classroom",
+      "target_id": "62",
+      "tenant_id": null,
+      "details": "Removed student 1021 from class IELTS Speaking Dave 1",
+      "created_at": "2026-10-07 11:00:35"
     }
   ],
   "system_configs": [

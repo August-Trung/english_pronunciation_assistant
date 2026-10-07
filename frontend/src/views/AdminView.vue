@@ -351,6 +351,10 @@
                       <v-icon size="x-small" color="grey">mdi-account-tie</v-icon>
                       <span>{{ t.admin_email }}</span>
                     </div>
+                    <div class="text-caption text-amber-darken-3 d-flex align-center ga-1" v-else>
+                      <v-icon size="x-small" color="amber-darken-3">mdi-account-alert-outline</v-icon>
+                      <span class="font-weight-medium">No admin assigned</span>
+                    </div>
                   </td>
                   <td class="text-center">
                     <div class="font-weight-black text-caption">
@@ -405,7 +409,7 @@
                         icon="mdi-tune"
                         color="primary"
                         variant="tonal"
-                        title="Manage Lifecycle & Quota"
+                        title="Configure School & Administrator"
                         @click="openLifecycleModal(t)"
                       />
                       <v-btn
@@ -1061,49 +1065,127 @@
         </v-card>
       </v-dialog>
 
-      <!-- Modal: Manage Tenant Lifecycle & Quota (Super Admin Only) -->
-      <v-dialog v-model="showLifecycleModal" max-width="450">
+      <!-- Modal: Manage Tenant Lifecycle, Quota & Admin (Super Admin Only) -->
+      <v-dialog v-model="showLifecycleModal" max-width="560">
         <v-card border rounded="lg" class="pa-4">
-          <div class="d-flex align-center ga-2 mb-2">
+          <div class="d-flex align-center ga-2 mb-1">
             <v-icon color="primary">mdi-tune</v-icon>
-            <span class="text-subtitle-1 font-weight-black text-primary">Manage School Lifecycle & Quota</span>
+            <span class="text-subtitle-1 font-weight-black text-primary">Manage School, Quota & Administrator</span>
           </div>
-          <div class="text-body-2 font-weight-bold text-secondary mb-3">
-            {{ tenantForLifecycle?.name }} ({{ tenantForLifecycle?.id }})
+          <div class="text-caption font-weight-bold text-secondary mb-3">
+            Organization ID: <span class="font-weight-mono text-primary">{{ tenantForLifecycle?.id }}</span>
           </div>
-          <v-select
-            v-model="lifecycleStatus"
-            :items="[
-              { title: 'ACTIVE (Operational)', value: 'active' },
-              { title: 'TRIAL (Limited Evaluation)', value: 'trial' },
-              { title: 'SUSPENDED (Locked Out)', value: 'suspended' },
-              { title: 'EXPIRED (License Expired)', value: 'expired' }
-            ]"
-            label="Lifecycle State:"
+
+          <v-alert
+            v-if="!tenantForLifecycle?.admin_email"
+            type="warning"
+            density="compact"
+            variant="tonal"
+            class="mb-3 text-caption"
+            icon="mdi-account-alert-outline"
+          >
+            No school administrator is currently linked to this organization. Enter an email and name below to provision or link one.
+          </v-alert>
+
+          <!-- Section: School Profile -->
+          <div class="text-caption font-weight-bold text-grey-darken-2 mb-1">School Profile</div>
+          <v-row density="compact">
+            <v-col cols="12" sm="7">
+              <v-text-field
+                v-model="lifecycleSchoolName"
+                label="School Organization Name:"
+                variant="outlined"
+                density="comfortable"
+                hide-details="auto"
+                class="mb-2"
+              />
+            </v-col>
+            <v-col cols="12" sm="5">
+              <v-select
+                v-model="lifecycleStatus"
+                :items="[
+                  { title: 'ACTIVE (Operational)', value: 'active' },
+                  { title: 'TRIAL (Evaluation)', value: 'trial' },
+                  { title: 'SUSPENDED (Locked)', value: 'suspended' },
+                  { title: 'EXPIRED (Ended)', value: 'expired' }
+                ]"
+                label="Lifecycle State:"
+                variant="outlined"
+                density="comfortable"
+                hide-details="auto"
+                class="mb-2"
+              />
+            </v-col>
+          </v-row>
+
+          <!-- Section: Administrator Account -->
+          <div class="text-caption font-weight-bold text-grey-darken-2 mt-2 mb-1">School Administrator Account</div>
+          <v-row density="compact">
+            <v-col cols="12" sm="6">
+              <v-text-field
+                v-model="lifecycleAdminEmail"
+                label="Administrator Email:"
+                placeholder="admin@school.edu.vn"
+                variant="outlined"
+                density="comfortable"
+                hide-details="auto"
+                class="mb-2"
+              />
+            </v-col>
+            <v-col cols="12" sm="6">
+              <v-text-field
+                v-model="lifecycleAdminName"
+                label="Administrator Full Name:"
+                placeholder="Principal / Academic Dean"
+                variant="outlined"
+                density="comfortable"
+                hide-details="auto"
+                class="mb-2"
+              />
+            </v-col>
+          </v-row>
+          <v-text-field
+            v-model="lifecycleAdminPassword"
+            label="Reset Password (Optional):"
+            placeholder="Leave blank to keep existing password"
+            type="password"
             variant="outlined"
             density="comfortable"
+            hide-details="auto"
             class="mb-2"
           />
-          <v-text-field
-            v-model.number="lifecycleSeats"
-            label="Purchased Seat Licenses:"
-            type="number"
-            variant="outlined"
-            density="comfortable"
-            class="mb-2"
-          />
-          <v-text-field
-            v-model="lifecycleExpiry"
-            label="License Expiry Date:"
-            placeholder="2028-12-31"
-            variant="outlined"
-            density="comfortable"
-            class="mb-3"
-          />
+
+          <!-- Section: Quotas & Capacity -->
+          <div class="text-caption font-weight-bold text-grey-darken-2 mt-2 mb-1">License & Capacity Quota</div>
+          <v-row density="compact">
+            <v-col cols="12" sm="6">
+              <v-text-field
+                v-model.number="lifecycleSeats"
+                label="Purchased Seat Licenses:"
+                type="number"
+                variant="outlined"
+                density="comfortable"
+                hide-details="auto"
+                class="mb-3"
+              />
+            </v-col>
+            <v-col cols="12" sm="6">
+              <v-text-field
+                v-model="lifecycleExpiry"
+                label="License Expiry Date:"
+                placeholder="2028-12-31"
+                variant="outlined"
+                density="comfortable"
+                hide-details="auto"
+                class="mb-3"
+              />
+            </v-col>
+          </v-row>
+
           <v-card-actions class="px-0 pb-0">
             <v-spacer />
             <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showLifecycleModal = false">Cancel</v-btn>
-            <v-btn color="primary" variant="flat" class="text-none font-weight-bold" :loading="isUpdatingLifecycle" @click="submitLifecycle">Update Lifecycle</v-btn>
+            <v-btn color="primary" variant="flat" class="text-none font-weight-bold" :loading="isUpdatingLifecycle" @click="submitLifecycle">Save Changes</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -1819,9 +1901,13 @@ const onboardExpiry = ref('2028-12-31')
 const onboardStatus = ref('active')
 const isOnboarding = ref(false)
 
-// Lifecycle Management Modal State
+// Lifecycle & School Configuration Modal State
 const showLifecycleModal = ref(false)
 const tenantForLifecycle = ref(null)
+const lifecycleSchoolName = ref('')
+const lifecycleAdminEmail = ref('')
+const lifecycleAdminName = ref('')
+const lifecycleAdminPassword = ref('')
 const lifecycleStatus = ref('active')
 const lifecycleSeats = ref(100)
 const lifecycleExpiry = ref('2028-12-31')
@@ -2781,6 +2867,11 @@ const submitOnboardTenant = async () => {
     notify('Please fill in school name, admin email, and admin name.', 'warning')
     return
   }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(onboardAdminEmail.value.trim())) {
+    notify('Please enter a valid administrator email address.', 'warning')
+    return
+  }
   isOnboarding.value = true
   try {
     const res = await fetch(`${props.backendUrl}/api/admin/tenants/onboard`, {
@@ -2819,14 +2910,29 @@ const submitOnboardTenant = async () => {
 
 const openLifecycleModal = (t) => {
   tenantForLifecycle.value = t
+  lifecycleSchoolName.value = t.name || ''
+  lifecycleAdminEmail.value = t.admin_email || ''
+  lifecycleAdminName.value = t.admin_name || ''
+  lifecycleAdminPassword.value = ''
   lifecycleStatus.value = t.status || 'active'
-  lifecycleSeats.value = t.license_seats || 100
+  lifecycleSeats.value = t.license_seats ?? 100
   lifecycleExpiry.value = t.license_expiry || '2028-12-31'
   showLifecycleModal.value = true
 }
 
 const submitLifecycle = async () => {
   if (!tenantForLifecycle.value) return
+  if (!lifecycleSchoolName.value.trim()) {
+    notify('School name cannot be empty.', 'warning')
+    return
+  }
+  if (lifecycleAdminEmail.value.trim()) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(lifecycleAdminEmail.value.trim())) {
+      notify('Please enter a valid administrator email address.', 'warning')
+      return
+    }
+  }
   isUpdatingLifecycle.value = true
   try {
     const res = await fetch(`${props.backendUrl}/api/admin/tenants/${tenantForLifecycle.value.id}/lifecycle`, {
@@ -2835,20 +2941,24 @@ const submitLifecycle = async () => {
       body: JSON.stringify({
         status: lifecycleStatus.value,
         license_seats: Number(lifecycleSeats.value) || 100,
-        license_expiry: lifecycleExpiry.value.trim()
+        license_expiry: lifecycleExpiry.value.trim(),
+        school_name: lifecycleSchoolName.value.trim(),
+        admin_email: lifecycleAdminEmail.value.trim() || null,
+        admin_name: lifecycleAdminName.value.trim() || null,
+        admin_password: lifecycleAdminPassword.value.trim() || null
       })
     })
     if (res.ok) {
       const data = await res.json()
       showLifecycleModal.value = false
-      notify(`Lifecycle for ${tenantForLifecycle.value.name} updated to ${data.tenant_status.toUpperCase()}!`, 'success')
+      notify(`School '${data.school_name || tenantForLifecycle.value.name}' updated successfully!`, 'success')
       await fetchAllAdminData()
     } else {
       const err = await res.json()
-      notify(err.detail || 'Failed to update tenant lifecycle.', 'error')
+      notify(err.detail || 'Failed to update tenant configuration.', 'error')
     }
   } catch (e) {
-    notify('Lifecycle update error: ' + e.message, 'error')
+    notify('Update error: ' + e.message, 'error')
   } finally {
     isUpdatingLifecycle.value = false
   }

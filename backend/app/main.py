@@ -4005,6 +4005,9 @@ def onboard_tenant(req: OnboardTenantRequest, current_user: dict = Depends(requi
         if not school_name or not admin_email or not admin_name:
             raise HTTPException(status_code=400, detail="School name, admin email, and admin name are required.")
             
+        if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", admin_email):
+            raise HTTPException(status_code=400, detail="Invalid administrator email format.")
+            
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
         
@@ -4975,6 +4978,10 @@ class TenantLifecycleRequest(BaseModel):
     status: str # "active", "trial", "suspended", "expired"
     license_seats: Optional[int] = None
     license_expiry: Optional[str] = None
+    school_name: Optional[str] = None
+    admin_email: Optional[str] = None
+    admin_name: Optional[str] = None
+    admin_password: Optional[str] = None
 
 @app.post("/api/admin/tenants/{tenant_id}/lifecycle")
 def update_tenant_lifecycle(
@@ -4982,7 +4989,7 @@ def update_tenant_lifecycle(
     req: TenantLifecycleRequest,
     current_user: dict = Depends(require_super_admin_only)
 ):
-    """Super Admin Tenant Lifecycle Control: active, trial, suspended, expired."""
+    """Super Admin Tenant Governance & Lifecycle Control: status, quota, school name, and administrator account."""
     try:
         new_status = req.status.strip().lower()
         if new_status not in ["active", "trial", "suspended", "expired"]:
@@ -4990,27 +4997,103 @@ def update_tenant_lifecycle(
             
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
-        cursor.execute("SELECT id, name, status, license_seats, license_expiry FROM tenants WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (tenant_id,))
+        cursor.execute("SELECT id, name, status, license_seats, license_expiry, admin_id FROM tenants WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (tenant_id,))
         row = cursor.fetchone()
         if not row:
             conn.close()
             raise HTTPException(status_code=404, detail="Tenant organization not found.")
             
+        current_name = row[1]
+        current_status = row[2]
         current_seats = row[3] if row[3] is not None else 100
         current_expiry = row[4] or "2028-12-31"
+        tenant_admin_id = row[5]
         
+        updated_name = req.school_name.strip() if req.school_name and req.school_name.strip() else current_name
         updated_seats = req.license_seats if req.license_seats is not None else current_seats
         updated_expiry = req.license_expiry.strip() if req.license_expiry else current_expiry
         
         cursor.execute("""
             UPDATE tenants
-            SET status = ?, license_seats = ?, license_expiry = ?
+            SET name = ?, status = ?, license_seats = ?, license_expiry = ?
             WHERE id = ?
-        """, (new_status, updated_seats, updated_expiry, tenant_id))
-        
+        """, (updated_name, new_status, updated_seats, updated_expiry, tenant_id))
+
+        admin_audit_note = ""
+        final_admin_email = ""
+        final_admin_name = ""
+
+        # Handle Admin updates if admin_email provided
+        if req.admin_email and req.admin_email.strip():
+            email_to_set = req.admin_email.strip().lower()
+            if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email_to_set):
+                conn.close()
+                raise HTTPException(status_code=400, detail="Invalid administrator email format.")
+            name_to_set = req.admin_name.strip() if req.admin_name and req.admin_name.strip() else "School Admin"
+            password_to_set = req.admin_password.strip() if req.admin_password and req.admin_password.strip() else None
+
+            final_admin_email = email_to_set
+            final_admin_name = name_to_set
+
+            # Check if there's an existing admin user
+            existing_admin = None
+            if tenant_admin_id:
+                cursor.execute("SELECT id, email, name FROM users WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (tenant_admin_id,))
+                existing_admin = cursor.fetchone()
+            if not existing_admin:
+                cursor.execute("SELECT id, email, name FROM users WHERE tenant_id = ? AND role = 'admin' AND (IsXoa IS NULL OR IsXoa = 0) LIMIT 1", (tenant_id,))
+                existing_admin = cursor.fetchone()
+
+            if existing_admin:
+                admin_uid, cur_email, cur_name = existing_admin
+                if email_to_set != cur_email:
+                    # Check unique email among other users
+                    cursor.execute("SELECT id FROM users WHERE email = ? AND id != ? AND (IsXoa IS NULL OR IsXoa = 0)", (email_to_set, admin_uid))
+                    if cursor.fetchone():
+                        conn.close()
+                        raise HTTPException(status_code=400, detail=f"Email '{email_to_set}' is already registered to another account.")
+                
+                if password_to_set:
+                    cursor.execute("""
+                        UPDATE users SET email = ?, name = ?, password_hash = ? WHERE id = ?
+                    """, (email_to_set, name_to_set, hash_password(password_to_set), admin_uid))
+                    admin_audit_note = f", updated admin to {email_to_set} ({name_to_set}) and reset password"
+                else:
+                    cursor.execute("""
+                        UPDATE users SET email = ?, name = ? WHERE id = ?
+                    """, (email_to_set, name_to_set, admin_uid))
+                    admin_audit_note = f", updated admin to {email_to_set} ({name_to_set})"
+                cursor.execute("UPDATE tenants SET admin_id = ? WHERE id = ?", (admin_uid, tenant_id))
+            else:
+                # No existing admin for this tenant: link or create
+                cursor.execute("SELECT id, email, role, tenant_id FROM users WHERE email = ? AND (IsXoa IS NULL OR IsXoa = 0)", (email_to_set,))
+                matched_user = cursor.fetchone()
+                if matched_user:
+                    m_uid = matched_user[0]
+                    if password_to_set:
+                        cursor.execute("""
+                            UPDATE users SET role = 'admin', tenant_id = ?, name = ?, password_hash = ? WHERE id = ?
+                        """, (tenant_id, name_to_set, hash_password(password_to_set), m_uid))
+                    else:
+                        cursor.execute("""
+                            UPDATE users SET role = 'admin', tenant_id = ?, name = ? WHERE id = ?
+                        """, (tenant_id, name_to_set, m_uid))
+                    cursor.execute("UPDATE tenants SET admin_id = ? WHERE id = ?", (m_uid, tenant_id))
+                    admin_audit_note = f", assigned existing user {email_to_set} as School Admin"
+                else:
+                    pwd = password_to_set or "Admin@12345"
+                    parent_code = f"PA-{random.randint(1000, 9999)}"
+                    cursor.execute("""
+                        INSERT INTO users (email, name, role, tenant_id, parent_code, password_hash, status)
+                        VALUES (?, ?, 'admin', ?, ?, ?, 'active')
+                    """, (email_to_set, name_to_set, tenant_id, parent_code, hash_password(pwd)))
+                    new_uid = cursor.lastrowid
+                    cursor.execute("UPDATE tenants SET admin_id = ? WHERE id = ?", (new_uid, tenant_id))
+                    admin_audit_note = f", provisioned new School Admin {email_to_set} ({name_to_set})"
+
         record_audit_log(
             cursor, current_user["id"], "UPDATE_TENANT_LIFECYCLE", "tenants", tenant_id, tenant_id,
-            f"Super Admin updated lifecycle of tenant {tenant_id} to {new_status} (seats: {updated_seats}, expiry: {updated_expiry})"
+            f"Super Admin updated school {updated_name} ({tenant_id}) to {new_status} (seats: {updated_seats}, expiry: {updated_expiry}){admin_audit_note}"
         )
         conn.commit()
         conn.close()
@@ -5019,9 +5102,12 @@ def update_tenant_lifecycle(
         return {
             "status": "success",
             "tenant_id": tenant_id,
+            "school_name": updated_name,
             "tenant_status": new_status,
             "license_seats": updated_seats,
-            "license_expiry": updated_expiry
+            "license_expiry": updated_expiry,
+            "admin_email": final_admin_email or None,
+            "admin_name": final_admin_name or None
         }
     except HTTPException:
         raise
