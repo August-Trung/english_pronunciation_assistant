@@ -5233,6 +5233,16 @@
       "tenant_id": "1",
       "details": "User School Admin (admin) logged in",
       "created_at": "2026-10-07 11:25:47"
+    },
+    {
+      "id": 308,
+      "user_id": 5,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "5",
+      "tenant_id": null,
+      "details": "User Super Admin (Owner) (super_admin) logged in",
+      "created_at": "2026-10-07 11:45:55"
     }
   ],
   "system_configs": [
