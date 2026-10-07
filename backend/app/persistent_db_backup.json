@@ -11,7 +11,8 @@
       "role": "super_admin",
       "tenant_id": null,
       "parent_code": "PA-8888",
-      "password_hash": "pbkdf2:sha256:100000$289a42f0ab8efd90342d87ff5e9d423e$64c53c83abf41952e5a1340ca25597d84a1ef6475d2725463ebf45382965a61d"
+      "password_hash": "pbkdf2:sha256:100000$289a42f0ab8efd90342d87ff5e9d423e$64c53c83abf41952e5a1340ca25597d84a1ef6475d2725463ebf45382965a61d",
+      "status": "active"
     },
     {
       "id": 6,
@@ -24,7 +25,8 @@
       "role": "admin",
       "tenant_id": "1",
       "parent_code": null,
-      "password_hash": "pbkdf2:sha256:100000$aa0d9d5a8062e894c8b2f7eba6c336f3$7aba0fd4f1b393173b4029259c5d04e3d9741376d28132e30414849fabda3696"
+      "password_hash": "pbkdf2:sha256:100000$aa0d9d5a8062e894c8b2f7eba6c336f3$7aba0fd4f1b393173b4029259c5d04e3d9741376d28132e30414849fabda3696",
+      "status": "active"
     },
     {
       "id": 7,
@@ -37,7 +39,8 @@
       "role": "teacher",
       "tenant_id": "1",
       "parent_code": null,
-      "password_hash": "pbkdf2:sha256:100000$c7d1845e529650ec888204f7794a9a64$463e63c2de0630a25a64161f202792413ed2f21cdb5c9ba71bdb0bfd53ff9189"
+      "password_hash": "pbkdf2:sha256:100000$c7d1845e529650ec888204f7794a9a64$463e63c2de0630a25a64161f202792413ed2f21cdb5c9ba71bdb0bfd53ff9189",
+      "status": "active"
     },
     {
       "id": 8,
@@ -50,7 +53,8 @@
       "role": "student",
       "tenant_id": null,
       "parent_code": null,
-      "password_hash": null
+      "password_hash": null,
+      "status": "active"
     },
     {
       "id": 10,
@@ -63,7 +67,120 @@
       "role": "student",
       "tenant_id": null,
       "parent_code": null,
-      "password_hash": null
+      "password_hash": null,
+      "status": "active"
+    },
+    {
+      "id": 201,
+      "email": "schooladmin1@fluent.edu.vn",
+      "name": "School Admin One",
+      "avatar": null,
+      "google_id": null,
+      "created_at": "2026-10-07 09:24:14",
+      "IsXoa": 0,
+      "role": "admin",
+      "tenant_id": "1",
+      "parent_code": null,
+      "password_hash": "pbkdf2:sha256:100000$3cdb7de4948661d0c1e0a72bfe26848a$86eefe01f36939c07657da5b2cfcf547f8bd7d7f3e1553b9c419e9ffd15db373",
+      "status": "active"
+    },
+    {
+      "id": 202,
+      "email": "schooladmin2@rival.edu.vn",
+      "name": "School Admin Two",
+      "avatar": null,
+      "google_id": null,
+      "created_at": "2026-10-07 09:24:14",
+      "IsXoa": 0,
+      "role": "admin",
+      "tenant_id": "2",
+      "parent_code": null,
+      "password_hash": "pbkdf2:sha256:100000$3cdb7de4948661d0c1e0a72bfe26848a$86eefe01f36939c07657da5b2cfcf547f8bd7d7f3e1553b9c419e9ffd15db373",
+      "status": "active"
+    },
+    {
+      "id": 211,
+      "email": "teacher_alpha@fluent.edu.vn",
+      "name": "Teacher Alpha",
+      "avatar": null,
+      "google_id": null,
+      "created_at": "2026-10-07 09:24:14",
+      "IsXoa": 0,
+      "role": "teacher",
+      "tenant_id": "1",
+      "parent_code": null,
+      "password_hash": "pbkdf2:sha256:100000$398a981b3528515df1dd1ce309efb3c4$a2eaea0bb55876fe567d6eb1a949ca524b2a99c10ac9521b227c94dd30465824",
+      "status": "active"
+    },
+    {
+      "id": 212,
+      "email": "teacher_beta@fluent.edu.vn",
+      "name": "Teacher Beta",
+      "avatar": null,
+      "google_id": null,
+      "created_at": "2026-10-07 09:24:14",
+      "IsXoa": 0,
+      "role": "teacher",
+      "tenant_id": "1",
+      "parent_code": null,
+      "password_hash": "pbkdf2:sha256:100000$38ab7e6042d38173fea468efdcf0dfb8$03edb33e11674cfaa9b0901db505c47332c6210d8401a39fe93cba0133f50a55",
+      "status": "active"
+    },
+    {
+      "id": 213,
+      "email": "teacher_rival@rival.edu.vn",
+      "name": "Teacher Rival",
+      "avatar": null,
+      "google_id": null,
+      "created_at": "2026-10-07 09:24:14",
+      "IsXoa": 0,
+      "role": "teacher",
+      "tenant_id": "2",
+      "parent_code": null,
+      "password_hash": "pbkdf2:sha256:100000$38ab7e6042d38173fea468efdcf0dfb8$03edb33e11674cfaa9b0901db505c47332c6210d8401a39fe93cba0133f50a55",
+      "status": "active"
+    },
+    {
+      "id": 301,
+      "email": "student1@test.com",
+      "name": "Student One",
+      "avatar": null,
+      "google_id": null,
+      "created_at": "2026-10-07 09:24:15",
+      "IsXoa": 0,
+      "role": "student",
+      "tenant_id": "1",
+      "parent_code": null,
+      "password_hash": "pbkdf2:sha256:100000$1f251cc7a9ac8c4ac59474181335e240$c8c73303685852d4574a902143613761e678294e10a3ffc643f1a641d068fca7",
+      "status": "active"
+    },
+    {
+      "id": 302,
+      "email": "student2@test.com",
+      "name": "Student Two",
+      "avatar": null,
+      "google_id": null,
+      "created_at": "2026-10-07 09:24:15",
+      "IsXoa": 0,
+      "role": "student",
+      "tenant_id": null,
+      "parent_code": null,
+      "password_hash": "pbkdf2:sha256:100000$1f251cc7a9ac8c4ac59474181335e240$c8c73303685852d4574a902143613761e678294e10a3ffc643f1a641d068fca7",
+      "status": "active"
+    },
+    {
+      "id": 303,
+      "email": "student3@test.com",
+      "name": "Student Three",
+      "avatar": null,
+      "google_id": null,
+      "created_at": "2026-10-07 09:24:15",
+      "IsXoa": 0,
+      "role": "student",
+      "tenant_id": "1",
+      "parent_code": null,
+      "password_hash": "pbkdf2:sha256:100000$1f251cc7a9ac8c4ac59474181335e240$c8c73303685852d4574a902143613761e678294e10a3ffc643f1a641d068fca7",
+      "status": "active"
     },
     {
       "id": 999,
@@ -76,7 +193,8 @@
       "role": "student",
       "tenant_id": null,
       "parent_code": null,
-      "password_hash": null
+      "password_hash": null,
+      "status": "active"
     },
     {
       "id": 1009,
@@ -89,7 +207,8 @@
       "role": "student",
       "tenant_id": null,
       "parent_code": null,
-      "password_hash": null
+      "password_hash": null,
+      "status": "active"
     }
   ],
   "history": [
@@ -202,7 +321,8 @@
       "join_code": "CLS-836-58",
       "created_at": "2026-07-30 18:10:39",
       "IsXoa": 0,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "is_archived": 0
     },
     {
       "id": 7,
@@ -212,7 +332,8 @@
       "join_code": "CLS-TEST-99",
       "created_at": "2026-07-31 19:40:50",
       "IsXoa": 1,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "is_archived": 0
     },
     {
       "id": 8,
@@ -222,7 +343,8 @@
       "join_code": "CLS-TST-78077",
       "created_at": "2026-07-31 19:41:12",
       "IsXoa": 1,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "is_archived": 0
     },
     {
       "id": 9,
@@ -232,7 +354,8 @@
       "join_code": "CLS-TST-371821",
       "created_at": "2026-07-31 19:42:07",
       "IsXoa": 1,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "is_archived": 0
     },
     {
       "id": 10,
@@ -242,7 +365,8 @@
       "join_code": "CLS-TST-378138",
       "created_at": "2026-07-31 20:12:32",
       "IsXoa": 1,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "is_archived": 0
     },
     {
       "id": 11,
@@ -252,7 +376,8 @@
       "join_code": "CLS-TST-805339",
       "created_at": "2026-07-31 20:12:39",
       "IsXoa": 1,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "is_archived": 0
     },
     {
       "id": 12,
@@ -262,7 +387,8 @@
       "join_code": "CLS-TST-898185",
       "created_at": "2026-08-02 13:27:21",
       "IsXoa": 1,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "is_archived": 0
     },
     {
       "id": 13,
@@ -272,7 +398,8 @@
       "join_code": "CLS-568-79",
       "created_at": "2026-08-02 13:29:44",
       "IsXoa": 1,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "is_archived": 0
     },
     {
       "id": 14,
@@ -282,7 +409,8 @@
       "join_code": "CLS-261-96",
       "created_at": "2026-08-02 13:29:54",
       "IsXoa": 1,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "is_archived": 0
     },
     {
       "id": 15,
@@ -292,7 +420,30 @@
       "join_code": "CLS-506-65",
       "created_at": "2026-08-02 13:30:06",
       "IsXoa": 1,
-      "tenant_id": "1"
+      "tenant_id": "1",
+      "is_archived": 0
+    },
+    {
+      "id": 37,
+      "teacher_id": 212,
+      "name": "IELTS Band 7.5 Intensive",
+      "grade_level": "Advanced",
+      "join_code": "CLS-842-14",
+      "created_at": "2026-10-07 09:24:15",
+      "IsXoa": 0,
+      "tenant_id": "1",
+      "is_archived": 0
+    },
+    {
+      "id": 38,
+      "teacher_id": 212,
+      "name": "TOEIC Masterclass",
+      "grade_level": "Intermediate",
+      "join_code": "CLS-472-45",
+      "created_at": "2026-10-07 09:24:15",
+      "IsXoa": 0,
+      "tenant_id": "1",
+      "is_archived": 0
     }
   ],
   "class_enrollments": [
@@ -301,6 +452,46 @@
       "class_id": 6,
       "student_id": 1009,
       "joined_at": "2026-10-07 04:47:31",
+      "IsXoa": 0,
+      "tenant_id": "1"
+    },
+    {
+      "id": 61,
+      "class_id": 37,
+      "student_id": 301,
+      "joined_at": "2026-10-07 09:24:15",
+      "IsXoa": 0,
+      "tenant_id": "1"
+    },
+    {
+      "id": 62,
+      "class_id": 37,
+      "student_id": 302,
+      "joined_at": "2026-10-07 09:24:15",
+      "IsXoa": 1,
+      "tenant_id": "1"
+    },
+    {
+      "id": 63,
+      "class_id": 38,
+      "student_id": 301,
+      "joined_at": "2026-10-07 09:24:15",
+      "IsXoa": 0,
+      "tenant_id": "1"
+    },
+    {
+      "id": 64,
+      "class_id": 38,
+      "student_id": 302,
+      "joined_at": "2026-10-07 09:24:15",
+      "IsXoa": 1,
+      "tenant_id": "1"
+    },
+    {
+      "id": 65,
+      "class_id": 37,
+      "student_id": 303,
+      "joined_at": "2026-10-07 09:24:15",
       "IsXoa": 0,
       "tenant_id": "1"
     }
@@ -1074,16 +1265,6 @@
       "IsXoa": 1
     },
     {
-      "id": "1",
-      "name": "Fluent English Academy",
-      "admin_id": 7,
-      "logo_url": null,
-      "license_seats": 100,
-      "license_expiry": "2028-12-31",
-      "created_at": "2026-07-30 18:00:00",
-      "IsXoa": 0
-    },
-    {
       "id": "tenant_5682",
       "name": "High School Olympia",
       "admin_id": null,
@@ -1101,6 +1282,66 @@
       "license_seats": 250,
       "license_expiry": "2027-08-01",
       "created_at": "2026-10-07 08:18:45",
+      "IsXoa": 0
+    },
+    {
+      "id": "tenant_5675",
+      "name": "High School Olympia",
+      "admin_id": null,
+      "logo_url": "",
+      "license_seats": 250,
+      "license_expiry": "2027-08-01",
+      "created_at": "2026-10-07 08:23:39",
+      "IsXoa": 0
+    },
+    {
+      "id": "tenant_8835",
+      "name": "High School Olympia",
+      "admin_id": null,
+      "logo_url": "",
+      "license_seats": 250,
+      "license_expiry": "2027-08-01",
+      "created_at": "2026-10-07 09:16:58",
+      "IsXoa": 0
+    },
+    {
+      "id": "tenant_5818",
+      "name": "High School Olympia",
+      "admin_id": null,
+      "logo_url": "",
+      "license_seats": 250,
+      "license_expiry": "2027-08-01",
+      "created_at": "2026-10-07 09:21:52",
+      "IsXoa": 0
+    },
+    {
+      "id": "1",
+      "name": "Fluent English Academy",
+      "admin_id": null,
+      "logo_url": null,
+      "license_seats": 3,
+      "license_expiry": "2028-12-31",
+      "created_at": "2026-10-07 09:24:14",
+      "IsXoa": 0
+    },
+    {
+      "id": "2",
+      "name": "Rival Academy",
+      "admin_id": null,
+      "logo_url": null,
+      "license_seats": 5,
+      "license_expiry": "2028-12-31",
+      "created_at": "2026-10-07 09:24:14",
+      "IsXoa": 0
+    },
+    {
+      "id": "tenant_4861",
+      "name": "High School Olympia",
+      "admin_id": null,
+      "logo_url": "",
+      "license_seats": 250,
+      "license_expiry": "2027-08-01",
+      "created_at": "2026-10-07 09:24:31",
       "IsXoa": 0
     }
   ],
@@ -1184,6 +1425,1376 @@
       "tenant_id": "tenant_7075",
       "details": "Super Admin created tenant: High School Olympia",
       "created_at": "2026-10-07 08:18:45"
+    },
+    {
+      "id": 9,
+      "user_id": 5,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "5",
+      "tenant_id": null,
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 08:23:39"
+    },
+    {
+      "id": 10,
+      "user_id": 6,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "6",
+      "tenant_id": "1",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 08:23:39"
+    },
+    {
+      "id": 11,
+      "user_id": 7,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "7",
+      "tenant_id": "1",
+      "details": "Teacher authenticated successfully",
+      "created_at": "2026-10-07 08:23:39"
+    },
+    {
+      "id": 12,
+      "user_id": 5,
+      "action": "CREATE_TENANT",
+      "target_type": "tenants",
+      "target_id": "tenant_5675",
+      "tenant_id": "tenant_5675",
+      "details": "Super Admin created tenant: High School Olympia",
+      "created_at": "2026-10-07 08:23:39"
+    },
+    {
+      "id": 13,
+      "user_id": 201,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "201",
+      "tenant_id": "1",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:11:06"
+    },
+    {
+      "id": 14,
+      "user_id": 202,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "202",
+      "tenant_id": "2",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:11:06"
+    },
+    {
+      "id": 15,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "16",
+      "tenant_id": "1",
+      "details": "Created classroom 'IELTS Band 7.5 Intensive' assigned to teacher Teacher Alpha",
+      "created_at": "2026-10-07 09:11:06"
+    },
+    {
+      "id": 16,
+      "user_id": 201,
+      "action": "ASSIGN_TEACHER",
+      "target_type": "classrooms",
+      "target_id": "16",
+      "tenant_id": "1",
+      "details": "Reassigned classroom 'IELTS Band 7.5 Intensive' to teacher Teacher Beta",
+      "created_at": "2026-10-07 09:11:06"
+    },
+    {
+      "id": 17,
+      "user_id": 201,
+      "action": "ARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "16",
+      "tenant_id": "1",
+      "details": "Archived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 09:11:07"
+    },
+    {
+      "id": 18,
+      "user_id": 201,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "201",
+      "tenant_id": "1",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:11:31"
+    },
+    {
+      "id": 19,
+      "user_id": 202,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "202",
+      "tenant_id": "2",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:11:31"
+    },
+    {
+      "id": 20,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "17",
+      "tenant_id": "1",
+      "details": "Created classroom 'IELTS Band 7.5 Intensive' assigned to teacher Teacher Alpha",
+      "created_at": "2026-10-07 09:11:31"
+    },
+    {
+      "id": 21,
+      "user_id": 201,
+      "action": "ASSIGN_TEACHER",
+      "target_type": "classrooms",
+      "target_id": "17",
+      "tenant_id": "1",
+      "details": "Reassigned classroom 'IELTS Band 7.5 Intensive' to teacher Teacher Beta",
+      "created_at": "2026-10-07 09:11:31"
+    },
+    {
+      "id": 22,
+      "user_id": 201,
+      "action": "ARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "17",
+      "tenant_id": "1",
+      "details": "Archived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 09:11:31"
+    },
+    {
+      "id": 23,
+      "user_id": 201,
+      "action": "UNARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "17",
+      "tenant_id": "1",
+      "details": "Unarchived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 09:11:31"
+    },
+    {
+      "id": 24,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "18",
+      "tenant_id": "1",
+      "details": "Created classroom 'TOEIC Masterclass' assigned to teacher Teacher Beta",
+      "created_at": "2026-10-07 09:11:31"
+    },
+    {
+      "id": 25,
+      "user_id": 201,
+      "action": "TRANSFER_STUDENT",
+      "target_type": "class_enrollments",
+      "target_id": "18:302",
+      "tenant_id": "1",
+      "details": "Transferred student Student Two from 'IELTS Band 7.5 Intensive' to 'TOEIC Masterclass'",
+      "created_at": "2026-10-07 09:11:31"
+    },
+    {
+      "id": 26,
+      "user_id": 201,
+      "action": "REVOKE_STUDENT_SEAT",
+      "target_type": "class_enrollments",
+      "target_id": "18:302",
+      "tenant_id": "1",
+      "details": "Revoked seat for student Student Two (student2@test.com) from class 'TOEIC Masterclass'",
+      "created_at": "2026-10-07 09:11:31"
+    },
+    {
+      "id": 27,
+      "user_id": 201,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "201",
+      "tenant_id": "1",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:12:44"
+    },
+    {
+      "id": 28,
+      "user_id": 202,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "202",
+      "tenant_id": "2",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:12:44"
+    },
+    {
+      "id": 29,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "19",
+      "tenant_id": "1",
+      "details": "Created classroom 'IELTS Band 7.5 Intensive' assigned to teacher Teacher Alpha",
+      "created_at": "2026-10-07 09:12:44"
+    },
+    {
+      "id": 30,
+      "user_id": 201,
+      "action": "ASSIGN_TEACHER",
+      "target_type": "classrooms",
+      "target_id": "19",
+      "tenant_id": "1",
+      "details": "Reassigned classroom 'IELTS Band 7.5 Intensive' to teacher Teacher Beta",
+      "created_at": "2026-10-07 09:12:44"
+    },
+    {
+      "id": 31,
+      "user_id": 201,
+      "action": "ARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "19",
+      "tenant_id": "1",
+      "details": "Archived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 09:12:44"
+    },
+    {
+      "id": 32,
+      "user_id": 201,
+      "action": "UNARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "19",
+      "tenant_id": "1",
+      "details": "Unarchived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 09:12:44"
+    },
+    {
+      "id": 33,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "20",
+      "tenant_id": "1",
+      "details": "Created classroom 'TOEIC Masterclass' assigned to teacher Teacher Beta",
+      "created_at": "2026-10-07 09:12:44"
+    },
+    {
+      "id": 34,
+      "user_id": 201,
+      "action": "TRANSFER_STUDENT",
+      "target_type": "class_enrollments",
+      "target_id": "20:302",
+      "tenant_id": "1",
+      "details": "Transferred student Student Two from 'IELTS Band 7.5 Intensive' to 'TOEIC Masterclass'",
+      "created_at": "2026-10-07 09:12:44"
+    },
+    {
+      "id": 35,
+      "user_id": 201,
+      "action": "REVOKE_STUDENT_SEAT",
+      "target_type": "class_enrollments",
+      "target_id": "20:302",
+      "tenant_id": "1",
+      "details": "Revoked seat for student Student Two (student2@test.com) from class 'TOEIC Masterclass'",
+      "created_at": "2026-10-07 09:12:44"
+    },
+    {
+      "id": 36,
+      "user_id": 201,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "201",
+      "tenant_id": "1",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:13:01"
+    },
+    {
+      "id": 37,
+      "user_id": 202,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "202",
+      "tenant_id": "2",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:13:01"
+    },
+    {
+      "id": 38,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "21",
+      "tenant_id": "1",
+      "details": "Created classroom 'IELTS Band 7.5 Intensive' assigned to teacher Teacher Alpha",
+      "created_at": "2026-10-07 09:13:01"
+    },
+    {
+      "id": 39,
+      "user_id": 201,
+      "action": "ASSIGN_TEACHER",
+      "target_type": "classrooms",
+      "target_id": "21",
+      "tenant_id": "1",
+      "details": "Reassigned classroom 'IELTS Band 7.5 Intensive' to teacher Teacher Beta",
+      "created_at": "2026-10-07 09:13:01"
+    },
+    {
+      "id": 40,
+      "user_id": 201,
+      "action": "ARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "21",
+      "tenant_id": "1",
+      "details": "Archived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 09:13:01"
+    },
+    {
+      "id": 41,
+      "user_id": 201,
+      "action": "UNARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "21",
+      "tenant_id": "1",
+      "details": "Unarchived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 09:13:01"
+    },
+    {
+      "id": 42,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "22",
+      "tenant_id": "1",
+      "details": "Created classroom 'TOEIC Masterclass' assigned to teacher Teacher Beta",
+      "created_at": "2026-10-07 09:13:01"
+    },
+    {
+      "id": 43,
+      "user_id": 201,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "201",
+      "tenant_id": "1",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:13:18"
+    },
+    {
+      "id": 44,
+      "user_id": 202,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "202",
+      "tenant_id": "2",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:13:18"
+    },
+    {
+      "id": 45,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "23",
+      "tenant_id": "1",
+      "details": "Created classroom 'IELTS Band 7.5 Intensive' assigned to teacher Teacher Alpha",
+      "created_at": "2026-10-07 09:13:18"
+    },
+    {
+      "id": 46,
+      "user_id": 201,
+      "action": "ASSIGN_TEACHER",
+      "target_type": "classrooms",
+      "target_id": "23",
+      "tenant_id": "1",
+      "details": "Reassigned classroom 'IELTS Band 7.5 Intensive' to teacher Teacher Beta",
+      "created_at": "2026-10-07 09:13:18"
+    },
+    {
+      "id": 47,
+      "user_id": 201,
+      "action": "ARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "23",
+      "tenant_id": "1",
+      "details": "Archived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 09:13:18"
+    },
+    {
+      "id": 48,
+      "user_id": 201,
+      "action": "UNARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "23",
+      "tenant_id": "1",
+      "details": "Unarchived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 09:13:18"
+    },
+    {
+      "id": 49,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "24",
+      "tenant_id": "1",
+      "details": "Created classroom 'TOEIC Masterclass' assigned to teacher Teacher Beta",
+      "created_at": "2026-10-07 09:13:18"
+    },
+    {
+      "id": 50,
+      "user_id": 201,
+      "action": "TRANSFER_STUDENT",
+      "target_type": "class_enrollments",
+      "target_id": "24:302",
+      "tenant_id": "1",
+      "details": "Transferred student Student Two from 'IELTS Band 7.5 Intensive' to 'TOEIC Masterclass'",
+      "created_at": "2026-10-07 09:13:18"
+    },
+    {
+      "id": 51,
+      "user_id": 201,
+      "action": "REVOKE_STUDENT_SEAT",
+      "target_type": "class_enrollments",
+      "target_id": "24:302",
+      "tenant_id": "1",
+      "details": "Revoked seat for student Student Two (student2@test.com) from class 'TOEIC Masterclass'",
+      "created_at": "2026-10-07 09:13:18"
+    },
+    {
+      "id": 52,
+      "user_id": 201,
+      "action": "SUSPEND_TEACHER",
+      "target_type": "users",
+      "target_id": "211",
+      "tenant_id": "1",
+      "details": "Suspended teacher Teacher Alpha (teacher_alpha@fluent.edu.vn)",
+      "created_at": "2026-10-07 09:13:18"
+    },
+    {
+      "id": 53,
+      "user_id": 201,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "201",
+      "tenant_id": "1",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:14:12"
+    },
+    {
+      "id": 54,
+      "user_id": 202,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "202",
+      "tenant_id": "2",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:14:12"
+    },
+    {
+      "id": 55,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "25",
+      "tenant_id": "1",
+      "details": "Created classroom 'IELTS Band 7.5 Intensive' assigned to teacher Teacher Alpha",
+      "created_at": "2026-10-07 09:14:12"
+    },
+    {
+      "id": 56,
+      "user_id": 201,
+      "action": "ASSIGN_TEACHER",
+      "target_type": "classrooms",
+      "target_id": "25",
+      "tenant_id": "1",
+      "details": "Reassigned classroom 'IELTS Band 7.5 Intensive' to teacher Teacher Beta",
+      "created_at": "2026-10-07 09:14:12"
+    },
+    {
+      "id": 57,
+      "user_id": 201,
+      "action": "ARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "25",
+      "tenant_id": "1",
+      "details": "Archived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 09:14:12"
+    },
+    {
+      "id": 58,
+      "user_id": 201,
+      "action": "UNARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "25",
+      "tenant_id": "1",
+      "details": "Unarchived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 09:14:12"
+    },
+    {
+      "id": 59,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "26",
+      "tenant_id": "1",
+      "details": "Created classroom 'TOEIC Masterclass' assigned to teacher Teacher Beta",
+      "created_at": "2026-10-07 09:14:12"
+    },
+    {
+      "id": 60,
+      "user_id": 201,
+      "action": "TRANSFER_STUDENT",
+      "target_type": "class_enrollments",
+      "target_id": "26:302",
+      "tenant_id": "1",
+      "details": "Transferred student Student Two from 'IELTS Band 7.5 Intensive' to 'TOEIC Masterclass'",
+      "created_at": "2026-10-07 09:14:12"
+    },
+    {
+      "id": 61,
+      "user_id": 201,
+      "action": "REVOKE_STUDENT_SEAT",
+      "target_type": "class_enrollments",
+      "target_id": "26:302",
+      "tenant_id": "1",
+      "details": "Revoked seat for student Student Two (student2@test.com) from class 'TOEIC Masterclass'",
+      "created_at": "2026-10-07 09:14:13"
+    },
+    {
+      "id": 62,
+      "user_id": 201,
+      "action": "SUSPEND_TEACHER",
+      "target_type": "users",
+      "target_id": "211",
+      "tenant_id": "1",
+      "details": "Suspended teacher Teacher Alpha (teacher_alpha@fluent.edu.vn)",
+      "created_at": "2026-10-07 09:14:13"
+    },
+    {
+      "id": 63,
+      "user_id": 201,
+      "action": "REACTIVATE_TEACHER",
+      "target_type": "users",
+      "target_id": "211",
+      "tenant_id": "1",
+      "details": "Reactivated teacher Teacher Alpha (teacher_alpha@fluent.edu.vn)",
+      "created_at": "2026-10-07 09:14:13"
+    },
+    {
+      "id": 64,
+      "user_id": 201,
+      "action": "RESET_TEACHER_PASSWORD",
+      "target_type": "users",
+      "target_id": "211",
+      "tenant_id": "1",
+      "details": "Reset password for teacher Teacher Alpha (teacher_alpha@fluent.edu.vn)",
+      "created_at": "2026-10-07 09:14:13"
+    },
+    {
+      "id": 65,
+      "user_id": 201,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "201",
+      "tenant_id": "1",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:14:38"
+    },
+    {
+      "id": 66,
+      "user_id": 202,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "202",
+      "tenant_id": "2",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:14:38"
+    },
+    {
+      "id": 67,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "27",
+      "tenant_id": "1",
+      "details": "Created classroom 'IELTS Band 7.5 Intensive' assigned to teacher Teacher Alpha",
+      "created_at": "2026-10-07 09:14:38"
+    },
+    {
+      "id": 68,
+      "user_id": 201,
+      "action": "ASSIGN_TEACHER",
+      "target_type": "classrooms",
+      "target_id": "27",
+      "tenant_id": "1",
+      "details": "Reassigned classroom 'IELTS Band 7.5 Intensive' to teacher Teacher Beta",
+      "created_at": "2026-10-07 09:14:38"
+    },
+    {
+      "id": 69,
+      "user_id": 201,
+      "action": "ARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "27",
+      "tenant_id": "1",
+      "details": "Archived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 09:14:38"
+    },
+    {
+      "id": 70,
+      "user_id": 201,
+      "action": "UNARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "27",
+      "tenant_id": "1",
+      "details": "Unarchived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 09:14:38"
+    },
+    {
+      "id": 71,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "28",
+      "tenant_id": "1",
+      "details": "Created classroom 'TOEIC Masterclass' assigned to teacher Teacher Beta",
+      "created_at": "2026-10-07 09:14:38"
+    },
+    {
+      "id": 72,
+      "user_id": 201,
+      "action": "TRANSFER_STUDENT",
+      "target_type": "class_enrollments",
+      "target_id": "28:302",
+      "tenant_id": "1",
+      "details": "Transferred student Student Two from 'IELTS Band 7.5 Intensive' to 'TOEIC Masterclass'",
+      "created_at": "2026-10-07 09:14:38"
+    },
+    {
+      "id": 73,
+      "user_id": 201,
+      "action": "REVOKE_STUDENT_SEAT",
+      "target_type": "class_enrollments",
+      "target_id": "28:302",
+      "tenant_id": "1",
+      "details": "Revoked seat for student Student Two (student2@test.com) from class 'TOEIC Masterclass'",
+      "created_at": "2026-10-07 09:14:38"
+    },
+    {
+      "id": 74,
+      "user_id": 201,
+      "action": "SUSPEND_TEACHER",
+      "target_type": "users",
+      "target_id": "211",
+      "tenant_id": "1",
+      "details": "Suspended teacher Teacher Alpha (teacher_alpha@fluent.edu.vn)",
+      "created_at": "2026-10-07 09:14:38"
+    },
+    {
+      "id": 75,
+      "user_id": 201,
+      "action": "REACTIVATE_TEACHER",
+      "target_type": "users",
+      "target_id": "211",
+      "tenant_id": "1",
+      "details": "Reactivated teacher Teacher Alpha (teacher_alpha@fluent.edu.vn)",
+      "created_at": "2026-10-07 09:14:38"
+    },
+    {
+      "id": 76,
+      "user_id": 201,
+      "action": "RESET_TEACHER_PASSWORD",
+      "target_type": "users",
+      "target_id": "211",
+      "tenant_id": "1",
+      "details": "Reset password for teacher Teacher Alpha (teacher_alpha@fluent.edu.vn)",
+      "created_at": "2026-10-07 09:14:38"
+    },
+    {
+      "id": 77,
+      "user_id": 201,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "201",
+      "tenant_id": "1",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:15:42"
+    },
+    {
+      "id": 78,
+      "user_id": 202,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "202",
+      "tenant_id": "2",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:15:42"
+    },
+    {
+      "id": 79,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "29",
+      "tenant_id": "1",
+      "details": "Created classroom 'IELTS Band 7.5 Intensive' assigned to teacher Teacher Alpha",
+      "created_at": "2026-10-07 09:15:42"
+    },
+    {
+      "id": 80,
+      "user_id": 201,
+      "action": "ASSIGN_TEACHER",
+      "target_type": "classrooms",
+      "target_id": "29",
+      "tenant_id": "1",
+      "details": "Reassigned classroom 'IELTS Band 7.5 Intensive' to teacher Teacher Beta",
+      "created_at": "2026-10-07 09:15:43"
+    },
+    {
+      "id": 81,
+      "user_id": 201,
+      "action": "ARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "29",
+      "tenant_id": "1",
+      "details": "Archived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 09:15:43"
+    },
+    {
+      "id": 82,
+      "user_id": 201,
+      "action": "UNARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "29",
+      "tenant_id": "1",
+      "details": "Unarchived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 09:15:43"
+    },
+    {
+      "id": 83,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "30",
+      "tenant_id": "1",
+      "details": "Created classroom 'TOEIC Masterclass' assigned to teacher Teacher Beta",
+      "created_at": "2026-10-07 09:15:43"
+    },
+    {
+      "id": 84,
+      "user_id": 201,
+      "action": "TRANSFER_STUDENT",
+      "target_type": "class_enrollments",
+      "target_id": "30:302",
+      "tenant_id": "1",
+      "details": "Transferred student Student Two from 'IELTS Band 7.5 Intensive' to 'TOEIC Masterclass'",
+      "created_at": "2026-10-07 09:15:43"
+    },
+    {
+      "id": 85,
+      "user_id": 201,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "201",
+      "tenant_id": "1",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:15:58"
+    },
+    {
+      "id": 86,
+      "user_id": 201,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "201",
+      "tenant_id": "1",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:16:29"
+    },
+    {
+      "id": 87,
+      "user_id": 202,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "202",
+      "tenant_id": "2",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:16:30"
+    },
+    {
+      "id": 88,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "31",
+      "tenant_id": "1",
+      "details": "Created classroom 'IELTS Band 7.5 Intensive' assigned to teacher Teacher Alpha",
+      "created_at": "2026-10-07 09:16:30"
+    },
+    {
+      "id": 89,
+      "user_id": 201,
+      "action": "ASSIGN_TEACHER",
+      "target_type": "classrooms",
+      "target_id": "31",
+      "tenant_id": "1",
+      "details": "Reassigned classroom 'IELTS Band 7.5 Intensive' to teacher Teacher Beta",
+      "created_at": "2026-10-07 09:16:30"
+    },
+    {
+      "id": 90,
+      "user_id": 201,
+      "action": "ARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "31",
+      "tenant_id": "1",
+      "details": "Archived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 09:16:30"
+    },
+    {
+      "id": 91,
+      "user_id": 201,
+      "action": "UNARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "31",
+      "tenant_id": "1",
+      "details": "Unarchived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 09:16:30"
+    },
+    {
+      "id": 92,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "32",
+      "tenant_id": "1",
+      "details": "Created classroom 'TOEIC Masterclass' assigned to teacher Teacher Beta",
+      "created_at": "2026-10-07 09:16:30"
+    },
+    {
+      "id": 93,
+      "user_id": 201,
+      "action": "TRANSFER_STUDENT",
+      "target_type": "class_enrollments",
+      "target_id": "32:302",
+      "tenant_id": "1",
+      "details": "Transferred student Student Two from 'IELTS Band 7.5 Intensive' to 'TOEIC Masterclass'",
+      "created_at": "2026-10-07 09:16:30"
+    },
+    {
+      "id": 94,
+      "user_id": 201,
+      "action": "REVOKE_STUDENT_SEAT",
+      "target_type": "class_enrollments",
+      "target_id": "32:302",
+      "tenant_id": "1",
+      "details": "Revoked seat for student Student Two (student2@test.com) from class 'TOEIC Masterclass'",
+      "created_at": "2026-10-07 09:16:30"
+    },
+    {
+      "id": 95,
+      "user_id": 201,
+      "action": "SUSPEND_TEACHER",
+      "target_type": "users",
+      "target_id": "211",
+      "tenant_id": "1",
+      "details": "Suspended teacher Teacher Alpha (teacher_alpha@fluent.edu.vn)",
+      "created_at": "2026-10-07 09:16:30"
+    },
+    {
+      "id": 96,
+      "user_id": 201,
+      "action": "REACTIVATE_TEACHER",
+      "target_type": "users",
+      "target_id": "211",
+      "tenant_id": "1",
+      "details": "Reactivated teacher Teacher Alpha (teacher_alpha@fluent.edu.vn)",
+      "created_at": "2026-10-07 09:16:30"
+    },
+    {
+      "id": 97,
+      "user_id": 201,
+      "action": "RESET_TEACHER_PASSWORD",
+      "target_type": "users",
+      "target_id": "211",
+      "tenant_id": "1",
+      "details": "Reset password for teacher Teacher Alpha (teacher_alpha@fluent.edu.vn)",
+      "created_at": "2026-10-07 09:16:30"
+    },
+    {
+      "id": 98,
+      "user_id": 201,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "201",
+      "tenant_id": "1",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:16:47"
+    },
+    {
+      "id": 99,
+      "user_id": 202,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "202",
+      "tenant_id": "2",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:16:47"
+    },
+    {
+      "id": 100,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "33",
+      "tenant_id": "1",
+      "details": "Created classroom 'IELTS Band 7.5 Intensive' assigned to teacher Teacher Alpha",
+      "created_at": "2026-10-07 09:16:47"
+    },
+    {
+      "id": 101,
+      "user_id": 201,
+      "action": "ASSIGN_TEACHER",
+      "target_type": "classrooms",
+      "target_id": "33",
+      "tenant_id": "1",
+      "details": "Reassigned classroom 'IELTS Band 7.5 Intensive' to teacher Teacher Beta",
+      "created_at": "2026-10-07 09:16:47"
+    },
+    {
+      "id": 102,
+      "user_id": 201,
+      "action": "ARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "33",
+      "tenant_id": "1",
+      "details": "Archived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 09:16:47"
+    },
+    {
+      "id": 103,
+      "user_id": 201,
+      "action": "UNARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "33",
+      "tenant_id": "1",
+      "details": "Unarchived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 09:16:47"
+    },
+    {
+      "id": 104,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "34",
+      "tenant_id": "1",
+      "details": "Created classroom 'TOEIC Masterclass' assigned to teacher Teacher Beta",
+      "created_at": "2026-10-07 09:16:47"
+    },
+    {
+      "id": 105,
+      "user_id": 201,
+      "action": "TRANSFER_STUDENT",
+      "target_type": "class_enrollments",
+      "target_id": "34:302",
+      "tenant_id": "1",
+      "details": "Transferred student Student Two from 'IELTS Band 7.5 Intensive' to 'TOEIC Masterclass'",
+      "created_at": "2026-10-07 09:16:47"
+    },
+    {
+      "id": 106,
+      "user_id": 201,
+      "action": "REVOKE_STUDENT_SEAT",
+      "target_type": "class_enrollments",
+      "target_id": "34:302",
+      "tenant_id": "1",
+      "details": "Revoked seat for student Student Two (student2@test.com) from class 'TOEIC Masterclass'",
+      "created_at": "2026-10-07 09:16:47"
+    },
+    {
+      "id": 107,
+      "user_id": 201,
+      "action": "SUSPEND_TEACHER",
+      "target_type": "users",
+      "target_id": "211",
+      "tenant_id": "1",
+      "details": "Suspended teacher Teacher Alpha (teacher_alpha@fluent.edu.vn)",
+      "created_at": "2026-10-07 09:16:47"
+    },
+    {
+      "id": 108,
+      "user_id": 201,
+      "action": "REACTIVATE_TEACHER",
+      "target_type": "users",
+      "target_id": "211",
+      "tenant_id": "1",
+      "details": "Reactivated teacher Teacher Alpha (teacher_alpha@fluent.edu.vn)",
+      "created_at": "2026-10-07 09:16:47"
+    },
+    {
+      "id": 109,
+      "user_id": 201,
+      "action": "RESET_TEACHER_PASSWORD",
+      "target_type": "users",
+      "target_id": "211",
+      "tenant_id": "1",
+      "details": "Reset password for teacher Teacher Alpha (teacher_alpha@fluent.edu.vn)",
+      "created_at": "2026-10-07 09:16:47"
+    },
+    {
+      "id": 110,
+      "user_id": 5,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "5",
+      "tenant_id": null,
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:16:58"
+    },
+    {
+      "id": 111,
+      "user_id": 6,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "6",
+      "tenant_id": "1",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:16:58"
+    },
+    {
+      "id": 112,
+      "user_id": 7,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "7",
+      "tenant_id": "1",
+      "details": "Teacher authenticated successfully",
+      "created_at": "2026-10-07 09:16:58"
+    },
+    {
+      "id": 113,
+      "user_id": 5,
+      "action": "CREATE_TENANT",
+      "target_type": "tenants",
+      "target_id": "tenant_8835",
+      "tenant_id": "tenant_8835",
+      "details": "Super Admin created tenant: High School Olympia",
+      "created_at": "2026-10-07 09:16:58"
+    },
+    {
+      "id": 114,
+      "user_id": 5,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "5",
+      "tenant_id": null,
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:21:51"
+    },
+    {
+      "id": 115,
+      "user_id": 6,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "6",
+      "tenant_id": "1",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:21:51"
+    },
+    {
+      "id": 116,
+      "user_id": 7,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "7",
+      "tenant_id": "1",
+      "details": "Teacher authenticated successfully",
+      "created_at": "2026-10-07 09:21:51"
+    },
+    {
+      "id": 117,
+      "user_id": 5,
+      "action": "CREATE_TENANT",
+      "target_type": "tenants",
+      "target_id": "tenant_5818",
+      "tenant_id": "tenant_5818",
+      "details": "Super Admin created tenant: High School Olympia",
+      "created_at": "2026-10-07 09:21:52"
+    },
+    {
+      "id": 118,
+      "user_id": 201,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "201",
+      "tenant_id": "1",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:22:05"
+    },
+    {
+      "id": 119,
+      "user_id": 202,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "202",
+      "tenant_id": "2",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:22:05"
+    },
+    {
+      "id": 120,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "35",
+      "tenant_id": "1",
+      "details": "Created classroom 'IELTS Band 7.5 Intensive' assigned to teacher Teacher Alpha",
+      "created_at": "2026-10-07 09:22:05"
+    },
+    {
+      "id": 121,
+      "user_id": 201,
+      "action": "ASSIGN_TEACHER",
+      "target_type": "classrooms",
+      "target_id": "35",
+      "tenant_id": "1",
+      "details": "Reassigned classroom 'IELTS Band 7.5 Intensive' to teacher Teacher Beta",
+      "created_at": "2026-10-07 09:22:05"
+    },
+    {
+      "id": 122,
+      "user_id": 201,
+      "action": "ARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "35",
+      "tenant_id": "1",
+      "details": "Archived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 09:22:05"
+    },
+    {
+      "id": 123,
+      "user_id": 201,
+      "action": "UNARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "35",
+      "tenant_id": "1",
+      "details": "Unarchived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 09:22:05"
+    },
+    {
+      "id": 124,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "36",
+      "tenant_id": "1",
+      "details": "Created classroom 'TOEIC Masterclass' assigned to teacher Teacher Beta",
+      "created_at": "2026-10-07 09:22:05"
+    },
+    {
+      "id": 125,
+      "user_id": 201,
+      "action": "TRANSFER_STUDENT",
+      "target_type": "class_enrollments",
+      "target_id": "36:302",
+      "tenant_id": "1",
+      "details": "Transferred student Student Two from 'IELTS Band 7.5 Intensive' to 'TOEIC Masterclass'",
+      "created_at": "2026-10-07 09:22:05"
+    },
+    {
+      "id": 126,
+      "user_id": 201,
+      "action": "REVOKE_STUDENT_SEAT",
+      "target_type": "class_enrollments",
+      "target_id": "36:302",
+      "tenant_id": "1",
+      "details": "Revoked seat for student Student Two (student2@test.com) from class 'TOEIC Masterclass'",
+      "created_at": "2026-10-07 09:22:05"
+    },
+    {
+      "id": 127,
+      "user_id": 201,
+      "action": "SUSPEND_TEACHER",
+      "target_type": "users",
+      "target_id": "211",
+      "tenant_id": "1",
+      "details": "Suspended teacher Teacher Alpha (teacher_alpha@fluent.edu.vn)",
+      "created_at": "2026-10-07 09:22:05"
+    },
+    {
+      "id": 128,
+      "user_id": 201,
+      "action": "REACTIVATE_TEACHER",
+      "target_type": "users",
+      "target_id": "211",
+      "tenant_id": "1",
+      "details": "Reactivated teacher Teacher Alpha (teacher_alpha@fluent.edu.vn)",
+      "created_at": "2026-10-07 09:22:05"
+    },
+    {
+      "id": 129,
+      "user_id": 201,
+      "action": "RESET_TEACHER_PASSWORD",
+      "target_type": "users",
+      "target_id": "211",
+      "tenant_id": "1",
+      "details": "Reset password for teacher Teacher Alpha (teacher_alpha@fluent.edu.vn)",
+      "created_at": "2026-10-07 09:22:05"
+    },
+    {
+      "id": 130,
+      "user_id": 201,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "201",
+      "tenant_id": "1",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:24:15"
+    },
+    {
+      "id": 131,
+      "user_id": 202,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "202",
+      "tenant_id": "2",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:24:15"
+    },
+    {
+      "id": 132,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "37",
+      "tenant_id": "1",
+      "details": "Created classroom 'IELTS Band 7.5 Intensive' assigned to teacher Teacher Alpha",
+      "created_at": "2026-10-07 09:24:15"
+    },
+    {
+      "id": 133,
+      "user_id": 201,
+      "action": "ASSIGN_TEACHER",
+      "target_type": "classrooms",
+      "target_id": "37",
+      "tenant_id": "1",
+      "details": "Reassigned classroom 'IELTS Band 7.5 Intensive' to teacher Teacher Beta",
+      "created_at": "2026-10-07 09:24:15"
+    },
+    {
+      "id": 134,
+      "user_id": 201,
+      "action": "ARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "37",
+      "tenant_id": "1",
+      "details": "Archived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 09:24:15"
+    },
+    {
+      "id": 135,
+      "user_id": 201,
+      "action": "UNARCHIVE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "37",
+      "tenant_id": "1",
+      "details": "Unarchived classroom 'IELTS Band 7.5 Intensive'",
+      "created_at": "2026-10-07 09:24:15"
+    },
+    {
+      "id": 136,
+      "user_id": 201,
+      "action": "CREATE_CLASSROOM",
+      "target_type": "classrooms",
+      "target_id": "38",
+      "tenant_id": "1",
+      "details": "Created classroom 'TOEIC Masterclass' assigned to teacher Teacher Beta",
+      "created_at": "2026-10-07 09:24:15"
+    },
+    {
+      "id": 137,
+      "user_id": 201,
+      "action": "TRANSFER_STUDENT",
+      "target_type": "class_enrollments",
+      "target_id": "38:302",
+      "tenant_id": "1",
+      "details": "Transferred student Student Two from 'IELTS Band 7.5 Intensive' to 'TOEIC Masterclass'",
+      "created_at": "2026-10-07 09:24:15"
+    },
+    {
+      "id": 138,
+      "user_id": 201,
+      "action": "REVOKE_STUDENT_SEAT",
+      "target_type": "class_enrollments",
+      "target_id": "38:302",
+      "tenant_id": "1",
+      "details": "Revoked seat for student Student Two (student2@test.com) from class 'TOEIC Masterclass'",
+      "created_at": "2026-10-07 09:24:15"
+    },
+    {
+      "id": 139,
+      "user_id": 201,
+      "action": "SUSPEND_TEACHER",
+      "target_type": "users",
+      "target_id": "211",
+      "tenant_id": "1",
+      "details": "Suspended teacher Teacher Alpha (teacher_alpha@fluent.edu.vn)",
+      "created_at": "2026-10-07 09:24:15"
+    },
+    {
+      "id": 140,
+      "user_id": 201,
+      "action": "REACTIVATE_TEACHER",
+      "target_type": "users",
+      "target_id": "211",
+      "tenant_id": "1",
+      "details": "Reactivated teacher Teacher Alpha (teacher_alpha@fluent.edu.vn)",
+      "created_at": "2026-10-07 09:24:15"
+    },
+    {
+      "id": 141,
+      "user_id": 201,
+      "action": "RESET_TEACHER_PASSWORD",
+      "target_type": "users",
+      "target_id": "211",
+      "tenant_id": "1",
+      "details": "Reset password for teacher Teacher Alpha (teacher_alpha@fluent.edu.vn)",
+      "created_at": "2026-10-07 09:24:15"
+    },
+    {
+      "id": 142,
+      "user_id": 5,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "5",
+      "tenant_id": null,
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:24:31"
+    },
+    {
+      "id": 143,
+      "user_id": 6,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "6",
+      "tenant_id": "1",
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-07 09:24:31"
+    },
+    {
+      "id": 144,
+      "user_id": 7,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "7",
+      "tenant_id": "1",
+      "details": "Teacher authenticated successfully",
+      "created_at": "2026-10-07 09:24:31"
+    },
+    {
+      "id": 145,
+      "user_id": 5,
+      "action": "CREATE_TENANT",
+      "target_type": "tenants",
+      "target_id": "tenant_4861",
+      "tenant_id": "tenant_4861",
+      "details": "Super Admin created tenant: High School Olympia",
+      "created_at": "2026-10-07 09:24:31"
     }
   ],
   "system_configs": [

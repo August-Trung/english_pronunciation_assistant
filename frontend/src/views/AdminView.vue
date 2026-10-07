@@ -334,19 +334,29 @@
           <!-- TAB 2: Classrooms Directory (Shared with Data Isolation) -->
           <v-window-item value="classrooms">
             <div class="d-flex align-center justify-space-between mb-3 flex-wrap ga-2">
-              <div>
-                <span class="text-subtitle-2 font-weight-black text-secondary">ACTIVE CLASSROOMS DIRECTORY</span>
-                <span class="text-caption text-grey ml-2">({{ classroomsList.length }} classes in scope)</span>
+              <div class="d-flex align-center flex-wrap ga-2">
+                <span class="text-subtitle-2 font-weight-black text-secondary">CLASSROOMS DIRECTORY</span>
+                <v-chip-group v-model="activeClassFilter" mandatory density="compact">
+                  <v-chip value="all" filter size="small" class="font-weight-bold">All ({{ classroomsList.length }})</v-chip>
+                  <v-chip value="active" filter size="small" color="success" class="font-weight-bold">Active</v-chip>
+                  <v-chip value="archived" filter size="small" color="grey-darken-1" class="font-weight-bold">Archived</v-chip>
+                </v-chip-group>
               </div>
-              <v-text-field
-                v-model="searchClassText"
-                placeholder="Search class or teacher..."
-                variant="outlined"
-                density="compact"
-                hide-details
-                prepend-inner-icon="mdi-magnify"
-                style="max-width: 260px;"
-              />
+
+              <div class="d-flex align-center ga-2 flex-wrap">
+                <v-text-field
+                  v-model="searchClassText"
+                  placeholder="Search class or teacher..."
+                  variant="outlined"
+                  density="compact"
+                  hide-details
+                  prepend-inner-icon="mdi-magnify"
+                  style="max-width: 240px;"
+                />
+                <v-btn color="primary" size="small" variant="flat" class="font-weight-bold text-none" prepend-icon="mdi-plus-box" @click="showCreateClassModal = true">
+                  Create Classroom
+                </v-btn>
+              </div>
             </div>
 
             <v-table density="comfortable" hover class="border rounded-lg">
@@ -354,10 +364,11 @@
                 <tr class="bg-grey-lighten-4">
                   <th class="font-weight-black text-caption text-secondary">CLASS NAME & GRADE</th>
                   <th class="font-weight-black text-caption text-secondary">TEACHER IN CHARGE</th>
+                  <th class="font-weight-black text-caption text-secondary text-center">STATUS</th>
                   <th v-if="isSuperAdmin" class="font-weight-black text-caption text-secondary">SCHOOL TENANT</th>
                   <th class="font-weight-black text-caption text-secondary text-center">JOIN CODE</th>
                   <th class="font-weight-black text-caption text-secondary text-center">ENROLLED STUDENTS</th>
-                  <th class="font-weight-black text-caption text-secondary text-center">ACTION</th>
+                  <th class="font-weight-black text-caption text-secondary text-center">ACTIONS</th>
                 </tr>
               </thead>
               <tbody>
@@ -370,6 +381,16 @@
                     <div class="font-weight-bold text-body-2">{{ cls.teacher_name }}</div>
                     <div class="text-caption text-grey">{{ cls.teacher_email }}</div>
                   </td>
+                  <td class="text-center">
+                    <v-chip
+                      size="x-small"
+                      :color="cls.is_archived ? 'grey' : 'success'"
+                      variant="flat"
+                      class="font-weight-black"
+                    >
+                      {{ cls.is_archived ? 'ARCHIVED' : 'ACTIVE' }}
+                    </v-chip>
+                  </td>
                   <td v-if="isSuperAdmin">
                     <v-chip size="x-small" color="blue-lighten-4" class="font-weight-bold text-blue-darken-4">
                       {{ cls.school_name }}
@@ -380,22 +401,50 @@
                       {{ cls.join_code }}
                     </v-chip>
                   </td>
-                  <td class="text-center font-weight-black text-body-2 text-secondary">
-                    {{ cls.student_count }} Students
+                  <td class="text-center">
+                    <v-chip
+                      size="small"
+                      color="indigo-lighten-5"
+                      variant="flat"
+                      class="font-weight-black text-indigo-darken-3 cursor-pointer"
+                      prepend-icon="mdi-account-group"
+                      title="Click to view student roster"
+                      @click="openClassRoster(cls)"
+                    >
+                      {{ cls.student_count }} Students
+                    </v-chip>
                   </td>
                   <td class="text-center">
-                    <v-btn
-                      size="x-small"
-                      icon="mdi-delete-outline"
-                      color="error"
-                      variant="tonal"
-                      title="Delete Classroom"
-                      @click="confirmDeleteClassroom(cls)"
-                    />
+                    <div class="d-flex align-center justify-center ga-1">
+                      <v-btn
+                        size="x-small"
+                        icon="mdi-account-switch"
+                        color="primary"
+                        variant="tonal"
+                        title="Reassign Teacher"
+                        @click="openAssignTeacherModal(cls)"
+                      />
+                      <v-btn
+                        size="x-small"
+                        :icon="cls.is_archived ? 'mdi-archive-arrow-up' : 'mdi-archive-arrow-down'"
+                        :color="cls.is_archived ? 'success' : 'amber-darken-3'"
+                        variant="tonal"
+                        :title="cls.is_archived ? 'Restore Classroom' : 'Archive Classroom'"
+                        @click="confirmToggleArchive(cls)"
+                      />
+                      <v-btn
+                        size="x-small"
+                        icon="mdi-delete-outline"
+                        color="error"
+                        variant="tonal"
+                        title="Delete Classroom"
+                        @click="confirmDeleteClassroom(cls)"
+                      />
+                    </div>
                   </td>
                 </tr>
                 <tr v-if="!filteredClassrooms.length">
-                  <td :colspan="isSuperAdmin ? 6 : 5" class="text-center pa-6 text-caption text-grey">
+                  <td :colspan="isSuperAdmin ? 7 : 6" class="text-center pa-6 text-caption text-grey">
                     No classrooms found matching search criteria.
                   </td>
                 </tr>
@@ -437,11 +486,12 @@
                 <tr class="bg-grey-lighten-4">
                   <th class="font-weight-black text-caption text-secondary">USER DETAILS</th>
                   <th class="font-weight-black text-caption text-secondary text-center">ROLE</th>
+                  <th class="font-weight-black text-caption text-secondary text-center">STATUS</th>
                   <th v-if="isSuperAdmin" class="font-weight-black text-caption text-secondary">ORGANIZATION</th>
                   <th class="font-weight-black text-caption text-secondary text-center">PRIMARY CLASSROOM</th>
                   <th class="font-weight-black text-caption text-secondary text-center">PARENT TRACKING</th>
                   <th class="font-weight-black text-caption text-secondary text-center">STREAK</th>
-                  <th class="font-weight-black text-caption text-secondary text-center">ACTION</th>
+                  <th class="font-weight-black text-caption text-secondary text-center">ACTIONS</th>
                 </tr>
               </thead>
               <tbody>
@@ -468,6 +518,16 @@
                       {{ usr.role.toUpperCase() }}
                     </v-chip>
                   </td>
+                  <td class="text-center">
+                    <v-chip
+                      size="x-small"
+                      :color="usr.status === 'suspended' ? 'warning' : 'success'"
+                      variant="flat"
+                      class="font-weight-black"
+                    >
+                      {{ (usr.status || 'ACTIVE').toUpperCase() }}
+                    </v-chip>
+                  </td>
                   <td v-if="isSuperAdmin">
                     <span class="text-caption font-weight-bold text-grey-darken-2">{{ usr.school_name }}</span>
                   </td>
@@ -489,6 +549,25 @@
                   </td>
                   <td class="text-center">
                     <div class="d-flex align-center justify-center ga-1">
+                      <!-- Teacher Specific Operations -->
+                      <template v-if="usr.role === 'teacher'">
+                        <v-btn
+                          size="x-small"
+                          :icon="usr.status === 'suspended' ? 'mdi-account-check' : 'mdi-account-lock'"
+                          :color="usr.status === 'suspended' ? 'success' : 'warning'"
+                          variant="tonal"
+                          :title="usr.status === 'suspended' ? 'Reactivate Educator' : 'Suspend Educator'"
+                          @click="confirmToggleTeacher(usr)"
+                        />
+                        <v-btn
+                          size="x-small"
+                          icon="mdi-key-change"
+                          color="teal"
+                          variant="tonal"
+                          title="Reset Password"
+                          @click="openResetTeacherPass(usr)"
+                        />
+                      </template>
                       <v-btn size="x-small" icon="mdi-shield-account-outline" color="indigo" variant="tonal" title="Change Role" @click="openChangeRoleModal(usr)" />
                       <v-btn size="x-small" icon="mdi-pencil-outline" color="primary" variant="tonal" title="Edit User" @click="openEditUserModal(usr)" />
                       <v-btn size="x-small" icon="mdi-delete-outline" color="error" variant="tonal" title="Delete User" @click="confirmDeleteUser(usr)" />
@@ -904,6 +983,292 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
+      <!-- Modal: Create New Classroom (P1) -->
+      <v-dialog v-model="showCreateClassModal" max-width="480">
+        <v-card border rounded="lg" class="pa-4 bg-white">
+          <div class="text-subtitle-1 font-weight-black text-primary mb-3 d-flex align-center ga-2">
+            <v-icon color="primary">mdi-plus-box</v-icon>
+            <span>Create New Classroom</span>
+          </div>
+          <v-text-field
+            v-model="newClassName"
+            label="Classroom Name:"
+            placeholder="e.g. English Grade 10 - Honors"
+            variant="outlined"
+            density="comfortable"
+            class="mb-2"
+          />
+          <v-text-field
+            v-model="newClassGrade"
+            label="Grade Level / Proficiency:"
+            placeholder="e.g. Grade 10 or Intermediate B1"
+            variant="outlined"
+            density="comfortable"
+            class="mb-2"
+          />
+          <v-select
+            v-model="newClassTeacherId"
+            :items="availableTeachers"
+            item-title="title"
+            item-value="value"
+            label="Assign Teacher in Charge:"
+            variant="outlined"
+            density="comfortable"
+            class="mb-3"
+          />
+          <v-card-actions class="px-0 pb-0">
+            <v-spacer />
+            <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showCreateClassModal = false">Cancel</v-btn>
+            <v-btn color="primary" variant="flat" class="text-none font-weight-bold" :loading="isCreatingClass" @click="submitCreateClass">Create Class</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Modal: Reassign Classroom Teacher (P1) -->
+      <v-dialog v-model="showAssignTeacherModal" max-width="440">
+        <v-card border rounded="lg" class="pa-4 bg-white">
+          <div class="text-subtitle-1 font-weight-black text-primary mb-2 d-flex align-center ga-2">
+            <v-icon color="primary">mdi-account-switch</v-icon>
+            <span>Reassign Class Teacher</span>
+          </div>
+          <div class="text-body-2 text-grey-darken-2 mb-3">
+            Reassigning classroom <strong>"{{ classToAssignTeacher?.name }}"</strong>:
+          </div>
+          <v-select
+            v-model="selectedNewTeacherId"
+            :items="availableTeachers"
+            item-title="title"
+            item-value="value"
+            label="Select Educator:"
+            variant="outlined"
+            density="comfortable"
+            class="mb-3"
+          />
+          <v-card-actions class="px-0 pb-0">
+            <v-spacer />
+            <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showAssignTeacherModal = false">Cancel</v-btn>
+            <v-btn color="primary" variant="flat" class="text-none font-weight-bold" :loading="isAssigningTeacher" @click="submitAssignTeacher">Reassign</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Modal: Archive / Unarchive Classroom (P1) -->
+      <v-dialog v-model="showArchiveClassModal" max-width="420">
+        <v-card border rounded="lg" class="pa-4 bg-white">
+          <div class="text-subtitle-1 font-weight-black text-secondary mb-2 d-flex align-center ga-2">
+            <v-icon :color="classToToggleArchive?.is_archived ? 'success' : 'amber-darken-3'">
+              {{ classToToggleArchive?.is_archived ? 'mdi-archive-arrow-up' : 'mdi-archive-arrow-down' }}
+            </v-icon>
+            <span>{{ classToToggleArchive?.is_archived ? 'Confirm Restore Classroom' : 'Confirm Archive Classroom' }}</span>
+          </div>
+          <div class="text-body-2 text-grey-darken-2 mb-4">
+            Are you sure you want to {{ classToToggleArchive?.is_archived ? 'restore' : 'archive' }} classroom
+            <strong>"{{ classToToggleArchive?.name }}"</strong>?
+            <span v-if="!classToToggleArchive?.is_archived" class="d-block mt-1 text-caption text-grey">
+              Archived classes will stop accepting new student enrollments while preserving all gradebook history.
+            </span>
+          </div>
+          <v-card-actions class="px-0 pb-0">
+            <v-spacer />
+            <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showArchiveClassModal = false">Cancel</v-btn>
+            <v-btn :color="classToToggleArchive?.is_archived ? 'success' : 'amber-darken-3'" variant="flat" class="text-none font-weight-bold" :loading="isArchivingClass" @click="submitToggleArchive">
+              {{ classToToggleArchive?.is_archived ? 'Restore to Active' : 'Archive Class' }}
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Modal: Class Roster Directory (P1) -->
+      <v-dialog v-model="showClassRosterModal" max-width="760">
+        <v-card border rounded="lg" class="pa-4 bg-white">
+          <div class="d-flex align-center justify-space-between mb-3 flex-wrap ga-2">
+            <div class="d-flex align-center ga-2">
+              <v-avatar color="indigo-lighten-5" size="36">
+                <v-icon color="indigo">mdi-account-group</v-icon>
+              </v-avatar>
+              <div>
+                <div class="text-subtitle-1 font-weight-black text-secondary">
+                  {{ activeRosterClass?.name }}
+                </div>
+                <div class="text-caption text-grey">
+                  Code: <strong class="font-weight-mono text-primary">{{ activeRosterClass?.join_code }}</strong> &bull;
+                  Grade: {{ activeRosterClass?.grade_level }} &bull;
+                  {{ classRosterStudents.length }} Enrolled Students
+                </div>
+              </div>
+            </div>
+            <v-btn variant="text" density="compact" icon="mdi-close" @click="showClassRosterModal = false" />
+          </div>
+
+          <v-table density="comfortable" hover class="border rounded-lg mb-3">
+            <thead>
+              <tr class="bg-grey-lighten-4">
+                <th class="font-weight-black text-caption text-secondary">STUDENT</th>
+                <th class="font-weight-black text-caption text-secondary text-center">JOINED</th>
+                <th class="font-weight-black text-caption text-secondary text-center">SUBMISSIONS</th>
+                <th class="font-weight-black text-caption text-secondary text-center">AVG SCORE</th>
+                <th class="font-weight-black text-caption text-secondary text-center">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="stu in classRosterStudents" :key="stu.id">
+                <td class="pa-2">
+                  <div class="d-flex align-center ga-2">
+                    <v-avatar size="30" color="indigo-lighten-5">
+                      <img v-if="stu.avatar" :src="stu.avatar" alt="Avatar" />
+                      <span v-else class="text-caption font-weight-bold text-primary">{{ stu.name?.slice(0, 1)?.toUpperCase() || 'S' }}</span>
+                    </v-avatar>
+                    <div>
+                      <div class="font-weight-bold text-body-2">{{ stu.name }}</div>
+                      <div class="text-caption text-grey">{{ stu.email }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-center text-caption font-weight-mono text-grey-darken-1">{{ stu.joined_at?.slice(0, 10) || '—' }}</td>
+                <td class="text-center font-weight-bold text-caption">{{ stu.submission_count || 0 }}</td>
+                <td class="text-center">
+                  <v-chip v-if="stu.avg_score !== null && stu.avg_score !== undefined" size="x-small" color="success" variant="flat" class="font-weight-black">
+                    {{ stu.avg_score }}%
+                  </v-chip>
+                  <span v-else class="text-caption text-grey">—</span>
+                </td>
+                <td class="text-center">
+                  <div class="d-flex align-center justify-center ga-1">
+                    <v-btn
+                      size="x-small"
+                      icon="mdi-swap-horizontal"
+                      color="primary"
+                      variant="tonal"
+                      title="Transfer to Another Class"
+                      @click="openTransferStudentModal(stu)"
+                    />
+                    <v-btn
+                      size="x-small"
+                      icon="mdi-account-remove"
+                      color="error"
+                      variant="tonal"
+                      title="Revoke Student Seat"
+                      @click="confirmRevokeStudent(stu)"
+                    />
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="!classRosterStudents.length">
+                <td colspan="5" class="text-center pa-6 text-caption text-grey">
+                  No students currently enrolled in this classroom.
+                </td>
+              </tr>
+            </tbody>
+          </v-table>
+
+          <v-card-actions class="px-0 pb-0">
+            <v-spacer />
+            <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showClassRosterModal = false">Close</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Modal: Transfer Student (P1) -->
+      <v-dialog v-model="showTransferStudentModal" max-width="440">
+        <v-card border rounded="lg" class="pa-4 bg-white">
+          <div class="text-subtitle-1 font-weight-black text-primary mb-2 d-flex align-center ga-2">
+            <v-icon color="primary">mdi-swap-horizontal</v-icon>
+            <span>Transfer Student</span>
+          </div>
+          <div class="text-body-2 text-grey-darken-2 mb-3">
+            Transfer <strong>{{ studentToTransfer?.name }}</strong> from <em>{{ activeRosterClass?.name }}</em> to:
+          </div>
+          <v-select
+            v-model="targetTransferClassId"
+            :items="availableTransferClasses"
+            item-title="title"
+            item-value="value"
+            label="Destination Classroom:"
+            variant="outlined"
+            density="comfortable"
+            class="mb-3"
+          />
+          <v-card-actions class="px-0 pb-0">
+            <v-spacer />
+            <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showTransferStudentModal = false">Cancel</v-btn>
+            <v-btn color="primary" variant="flat" class="text-none font-weight-bold" :loading="isTransferringStudent" @click="submitTransferStudent">Confirm Transfer</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Modal: Revoke Student Seat Confirmation (P1) -->
+      <v-dialog v-model="showRevokeStudentModal" max-width="420">
+        <v-card border rounded="lg" class="pa-4 bg-white">
+          <div class="text-subtitle-1 font-weight-black text-error mb-2 d-flex align-center ga-2">
+            <v-icon color="error">mdi-account-remove</v-icon>
+            <span>Confirm Revoke Student Seat</span>
+          </div>
+          <div class="text-body-2 text-grey-darken-2 mb-3">
+            Are you sure you want to remove <strong>{{ studentToRevoke?.name }}</strong> from <em>{{ activeRosterClass?.name }}</em>?
+          </div>
+          <div class="text-caption text-grey-darken-1 mb-4 bg-grey-lighten-4 pa-2 rounded">
+            This will un-enroll the student and return 1 seat back to your school's license quota pool.
+          </div>
+          <v-card-actions class="px-0 pb-0">
+            <v-spacer />
+            <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showRevokeStudentModal = false">Cancel</v-btn>
+            <v-btn color="error" variant="flat" class="text-none font-weight-bold" :loading="isRevokingStudent" @click="submitRevokeStudent">Revoke Seat</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Modal: Toggle Teacher Status Confirmation (P1) -->
+      <v-dialog v-model="showToggleTeacherModal" max-width="420">
+        <v-card border rounded="lg" class="pa-4 bg-white">
+          <div class="text-subtitle-1 font-weight-black text-secondary mb-2 d-flex align-center ga-2">
+            <v-icon :color="teacherToToggle?.status === 'suspended' ? 'success' : 'warning'">
+              {{ teacherToToggle?.status === 'suspended' ? 'mdi-account-check' : 'mdi-account-lock' }}
+            </v-icon>
+            <span>{{ teacherToToggle?.status === 'suspended' ? 'Reactivate Educator Account' : 'Suspend Educator Account' }}</span>
+          </div>
+          <div class="text-body-2 text-grey-darken-2 mb-3">
+            Are you sure you want to {{ teacherToToggle?.status === 'suspended' ? 'reactivate' : 'suspend' }} account for
+            <strong>{{ teacherToToggle?.name }}</strong> ({{ teacherToToggle?.email }})?
+          </div>
+          <div v-if="teacherToToggle?.status !== 'suspended'" class="text-caption text-warning mb-4 bg-amber-lighten-5 pa-2 rounded border border-warning">
+            Suspended educators will immediately lose access to their classes and administrative dashboards.
+          </div>
+          <v-card-actions class="px-0 pb-0">
+            <v-spacer />
+            <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showToggleTeacherModal = false">Cancel</v-btn>
+            <v-btn :color="teacherToToggle?.status === 'suspended' ? 'success' : 'warning'" variant="flat" class="text-none font-weight-bold" :loading="isTogglingTeacher" @click="submitToggleTeacherStatus">
+              {{ teacherToToggle?.status === 'suspended' ? 'Reactivate' : 'Suspend Educator' }}
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Modal: Reset Teacher Password (P1) -->
+      <v-dialog v-model="showResetTeacherPassModal" max-width="440">
+        <v-card border rounded="lg" class="pa-4 bg-white">
+          <div class="text-subtitle-1 font-weight-black text-teal-darken-3 mb-2 d-flex align-center ga-2">
+            <v-icon color="teal">mdi-key-change</v-icon>
+            <span>Reset Educator Password</span>
+          </div>
+          <div class="text-body-2 text-grey-darken-2 mb-3">
+            Reset password for <strong>{{ teacherToResetPass?.name }}</strong> ({{ teacherToResetPass?.email }}):
+          </div>
+          <v-text-field
+            v-model="newTeacherPasswordInput"
+            label="New Password (min 6 characters):"
+            placeholder="Enter new password"
+            type="password"
+            variant="outlined"
+            density="comfortable"
+            class="mb-3"
+          />
+          <v-card-actions class="px-0 pb-0">
+            <v-spacer />
+            <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showResetTeacherPassModal = false">Cancel</v-btn>
+            <v-btn color="teal" variant="flat" class="text-none font-weight-bold" :loading="isResettingTeacherPass" @click="submitResetTeacherPassword">Save New Password</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </div>
   </v-container>
 </template>
@@ -962,6 +1327,46 @@ const searchClassText = ref('')
 const searchUserText = ref('')
 const searchAssignmentText = ref('')
 const selectedUserRoleFilter = ref('all')
+const activeClassFilter = ref('all')
+
+// P1 Modals State
+const showCreateClassModal = ref(false)
+const newClassName = ref('')
+const newClassGrade = ref('')
+const newClassTeacherId = ref(null)
+const isCreatingClass = ref(false)
+
+const showAssignTeacherModal = ref(false)
+const classToAssignTeacher = ref(null)
+const selectedNewTeacherId = ref(null)
+const isAssigningTeacher = ref(false)
+
+const showArchiveClassModal = ref(false)
+const classToToggleArchive = ref(null)
+const isArchivingClass = ref(false)
+
+const showClassRosterModal = ref(false)
+const activeRosterClass = ref(null)
+const classRosterStudents = ref([])
+const isFetchingRoster = ref(false)
+
+const showTransferStudentModal = ref(false)
+const studentToTransfer = ref(null)
+const targetTransferClassId = ref(null)
+const isTransferringStudent = ref(false)
+
+const showRevokeStudentModal = ref(false)
+const studentToRevoke = ref(null)
+const isRevokingStudent = ref(false)
+
+const showToggleTeacherModal = ref(false)
+const teacherToToggle = ref(null)
+const isTogglingTeacher = ref(false)
+
+const showResetTeacherPassModal = ref(false)
+const teacherToResetPass = ref(null)
+const newTeacherPasswordInput = ref('')
+const isResettingTeacherPass = ref(false)
 
 // Modals State
 const showLogoutDialog = ref(false)
@@ -1011,6 +1416,19 @@ const isUpdatingTenant = ref(false)
 const isDeletingTenant = ref(false)
 
 // Computed Filters
+const availableTeachers = computed(() => {
+  return usersList.value
+    .filter(u => u.role === 'teacher' && u.status !== 'suspended')
+    .map(u => ({ title: `${u.name} (${u.email})`, value: u.id }))
+})
+
+const availableTransferClasses = computed(() => {
+  if (!activeRosterClass.value) return []
+  return classroomsList.value
+    .filter(c => c.id !== activeRosterClass.value.id && !c.is_archived)
+    .map(c => ({ title: `${c.name} (${c.grade_level})`, value: c.id }))
+})
+
 const tenantScopeOptions = computed(() => {
   const opts = [{ title: 'All Schools (Global)', value: 'all' }]
   overview.value.tenants?.forEach(t => {
@@ -1052,9 +1470,15 @@ const allowedRoleChangeOptions = computed(() => {
 })
 
 const filteredClassrooms = computed(() => {
+  let list = classroomsList.value
+  if (activeClassFilter.value === 'active') {
+    list = list.filter(c => !c.is_archived)
+  } else if (activeClassFilter.value === 'archived') {
+    list = list.filter(c => c.is_archived)
+  }
   const q = searchClassText.value.toLowerCase().trim()
-  if (!q) return classroomsList.value
-  return classroomsList.value.filter(c =>
+  if (!q) return list
+  return list.filter(c =>
     c.name?.toLowerCase().includes(q) ||
     c.teacher_name?.toLowerCase().includes(q) ||
     c.join_code?.toLowerCase().includes(q)
@@ -1451,6 +1875,251 @@ const submitDeleteClassroom = async () => {
     notify('Delete class error: ' + e.message, 'error')
   } finally {
     isDeletingClass.value = false
+  }
+}
+
+// P1: Classroom & Student Actions
+const submitCreateClass = async () => {
+  if (!newClassName.value.trim() || !newClassTeacherId.value) {
+    notify('Please specify class name and select a teacher in charge.', 'warning')
+    return
+  }
+  isCreatingClass.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/admin/classes/create`, {
+      method: 'POST',
+      headers: getAdminAuthHeaders(),
+      body: JSON.stringify({
+        name: newClassName.value.trim(),
+        grade_level: newClassGrade.value.trim() || 'General',
+        teacher_id: Number(newClassTeacherId.value),
+        tenant_id: isSuperAdmin.value ? selectedTenantScope.value : (userTenantId.value || '1')
+      })
+    })
+    if (res.ok) {
+      showCreateClassModal.value = false
+      newClassName.value = ''
+      newClassGrade.value = ''
+      newClassTeacherId.value = null
+      notify('Classroom created successfully!', 'success', 'mdi-check-circle')
+      await fetchClassrooms()
+      await fetchOverview()
+    } else {
+      const err = await res.json()
+      notify(err.detail || 'Could not create classroom.', 'error')
+    }
+  } catch (e) {
+    notify('Create class error: ' + e.message, 'error')
+  } finally {
+    isCreatingClass.value = false
+  }
+}
+
+const openAssignTeacherModal = (cls) => {
+  classToAssignTeacher.value = cls
+  selectedNewTeacherId.value = cls.teacher_id || null
+  showAssignTeacherModal.value = true
+}
+
+const submitAssignTeacher = async () => {
+  if (!classToAssignTeacher.value || !selectedNewTeacherId.value) return
+  isAssigningTeacher.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/admin/classes/${classToAssignTeacher.value.id}/assign-teacher`, {
+      method: 'POST',
+      headers: getAdminAuthHeaders(),
+      body: JSON.stringify({ teacher_id: Number(selectedNewTeacherId.value) })
+    })
+    if (res.ok) {
+      showAssignTeacherModal.value = false
+      notify('Teacher reassigned successfully!', 'success')
+      await fetchClassrooms()
+    } else {
+      const err = await res.json()
+      notify(err.detail || 'Failed to reassign teacher.', 'error')
+    }
+  } catch (e) {
+    notify('Assign teacher error: ' + e.message, 'error')
+  } finally {
+    isAssigningTeacher.value = false
+  }
+}
+
+const confirmToggleArchive = (cls) => {
+  classToToggleArchive.value = cls
+  showArchiveClassModal.value = true
+}
+
+const submitToggleArchive = async () => {
+  if (!classToToggleArchive.value) return
+  isArchivingClass.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/admin/classes/${classToToggleArchive.value.id}/toggle-archive`, {
+      method: 'POST',
+      headers: getAdminAuthHeaders()
+    })
+    if (res.ok) {
+      const data = await res.json()
+      showArchiveClassModal.value = false
+      notify(data.message || 'Classroom status updated.', 'success')
+      await fetchClassrooms()
+      await fetchOverview()
+    } else {
+      const err = await res.json()
+      notify(err.detail || 'Failed to toggle archive status.', 'error')
+    }
+  } catch (e) {
+    notify('Archive toggle error: ' + e.message, 'error')
+  } finally {
+    isArchivingClass.value = false
+  }
+}
+
+const openClassRoster = async (cls) => {
+  activeRosterClass.value = cls
+  classRosterStudents.value = []
+  showClassRosterModal.value = true
+  isFetchingRoster.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/admin/classes/${cls.id}/roster`, {
+      headers: getAdminAuthHeaders()
+    })
+    if (res.ok) {
+      const data = await res.json()
+      classRosterStudents.value = data.students || []
+    } else {
+      const err = await res.json()
+      notify(err.detail || 'Failed to load class roster.', 'error')
+    }
+  } catch (e) {
+    notify('Load roster error: ' + e.message, 'error')
+  } finally {
+    isFetchingRoster.value = false
+  }
+}
+
+const openTransferStudentModal = (stu) => {
+  studentToTransfer.value = stu
+  targetTransferClassId.value = null
+  showTransferStudentModal.value = true
+}
+
+const submitTransferStudent = async () => {
+  if (!studentToTransfer.value || !targetTransferClassId.value || !activeRosterClass.value) return
+  isTransferringStudent.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/admin/classes/${activeRosterClass.value.id}/transfer-student`, {
+      method: 'POST',
+      headers: getAdminAuthHeaders(),
+      body: JSON.stringify({
+        student_id: Number(studentToTransfer.value.id),
+        to_class_id: Number(targetTransferClassId.value)
+      })
+    })
+    if (res.ok) {
+      showTransferStudentModal.value = false
+      notify('Student transferred successfully!', 'success')
+      await openClassRoster(activeRosterClass.value)
+      await fetchClassrooms()
+    } else {
+      const err = await res.json()
+      notify(err.detail || 'Failed to transfer student.', 'error')
+    }
+  } catch (e) {
+    notify('Transfer error: ' + e.message, 'error')
+  } finally {
+    isTransferringStudent.value = false
+  }
+}
+
+const confirmRevokeStudent = (stu) => {
+  studentToRevoke.value = stu
+  showRevokeStudentModal.value = true
+}
+
+const submitRevokeStudent = async () => {
+  if (!studentToRevoke.value || !activeRosterClass.value) return
+  isRevokingStudent.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/admin/classes/${activeRosterClass.value.id}/revoke-student/${studentToRevoke.value.id}`, {
+      method: 'POST',
+      headers: getAdminAuthHeaders()
+    })
+    if (res.ok) {
+      showRevokeStudentModal.value = false
+      notify('Student seat revoked successfully.', 'info', 'mdi-account-minus')
+      await openClassRoster(activeRosterClass.value)
+      await fetchAllAdminData()
+    } else {
+      const err = await res.json()
+      notify(err.detail || 'Failed to revoke seat.', 'error')
+    }
+  } catch (e) {
+    notify('Revoke error: ' + e.message, 'error')
+  } finally {
+    isRevokingStudent.value = false
+  }
+}
+
+const confirmToggleTeacher = (usr) => {
+  teacherToToggle.value = usr
+  showToggleTeacherModal.value = true
+}
+
+const submitToggleTeacherStatus = async () => {
+  if (!teacherToToggle.value) return
+  isTogglingTeacher.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/admin/teachers/${teacherToToggle.value.id}/toggle-status`, {
+      method: 'POST',
+      headers: getAdminAuthHeaders()
+    })
+    if (res.ok) {
+      const data = await res.json()
+      showToggleTeacherModal.value = false
+      notify(data.message || 'Teacher status updated.', 'success')
+      await fetchUsers()
+    } else {
+      const err = await res.json()
+      notify(err.detail || 'Failed to change teacher status.', 'error')
+    }
+  } catch (e) {
+    notify('Toggle status error: ' + e.message, 'error')
+  } finally {
+    isTogglingTeacher.value = false
+  }
+}
+
+const openResetTeacherPass = (usr) => {
+  teacherToResetPass.value = usr
+  newTeacherPasswordInput.value = ''
+  showResetTeacherPassModal.value = true
+}
+
+const submitResetTeacherPassword = async () => {
+  if (!teacherToResetPass.value || !newTeacherPasswordInput.value.trim()) return
+  if (newTeacherPasswordInput.value.trim().length < 6) {
+    notify('Password must be at least 6 characters long.', 'warning')
+    return
+  }
+  isResettingTeacherPass.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/admin/teachers/${teacherToResetPass.value.id}/reset-password`, {
+      method: 'POST',
+      headers: getAdminAuthHeaders(),
+      body: JSON.stringify({ new_password: newTeacherPasswordInput.value.trim() })
+    })
+    if (res.ok) {
+      showResetTeacherPassModal.value = false
+      notify('Teacher password updated successfully!', 'success', 'mdi-key-check')
+    } else {
+      const err = await res.json()
+      notify(err.detail || 'Failed to reset password.', 'error')
+    }
+  } catch (e) {
+    notify('Reset password error: ' + e.message, 'error')
+  } finally {
+    isResettingTeacherPass.value = false
   }
 }
 

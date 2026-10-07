@@ -1794,6 +1794,18 @@ def init_db():
         except Exception:
             pass
 
+        # P1 Migrations: Class Archiving & User Status
+        try:
+            cursor.execute("ALTER TABLE classrooms ADD COLUMN is_archived INTEGER DEFAULT 0")
+        except Exception:
+            pass
+        try:
+            cursor.execute("ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'active'")
+        except Exception:
+            pass
+        cursor.execute("UPDATE classrooms SET is_archived = 0 WHERE is_archived IS NULL")
+        cursor.execute("UPDATE users SET status = 'active' WHERE status IS NULL OR status = ''")
+
         # Super Admin Default Initialization (Owner Account)
         cursor.execute("SELECT id FROM users WHERE role = 'super_admin'")
         if not cursor.fetchone():
@@ -2463,17 +2475,65 @@ def join_class(req: JoinClassRequest):
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
         code_clean = req.join_code.strip().upper()
-        cursor.execute("SELECT id, name FROM classrooms WHERE UPPER(join_code) = ? AND (IsXoa IS NULL OR IsXoa = 0)", (code_clean,))
+        cursor.execute("""
+            SELECT id, name, tenant_id, COALESCE(is_archived, 0)
+            FROM classrooms
+            WHERE UPPER(join_code) = ? AND (IsXoa IS NULL OR IsXoa = 0)
+        """, (code_clean,))
         cls = cursor.fetchone()
         if not cls:
             conn.close()
             raise HTTPException(status_code=404, detail="Invalid Class Join Code. Please verify with your teacher.")
         
-        class_id, class_name = cls[0], cls[1]
-        cursor.execute(
-            "INSERT OR IGNORE INTO class_enrollments (class_id, student_id) VALUES (?, ?)",
-            (class_id, req.student_id)
-        )
+        class_id, class_name, tenant_id, is_archived = cls[0], cls[1], cls[2], cls[3]
+        if is_archived == 1:
+            conn.close()
+            raise HTTPException(status_code=400, detail="This classroom is archived and no longer accepting enrollments.")
+
+        # Enforce multi-tenant license seats quota
+        if tenant_id:
+            cursor.execute("""
+                SELECT id FROM class_enrollments
+                WHERE tenant_id = ? AND student_id = ? AND (IsXoa IS NULL OR IsXoa = 0)
+                LIMIT 1
+            """, (tenant_id, req.student_id))
+            already_enrolled_in_tenant = cursor.fetchone() is not None
+
+            if not already_enrolled_in_tenant:
+                cursor.execute("""
+                    SELECT COUNT(DISTINCT student_id) FROM class_enrollments
+                    WHERE tenant_id = ? AND (IsXoa IS NULL OR IsXoa = 0)
+                """, (tenant_id,))
+                current_used_seats = cursor.fetchone()[0]
+
+                cursor.execute("SELECT license_seats FROM tenants WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (tenant_id,))
+                t_row = cursor.fetchone()
+                max_seats = t_row[0] if t_row and t_row[0] is not None else 100
+
+                if current_used_seats >= max_seats:
+                    conn.close()
+                    raise HTTPException(
+                        status_code=403,
+                        detail=f"License seat quota exceeded for this school ({current_used_seats}/{max_seats} seats used). Please contact your school administrator."
+                    )
+
+            # Link student's tenant_id if not already set
+            cursor.execute("UPDATE users SET tenant_id = ? WHERE id = ? AND (tenant_id IS NULL OR tenant_id = '')", (tenant_id, req.student_id))
+
+        cursor.execute("SELECT id FROM class_enrollments WHERE class_id = ? AND student_id = ?", (class_id, req.student_id))
+        existing_enr = cursor.fetchone()
+        if existing_enr:
+            cursor.execute("""
+                UPDATE class_enrollments
+                SET IsXoa = 0, tenant_id = ?, joined_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, (tenant_id, existing_enr[0]))
+        else:
+            cursor.execute("""
+                INSERT INTO class_enrollments (class_id, student_id, tenant_id, IsXoa)
+                VALUES (?, ?, ?, 0)
+            """, (class_id, req.student_id, tenant_id))
+
         conn.commit()
         conn.close()
         export_db_to_json()
@@ -2520,8 +2580,15 @@ def leave_class(req: LeaveClassRequest):
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/api/classes/teacher/{teacher_id}")
-def get_teacher_classes(teacher_id: int):
+def get_teacher_classes(
+    teacher_id: int,
+    current_user: dict = Depends(require_educator_or_admin)
+):
     try:
+        # Teachers can only view their own classes unless admin/super_admin
+        if current_user.get("role") == "teacher" and current_user.get("id") != teacher_id:
+            raise HTTPException(status_code=403, detail="Forbidden: You can only view your own classes.")
+
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
         cursor.execute("""
@@ -3060,15 +3127,11 @@ def get_admin_overview(
             total_teachers = cursor.fetchone()[0]
             
             cursor.execute("""
-                SELECT COUNT(DISTINCT u.id)
-                FROM users u
-                WHERE (u.tenant_id = ? OR u.id IN (
-                    SELECT ce.student_id FROM class_enrollments ce
-                    JOIN classrooms c ON ce.class_id = c.id
-                    WHERE c.tenant_id = ? AND (ce.IsXoa IS NULL OR ce.IsXoa = 0)
-                ))
-                AND u.role = 'student' AND (u.IsXoa IS NULL OR u.IsXoa = 0)
-            """, (target_tenant, target_tenant))
+                SELECT COUNT(DISTINCT ce.student_id)
+                FROM class_enrollments ce
+                JOIN classrooms c ON ce.class_id = c.id
+                WHERE c.tenant_id = ? AND (ce.IsXoa IS NULL OR ce.IsXoa = 0)
+            """, (target_tenant,))
             total_students = cursor.fetchone()[0]
             
             cursor.execute("SELECT COUNT(*) FROM classrooms WHERE tenant_id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (target_tenant,))
@@ -3152,6 +3215,7 @@ def get_admin_overview(
 @app.get("/api/admin/classes")
 def get_admin_classes(
     tenant_id: Optional[str] = None,
+    status_filter: Optional[str] = None,
     current_user: dict = Depends(require_admin_or_super_admin)
 ):
     try:
@@ -3163,32 +3227,33 @@ def get_admin_classes(
         else:
             target_tenant = tenant_id if tenant_id and tenant_id != 'all' else None
             
+        where_clauses = ["(c.IsXoa IS NULL OR c.IsXoa = 0)"]
+        params = []
         if target_tenant:
-            cursor.execute("""
-                SELECT c.id, c.name, c.grade_level, c.join_code, c.created_at, c.tenant_id,
-                       COALESCE(t.name, 'Fluent English Academy') as school_name,
-                       COALESCE(u.name, 'Educator Lead') as teacher_name,
-                       COALESCE(u.email, 'teacher@fluent.edu.vn') as teacher_email,
-                       (SELECT COUNT(*) FROM class_enrollments ce WHERE ce.class_id = c.id AND (ce.IsXoa IS NULL OR ce.IsXoa = 0)) as student_count
-                FROM classrooms c
-                LEFT JOIN tenants t ON c.tenant_id = t.id
-                LEFT JOIN users u ON c.teacher_id = u.id
-                WHERE (c.IsXoa IS NULL OR c.IsXoa = 0) AND c.tenant_id = ?
-                ORDER BY c.id DESC
-            """, (target_tenant,))
-        else:
-            cursor.execute("""
-                SELECT c.id, c.name, c.grade_level, c.join_code, c.created_at, c.tenant_id,
-                       COALESCE(t.name, 'Fluent English Academy') as school_name,
-                       COALESCE(u.name, 'Educator Lead') as teacher_name,
-                       COALESCE(u.email, 'teacher@fluent.edu.vn') as teacher_email,
-                       (SELECT COUNT(*) FROM class_enrollments ce WHERE ce.class_id = c.id AND (ce.IsXoa IS NULL OR ce.IsXoa = 0)) as student_count
-                FROM classrooms c
-                LEFT JOIN tenants t ON c.tenant_id = t.id
-                LEFT JOIN users u ON c.teacher_id = u.id
-                WHERE (c.IsXoa IS NULL OR c.IsXoa = 0)
-                ORDER BY c.id DESC
-            """)
+            where_clauses.append("c.tenant_id = ?")
+            params.append(target_tenant)
+            
+        if status_filter == "active":
+            where_clauses.append("(c.is_archived IS NULL OR c.is_archived = 0)")
+        elif status_filter == "archived":
+            where_clauses.append("c.is_archived = 1")
+            
+        where_sql = " AND ".join(where_clauses)
+        
+        cursor.execute(f"""
+            SELECT c.id, c.name, c.grade_level, c.join_code, c.created_at, c.tenant_id,
+                   COALESCE(t.name, 'Fluent English Academy') as school_name,
+                   COALESCE(u.name, 'Educator Lead') as teacher_name,
+                   COALESCE(u.email, 'teacher@fluent.edu.vn') as teacher_email,
+                   (SELECT COUNT(*) FROM class_enrollments ce WHERE ce.class_id = c.id AND (ce.IsXoa IS NULL OR ce.IsXoa = 0)) as student_count,
+                   COALESCE(c.is_archived, 0) as is_archived,
+                   c.teacher_id
+            FROM classrooms c
+            LEFT JOIN tenants t ON c.tenant_id = t.id
+            LEFT JOIN users u ON c.teacher_id = u.id
+            WHERE {where_sql}
+            ORDER BY c.id DESC
+        """, tuple(params))
             
         rows = cursor.fetchall()
         conn.close()
@@ -3203,7 +3268,9 @@ def get_admin_classes(
                 "school_name": r[6],
                 "teacher_name": r[7],
                 "teacher_email": r[8],
-                "student_count": r[9]
+                "student_count": r[9],
+                "is_archived": bool(r[10]),
+                "teacher_id": r[11]
             }
             for r in rows
         ]
@@ -3235,6 +3302,468 @@ def delete_class_admin(
         conn.close()
         export_db_to_json()
         return {"status": "success", "message": f"Classroom {class_id} deleted."}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+class AdminCreateClassRequest(BaseModel):
+    name: str
+    grade_level: str
+    teacher_id: int
+    tenant_id: Optional[str] = None
+
+@app.post("/api/admin/classes/create")
+def admin_create_class(
+    req: AdminCreateClassRequest,
+    current_user: dict = Depends(require_admin_or_super_admin)
+):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        if current_user["role"] == "admin":
+            target_tenant = current_user.get("tenant_id") or "1"
+        else:
+            target_tenant = req.tenant_id or "1"
+            
+        # Verify teacher exists and belongs to target tenant
+        cursor.execute("SELECT id, name, role, tenant_id FROM users WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (req.teacher_id,))
+        teacher = cursor.fetchone()
+        if not teacher:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Selected teacher not found.")
+            
+        if current_user["role"] == "admin" and str(teacher[3]) != str(target_tenant):
+            conn.close()
+            raise HTTPException(status_code=403, detail="Forbidden: Selected teacher does not belong to your school.")
+            
+        join_code = f"CLS-{random.randint(100, 999)}-{random.randint(10, 99)}"
+        cursor.execute("""
+            INSERT INTO classrooms (teacher_id, name, grade_level, join_code, tenant_id, is_archived, IsXoa)
+            VALUES (?, ?, ?, ?, ?, 0, 0)
+        """, (req.teacher_id, req.name.strip(), req.grade_level.strip(), join_code, str(target_tenant)))
+        class_id = cursor.lastrowid
+        record_audit_log(cursor, current_user["id"], "CREATE_CLASSROOM", "classrooms", str(class_id), target_tenant, f"Created classroom '{req.name.strip()}' assigned to teacher {teacher[1]}")
+        conn.commit()
+        conn.close()
+        export_db_to_json()
+        return {"status": "success", "class_id": class_id, "join_code": join_code, "name": req.name}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+class AssignTeacherRequest(BaseModel):
+    teacher_id: int
+
+@app.post("/api/admin/classes/{class_id}/assign-teacher")
+def assign_teacher_to_class(
+    class_id: int,
+    req: AssignTeacherRequest,
+    current_user: dict = Depends(require_admin_or_super_admin)
+):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, tenant_id, name FROM classrooms WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (class_id,))
+        cls = cursor.fetchone()
+        if not cls:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Classroom not found.")
+            
+        if current_user["role"] == "admin" and str(cls[1]) != str(current_user.get("tenant_id")):
+            conn.close()
+            raise HTTPException(status_code=403, detail="Forbidden: Cannot manage classroom from another school.")
+            
+        cursor.execute("SELECT id, name, tenant_id FROM users WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0) AND role = 'teacher'", (req.teacher_id,))
+        teacher = cursor.fetchone()
+        if not teacher:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Selected teacher not found or is not an active educator.")
+            
+        if current_user["role"] == "admin" and str(teacher[2]) != str(current_user.get("tenant_id")):
+            conn.close()
+            raise HTTPException(status_code=403, detail="Forbidden: Selected teacher does not belong to your school.")
+            
+        cursor.execute("UPDATE classrooms SET teacher_id = ? WHERE id = ?", (req.teacher_id, class_id))
+        record_audit_log(cursor, current_user["id"], "ASSIGN_TEACHER", "classrooms", str(class_id), cls[1], f"Reassigned classroom '{cls[2]}' to teacher {teacher[1]}")
+        conn.commit()
+        conn.close()
+        export_db_to_json()
+        return {"status": "success", "message": f"Classroom reassigned to {teacher[1]}."}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/admin/classes/{class_id}/toggle-archive")
+def toggle_archive_class(
+    class_id: int,
+    current_user: dict = Depends(require_admin_or_super_admin)
+):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, tenant_id, name, COALESCE(is_archived, 0) FROM classrooms WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (class_id,))
+        cls = cursor.fetchone()
+        if not cls:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Classroom not found.")
+            
+        if current_user["role"] == "admin" and str(cls[1]) != str(current_user.get("tenant_id")):
+            conn.close()
+            raise HTTPException(status_code=403, detail="Forbidden: Cannot manage classroom from another school.")
+            
+        new_status = 1 if cls[3] == 0 else 0
+        action_name = "ARCHIVE_CLASSROOM" if new_status == 1 else "UNARCHIVE_CLASSROOM"
+        cursor.execute("UPDATE classrooms SET is_archived = ? WHERE id = ?", (new_status, class_id))
+        record_audit_log(cursor, current_user["id"], action_name, "classrooms", str(class_id), cls[1], f"{'Archived' if new_status == 1 else 'Unarchived'} classroom '{cls[2]}'")
+        conn.commit()
+        conn.close()
+        export_db_to_json()
+        return {"status": "success", "is_archived": bool(new_status), "message": f"Classroom {'archived' if new_status == 1 else 'restored to active'}."}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/api/admin/classes/{class_id}/roster")
+def get_class_roster(
+    class_id: int,
+    current_user: dict = Depends(require_admin_or_super_admin)
+):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, name, grade_level, join_code, tenant_id, COALESCE(is_archived, 0) FROM classrooms WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (class_id,))
+        cls = cursor.fetchone()
+        if not cls:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Classroom not found.")
+            
+        if current_user["role"] == "admin" and str(cls[4]) != str(current_user.get("tenant_id")):
+            conn.close()
+            raise HTTPException(status_code=403, detail="Forbidden: Cannot view roster of another school.")
+            
+        cursor.execute("""
+            SELECT u.id, u.name, u.email, u.avatar, e.joined_at,
+                   (SELECT COUNT(*) FROM submissions s JOIN assignments a ON s.assignment_id = a.id WHERE s.student_id = u.id AND a.class_id = e.class_id AND (s.IsXoa IS NULL OR s.IsXoa = 0)) as sub_count,
+                   (SELECT AVG(COALESCE(s.score_override, s.score)) FROM submissions s JOIN assignments a ON s.assignment_id = a.id WHERE s.student_id = u.id AND a.class_id = e.class_id AND (s.IsXoa IS NULL OR s.IsXoa = 0)) as avg_sc
+            FROM class_enrollments e
+            JOIN users u ON e.student_id = u.id
+            WHERE e.class_id = ? AND (e.IsXoa IS NULL OR e.IsXoa = 0) AND (u.IsXoa IS NULL OR u.IsXoa = 0)
+            ORDER BY u.name ASC
+        """, (class_id,))
+        students = [
+            {
+                "id": r[0],
+                "name": r[1],
+                "email": r[2],
+                "avatar": r[3] or "",
+                "joined_at": r[4],
+                "submission_count": r[5],
+                "avg_score": round(r[6], 1) if r[6] is not None else None
+            }
+            for r in cursor.fetchall()
+        ]
+        conn.close()
+        return {
+            "class_id": cls[0],
+            "class_name": cls[1],
+            "grade_level": cls[2],
+            "join_code": cls[3],
+            "is_archived": bool(cls[5]),
+            "students": students,
+            "total_students": len(students)
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/admin/classes/{class_id}/revoke-student/{student_id}")
+def revoke_student_from_class(
+    class_id: int,
+    student_id: int,
+    current_user: dict = Depends(require_admin_or_super_admin)
+):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, tenant_id, name FROM classrooms WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (class_id,))
+        cls = cursor.fetchone()
+        if not cls:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Classroom not found.")
+            
+        if current_user["role"] == "admin" and str(cls[1]) != str(current_user.get("tenant_id")):
+            conn.close()
+            raise HTTPException(status_code=403, detail="Forbidden: Cannot manage classroom from another school.")
+            
+        cursor.execute("SELECT id, name, email FROM users WHERE id = ?", (student_id,))
+        student = cursor.fetchone()
+        if not student:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Student not found.")
+            
+        cursor.execute("UPDATE class_enrollments SET IsXoa = 1 WHERE class_id = ? AND student_id = ?", (class_id, student_id))
+        
+        # If student has no more active enrollments in this school, release their school affiliation
+        cursor.execute("""
+            SELECT ce.id FROM class_enrollments ce
+            JOIN classrooms c ON ce.class_id = c.id
+            WHERE c.tenant_id = ? AND ce.student_id = ? AND (ce.IsXoa IS NULL OR ce.IsXoa = 0)
+            LIMIT 1
+        """, (cls[1], student_id))
+        if not cursor.fetchone():
+            cursor.execute("UPDATE users SET tenant_id = NULL WHERE id = ? AND tenant_id = ?", (student_id, cls[1]))
+
+        record_audit_log(cursor, current_user["id"], "REVOKE_STUDENT_SEAT", "class_enrollments", f"{class_id}:{student_id}", cls[1], f"Revoked seat for student {student[1]} ({student[2]}) from class '{cls[2]}'")
+        conn.commit()
+        conn.close()
+        export_db_to_json()
+        return {"status": "success", "message": f"Student {student[1]} removed from classroom. Seat released."}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+class TransferStudentRequest(BaseModel):
+    student_id: int
+    to_class_id: int
+
+@app.post("/api/admin/classes/{class_id}/transfer-student")
+def transfer_student_class(
+    class_id: int,
+    req: TransferStudentRequest,
+    current_user: dict = Depends(require_admin_or_super_admin)
+):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, tenant_id, name FROM classrooms WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (class_id,))
+        src_cls = cursor.fetchone()
+        if not src_cls:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Source classroom not found.")
+            
+        cursor.execute("SELECT id, tenant_id, name, COALESCE(is_archived, 0) FROM classrooms WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (req.to_class_id,))
+        dest_cls = cursor.fetchone()
+        if not dest_cls:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Destination classroom not found.")
+            
+        if dest_cls[3] == 1:
+            conn.close()
+            raise HTTPException(status_code=400, detail="Cannot transfer student to an archived classroom.")
+            
+        if current_user["role"] == "admin":
+            admin_tenant = str(current_user.get("tenant_id"))
+            if str(src_cls[1]) != admin_tenant or str(dest_cls[1]) != admin_tenant:
+                conn.close()
+                raise HTTPException(status_code=403, detail="Forbidden: Both classrooms must belong to your school.")
+        elif str(src_cls[1]) != str(dest_cls[1]):
+            conn.close()
+            raise HTTPException(status_code=400, detail="Cannot transfer student between different schools.")
+            
+        cursor.execute("SELECT id, name, email FROM users WHERE id = ?", (req.student_id,))
+        student = cursor.fetchone()
+        if not student:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Student not found.")
+            
+        # Revoke source enrollment
+        cursor.execute("UPDATE class_enrollments SET IsXoa = 1 WHERE class_id = ? AND student_id = ?", (class_id, req.student_id))
+        
+        # Upsert destination enrollment
+        cursor.execute("SELECT id FROM class_enrollments WHERE class_id = ? AND student_id = ?", (req.to_class_id, req.student_id))
+        existing = cursor.fetchone()
+        if existing:
+            cursor.execute("UPDATE class_enrollments SET IsXoa = 0, tenant_id = ?, joined_at = CURRENT_TIMESTAMP WHERE id = ?", (dest_cls[1], existing[0]))
+        else:
+            cursor.execute("INSERT INTO class_enrollments (class_id, student_id, tenant_id, IsXoa) VALUES (?, ?, ?, 0)", (req.to_class_id, req.student_id, dest_cls[1]))
+            
+        record_audit_log(cursor, current_user["id"], "TRANSFER_STUDENT", "class_enrollments", f"{req.to_class_id}:{req.student_id}", dest_cls[1], f"Transferred student {student[1]} from '{src_cls[2]}' to '{dest_cls[2]}'")
+        conn.commit()
+        conn.close()
+        export_db_to_json()
+        return {"status": "success", "message": f"Student {student[1]} transferred to '{dest_cls[2]}' successfully."}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/api/admin/teachers")
+def get_admin_teachers(
+    tenant_id: Optional[str] = None,
+    current_user: dict = Depends(require_admin_or_super_admin)
+):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        if current_user["role"] == "admin":
+            target_tenant = current_user.get("tenant_id") or "1"
+        else:
+            target_tenant = tenant_id if tenant_id and tenant_id != 'all' else None
+            
+        query = """
+            SELECT u.id, u.name, u.email, u.avatar, COALESCE(u.status, 'active') as status, u.created_at, u.tenant_id,
+                   COALESCE(t.name, 'Independent / Global') as school_name,
+                   (SELECT COUNT(*) FROM classrooms c WHERE c.teacher_id = u.id AND (c.IsXoa IS NULL OR c.IsXoa = 0) AND (c.is_archived IS NULL OR c.is_archived = 0)) as active_classes_count,
+                   (SELECT COUNT(DISTINCT ce.student_id) FROM classrooms c JOIN class_enrollments ce ON c.id = ce.class_id WHERE c.teacher_id = u.id AND (c.IsXoa IS NULL OR c.IsXoa = 0) AND (ce.IsXoa IS NULL OR ce.IsXoa = 0)) as students_count
+            FROM users u
+            LEFT JOIN tenants t ON u.tenant_id = t.id
+            WHERE u.role = 'teacher' AND (u.IsXoa IS NULL OR u.IsXoa = 0)
+        """
+        params = []
+        if target_tenant:
+            query += " AND u.tenant_id = ?"
+            params.append(target_tenant)
+            
+        query += " ORDER BY u.id DESC"
+        cursor.execute(query, tuple(params))
+        rows = cursor.fetchall()
+        conn.close()
+        teachers = [
+            {
+                "id": r[0],
+                "name": r[1],
+                "email": r[2],
+                "avatar": r[3] or "",
+                "status": r[4],
+                "created_at": r[5],
+                "tenant_id": r[6],
+                "school_name": r[7],
+                "active_classes_count": r[8],
+                "students_count": r[9]
+            }
+            for r in rows
+        ]
+        return {"teachers": teachers}
+    except Exception as e:
+        return {"teachers": [], "error": str(e)}
+
+@app.post("/api/admin/teachers/{teacher_id}/toggle-status")
+def toggle_teacher_status(
+    teacher_id: int,
+    current_user: dict = Depends(require_admin_or_super_admin)
+):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, name, email, tenant_id, COALESCE(status, 'active') FROM users WHERE id = ? AND role = 'teacher' AND (IsXoa IS NULL OR IsXoa = 0)", (teacher_id,))
+        t = cursor.fetchone()
+        if not t:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Teacher not found.")
+            
+        if current_user["role"] == "admin" and str(t[3]) != str(current_user.get("tenant_id")):
+            conn.close()
+            raise HTTPException(status_code=403, detail="Forbidden: Cannot manage teachers of another school.")
+            
+        new_status = "suspended" if t[4] == "active" else "active"
+        action_name = "SUSPEND_TEACHER" if new_status == "suspended" else "REACTIVATE_TEACHER"
+        cursor.execute("UPDATE users SET status = ? WHERE id = ?", (new_status, teacher_id))
+        record_audit_log(cursor, current_user["id"], action_name, "users", str(teacher_id), t[3], f"{'Suspended' if new_status == 'suspended' else 'Reactivated'} teacher {t[1]} ({t[2]})")
+        conn.commit()
+        conn.close()
+        export_db_to_json()
+        return {"status": "success", "new_status": new_status, "message": f"Teacher account {new_status}."}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+class ResetPasswordRequest(BaseModel):
+    new_password: str
+
+@app.post("/api/admin/teachers/{teacher_id}/reset-password")
+def reset_teacher_password(
+    teacher_id: int,
+    req: ResetPasswordRequest,
+    current_user: dict = Depends(require_admin_or_super_admin)
+):
+    try:
+        new_pwd = req.new_password.strip()
+        if len(new_pwd) < 6:
+            raise HTTPException(status_code=400, detail="Password must be at least 6 characters long.")
+            
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, name, email, tenant_id FROM users WHERE id = ? AND role = 'teacher' AND (IsXoa IS NULL OR IsXoa = 0)", (teacher_id,))
+        t = cursor.fetchone()
+        if not t:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Teacher not found.")
+            
+        if current_user["role"] == "admin" and str(t[3]) != str(current_user.get("tenant_id")):
+            conn.close()
+            raise HTTPException(status_code=403, detail="Forbidden: Cannot reset password for teacher of another school.")
+            
+        pwd_hash = hash_password(new_pwd)
+        cursor.execute("UPDATE users SET password_hash = ? WHERE id = ?", (pwd_hash, teacher_id))
+        record_audit_log(cursor, current_user["id"], "RESET_TEACHER_PASSWORD", "users", str(teacher_id), t[3], f"Reset password for teacher {t[1]} ({t[2]})")
+        conn.commit()
+        conn.close()
+        export_db_to_json()
+        return {"status": "success", "message": f"Password reset successfully for teacher {t[1]}."}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/api/admin/seats-summary")
+def get_seats_summary(
+    tenant_id: Optional[str] = None,
+    current_user: dict = Depends(require_admin_or_super_admin)
+):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        if current_user["role"] == "admin":
+            target_tenant = current_user.get("tenant_id") or "1"
+        else:
+            target_tenant = tenant_id or "1"
+            
+        cursor.execute("SELECT id, name, license_seats, license_expiry FROM tenants WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)", (target_tenant,))
+        t_row = cursor.fetchone()
+        if not t_row:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Tenant organization not found.")
+            
+        license_seats = t_row[2] or 100
+        
+        # Unique active students enrolled in this tenant
+        cursor.execute("""
+            SELECT COUNT(DISTINCT ce.student_id)
+            FROM class_enrollments ce
+            JOIN classrooms c ON ce.class_id = c.id
+            WHERE c.tenant_id = ? AND (ce.IsXoa IS NULL OR ce.IsXoa = 0)
+        """, (target_tenant,))
+        used_seats = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM classrooms WHERE tenant_id = ? AND (IsXoa IS NULL OR IsXoa = 0) AND (is_archived IS NULL OR is_archived = 0)", (target_tenant,))
+        active_classes = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM classrooms WHERE tenant_id = ? AND (IsXoa IS NULL OR IsXoa = 0) AND is_archived = 1", (target_tenant,))
+        archived_classes = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM users WHERE tenant_id = ? AND role = 'teacher' AND (IsXoa IS NULL OR IsXoa = 0)", (target_tenant,))
+        teachers_count = cursor.fetchone()[0]
+        
+        conn.close()
+        return {
+            "tenant_id": t_row[0],
+            "school_name": t_row[1],
+            "license_seats": license_seats,
+            "used_seats": used_seats,
+            "available_seats": max(0, license_seats - used_seats),
+            "usage_percentage": round((used_seats / license_seats * 100), 1) if license_seats else 0,
+            "active_classes": active_classes,
+            "archived_classes": archived_classes,
+            "teachers_count": teachers_count,
+            "license_expiry": t_row[3]
+        }
     except HTTPException:
         raise
     except Exception as e:
@@ -3387,7 +3916,8 @@ def get_admin_users(
             SELECT u.id, u.email, u.name, u.role, u.tenant_id, u.parent_code, u.created_at, u.avatar,
                    COALESCE(t.name, 'Independent / Global') as school_name,
                    (SELECT COUNT(*) FROM class_enrollments ce WHERE ce.student_id = u.id AND (ce.IsXoa IS NULL OR ce.IsXoa = 0)) as enrolled_count,
-                   (SELECT c.name FROM classrooms c JOIN class_enrollments ce ON c.id = ce.class_id WHERE ce.student_id = u.id AND (ce.IsXoa IS NULL OR ce.IsXoa = 0) LIMIT 1) as primary_class
+                   (SELECT c.name FROM classrooms c JOIN class_enrollments ce ON c.id = ce.class_id WHERE ce.student_id = u.id AND (ce.IsXoa IS NULL OR ce.IsXoa = 0) LIMIT 1) as primary_class,
+                   COALESCE(u.status, 'active') as status
             FROM users u
             LEFT JOIN tenants t ON u.tenant_id = t.id
             WHERE (u.IsXoa IS NULL OR u.IsXoa = 0)
@@ -3421,6 +3951,7 @@ def get_admin_users(
                 "school_name": r[8],
                 "enrolled_count": r[9],
                 "primary_class": r[10] or "None",
+                "status": r[11],
                 "streak": stk
             })
             

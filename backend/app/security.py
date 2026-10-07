@@ -113,23 +113,34 @@ def get_current_user_from_db(db_path: str, token: str) -> dict:
     
     conn = sqlite3.connect(db_path, timeout=10.0)
     cursor = conn.cursor()
-    cursor.execute("""
-        SELECT id, email, name, role, tenant_id
-        FROM users
-        WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)
-    """, (user_id,))
+    try:
+        cursor.execute("""
+            SELECT id, email, name, role, tenant_id, COALESCE(status, 'active')
+            FROM users
+            WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)
+        """, (user_id,))
+    except Exception:
+        cursor.execute("""
+            SELECT id, email, name, role, tenant_id, 'active'
+            FROM users
+            WHERE id = ? AND (IsXoa IS NULL OR IsXoa = 0)
+        """, (user_id,))
     row = cursor.fetchone()
     conn.close()
     
     if not row:
         raise HTTPException(status_code=401, detail="Account not found or deactivated.")
         
+    if row[5] == "suspended":
+        raise HTTPException(status_code=403, detail="Account is suspended. Please contact your school administrator.")
+        
     return {
         "id": row[0],
         "email": row[1],
         "name": row[2],
         "role": row[3],
-        "tenant_id": str(row[4]) if row[4] is not None else None
+        "tenant_id": str(row[4]) if row[4] is not None else None,
+        "status": row[5]
     }
 
 def record_audit_log(cursor, user_id: int, action: str, target_type: str, target_id: str, tenant_id: Optional[str], details: str = ""):
