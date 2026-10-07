@@ -40,6 +40,32 @@
       "password_hash": "teacher123"
     },
     {
+      "id": 8,
+      "email": "nguyendanthuy@gmail.com",
+      "name": "Nguyễn Đan Thuỳ",
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocJr4t1Q3sPq0oM0E_2Dw8mpxNFOaRco1EKRWUgq4gkDDslESdQ-=s96-c",
+      "google_id": null,
+      "created_at": "2026-10-07 02:00:00",
+      "IsXoa": 0,
+      "role": "student",
+      "tenant_id": null,
+      "parent_code": null,
+      "password_hash": null
+    },
+    {
+      "id": 10,
+      "email": "nguyenminhtrung01082003@gmail.com",
+      "name": "Trung Nguyễn Minh",
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocJkca7Rp0VvZBIK0djEUbRmY15YOkllZdhrVSR6x7j9V82jHlAc=s96-c",
+      "google_id": null,
+      "created_at": "2026-10-07 03:42:35",
+      "IsXoa": 0,
+      "role": "student",
+      "tenant_id": null,
+      "parent_code": null,
+      "password_hash": null
+    },
+    {
       "id": 999,
       "email": "student999@test.com",
       "name": "Test Student 999",
@@ -168,9 +194,88 @@
       "tenant_id": null,
       "parent_code": "PA-8888",
       "password_hash": "newpassword456"
+    },
+    {
+      "id": 1009,
+      "email": "augusttrung8123@gmail.com",
+      "name": "Trung August",
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocJkMYLh6fWQrugyyDLQy4q-zxveZGaShY9bFF5RCB8rk_Mywh8=s96-c",
+      "google_id": null,
+      "created_at": "2026-10-07 04:25:15",
+      "IsXoa": 0,
+      "role": "student",
+      "tenant_id": null,
+      "parent_code": null,
+      "password_hash": null
     }
   ],
-  "history": [],
+  "history": [
+    {
+      "id": 101,
+      "user_id": 8,
+      "topic": "The secret of getting ahead is getting started.",
+      "transcribed": "The secret of getting ahead is getting started.",
+      "score": 9.4,
+      "breakdown_json": "{\"Pronunciation\": 9.5, \"Fluency\": 9.2, \"Grammar\": 9.6, \"Vocabulary\": 9.4, \"Communication\": 9.3, \"Total\": 9.4, \"Confidence\": 95.0, \"RawConfidence\": 95.0, \"WordCount\": 9, \"SpeechRate\": 2.4, \"SpeedCategory\": \"normal\", \"IsFluentSpeaker\": true, \"SpeakerLevel\": \"advanced\"}",
+      "feedback": "Phát âm rất xuất sắc và ngữ điệu tự nhiên!",
+      "timestamp": "2026-10-07 08:32:15",
+      "date": "2026-10-07",
+      "IsXoa": 0,
+      "audio_url": ""
+    },
+    {
+      "id": 102,
+      "user_id": 10,
+      "topic": "What time does the train leave?",
+      "transcribed": "What time does the train leave?",
+      "score": 6.5,
+      "breakdown_json": "{\"Pronunciation\": 6.5, \"Fluency\": 6.2, \"Grammar\": 7.0, \"Vocabulary\": 6.8, \"Communication\": 6.5, \"Total\": 6.5, \"Confidence\": 70.0, \"RawConfidence\": 70.0, \"WordCount\": 6, \"SpeechRate\": 1.8, \"SpeedCategory\": \"normal\", \"IsFluentSpeaker\": false, \"SpeakerLevel\": \"intermediate\"}",
+      "feedback": "Phát âm khá tốt, cần chú ý nối âm đuôi.",
+      "timestamp": "2026-10-07 08:47:38",
+      "date": "2026-10-07",
+      "IsXoa": 0,
+      "audio_url": ""
+    },
+    {
+      "id": 103,
+      "user_id": 10,
+      "topic": "Technology is changing the way we communicate every day.",
+      "transcribed": "Technology is changing the way we communicate every day.",
+      "score": 7.0,
+      "breakdown_json": "{\"Pronunciation\": 7.2, \"Fluency\": 6.8, \"Grammar\": 7.5, \"Vocabulary\": 7.0, \"Communication\": 7.0, \"Total\": 7.0, \"Confidence\": 78.0, \"RawConfidence\": 78.0, \"WordCount\": 9, \"SpeechRate\": 2.0, \"SpeedCategory\": \"normal\", \"IsFluentSpeaker\": false, \"SpeakerLevel\": \"intermediate\"}",
+      "feedback": "Tiến bộ rõ rệt! Ngữ điệu đã mượt mà hơn nhiều.",
+      "timestamp": "2026-10-07 09:03:12",
+      "date": "2026-10-07",
+      "IsXoa": 0,
+      "audio_url": ""
+    },
+    {
+      "id": 104,
+      "user_id": 10,
+      "topic": "My dog loves playing in the park.",
+      "transcribed": "My dog loves playing in the park.",
+      "score": 5.5,
+      "breakdown_json": "{\"Pronunciation\": 5.5, \"Fluency\": 5.2, \"Grammar\": 6.0, \"Vocabulary\": 5.5, \"Communication\": 5.5, \"Total\": 5.5, \"Confidence\": 60.0, \"RawConfidence\": 60.0, \"WordCount\": 7, \"SpeechRate\": 1.5, \"SpeedCategory\": \"slow\", \"IsFluentSpeaker\": false, \"SpeakerLevel\": \"beginner\"}",
+      "feedback": "Cố gắng phát âm rõ phụ âm /k/ trong từ 'park'.",
+      "timestamp": "2026-10-07 09:18:45",
+      "date": "2026-10-07",
+      "IsXoa": 0,
+      "audio_url": ""
+    },
+    {
+      "id": 105,
+      "user_id": 10,
+      "topic": "Continuous effort, not strength or intelligence, is the key to unlocking our potential.",
+      "transcribed": "Continuous effort, not strength or intelligence, is the key to unlocking our potential.",
+      "score": 9.4,
+      "breakdown_json": "{\"Pronunciation\": 9.5, \"Fluency\": 9.3, \"Grammar\": 9.5, \"Vocabulary\": 9.4, \"Communication\": 9.3, \"Total\": 9.4, \"Confidence\": 94.0, \"RawConfidence\": 94.0, \"WordCount\": 12, \"SpeechRate\": 2.4, \"SpeedCategory\": \"normal\", \"IsFluentSpeaker\": true, \"SpeakerLevel\": \"advanced\"}",
+      "feedback": "Tuyệt vời! Ngữ điệu chuẩn học thuật và phát âm hoàn hảo!",
+      "timestamp": "2026-10-07 09:32:27",
+      "date": "2026-10-07",
+      "IsXoa": 0,
+      "audio_url": ""
+    }
+  ],
   "user_settings": [],
   "weak_words": [
     {
@@ -204,5 +309,54 @@
       "IsXoa": 0
     }
   ],
-  "achievements": []
+  "achievements": [],
+  "classrooms": [
+    {
+      "id": 6,
+      "teacher_id": 7,
+      "tenant_id": "1",
+      "name": "Class 5A QR Test",
+      "grade_level": "Elementary (Grades 1 - 5)",
+      "join_code": "CLS-836-58",
+      "created_at": "2026-07-30 18:10:39",
+      "IsXoa": 0
+    }
+  ],
+  "class_enrollments": [
+    {
+      "id": 1,
+      "class_id": 6,
+      "student_id": 1009,
+      "tenant_id": "1",
+      "joined_at": "2026-10-07 04:47:31",
+      "IsXoa": 0
+    }
+  ],
+  "assignments": [
+    {
+      "id": 1,
+      "class_id": 6,
+      "teacher_id": 7,
+      "tenant_id": "1",
+      "title": "Unit 1: Introductions & Daily Greetings",
+      "topic_sentence": "Good morning everyone, welcome to our English pronunciation class today.",
+      "target_ipa": "/ɡʊd ˈmɔːnɪŋ ˈevriwʌn ˈwelkəm tuː ˈaʊər ˈɪŋɡlɪʃ prəˌnʌnsiˈeɪʃn klɑːs təˈdeɪ/",
+      "due_date": "2026-10-31",
+      "created_at": "2026-10-07 04:48:00",
+      "IsXoa": 0
+    }
+  ],
+  "submissions": [],
+  "tenants": [
+    {
+      "id": "1",
+      "name": "Fluent English Academy",
+      "admin_id": 7,
+      "logo_url": null,
+      "license_seats": 100,
+      "license_expiry": "2028-12-31",
+      "created_at": "2026-07-30 18:00:00",
+      "IsXoa": 0
+    }
+  ]
 }

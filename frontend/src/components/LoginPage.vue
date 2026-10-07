@@ -72,7 +72,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 
 const props = defineProps({
   backendUrl: String
@@ -116,37 +116,5 @@ const handleGoogleSignIn = () => {
   window.location.href = authUrl
 }
 
-onMounted(async () => {
-  const hash = window.location.hash
-  if (hash && hash.includes('access_token=')) {
-    isGoogleLoading.value = true
-    try {
-      const params = new URLSearchParams(hash.substring(1))
-      const accessToken = params.get('access_token')
-      
-      if (accessToken) {
-        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: { Authorization: `Bearer ${accessToken}` }
-        })
-        
-        if (res.ok) {
-          const googleUser = await res.json()
-          localStorage.setItem('user_role', 'student')
-          emit('login', {
-            user_id: 1,
-            email: googleUser.email,
-            name: googleUser.name || googleUser.email.split('@')[0],
-            avatar: googleUser.picture || '',
-            role: 'student'
-          })
-        }
-      }
-    } catch (err) {
-      console.error('Google Auth Hash Parsing Error:', err)
-    } finally {
-      isGoogleLoading.value = false
-      window.history.replaceState({}, document.title, window.location.pathname)
-    }
-  }
-})
+// Google OAuth Redirect callback is handled seamlessly at top level by App.vue
 </script>

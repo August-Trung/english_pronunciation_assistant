@@ -58,7 +58,7 @@
           class="font-weight-bold"
           prepend-icon="mdi-google-classroom"
         >
-          {{ cls.class_name }} ({{ cls.join_code || 'Enrolled' }})
+          {{ cls.class_name }} ({{ cls.join_code || 'Enrolled' }})<span v-if="cls.teacher_name" class="ml-1 opacity-75">• {{ cls.teacher_name }}</span>
           <template #append>
             <v-btn
               icon="mdi-exit-to-app"
@@ -139,18 +139,31 @@
 
       <div v-if="!assignments.length" class="text-center pa-8 bg-white border rounded-lg">
         <v-icon size="48" color="grey-lighten-1">mdi-clipboard-check-outline</v-icon>
-        <div class="text-subtitle-2 font-weight-bold text-grey mt-2">
-          You are not enrolled in any class yet or have no assigned homework.
-        </div>
-        <v-btn
-          color="primary"
-          variant="tonal"
-          class="mt-3 text-none font-weight-bold"
-          prepend-icon="mdi-key-variant"
-          @click="showJoinClassModal = true"
-        >
-          Enter Join Code (Example: CLS-524-89)
-        </v-btn>
+        <template v-if="enrolledClasses.length">
+          <div class="text-subtitle-1 font-weight-black text-indigo-darken-2 mt-2">
+            You're all caught up!
+          </div>
+          <div class="text-subtitle-2 font-weight-medium text-grey-darken-1 mt-1">
+            Your teacher has not assigned any homework for your classroom yet. Check back soon!
+          </div>
+        </template>
+        <template v-else>
+          <div class="text-subtitle-2 font-weight-bold text-grey-darken-1 mt-2">
+            You are not enrolled in any classroom yet.
+          </div>
+          <div class="text-caption text-grey mt-1">
+            Enter a classroom join code provided by your teacher to access class homework.
+          </div>
+          <v-btn
+            color="primary"
+            variant="tonal"
+            class="mt-3 text-none font-weight-bold"
+            prepend-icon="mdi-key-variant"
+            @click="showJoinClassModal = true"
+          >
+            Enter Join Code (Example: CLS-836-58)
+          </v-btn>
+        </template>
       </div>
     </div>
 
@@ -247,6 +260,7 @@ const notify = (text, color = 'success', icon = 'mdi-check-circle') => {
 }
 
 const assignments = ref([])
+const classesList = ref([])
 const showJoinClassModal = ref(false)
 const joinCodeInput = ref('')
 const isJoining = ref(false)
@@ -261,8 +275,11 @@ let mediaRecorder = null
 let audioChunks = []
 
 const enrolledClasses = computed(() => {
+  if (classesList.value?.length) {
+    return classesList.value
+  }
   const map = {}
-  assignments.value.forEach(a => {
+  assignments.value?.forEach(a => {
     if (a.class_id && !map[a.class_id]) {
       map[a.class_id] = {
         class_id: a.class_id,
@@ -274,9 +291,29 @@ const enrolledClasses = computed(() => {
   return Object.values(map)
 })
 
-const fetchStudentAssignments = async () => {
+const getActiveStudentId = () => {
+  return props.userId || Number(localStorage.getItem('user_id')) || null
+}
+
+const fetchEnrolledClasses = async () => {
+  const uid = getActiveStudentId()
+  if (!uid) return
   try {
-    const res = await fetch(`${props.backendUrl}/api/assignments/student/${props.userId || 1}`)
+    const res = await fetch(`${props.backendUrl}/api/classes/student/${uid}`)
+    if (res.ok) {
+      const data = await res.json()
+      classesList.value = data.classes || []
+    }
+  } catch (e) {
+    console.error('Fetch student classes error:', e)
+  }
+}
+
+const fetchStudentAssignments = async () => {
+  const uid = getActiveStudentId()
+  if (!uid) return
+  try {
+    const res = await fetch(`${props.backendUrl}/api/assignments/student/${uid}`)
     if (res.ok) {
       const data = await res.json()
       assignments.value = data.assignments || []
@@ -289,13 +326,18 @@ const fetchStudentAssignments = async () => {
 const submitJoinClass = async (codeToJoin = null) => {
   const code = (codeToJoin || joinCodeInput.value || '').trim()
   if (!code) return
+  const uid = getActiveStudentId()
+  if (!uid) {
+    notify('Please sign in to join a classroom.', 'warning', 'mdi-account-lock')
+    return
+  }
   isJoining.value = true
   try {
     const res = await fetch(`${props.backendUrl}/api/classes/join`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        student_id: props.userId || 1,
+        student_id: uid,
         join_code: code
       })
     })
@@ -305,6 +347,7 @@ const submitJoinClass = async (codeToJoin = null) => {
       showJoinClassModal.value = false
       joinCodeInput.value = ''
       localStorage.removeItem('pending_join_code')
+      await fetchEnrolledClasses()
       await fetchStudentAssignments()
     } else {
       const err = await res.json()
@@ -325,13 +368,15 @@ const openLeaveClassModal = (cls) => {
 
 const confirmLeaveClass = async () => {
   if (!targetLeaveClass.value) return
+  const uid = getActiveStudentId()
+  if (!uid) return
   isLeaving.value = true
   try {
     const res = await fetch(`${props.backendUrl}/api/classes/leave`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        student_id: props.userId || 1,
+        student_id: uid,
         class_id: targetLeaveClass.value.class_id
       })
     })
@@ -340,6 +385,7 @@ const confirmLeaveClass = async () => {
       showLeaveModal.value = false
       targetLeaveClass.value = null
       leaveInput.value = ''
+      await fetchEnrolledClasses()
       await fetchStudentAssignments()
     } else {
       const err = await res.json()
@@ -358,8 +404,8 @@ const handleUrlJoinCode = async () => {
   
   if (code && code.trim()) {
     code = code.trim()
-    const activeUser = props.userId || localStorage.getItem('user_id')
-    if (!activeUser) {
+    const uid = getActiveStudentId()
+    if (!uid) {
       localStorage.setItem('pending_join_code', code)
       notify('QR Code detected! Please Sign In or Register to auto-join class.', 'info', 'mdi-qrcode-scan')
     } else {
@@ -392,10 +438,11 @@ const toggleRecording = async (asg) => {
 }
 
 const uploadSubmission = async (asg) => {
+  const uid = getActiveStudentId()
   const blob = new Blob(audioChunks, { type: 'audio/webm' })
   const formData = new FormData()
   formData.append('assignment_id', asg.assignment_id)
-  formData.append('student_id', props.userId || 1)
+  formData.append('student_id', uid || 1)
   formData.append('student_name', 'Student')
   formData.append('audio', blob, 'submission.webm')
 
@@ -414,6 +461,7 @@ const uploadSubmission = async (asg) => {
 }
 
 onMounted(async () => {
+  await fetchEnrolledClasses()
   await fetchStudentAssignments()
   await handleUrlJoinCode()
 })

@@ -1,0 +1,28 @@
+[
+  {
+    "rank": 1,
+    "user_id": 8,
+    "name": "Nguyễn Đan Thuỳ",
+    "avatar": "https://lh3.googleusercontent.com/a/ACg8ocJr4t1Q3sPq0oM0E_2Dw8mpxNFOaRco1EKRWUgq4gkDDslESdQ-=s96-c",
+    "avatar_url": "https://lh3.googleusercontent.com/a/ACg8ocJr4t1Q3sPq0oM0E_2Dw8mpxNFOaRco1EKRWUgq4gkDDslESdQ-=s96-c",
+    "total_practices": 1,
+    "total_sessions": 1,
+    "avg_score": 9.4,
+    "best_score": 9.4,
+    "streak": 1,
+    "streak_count": 1
+  },
+  {
+    "rank": 2,
+    "user_id": 10,
+    "name": "Trung Nguyễn Minh",
+    "avatar": "https://lh3.googleusercontent.com/a/ACg8ocJkca7Rp0VvZBIK0djEUbRmY15YOkllZdhrVSR6x7j9V82jHlAc=s96-c",
+    "avatar_url": "https://lh3.googleusercontent.com/a/ACg8ocJkca7Rp0VvZBIK0djEUbRmY15YOkllZdhrVSR6x7j9V82jHlAc=s96-c",
+    "total_practices": 4,
+    "total_sessions": 4,
+    "avg_score": 7.1,
+    "best_score": 9.4,
+    "streak": 1,
+    "streak_count": 1
+  }
+]

@@ -14,8 +14,32 @@
           </v-chip>
         </div>
 
-        <div class="text-caption text-grey-darken-1 font-weight-bold">
+        <div class="text-caption text-grey-darken-1 font-weight-bold mb-2">
           <v-icon size="x-small" color="primary">mdi-email-outline</v-icon> {{ userEmail || 'Guest Learner Account (Unlinked)' }}
+        </div>
+
+        <!-- Classroom Affiliation Status -->
+        <div class="d-flex align-center justify-center">
+          <v-chip
+            v-if="enrolledClass"
+            color="indigo-darken-1"
+            variant="tonal"
+            size="small"
+            class="font-weight-black"
+            prepend-icon="mdi-google-classroom"
+          >
+            Classroom Student: {{ enrolledClass.class_name }} ({{ enrolledClass.join_code }})
+          </v-chip>
+          <v-chip
+            v-else
+            color="teal-darken-1"
+            variant="tonal"
+            size="small"
+            class="font-weight-black"
+            prepend-icon="mdi-earth"
+          >
+            Independent Learner
+          </v-chip>
         </div>
       </div>
 
@@ -98,10 +122,11 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import PdfReportDialog from '@/components/PdfReportDialog.vue'
 
 const showPdfReport = ref(false)
+const enrolledClass = ref(null)
 
 const props = defineProps({
   backendUrl: String,
@@ -119,6 +144,32 @@ const emit = defineEmits(['update-settings'])
 const editName = ref(props.userName)
 const editGoal = ref(props.dailyGoal)
 const isSaving = ref(false)
+
+const fetchStudentClassAffiliation = async () => {
+  const uid = props.userId || Number(localStorage.getItem('user_id'))
+  if (!uid || !props.backendUrl) return
+  try {
+    const res = await fetch(`${props.backendUrl}/api/classes/student/${uid}`)
+    if (res.ok) {
+      const data = await res.json()
+      if (data.classes?.length) {
+        enrolledClass.value = data.classes[0]
+      } else {
+        enrolledClass.value = null
+      }
+    }
+  } catch (e) {
+    console.error('Fetch student class affiliation error:', e)
+  }
+}
+
+onMounted(() => {
+  fetchStudentClassAffiliation()
+})
+
+watch(() => props.userId, () => {
+  fetchStudentClassAffiliation()
+})
 
 const formatDisplayName = (name) => {
   if (!name) return 'Learner'

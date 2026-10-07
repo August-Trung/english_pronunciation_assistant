@@ -1,0 +1,86 @@
+{
+  "import_res": "Restored 12 rows from /app/app/persistent_db_backup.json",
+  "users": [
+    [
+      5,
+      "superadmin@fluent.edu.vn",
+      "Super Admin",
+      null,
+      null,
+      "2026-07-30 17:42:52",
+      0,
+      "super_admin",
+      "1",
+      "PA-8888",
+      "superadmin123"
+    ],
+    [
+      6,
+      "admin@fluent.edu.vn",
+      "School Admin",
+      null,
+      null,
+      "2026-07-30 18:41:50",
+      0,
+      "admin",
+      "1",
+      null,
+      "admin123"
+    ],
+    [
+      7,
+      "teacher@fluent.edu.vn",
+      "Educator Lead",
+      null,
+      null,
+      "2026-07-30 18:41:50",
+      0,
+      "teacher",
+      "1",
+      null,
+      "teacher123"
+    ],
+    [
+      9,
+      "user_9@fluent.edu.vn",
+      "Học Sinh #9",
+      "",
+      null,
+      "2026-10-07 03:37:51",
+      0,
+      "student",
+      null,
+      null,
+      null
+    ],
+    [
+      10,
+      "nguyenminhtrung01082003@gmail.com",
+      "Trung Nguyễn Minh",
+      "https://lh3.googleusercontent.com/a/ACg8ocJkca7Rp0VvZBIK0djEUbRmY15YOkllZdhrVSR6x7j9V82jHlAc=s96-c",
+      null,
+      "2026-10-07 03:42:35",
+      0,
+      "student",
+      null,
+      null,
+      null
+    ]
+  ],
+  "history": [
+    [
+      1,
+      9,
+      "Technology helps us learn faster",
+      ".",
+      1.0,
+      "{\"Pronunciation\": 0.8, \"Fluency\": 0.6, \"Grammar\": 1.4, \"Vocabulary\": 0.7, \"Communication\": 0.5, \"Total\": 3.9, \"Confidence\": 30.0, \"RawConfidence\": 2.0, \"WordCount\": 1, \"SpeechRate\": 0.5, \"SpeedCategory\": \"very_slow\", \"IsFluentSpeaker\": false, \"SpeakerLevel\": \"beginner\", \"DetectedWarnings\": [\"M\\u1ed9t s\\u1ed1 t\\u1eeb c\\u00f3 th\\u1ec3 ch\\u01b0a r\\u00f5 r\\u00e0ng\"]}",
+      "### Lưu ý về chất lượng âm thanh\n\nĐộ rõ của giọng nói: 30%\n\nHệ thống nhận thấy âm thanh có thể bị ồn hoặc micro ở quá xa. Để cải thiện điểm số:\n- Hãy nói rõ ràng hơn ở phòng yên tĩnh\n- Giữ micro gần miệng hơn\n- Thử ghi âm lại nếu điểm số thấp bất thường\n\n---\n\nĐÁNH GIÁ CHI TIẾT KỸ NĂNG:\n\n• Trôi chảy & Diễn đạt:\n  Hãy luyện tập thêm! Hãy cố gắng nói trọn vẹn cả câu thay vì ngắt quãng nhiều.\n\n• Từ vựng:\n  Được rồi! Em có thể kết hợp thêm các tính từ miêu tả phong phú để câu nói hay hơn.\n\n• Ngữ pháp:\n  Lưu ý nhỏ: Em chú ý sử dụng đúng động từ và cấu trúc câu hoàn chỉnh nhé.\n\n• Phát âm:\n  Hãy luyện tập thêm! Hãy phát âm chậm rãi và tròn vành rõ chữ hơn.\n\n• Giao tiếp:\n  Hãy cố gắng mở rộng thêm ý: Nói chi tiết hơn vì sao, khi nào hoặc như thế nào.\n\nLỜI KHUYÊN ĐỂ TIẾN BỘ:\n\nBắt đầu rất tốt! Hãy luyện tập mỗi ngày:\n  + Nói các câu ngắn nhưng đầy đủ chủ ngữ - vị ngữ\n  + Bắt đầu với những chủ đề đơn giản mà em yêu thích\n\nHãy nhớ rằng: Càng luyện tập nhiều, em sẽ nói càng hay! Cố lên nhé!",
+      "2026-10-07 05:37:51",
+      "2026-10-07",
+      0,
+      "/uploads/recordings/rec_9_1791344271_170.wav"
+    ]
+  ],
+  "db_path": "/app/app/app_data.db"
+}

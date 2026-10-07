@@ -1,8 +1,15 @@
 <template>
   <v-app class="bg-background">
     <!-- Full Screen Loader while verifying login session -->
-    <div v-if="isCheckingAuth" class="fill-height d-flex align-center justify-center bg-white" style="min-height: 100vh;">
-      <v-progress-circular indeterminate color="teal" size="48" />
+    <div v-if="isCheckingAuth" class="fill-height d-flex flex-column align-center justify-center bg-white" style="min-height: 100vh;">
+      <v-avatar color="primary-lighten-5" size="64" class="mb-4 elevation-1">
+        <img src="/logo-augusttrung.png" alt="August Trung Logo" height="42" class="d-inline-block" />
+      </v-avatar>
+      <v-progress-circular indeterminate color="primary" size="44" width="4" class="mb-4" />
+      <div class="text-subtitle-1 font-weight-bold text-grey-darken-3 tracking-tight">
+        {{ authLoadingMessage }}
+      </div>
+      <div class="text-caption text-grey mt-1">Please wait a moment...</div>
     </div>
 
     <!-- Standalone Portal Routes (/teacher, /admin, /parent): Render router-view directly! -->
@@ -72,45 +79,48 @@
                 Leaderboard
               </v-btn>
 
-              <!-- Homework Pill for Students -->
-              <v-btn to="/homework" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-clipboard-text-outline" class="font-weight-bold text-none text-body-2">
-                Homework
-              </v-btn>
-
               <!-- History Log Pill for Students -->
               <v-btn to="/history" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-history" class="font-weight-bold text-none text-body-2">
                 History Log
               </v-btn>
 
-              <!-- Teacher Hub Pill (Visible to Teacher / Admin) -->
-              <v-btn
-                v-if="['teacher', 'admin', 'super_admin'].includes(userRole)"
-                to="/teacher"
-                variant="text"
-                color="indigo"
-                rounded="pill"
-                density="comfortable"
-                active-color="indigo-darken-3"
-                prepend-icon="mdi-school"
-                class="font-weight-bold text-none text-body-2"
-              >
-                Teacher Hub
-              </v-btn>
+              <!-- Extended Features (Hidden on myhanh domain) -->
+              <template v-if="!isMyHanhDomain">
+                <!-- Homework Pill for Students -->
+                <v-btn to="/homework" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-clipboard-text-outline" class="font-weight-bold text-none text-body-2">
+                  Homework
+                </v-btn>
 
-              <!-- Admin Console Pill (Visible to Admin / Super Admin) -->
-              <v-btn
-                v-if="['admin', 'super_admin'].includes(userRole)"
-                to="/admin"
-                variant="text"
-                color="grey-darken-4"
-                rounded="pill"
-                density="comfortable"
-                active-color="black"
-                prepend-icon="mdi-shield-crown"
-                class="font-weight-bold text-none text-body-2"
-              >
-                Admin Console
-              </v-btn>
+                <!-- Teacher Hub Pill (Visible to Teacher / Admin) -->
+                <v-btn
+                  v-if="['teacher', 'admin', 'super_admin'].includes(userRole)"
+                  to="/teacher"
+                  variant="text"
+                  color="indigo"
+                  rounded="pill"
+                  density="comfortable"
+                  active-color="indigo-darken-3"
+                  prepend-icon="mdi-school"
+                  class="font-weight-bold text-none text-body-2"
+                >
+                  Teacher Hub
+                </v-btn>
+
+                <!-- Admin Console Pill (Visible to Admin / Super Admin) -->
+                <v-btn
+                  v-if="['admin', 'super_admin'].includes(userRole)"
+                  to="/admin"
+                  variant="text"
+                  color="grey-darken-4"
+                  rounded="pill"
+                  density="comfortable"
+                  active-color="black"
+                  prepend-icon="mdi-shield-crown"
+                  class="font-weight-bold text-none text-body-2"
+                >
+                  Admin Console
+                </v-btn>
+              </template>
             </div>
 
             <v-spacer />
@@ -128,6 +138,18 @@
               >
                 <span class="d-none d-sm-inline">{{ streak }}-Day Streak</span>
                 <span class="d-inline d-sm-none">{{ streak }}d</span>
+              </v-chip>
+              <v-chip
+                v-else
+                color="grey-darken-1"
+                variant="tonal"
+                density="comfortable"
+                class="font-weight-bold text-caption text-sm-body-2 px-2 px-sm-3"
+                prepend-icon="mdi-fire"
+              >
+                <span class="d-none d-sm-inline">0-Day Streak</span>
+                <span class="d-inline d-sm-none">0d</span>
+                <v-tooltip activator="parent" location="bottom">Practice today to ignite your streak!</v-tooltip>
               </v-chip>
 
               <!-- Avatar Dropdown Menu -->
@@ -166,7 +188,7 @@
                     <v-list-item-title class="text-caption font-weight-bold">User Profile</v-list-item-title>
                   </v-list-item>
 
-                  <v-list-item class="rounded mb-1" prepend-icon="mdi-cards-outline" color="error" to="/flashcards">
+                  <v-list-item v-if="!isMyHanhDomain" class="rounded mb-1" prepend-icon="mdi-cards-outline" color="error" to="/flashcards">
                     <v-list-item-title class="text-caption font-weight-bold text-error">Weak Words Flashcards</v-list-item-title>
                   </v-list-item>
 
@@ -226,18 +248,25 @@
 
           <router-link to="/leaderboard" class="nav-item" active-class="nav-item-active">
             <v-icon size="18">mdi-trophy-outline</v-icon>
-            <span class="nav-label">Arena</span>
+            <span class="nav-label">Leaderboard</span>
           </router-link>
 
-          <router-link to="/stats" class="nav-item" active-class="nav-item-active">
-            <v-icon size="18">mdi-chart-bar</v-icon>
-            <span class="nav-label">Analytics</span>
+          <router-link to="/history" class="nav-item" active-class="nav-item-active">
+            <v-icon size="18">mdi-history</v-icon>
+            <span class="nav-label">History</span>
           </router-link>
 
-          <router-link to="/profile" class="nav-item" active-class="nav-item-active">
-            <v-icon size="18">mdi-account-circle-outline</v-icon>
-            <span class="nav-label">Profile</span>
-          </router-link>
+          <template v-if="!isMyHanhDomain">
+            <router-link to="/stats" class="nav-item" active-class="nav-item-active">
+              <v-icon size="18">mdi-chart-bar</v-icon>
+              <span class="nav-label">Analytics</span>
+            </router-link>
+
+            <router-link to="/profile" class="nav-item" active-class="nav-item-active">
+              <v-icon size="18">mdi-account-circle-outline</v-icon>
+              <span class="nav-label">Profile</span>
+            </router-link>
+          </template>
         </nav>
 
         <!-- Dialogs -->
@@ -383,7 +412,13 @@ const route = useRoute()
 // Routing
 const isAdminRoute = computed(() => route.path === '/admin')
 
+// Domain identification: check hostname for myhanh or test query param
+const isMyHanhDomain = computed(() => {
+  return window.location.hostname.includes('myhanh') || window.location.search.includes('mode=myhanh')
+})
+
 const isStandalonePortalRoute = computed(() => {
+  if (isMyHanhDomain.value) return false
   return ['/teacher', '/admin', '/parent'].includes(route.path)
 })
 
@@ -394,6 +429,7 @@ const goToHome = () => {
 // State
 const isLoggedIn = ref(false)
 const isCheckingAuth = ref(true)
+const authLoadingMessage = ref('Loading Fluent Studio...')
 const currentUserId = ref(null)
 const userEmail = ref('')
 const userName = ref('')
@@ -456,7 +492,7 @@ const backendUrl = ref(import.meta.env.VITE_BACKEND_URL || '')
 const isTestingConnection = ref(false)
 const connectionStatus = ref(null)
 
-// Lifecycle - Load persistent device session
+// Lifecycle - Load persistent device session & handle OAuth redirects
 onMounted(async () => {
   const storedUrl = localStorage.getItem('speak_backend_url')
   if (storedUrl && storedUrl.startsWith('http') && !storedUrl.includes('august-trung-english-pronunciation-assistant')) {
@@ -465,16 +501,51 @@ onMounted(async () => {
     backendUrl.value = import.meta.env.VITE_BACKEND_URL || ''
   }
 
-  try {
-    const storedEmail = localStorage.getItem('speak_user_email')
-    if (storedEmail) {
-      userEmail.value = storedEmail
-      await autoLoginByEmail(storedEmail)
+  const hash = window.location.hash
+  if (hash && hash.includes('access_token=')) {
+    // Seamless Google OAuth callback at top-level
+    authLoadingMessage.value = 'Signing in with Google... Preparing your learning studio...'
+    try {
+      const params = new URLSearchParams(hash.substring(1))
+      const accessToken = params.get('access_token')
+      if (accessToken) {
+        const gRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        })
+        if (gRes.ok) {
+          const googleUser = await gRes.json()
+          localStorage.setItem('user_role', 'student')
+          await handleLogin({
+            user_id: 1,
+            email: googleUser.email,
+            name: googleUser.name || googleUser.email.split('@')[0],
+            avatar: googleUser.picture || '',
+            role: 'student'
+          })
+        }
+      }
+    } catch (authErr) {
+      console.error('Google Auth Hash Parsing Error in App.vue:', authErr)
+    } finally {
+      window.history.replaceState({}, document.title, window.location.pathname)
+      isCheckingAuth.value = false
+      if (!isLoggedIn.value && !isStandalonePortalRoute.value && route.path !== '/') {
+        router.replace('/')
+      }
     }
-  } finally {
-    isCheckingAuth.value = false
-    if (!isLoggedIn.value && !isStandalonePortalRoute.value && route.path !== '/') {
-      router.replace('/')
+  } else {
+    // Normal auto login check by stored email
+    try {
+      const storedEmail = localStorage.getItem('speak_user_email')
+      if (storedEmail) {
+        userEmail.value = storedEmail
+        await autoLoginByEmail(storedEmail)
+      }
+    } finally {
+      isCheckingAuth.value = false
+      if (!isLoggedIn.value && !isStandalonePortalRoute.value && route.path !== '/') {
+        router.replace('/')
+      }
     }
   }
 
@@ -492,6 +563,39 @@ watch(
     }
   }
 )
+
+// Calculate user learning streak accurately from practice history dates
+const calculateStreakFromHistory = (histList) => {
+  if (!histList || histList.length === 0) return 0
+  const uniqueDates = [...new Set(histList.map(item => item.date || item.timestamp?.split(' ')[0]))]
+    .filter(Boolean)
+    .sort((a, b) => new Date(b) - new Date(a))
+  
+  if (uniqueDates.length === 0) return 0
+  
+  const todayStr = new Date().toISOString().split('T')[0]
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+  const yesterdayStr = yesterday.toISOString().split('T')[0]
+  
+  // If user didn't practice today or yesterday, streak is broken
+  if (uniqueDates[0] !== todayStr && uniqueDates[0] !== yesterdayStr) {
+    return 0
+  }
+  
+  let count = 1
+  for (let i = 0; i < uniqueDates.length - 1; i++) {
+    const cur = new Date(uniqueDates[i])
+    const prev = new Date(uniqueDates[i + 1])
+    const diffDays = Math.round((cur - prev) / (1000 * 60 * 60 * 24))
+    if (diffDays === 1) {
+      count++
+    } else if (diffDays > 1) {
+      break
+    }
+  }
+  return count
+}
 
 // Auto login device session from Cloud DB
 const autoLoginByEmail = async (emailVal) => {
@@ -511,7 +615,7 @@ const autoLoginByEmail = async (emailVal) => {
         userEmail.value = data.user.email
         userAvatar.value = data.user.avatar || data.user.avatar_url || cachedAvatar
         dailyGoal.value = data.user.daily_goal || 5
-        streak.value = data.user.streak_count || 1
+        streak.value = data.user.streak_count ?? 0
         isLoggedIn.value = true
         
         if (data.user.avatar) localStorage.setItem('speak_user_avatar', data.user.avatar)
@@ -541,7 +645,7 @@ const handleLogin = async (userData) => {
         userEmail.value = data.user.email
         userAvatar.value = userData.avatar || data.user.avatar || data.user.avatar_url || ''
         dailyGoal.value = data.user.daily_goal || 5
-        streak.value = data.user.streak_count || 1
+        streak.value = data.user.streak_count ?? 0
         
         localStorage.setItem('speak_user_email', data.user.email)
         if (userAvatar.value) localStorage.setItem('speak_user_avatar', userAvatar.value)
@@ -570,7 +674,9 @@ const fetchUserProfile = async () => {
       const data = await res.json()
       userName.value = data.name || userName.value
       dailyGoal.value = data.daily_goal || 5
-      streak.value = data.streak_count || 1
+      if (data.streak_count !== undefined && data.streak_count !== null) {
+        streak.value = data.streak_count
+      }
       
       // Fetch badge title if equipped
       if (data.equipped_badge) {
@@ -596,6 +702,11 @@ const fetchUserHistory = async () => {
     if (res.ok) {
       const data = await res.json()
       history.value = Array.isArray(data) ? data : (data.history || [])
+      // Dynamically calculate and update streak from actual history
+      const calcStreak = calculateStreakFromHistory(history.value)
+      if (calcStreak > 0 || streak.value === 0) {
+        streak.value = calcStreak
+      }
     }
   } catch (err) {
     console.error('Fetch history error:', err)
@@ -629,6 +740,7 @@ const clearHistory = async () => {
         method: 'DELETE'
       })
       history.value = []
+      streak.value = 0
     } catch (err) {
       console.error('Clear history error:', err)
     }

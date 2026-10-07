@@ -4,15 +4,21 @@
     <v-card flat border class="pa-4 pa-md-6 mb-4 bg-white" rounded="lg">
       <div class="d-flex flex-column flex-md-row align-start align-md-center justify-space-between ga-3">
         <div class="d-flex align-center ga-3">
-          <v-avatar color="indigo-lighten-5" size="48" class="text-indigo border">
+          <v-avatar color="indigo-lighten-5" size="48" class="text-indigo border flex-shrink-0">
             <v-icon size="28">mdi-history</v-icon>
           </v-avatar>
           <div>
-            <h1 class="text-h6 font-weight-black text-indigo-darken-3 tracking-tight">
-              Student Practice History & Evaluation Logs
-            </h1>
-            <p class="text-caption font-weight-medium text-grey-darken-1 mb-0">
-              Review your past audio recordings, 5-skill AI scores, IPA phonetic alignment, and export reports.
+            <div class="d-flex align-center ga-2 flex-wrap">
+              <h1 class="text-h6 font-weight-black text-indigo-darken-3 tracking-tight mb-0">
+                Student Practice History & Evaluation Logs
+              </h1>
+              <v-chip v-if="userName" size="small" color="indigo" variant="tonal" class="font-weight-black flex-shrink-0">
+                <v-icon start size="x-small">mdi-account-circle</v-icon>
+                {{ userName }}
+              </v-chip>
+            </div>
+            <p class="text-caption font-weight-medium text-grey-darken-1 mb-0 mt-1">
+              Personalized practice portfolio. Review your past audio recordings, 5-skill AI scores, and export reports.
             </p>
           </div>
         </div>
@@ -126,14 +132,14 @@
     <div v-else class="history-groups-container">
       <div v-for="group in groupedHistory" :key="group.date" class="mb-6">
         <!-- Date Header Divider -->
-        <div class="d-flex align-center ga-2 mb-3">
-          <v-chip color="indigo" variant="flat" size="small" class="font-weight-black" prepend-icon="mdi-calendar-check">
+        <div class="d-flex align-center ga-2 mb-3 flex-nowrap">
+          <v-chip color="indigo" variant="flat" size="small" class="font-weight-black flex-shrink-0 text-no-wrap" prepend-icon="mdi-calendar-check">
             {{ group.date }}
           </v-chip>
-          <span class="text-caption font-weight-bold text-grey-darken-2">
+          <span class="text-caption font-weight-bold text-grey-darken-2 flex-shrink-0 text-no-wrap">
             ({{ group.items.length }} session{{ group.items.length > 1 ? 's' : '' }})
           </span>
-          <v-divider class="flex-grow-1" />
+          <v-divider class="flex-grow-1 ml-2" />
         </div>
 
         <!-- Sessions List for this Date -->
@@ -143,28 +149,28 @@
               <div>
                 <!-- Top metadata: Time & Topic -->
                 <div class="d-flex align-center justify-space-between ga-2 mb-2">
-                  <div class="text-caption font-weight-bold text-grey-darken-1 d-flex align-center ga-1">
+                  <div class="text-caption font-weight-bold text-grey-darken-1 d-flex align-center ga-1 flex-shrink-0">
                     <v-icon size="x-small">mdi-clock-outline</v-icon>
-                    <span>{{ item.time }}</span>
+                    <span class="text-no-wrap">{{ item.time }}</span>
                   </div>
                   <v-chip
                     :color="item.score >= 8 ? 'success' : item.score >= 6 ? 'warning' : 'error'"
                     size="x-small"
                     variant="flat"
-                    class="font-weight-black"
+                    class="font-weight-black flex-shrink-0 text-no-wrap"
                   >
                     Score {{ item.score }}/10
                   </v-chip>
                 </div>
 
-                <div class="text-subtitle-2 font-weight-black text-indigo-darken-3 mb-2">
+                <div class="text-subtitle-2 font-weight-black text-indigo-darken-3 mb-2 text-wrap text-break">
                   Topic: "{{ item.topic }}"
                 </div>
 
                 <!-- Transcribed Text -->
                 <div class="bg-grey-lighten-4 pa-2.5 rounded border mb-3 text-caption font-weight-medium">
                   <span class="text-grey-darken-2 font-weight-bold">Transcribed Speech:</span>
-                  <div class="text-grey-darken-4 mt-0.5 font-italic">"{{ item.transcribed }}"</div>
+                  <div class="text-grey-darken-4 mt-0.5 font-italic text-wrap text-break">"{{ item.transcribed }}"</div>
                 </div>
 
                 <!-- IPA Phonetic Alignment if available -->
@@ -254,6 +260,14 @@ const props = defineProps({
   userId: {
     type: Number,
     default: 1
+  },
+  userName: {
+    type: String,
+    default: ''
+  },
+  userEmail: {
+    type: String,
+    default: ''
   }
 })
 

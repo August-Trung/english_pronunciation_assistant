@@ -757,10 +757,15 @@ const props = defineProps({
 const router = useRouter()
 
 const activeUserRole = ref(localStorage.getItem('user_role') || 'student')
+const localTeacherId = ref(Number(localStorage.getItem('user_id')) || null)
 const loginEmail = ref('')
 const loginPassword = ref('')
 const isLoggingIn = ref(false)
 const loginError = ref('')
+
+const getActiveTeacherId = () => {
+  return props.userId || localTeacherId.value || Number(localStorage.getItem('user_id')) || null
+}
 
 const toast = ref({ show: false, text: '', color: 'success', icon: 'mdi-check-circle' })
 const notify = (text, color = 'success', icon = 'mdi-check-circle') => {
@@ -801,7 +806,10 @@ const handleTeacherSignIn = async () => {
       const data = await res.json()
       activeUserRole.value = data.user.role || 'teacher'
       localStorage.setItem('user_role', data.user.role || 'teacher')
-      localStorage.setItem('user_id', data.user.id || 1)
+      if (data.user?.id) {
+        localTeacherId.value = data.user.id
+        localStorage.setItem('user_id', data.user.id)
+      }
       notify(`Welcome! Signed in as ${data.user.name}`, 'success', 'mdi-school')
       await fetchClasses()
     } else {
@@ -1081,8 +1089,10 @@ const totalSubmissionsCount = computed(() => {
 })
 
 const fetchClasses = async () => {
+  const tid = getActiveTeacherId()
+  if (!tid) return
   try {
-    const res = await fetch(`${props.backendUrl}/api/classes/teacher/${props.userId || 1}`)
+    const res = await fetch(`${props.backendUrl}/api/classes/teacher/${tid}`)
     if (res.ok) {
       const data = await res.json()
       classes.value = data.classes || []
@@ -1109,13 +1119,18 @@ const selectClass = async (classId) => {
 
 const submitCreateClass = async () => {
   if (!newClassName.value.trim()) return
+  const tid = getActiveTeacherId()
+  if (!tid) {
+    notify('Please sign in as a teacher to create a classroom.', 'warning', 'mdi-school')
+    return
+  }
   isCreatingClass.value = true
   try {
     const res = await fetch(`${props.backendUrl}/api/classes/create`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        teacher_id: props.userId || 1,
+        teacher_id: tid,
         name: newClassName.value.trim(),
         grade_level: newClassGrade.value
       })
@@ -1135,6 +1150,11 @@ const submitCreateClass = async () => {
 
 const submitCreateAssignment = async () => {
   if (!newAsgTitle.value.trim() || !newAsgSentence.value.trim()) return
+  const tid = getActiveTeacherId()
+  if (!tid) {
+    notify('Please sign in as a teacher to assign homework.', 'warning', 'mdi-school')
+    return
+  }
   isCreatingAsg.value = true
   try {
     const res = await fetch(`${props.backendUrl}/api/assignments/create`, {
@@ -1142,7 +1162,7 @@ const submitCreateAssignment = async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         class_id: selectedClassId.value,
-        teacher_id: props.userId || 1,
+        teacher_id: tid,
         title: newAsgTitle.value.trim(),
         topic_sentence: newAsgSentence.value.trim(),
         due_date: newAsgDueDate.value.trim()

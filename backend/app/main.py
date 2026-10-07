@@ -1310,8 +1310,10 @@ async def analyze_audio(
                     uid_val = 1
             conn = sqlite3.connect(DB_PATH, timeout=10.0)
             cursor = conn.cursor()
-            now_ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            now_dt = datetime.now().strftime("%Y-%m-%d")
+            # Vietnam Timezone (UTC+7)
+            now_vn = datetime.utcnow() + timedelta(hours=7)
+            now_ts = now_vn.strftime("%Y-%m-%d %H:%M:%S")
+            now_dt = now_vn.strftime("%Y-%m-%d")
             breakdown_str = json.dumps(breakdown) if breakdown else "{}"
             feedback_str = feedback or ""
 
@@ -1330,11 +1332,13 @@ async def analyze_audio(
                 INSERT INTO history (user_id, topic, transcribed, score, breakdown_json, feedback, timestamp, date, audio_url, IsXoa)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
             ''', (uid_val, topic or "Luyện nói tự do", transcribed_text, score, breakdown_str, feedback_str, now_ts, now_dt, saved_audio_url))
+            streak_val = calculate_user_streak(uid_val, cursor)
             conn.commit()
             conn.close()
             export_db_to_json()
         except Exception as db_err:
             print(f"Auto save history to DB error: {db_err}")
+            streak_val = 1
         
         # Target reference logic:
         # - For reading mode: target_ref is the exact target model sentence to read.
@@ -1367,7 +1371,9 @@ async def analyze_audio(
             "breakdown": breakdown,
             "reading_result": reading_result,
             "ipa_analysis": ipa_analysis,
-            "ai_analysis": ai_analysis
+            "ai_analysis": ai_analysis,
+            "streak": streak_val,
+            "streak_count": streak_val
         }
         
     except Exception as e:
@@ -1529,7 +1535,10 @@ def export_db_to_json():
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
         backup_data = {}
-        tables = ["users", "history", "user_settings", "weak_words", "achievements"]
+        tables = [
+            "users", "history", "user_settings", "weak_words", "achievements",
+            "classrooms", "class_enrollments", "assignments", "submissions", "tenants"
+        ]
         for table in tables:
             try:
                 cursor.execute(f"SELECT * FROM {table}")
@@ -1570,13 +1579,25 @@ def import_db_from_json():
 
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
+        try:
+            cursor.execute("ALTER TABLE history ADD COLUMN audio_url TEXT")
+        except Exception:
+            pass
+        # Purge temporary test students if any
+        cursor.execute("DELETE FROM users WHERE email LIKE 'user_%@fluent.edu.vn'")
+        cursor.execute("DELETE FROM history WHERE user_id NOT IN (SELECT id FROM users)")
         inserted_count = 0
         for table, rows in backup_data.items():
             if not rows:
                 continue
+            cursor.execute(f"PRAGMA table_info({table})")
+            existing_cols = {col[1] for col in cursor.fetchall()}
             for row in rows:
-                keys = list(row.keys())
-                values = [row[k] for k in keys]
+                filtered_row = {k: v for k, v in row.items() if k in existing_cols}
+                if not filtered_row:
+                    continue
+                keys = list(filtered_row.keys())
+                values = [filtered_row[k] for k in keys]
                 placeholders = ", ".join(["?"] * len(keys))
                 cols = ", ".join(keys)
                 sql = f"INSERT OR REPLACE INTO {table} ({cols}) VALUES ({placeholders})"
@@ -1765,8 +1786,59 @@ def init_db():
 
         # Tự động khôi phục dữ liệu toàn bộ người dùng nếu database vừa bị reset
         import_db_from_json()
+
+        # Dynamic standardization of classroom teacher ownership by official educator email
+        try:
+            conn = sqlite3.connect(DB_PATH, timeout=20.0)
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE classrooms 
+                SET teacher_id = (SELECT id FROM users WHERE email = 'teacher@fluent.edu.vn' AND (IsXoa IS NULL OR IsXoa = 0) LIMIT 1)
+                WHERE (teacher_id NOT IN (SELECT id FROM users WHERE role IN ('teacher', 'admin', 'super_admin')))
+                   OR (join_code = 'CLS-836-58' AND teacher_id != (SELECT id FROM users WHERE email = 'teacher@fluent.edu.vn' LIMIT 1))
+            """)
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print(f"Standardize classroom teacher error: {e}")
     except Exception as e:
         print(f"Database init error: {e}")
+
+def calculate_user_streak(user_id: int, cursor) -> int:
+    """Calculate the consecutive day learning streak for a user from their practice history."""
+    try:
+        cursor.execute('''
+            SELECT DISTINCT date FROM history 
+            WHERE user_id = ? AND (IsXoa IS NULL OR IsXoa = 0)
+            ORDER BY date DESC
+        ''', (user_id,))
+        dates = [r[0] for r in cursor.fetchall() if r[0]]
+        if not dates:
+            return 0
+        
+        now_dt = datetime.now()
+        today_str = now_dt.strftime("%Y-%m-%d")
+        yesterday_str = (now_dt - timedelta(days=1)).strftime("%Y-%m-%d")
+        
+        # Streak requires activity today or yesterday to remain active
+        if dates[0] != today_str and dates[0] != yesterday_str:
+            return 0
+        
+        streak = 1
+        for i in range(len(dates) - 1):
+            try:
+                d1 = datetime.strptime(dates[i], "%Y-%m-%d")
+                d2 = datetime.strptime(dates[i + 1], "%Y-%m-%d")
+                if (d1 - d2).days == 1:
+                    streak += 1
+                else:
+                    break
+            except Exception:
+                break
+        return streak
+    except Exception as e:
+        print(f"Error calculating streak for user {user_id}: {e}")
+        return 0
 
 init_db()
 
@@ -1782,6 +1854,7 @@ def get_user_profile(user_id: int):
             WHERE u.id = ?
         ''', (user_id,))
         row = cursor.fetchone()
+        streak_val = calculate_user_streak(user_id, cursor)
         conn.close()
         if row:
             return {
@@ -1789,11 +1862,13 @@ def get_user_profile(user_id: int):
                 "email": row[1], 
                 "name": row[2], 
                 "avatar": row[3],
-                "daily_goal": row[4] if row[4] is not None else 5
+                "daily_goal": row[4] if row[4] is not None else 5,
+                "streak": streak_val,
+                "streak_count": streak_val
             }
     except Exception as e:
         print(f"Get profile error: {e}")
-    return {"id": user_id, "email": "student@fluent.edu.vn", "name": f"Học Sinh #{user_id}", "avatar": "", "daily_goal": 5}
+    return {"id": user_id, "email": "student@fluent.edu.vn", "name": f"Học Sinh #{user_id}", "avatar": "", "daily_goal": 5, "streak": 0, "streak_count": 0}
 
 @app.get("/api/users/{user_id}/history")
 def get_user_history(user_id: int):
@@ -1862,13 +1937,12 @@ def get_leaderboard(mode: str = "freemium"):
             ''')
             
         rows = cursor.fetchall()
-        conn.close()
         
         leaderboard = []
         for idx, r in enumerate(rows, start=1):
             avg_val = round(r[4], 1) if r[4] else 0.0
             max_val = round(r[5], 1) if r[5] else avg_val
-            stk_val = 1
+            stk_val = calculate_user_streak(r[0], cursor)
             leaderboard.append({
                 "rank": idx,
                 "user_id": r[0],
@@ -1882,6 +1956,7 @@ def get_leaderboard(mode: str = "freemium"):
                 "streak": stk_val,
                 "streak_count": stk_val
             })
+        conn.close()
         return leaderboard
     except Exception as e:
         print(f"Leaderboard error: {e}")
@@ -2033,6 +2108,7 @@ def google_login(req: GoogleLoginRequest):
             else:
                 avatar = existing_avatar or ""
                 
+        streak_val = calculate_user_streak(user_id, cursor)
         conn.close()
         export_db_to_json()
         
@@ -2044,7 +2120,9 @@ def google_login(req: GoogleLoginRequest):
                 "name": name,
                 "avatar": avatar,
                 "avatar_url": avatar,
-                "daily_goal": daily_goal_val or 5
+                "daily_goal": daily_goal_val or 5,
+                "streak": streak_val,
+                "streak_count": streak_val
             }
         }
     except Exception as e:
@@ -2057,7 +2135,9 @@ def google_login(req: GoogleLoginRequest):
                 "name": req.name or "Học sinh",
                 "avatar": req.avatar or "",
                 "avatar_url": req.avatar or "",
-                "daily_goal": 5
+                "daily_goal": 5,
+                "streak": 0,
+                "streak_count": 0
             }
         }
 
@@ -2084,7 +2164,9 @@ def guest_login(req: GuestLoginRequest):
                 "id": user_id,
                 "email": email,
                 "name": name,
-                "avatar": ""
+                "avatar": "",
+                "streak": 0,
+                "streak_count": 0
             }
         }
     except Exception as e:
@@ -2361,6 +2443,40 @@ def get_teacher_classes(teacher_id: int):
     except Exception as e:
         return {"classes": [], "error": str(e)}
 
+@app.get("/api/classes/student/{student_id}")
+def get_student_classes(student_id: int):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT c.id, c.name, c.grade_level, c.join_code,
+                   COALESCE(u.name, 'Educator Lead') as teacher_name,
+                   COALESCE(u.email, 'teacher@fluent.edu.vn') as teacher_email,
+                   e.joined_at
+            FROM class_enrollments e
+            JOIN classrooms c ON e.class_id = c.id
+            LEFT JOIN users u ON c.teacher_id = u.id
+            WHERE e.student_id = ? AND (e.IsXoa IS NULL OR e.IsXoa = 0) AND (c.IsXoa IS NULL OR c.IsXoa = 0)
+            ORDER BY e.joined_at DESC
+        """, (student_id,))
+        rows = cursor.fetchall()
+        conn.close()
+        
+        classes = []
+        for r in rows:
+            classes.append({
+                "class_id": r[0],
+                "class_name": r[1],
+                "grade_level": r[2],
+                "join_code": r[3],
+                "teacher_name": r[4],
+                "teacher_email": r[5],
+                "joined_at": r[6]
+            })
+        return {"classes": classes}
+    except Exception as e:
+        return {"classes": [], "error": str(e)}
+
 @app.get("/api/classes/{class_id}/gradebook")
 def get_class_gradebook(class_id: int):
     try:
@@ -2485,7 +2601,7 @@ def get_student_assignments(student_id: int):
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT a.id, a.class_id, c.name as class_name, a.title, a.topic_sentence, a.target_ipa, a.due_date,
+            SELECT a.id, a.class_id, c.name as class_name, c.join_code, a.title, a.topic_sentence, a.target_ipa, a.due_date,
                    s.id as submission_id, s.score, s.audio_url, s.teacher_feedback
             FROM class_enrollments e
             JOIN classrooms c ON e.class_id = c.id
@@ -2503,15 +2619,16 @@ def get_student_assignments(student_id: int):
                 "assignment_id": r[0],
                 "class_id": r[1],
                 "class_name": r[2],
-                "title": r[3],
-                "topic_sentence": r[4],
-                "target_ipa": r[5],
-                "due_date": r[6],
-                "is_submitted": bool(r[7]),
-                "submission_id": r[7],
-                "score": r[8],
-                "audio_url": r[9],
-                "teacher_feedback": r[10]
+                "join_code": r[3],
+                "title": r[4],
+                "topic_sentence": r[5],
+                "target_ipa": r[6],
+                "due_date": r[7],
+                "is_submitted": bool(r[8]),
+                "submission_id": r[8],
+                "score": r[9],
+                "audio_url": r[10],
+                "teacher_feedback": r[11]
             })
         return {"assignments": assignments}
     except Exception as e:
@@ -3410,7 +3527,8 @@ def query_student_history(req: HistoryQueryRequest):
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
         
-        now_dt = datetime.now()
+        # Vietnam Timezone (UTC+7)
+        now_dt = datetime.utcnow() + timedelta(hours=7)
         today_str = now_dt.strftime("%Y-%m-%d")
         
         where_clause = "user_id = ? AND (IsXoa IS NULL OR IsXoa = 0)"

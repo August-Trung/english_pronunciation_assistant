@@ -67,7 +67,7 @@
               {{ top2.isEmpty ? '--/10' : `${(top2.best_score ?? top2.avg_score ?? 0).toFixed(1).replace('.', ',')}/10` }}
             </div>
             <div class="text-caption text-grey font-weight-bold" style="font-size: 10px;">
-              <v-icon size="x-small" color="deep-orange">mdi-fire</v-icon> {{ top2.streak_count || top2.streak || 1 }}d
+              <v-icon size="x-small" color="deep-orange">mdi-fire</v-icon> {{ top2.streak_count ?? top2.streak ?? 0 }}d
             </div>
           </v-card>
         </v-col>
@@ -97,7 +97,7 @@
               {{ top1.isEmpty ? '--/10' : `${(top1.best_score ?? top1.avg_score ?? 0).toFixed(1).replace('.', ',')}/10` }}
             </div>
             <div class="text-caption text-grey-darken-2 font-weight-bold" style="font-size: 11px;">
-              <v-icon size="x-small" color="deep-orange">mdi-fire</v-icon> {{ top1.streak_count || top1.streak || 1 }}d streak
+              <v-icon size="x-small" color="deep-orange">mdi-fire</v-icon> {{ top1.streak_count ?? top1.streak ?? 0 }}d streak
             </div>
           </v-card>
         </v-col>
@@ -127,7 +127,7 @@
               {{ top3.isEmpty ? '--/10' : `${(top3.best_score ?? top3.avg_score ?? 0).toFixed(1).replace('.', ',')}/10` }}
             </div>
             <div class="text-caption text-grey font-weight-bold" style="font-size: 10px;">
-              <v-icon size="x-small" color="deep-orange">mdi-fire</v-icon> {{ top3.streak_count || top3.streak || 1 }}d
+              <v-icon size="x-small" color="deep-orange">mdi-fire</v-icon> {{ top3.streak_count ?? top3.streak ?? 0 }}d
             </div>
           </v-card>
         </v-col>
@@ -177,7 +177,7 @@
               </td>
               <td class="text-center text-caption font-weight-bold">
                 <v-chip size="x-small" color="deep-orange" variant="tonal" class="font-weight-black">
-                  🔥 {{ item.streak_count || item.streak || 1 }}d
+                  🔥 {{ item.streak_count ?? item.streak ?? 0 }}d
                 </v-chip>
               </td>
               <td class="text-center text-caption font-weight-bold text-grey-darken-2">

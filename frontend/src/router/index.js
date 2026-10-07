@@ -32,4 +32,16 @@ const router = createRouter({
   routes
 })
 
+// Navigation guard for myhanh domain: limit access to core routes
+router.beforeEach((to, from, next) => {
+  const isMyHanh = window.location.hostname.includes('myhanh') || window.location.search.includes('mode=myhanh')
+  if (isMyHanh) {
+    const allowed = ['/', '/shadowing', '/leaderboard', '/history', '/profile']
+    if (!allowed.includes(to.path)) {
+      return next('/')
+    }
+  }
+  next()
+})
+
 export default router

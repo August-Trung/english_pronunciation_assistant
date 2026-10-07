@@ -28,6 +28,12 @@
           Outstanding! You have maintained a {{ streak }}-day learning streak!
         </div>
       </v-card>
+      <v-card v-else border flat class="mb-4 pa-3 text-center bg-grey-lighten-4 text-grey-darken-3" rounded="lg">
+        <div class="text-subtitle-2 font-weight-bold d-flex align-center justify-center ga-1">
+          <v-icon color="grey-darken-1">mdi-fire</v-icon>
+          Ignite your streak! Complete at least 1 speaking session today to start your learning streak.
+        </div>
+      </v-card>
 
       <!-- Overview Cards -->
       <v-row class="ma-0 mb-4 ga-2">

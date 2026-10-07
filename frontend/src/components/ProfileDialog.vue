@@ -24,8 +24,32 @@
             </v-chip>
           </div>
 
-          <div class="text-caption text-grey-darken-1 font-weight-bold">
+          <div class="text-caption text-grey-darken-1 font-weight-bold mb-2">
             <v-icon size="x-small" color="primary">mdi-email-outline</v-icon> {{ userEmail || 'Guest Learner Account' }}
+          </div>
+
+          <!-- Classroom Affiliation Status -->
+          <div class="d-flex align-center justify-center">
+            <v-chip
+              v-if="enrolledClass"
+              color="indigo-darken-1"
+              variant="tonal"
+              size="small"
+              class="font-weight-black"
+              prepend-icon="mdi-google-classroom"
+            >
+              Classroom Student: {{ enrolledClass.class_name }} ({{ enrolledClass.join_code }})
+            </v-chip>
+            <v-chip
+              v-else
+              color="teal-darken-1"
+              variant="tonal"
+              size="small"
+              class="font-weight-black"
+              prepend-icon="mdi-earth"
+            >
+              Independent Learner
+            </v-chip>
           </div>
         </div>
 
@@ -108,12 +132,32 @@ const dialog = ref(props.modelValue)
 const editName = ref(props.userName)
 const editGoal = ref(props.dailyGoal)
 const isSaving = ref(false)
+const enrolledClass = ref(null)
+
+const fetchStudentClassAffiliation = async () => {
+  const uid = props.userId || Number(localStorage.getItem('user_id'))
+  if (!uid || !props.backendUrl) return
+  try {
+    const res = await fetch(`${props.backendUrl}/api/classes/student/${uid}`)
+    if (res.ok) {
+      const data = await res.json()
+      if (data.classes?.length) {
+        enrolledClass.value = data.classes[0]
+      } else {
+        enrolledClass.value = null
+      }
+    }
+  } catch (e) {
+    console.error('Fetch student class affiliation error:', e)
+  }
+}
 
 watch(() => props.modelValue, (val) => {
   dialog.value = val
   if (val) {
     editName.value = props.userName
     editGoal.value = props.dailyGoal
+    fetchStudentClassAffiliation()
   }
 })
 

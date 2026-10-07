@@ -2,6 +2,8 @@
   <HistoryTab
     :backend-url="backendUrl"
     :user-id="userId"
+    :user-name="userName"
+    :user-email="userEmail"
   />
 </template>
 
@@ -16,6 +18,14 @@ defineProps({
   userId: {
     type: Number,
     default: null
+  },
+  userName: {
+    type: String,
+    default: ''
+  },
+  userEmail: {
+    type: String,
+    default: ''
   }
 })
 </script>
