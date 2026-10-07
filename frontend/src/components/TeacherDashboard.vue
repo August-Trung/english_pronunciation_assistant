@@ -146,41 +146,105 @@
 
     <!-- Main Content Area -->
     <v-row density="comfortable">
-      <!-- Left Column: Class Selector Tabs -->
-      <v-col cols="12" md="3">
-        <v-card border flat class="pa-3 bg-white rounded-lg">
-          <div class="text-subtitle-2 font-weight-black text-secondary mb-2 d-flex align-center justify-space-between">
-            <span>MY CLASSES</span>
-            <v-btn icon="mdi-refresh" variant="text" density="compact" size="x-small" @click="fetchClasses" />
+      <!-- Mobile Horizontal Class Switcher Bar (Visible on mobile/tablet) -->
+      <v-col cols="12" class="d-md-none pb-0">
+        <v-card border flat class="pa-3 bg-white rounded-lg mb-2">
+          <div class="d-flex align-center justify-space-between mb-2">
+            <span class="text-caption font-weight-black text-secondary">ACTIVE CLASSROOMS ({{ classes.length }})</span>
+            <v-btn size="x-small" color="primary" variant="flat" prepend-icon="mdi-plus" class="font-weight-bold text-none" @click="showCreateClassModal = true">
+              New Class
+            </v-btn>
           </div>
-
-          <v-list density="compact" class="pa-0">
-            <v-list-item
+          <div class="d-flex align-center ga-2 overflow-x-auto pb-1" style="white-space: nowrap;">
+            <v-chip
               v-for="cls in classes"
               :key="cls.id"
-              :active="selectedClassId === cls.id"
-              active-color="primary"
-              class="rounded-lg mb-1 border"
+              :color="selectedClassId === cls.id ? 'primary' : 'grey-lighten-4'"
+              :variant="selectedClassId === cls.id ? 'flat' : 'tonal'"
+              size="comfortable"
+              class="font-weight-bold flex-shrink-0 cursor-pointer"
               @click="selectClass(cls.id)"
             >
-              <template #prepend>
-                <v-avatar color="indigo-lighten-5" size="32" class="mr-2 text-indigo font-weight-black text-caption">
-                  {{ cls.name.slice(0, 2).toUpperCase() }}
-                </v-avatar>
-              </template>
-              <v-list-item-title class="font-weight-black text-body-2">{{ cls.name }}</v-list-item-title>
-              <v-list-item-subtitle class="text-caption d-flex align-center ga-1">
-                <span>Code:</span>
-                <v-chip size="x-small" color="primary" variant="flat" class="font-weight-mono font-weight-black" style="height: 16px;">
-                  {{ cls.join_code }}
-                </v-chip>
-              </v-list-item-subtitle>
-            </v-list-item>
+              <v-icon start size="small">mdi-google-classroom</v-icon>
+              {{ cls.name }} ({{ cls.student_count || 0 }})
+            </v-chip>
+          </div>
+        </v-card>
+      </v-col>
 
-            <div v-if="!classes.length" class="text-center pa-4 text-caption text-grey">
-              No classes created yet. Click "Create New Class" to start!
+      <!-- Desktop Left Column: Sticky & Searchable Class Selector List -->
+      <v-col cols="12" md="3" class="d-none d-md-block">
+        <v-card border flat class="pa-3 bg-white rounded-lg class-sidebar-sticky">
+          <!-- Header with Quick Add & Refresh -->
+          <div class="text-subtitle-2 font-weight-black text-secondary mb-2 d-flex align-center justify-space-between">
+            <span class="d-flex align-center ga-1">
+              <v-icon size="small" color="secondary">mdi-google-classroom</v-icon>
+              <span>MY CLASSES ({{ classes.length }})</span>
+            </span>
+            <div class="d-flex align-center ga-1">
+              <v-btn icon="mdi-plus" variant="tonal" color="primary" density="compact" size="small" title="Quick Add Class" @click="showCreateClassModal = true" />
+              <v-btn icon="mdi-refresh" variant="text" density="compact" size="small" title="Refresh Class List" @click="fetchClasses" />
             </div>
-          </v-list>
+          </div>
+
+          <!-- Quick Search Filter for Classes -->
+          <v-text-field
+            v-if="classes.length > 2"
+            v-model="searchClassText"
+            placeholder="Search classes..."
+            variant="outlined"
+            density="compact"
+            hide-details
+            clearable
+            prepend-inner-icon="mdi-magnify"
+            class="mb-2"
+          />
+
+          <!-- Scrollable Class Cards Container -->
+          <div class="class-list-scroll">
+            <v-list density="compact" class="pa-0">
+              <v-list-item
+                v-for="cls in filteredClasses"
+                :key="cls.id"
+                :active="selectedClassId === cls.id"
+                active-color="primary"
+                class="rounded-lg mb-2 border pa-2"
+                style="cursor: pointer;"
+                @click="selectClass(cls.id)"
+              >
+                <template #prepend>
+                  <v-avatar color="indigo-lighten-5" size="34" class="mr-2 text-indigo font-weight-black text-caption border">
+                    {{ cls.name.slice(0, 2).toUpperCase() }}
+                  </v-avatar>
+                </template>
+                <v-list-item-title class="font-weight-black text-body-2 text-truncate">{{ cls.name }}</v-list-item-title>
+                <v-list-item-subtitle class="mt-1 d-flex align-center flex-wrap ga-1">
+                  <!-- Student Count Chip -->
+                  <v-chip size="x-small" color="teal-darken-1" variant="tonal" class="font-weight-bold" prepend-icon="mdi-account-group" style="height: 18px;">
+                    <span class="ml-0.5">{{ cls.student_count || 0 }} {{ (cls.student_count === 1) ? 'student' : 'students' }}</span>
+                  </v-chip>
+                  <!-- Join Code Chip -->
+                  <v-chip size="x-small" color="primary" variant="flat" class="font-weight-mono font-weight-black" style="height: 18px;">
+                    {{ cls.join_code }}
+                  </v-chip>
+                </v-list-item-subtitle>
+                <div class="text-caption text-grey text-truncate mt-0.5" style="font-size: 0.7rem !important;">
+                  {{ cls.grade_level }}
+                </div>
+              </v-list-item>
+
+              <!-- Empty state for search -->
+              <div v-if="classes.length && !filteredClasses.length" class="text-center pa-4 text-caption text-grey">
+                <v-icon size="small" color="grey">mdi-magnify-close</v-icon>
+                <div class="mt-1">No classes match "{{ searchClassText }}"</div>
+              </div>
+
+              <!-- Empty state for zero classes -->
+              <div v-else-if="!classes.length" class="text-center pa-4 text-caption text-grey">
+                No classes created yet. Click "Create New Class" to start!
+              </div>
+            </v-list>
+          </div>
         </v-card>
       </v-col>
 
@@ -916,6 +980,17 @@ const filteredStudents = computed(() => {
   return stds.filter(s => (s.name || '').toLowerCase().includes(q) || (s.email || '').toLowerCase().includes(q))
 })
 
+const searchClassText = ref('')
+const filteredClasses = computed(() => {
+  if (!searchClassText.value?.trim()) return classes.value
+  const q = searchClassText.value.toLowerCase().trim()
+  return classes.value.filter(c => 
+    (c.name || '').toLowerCase().includes(q) ||
+    (c.join_code || '').toLowerCase().includes(q) ||
+    (c.grade_level || '').toLowerCase().includes(q)
+  )
+})
+
 // Edit / Delete Class states
 const showEditClassModal = ref(false)
 const editClassName = ref('')
@@ -1249,5 +1324,37 @@ onMounted(() => {
 <style scoped>
 .bg-gradient-indigo {
   background: linear-gradient(135deg, #3f51b5 0%, #1a237e 100%);
+}
+
+.class-sidebar-sticky {
+  position: sticky;
+  top: 76px;
+  max-height: calc(100vh - 96px);
+  display: flex;
+  flex-direction: column;
+}
+
+.class-list-scroll {
+  overflow-y: auto;
+  max-height: calc(100vh - 280px);
+  padding-right: 2px;
+}
+
+.class-list-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.class-list-scroll::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.class-list-scroll::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 4px;
+}
+
+.class-list-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;
 }
 </style>

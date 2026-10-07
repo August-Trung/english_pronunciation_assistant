@@ -74,10 +74,34 @@
       </div>
     </v-card>
 
+    <!-- Filter Tabs by Classroom if Student is in Multiple Classes -->
+    <div v-if="enrolledClasses.length > 1" class="d-flex align-center ga-2 overflow-x-auto pb-2 mb-3">
+      <v-chip
+        :color="selectedClassFilter === 'all' ? 'primary' : 'grey-lighten-4'"
+        :variant="selectedClassFilter === 'all' ? 'flat' : 'tonal'"
+        size="small"
+        class="font-weight-bold flex-shrink-0 cursor-pointer"
+        @click="selectedClassFilter = 'all'"
+      >
+        All Classrooms ({{ assignments.length }})
+      </v-chip>
+      <v-chip
+        v-for="cls in enrolledClasses"
+        :key="cls.class_id"
+        :color="selectedClassFilter === cls.class_id ? 'primary' : 'grey-lighten-4'"
+        :variant="selectedClassFilter === cls.class_id ? 'flat' : 'tonal'"
+        size="small"
+        class="font-weight-bold flex-shrink-0 cursor-pointer"
+        @click="selectedClassFilter = cls.class_id"
+      >
+        {{ cls.class_name }} ({{ getAssignmentsCountForClass(cls.class_id) }})
+      </v-chip>
+    </div>
+
     <!-- Assignments List -->
     <div class="d-flex flex-column ga-3">
       <v-card
-        v-for="asg in assignments"
+        v-for="asg in filteredAssignments"
         :key="asg.assignment_id"
         border
         flat
@@ -137,7 +161,7 @@
         </div>
       </v-card>
 
-      <div v-if="!assignments.length" class="text-center pa-8 bg-white border rounded-lg">
+      <div v-if="!filteredAssignments.length" class="text-center pa-8 bg-white border rounded-lg">
         <v-icon size="48" color="grey-lighten-1">mdi-clipboard-check-outline</v-icon>
         <template v-if="enrolledClasses.length">
           <div class="text-subtitle-1 font-weight-black text-indigo-darken-2 mt-2">
@@ -290,6 +314,16 @@ const enrolledClasses = computed(() => {
   })
   return Object.values(map)
 })
+
+const selectedClassFilter = ref('all')
+const filteredAssignments = computed(() => {
+  if (selectedClassFilter.value === 'all') return assignments.value
+  return assignments.value.filter(a => a.class_id === selectedClassFilter.value)
+})
+
+const getAssignmentsCountForClass = (classId) => {
+  return assignments.value.filter(a => a.class_id === classId).length
+}
 
 const getActiveStudentId = () => {
   return props.userId || Number(localStorage.getItem('user_id')) || null
