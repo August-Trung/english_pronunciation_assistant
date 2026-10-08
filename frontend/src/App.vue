@@ -255,6 +255,11 @@
             <span class="nav-label">Shadowing</span>
           </router-link>
 
+          <router-link to="/homework" class="nav-item" active-class="nav-item-active">
+            <v-icon size="18">mdi-clipboard-text-outline</v-icon>
+            <span class="nav-label">Homework</span>
+          </router-link>
+
           <router-link to="/leaderboard" class="nav-item" active-class="nav-item-active">
             <v-icon size="18">mdi-trophy-outline</v-icon>
             <span class="nav-label">Leaderboard</span>
