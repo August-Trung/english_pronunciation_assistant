@@ -51,186 +51,330 @@
 
     <!-- Main Workspace for logged in students -->
     <template v-else>
-      <!-- Premium Modern App Bar -->
-      <v-app-bar color="white" flat border class="px-2 px-md-8 px-lg-12">
-          <div class="d-flex align-center w-100">
-            <!-- Logo & Title Clickable Link to Home -->
-            <router-link to="/" class="d-flex align-center ga-1 ga-sm-2 text-decoration-none text-grey-darken-4" style="cursor: pointer;">
-              <img src="/logo-augusttrung.png" alt="August Trung Logo" height="34" class="mr-1 d-block" />
-              <div>
-                <span class="text-subtitle-1 font-weight-black text-primary tracking-tight">FLUENT</span>
-                <span class="d-none d-md-inline text-caption font-weight-bold text-grey-darken-1 border-s ps-2 ml-2">
-                  Academic English Pronunciation Studio
-                </span>
-              </div>
-            </router-link>
-
-            <!-- Desktop Navigation Pills (Dynamic by Role) -->
-            <div class="d-none d-sm-flex align-center ga-1 ml-4">
-              <v-btn to="/" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-microphone" class="font-weight-bold text-none text-body-2">
-                Speaking
-              </v-btn>
-              <v-btn to="/shadowing" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-waveform" class="font-weight-bold text-none text-body-2">
-                Shadowing
-              </v-btn>
-              <v-btn to="/flashcards" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-cards-variant" class="font-weight-bold text-none text-body-2">
-                Flashcards
-              </v-btn>
-              <v-btn to="/picture-practice" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-image-filter-frames" class="font-weight-bold text-none text-body-2">
-                Describe Picture
-              </v-btn>
-
-              <!-- Leaderboard Pill -->
-              <v-btn to="/leaderboard" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-trophy-outline" class="font-weight-bold text-none text-body-2">
-                Leaderboard
-              </v-btn>
-
-              <!-- History Log Pill for Students -->
-              <v-btn to="/history" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-history" class="font-weight-bold text-none text-body-2">
-                History Log
-              </v-btn>
-
-              <!-- Homework Pill for Students (Visible everywhere) -->
-              <v-btn to="/homework" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-clipboard-text-outline" class="font-weight-bold text-none text-body-2">
-                Homework
-              </v-btn>
-
-              <!-- Teacher Hub Pill (Visible to Teacher / Admin everywhere) -->
-              <v-btn
-                v-if="['teacher', 'admin', 'super_admin'].includes(userRole)"
-                to="/teacher"
-                variant="text"
-                color="indigo"
-                rounded="pill"
-                density="comfortable"
-                active-color="indigo-darken-3"
-                prepend-icon="mdi-school"
-                class="font-weight-bold text-none text-body-2"
-              >
-                Teacher Hub
-              </v-btn>
-
-              <!-- Admin Console Pill (Visible to Admin / Super Admin ONLY on non-myhanh domain) -->
-              <v-btn
-                v-if="!isMyHanhDomain && ['admin', 'super_admin'].includes(userRole)"
-                to="/admin"
-                variant="text"
-                color="grey-darken-4"
-                rounded="pill"
-                density="comfortable"
-                active-color="black"
-                prepend-icon="mdi-shield-crown"
-                class="font-weight-bold text-none text-body-2"
-              >
-                Admin Console
-              </v-btn>
+      <!-- Collapsible Modern Sidebar Navigation Drawer -->
+      <v-navigation-drawer
+        v-model="drawer"
+        :rail="mdAndUp && isRail"
+        :permanent="mdAndUp"
+        width="240"
+        rail-width="68"
+        class="fluent-sidebar bg-white border-e elevation-0"
+      >
+        <!-- Brand Header inside Drawer -->
+        <div class="sidebar-brand-header d-flex align-center px-3 py-3 border-b" :class="{ 'justify-center': mdAndUp && isRail }">
+          <router-link to="/" class="d-flex align-center text-decoration-none overflow-hidden" :class="{ 'justify-center': mdAndUp && isRail }">
+            <img src="/logo-augusttrung.png" alt="August Trung Logo" height="32" class="flex-shrink-0" />
+            <div v-if="!mdAndUp || !isRail" class="ml-2 text-truncate">
+              <div class="text-subtitle-2 font-weight-black text-primary tracking-tight" style="line-height: 1.2;">FLUENT</div>
+              <div class="text-caption font-weight-bold text-grey-darken-1 text-truncate" style="font-size: 10px; line-height: 1;">Academic Studio</div>
             </div>
+          </router-link>
+        </div>
 
-            <v-spacer />
+        <!-- Sidebar Navigation List -->
+        <v-list density="comfortable" nav class="px-2 py-2">
+          <!-- Section 1: Studio Modes -->
+          <div v-if="!mdAndUp || !isRail" class="text-caption font-weight-black text-grey-darken-1 px-3 pt-2 pb-1 text-uppercase" style="font-size: 10px; letter-spacing: 0.5px;">
+            Studio Modes
+          </div>
+          <v-divider v-else class="my-2" />
 
-            <!-- Ultra Clean Right Actions (Streak + Avatar Dropdown Menu) -->
-            <div class="d-flex align-center ga-2">
-              <!-- Streak Badge -->
-              <v-chip
-                v-if="streak > 0"
-                color="warning"
-                variant="flat"
-                density="comfortable"
-                class="font-weight-black text-caption text-sm-body-2 px-2 px-sm-3"
-                prepend-icon="mdi-fire"
-              >
-                <span class="d-none d-sm-inline">{{ streak }}-Day Streak</span>
-                <span class="d-inline d-sm-none">{{ streak }}d</span>
-              </v-chip>
-              <v-chip
-                v-else
-                color="grey-darken-1"
-                variant="tonal"
-                density="comfortable"
-                class="font-weight-bold text-caption text-sm-body-2 px-2 px-sm-3"
-                prepend-icon="mdi-fire"
-              >
-                <span class="d-none d-sm-inline">0-Day Streak</span>
-                <span class="d-inline d-sm-none">0d</span>
-                <v-tooltip activator="parent" location="bottom">Practice today to ignite your streak!</v-tooltip>
-              </v-chip>
+          <v-list-item
+            to="/"
+            rounded="lg"
+            color="primary"
+            active-class="sidebar-item-active"
+            prepend-icon="mdi-microphone"
+            class="mb-1"
+          >
+            <v-list-item-title class="font-weight-bold text-body-2">Speaking</v-list-item-title>
+            <v-tooltip v-if="mdAndUp && isRail" activator="parent" location="right">Speaking Studio</v-tooltip>
+          </v-list-item>
 
-              <!-- Avatar Dropdown Menu -->
-              <v-menu location="bottom end" transition="scale-transition">
-                <template #activator="{ props: menuProps }">
-                  <v-avatar
-                    v-bind="menuProps"
-                    size="36"
-                    color="primary-lighten-4"
-                    class="border cursor-pointer elevation-1"
-                  >
-                    <v-img v-if="userAvatar" :src="userAvatar" alt="Avatar" />
-                    <v-icon v-else size="small" color="primary">mdi-account</v-icon>
-                  </v-avatar>
+          <v-list-item
+            to="/shadowing"
+            rounded="lg"
+            color="primary"
+            active-class="sidebar-item-active"
+            prepend-icon="mdi-waveform"
+            class="mb-1"
+          >
+            <v-list-item-title class="font-weight-bold text-body-2">Shadowing</v-list-item-title>
+            <v-tooltip v-if="mdAndUp && isRail" activator="parent" location="right">Shadowing Studio</v-tooltip>
+          </v-list-item>
+
+          <v-list-item
+            to="/flashcards"
+            rounded="lg"
+            color="primary"
+            active-class="sidebar-item-active"
+            prepend-icon="mdi-cards-variant"
+            class="mb-1"
+          >
+            <v-list-item-title class="font-weight-bold text-body-2">Flashcards</v-list-item-title>
+            <v-tooltip v-if="mdAndUp && isRail" activator="parent" location="right">Vocabulary Flashcards</v-tooltip>
+          </v-list-item>
+
+          <v-list-item
+            to="/picture-practice"
+            rounded="lg"
+            color="primary"
+            active-class="sidebar-item-active"
+            prepend-icon="mdi-image-filter-frames"
+            class="mb-1"
+          >
+            <v-list-item-title class="font-weight-bold text-body-2">Describe Picture</v-list-item-title>
+            <v-tooltip v-if="mdAndUp && isRail" activator="parent" location="right">Describe Picture</v-tooltip>
+          </v-list-item>
+
+          <!-- Section 2: Activities & Progress -->
+          <div v-if="!mdAndUp || !isRail" class="text-caption font-weight-black text-grey-darken-1 px-3 pt-3 pb-1 text-uppercase" style="font-size: 10px; letter-spacing: 0.5px;">
+            Activities & Progress
+          </div>
+          <v-divider v-else class="my-2" />
+
+          <v-list-item
+            to="/homework"
+            rounded="lg"
+            color="primary"
+            active-class="sidebar-item-active"
+            prepend-icon="mdi-clipboard-text-outline"
+            class="mb-1"
+          >
+            <v-list-item-title class="font-weight-bold text-body-2">Homework</v-list-item-title>
+            <v-tooltip v-if="mdAndUp && isRail" activator="parent" location="right">Homework</v-tooltip>
+          </v-list-item>
+
+          <v-list-item
+            to="/leaderboard"
+            rounded="lg"
+            color="primary"
+            active-class="sidebar-item-active"
+            prepend-icon="mdi-trophy-outline"
+            class="mb-1"
+          >
+            <v-list-item-title class="font-weight-bold text-body-2">Leaderboard</v-list-item-title>
+            <v-tooltip v-if="mdAndUp && isRail" activator="parent" location="right">Leaderboard</v-tooltip>
+          </v-list-item>
+
+          <v-list-item
+            to="/history"
+            rounded="lg"
+            color="primary"
+            active-class="sidebar-item-active"
+            prepend-icon="mdi-history"
+            class="mb-1"
+          >
+            <v-list-item-title class="font-weight-bold text-body-2">History Log</v-list-item-title>
+            <v-tooltip v-if="mdAndUp && isRail" activator="parent" location="right">History Log</v-tooltip>
+          </v-list-item>
+
+          <v-list-item
+            v-if="!isMyHanhDomain"
+            to="/stats"
+            rounded="lg"
+            color="primary"
+            active-class="sidebar-item-active"
+            prepend-icon="mdi-chart-bar"
+            class="mb-1"
+          >
+            <v-list-item-title class="font-weight-bold text-body-2">Analytics</v-list-item-title>
+            <v-tooltip v-if="mdAndUp && isRail" activator="parent" location="right">Analytics</v-tooltip>
+          </v-list-item>
+
+          <!-- Section 3: Portals (Teacher / Admin) -->
+          <template v-if="['teacher', 'admin', 'super_admin'].includes(userRole)">
+            <div v-if="!mdAndUp || !isRail" class="text-caption font-weight-black text-indigo px-3 pt-3 pb-1 text-uppercase" style="font-size: 10px; letter-spacing: 0.5px;">
+              Portals
+            </div>
+            <v-divider v-else class="my-2" />
+
+            <v-list-item
+              to="/teacher"
+              rounded="lg"
+              color="indigo-darken-2"
+              active-class="sidebar-item-active"
+              prepend-icon="mdi-school"
+              class="mb-1"
+            >
+              <v-list-item-title class="font-weight-bold text-body-2 text-indigo-darken-2">Teacher Hub</v-list-item-title>
+              <v-tooltip v-if="mdAndUp && isRail" activator="parent" location="right">Teacher Hub</v-tooltip>
+            </v-list-item>
+
+            <v-list-item
+              v-if="!isMyHanhDomain && ['admin', 'super_admin'].includes(userRole)"
+              to="/admin"
+              rounded="lg"
+              color="purple-darken-3"
+              active-class="sidebar-item-active"
+              prepend-icon="mdi-shield-crown"
+              class="mb-1"
+            >
+              <v-list-item-title class="font-weight-bold text-body-2 text-purple-darken-3">Admin Console</v-list-item-title>
+              <v-tooltip v-if="mdAndUp && isRail" activator="parent" location="right">Admin Console</v-tooltip>
+            </v-list-item>
+          </template>
+        </v-list>
+
+        <!-- Append slot: Sidebar Rail Toggle Button on Desktop -->
+        <template #append>
+          <div class="pa-2 border-t">
+            <v-btn
+              v-if="mdAndUp"
+              variant="text"
+              block
+              density="comfortable"
+              class="text-caption font-weight-bold text-grey-darken-2 px-2"
+              :class="isRail ? 'justify-center' : 'justify-start'"
+              @click="toggleSidebar"
+            >
+              <v-icon :icon="isRail ? 'mdi-chevron-double-right' : 'mdi-chevron-double-left'" size="small" />
+              <span v-if="!isRail" class="ml-2 text-none">Collapse Sidebar</span>
+              <v-tooltip v-if="isRail" activator="parent" location="right">Expand Sidebar</v-tooltip>
+            </v-btn>
+          </div>
+        </template>
+      </v-navigation-drawer>
+
+      <!-- Streamlined Modern App Bar -->
+      <v-app-bar color="white" flat border class="px-2 px-md-4">
+        <div class="d-flex align-center w-100">
+          <!-- Mobile Drawer Toggle -->
+          <v-btn
+            icon
+            variant="text"
+            density="comfortable"
+            class="d-md-none mr-2"
+            @click="drawer = !drawer"
+          >
+            <v-icon>mdi-menu</v-icon>
+          </v-btn>
+
+          <!-- Desktop Quick Rail Toggle Button -->
+          <v-btn
+            v-if="mdAndUp"
+            icon
+            variant="text"
+            density="comfortable"
+            size="small"
+            class="mr-2 text-grey-darken-1"
+            @click="toggleSidebar"
+          >
+            <v-icon size="small">{{ isRail ? 'mdi-menu-open' : 'mdi-menu' }}</v-icon>
+            <v-tooltip activator="parent" location="bottom">{{ isRail ? 'Expand Sidebar' : 'Collapse Sidebar' }}</v-tooltip>
+          </v-btn>
+
+          <!-- Current Page Title / Breadcrumb -->
+          <div class="d-flex align-center ga-2">
+            <v-icon :color="activePageInfo.color" size="small">{{ activePageInfo.icon }}</v-icon>
+            <span class="text-subtitle-2 font-weight-black text-grey-darken-3">{{ activePageInfo.title }}</span>
+          </div>
+
+          <v-spacer />
+
+          <!-- Ultra Clean Right Actions (Streak + Avatar Dropdown Menu) -->
+          <div class="d-flex align-center ga-2">
+            <!-- Streak Badge -->
+            <v-chip
+              v-if="streak > 0"
+              color="warning"
+              variant="flat"
+              density="comfortable"
+              class="font-weight-black text-caption text-sm-body-2 px-2 px-sm-3"
+              prepend-icon="mdi-fire"
+            >
+              <span class="d-none d-sm-inline">{{ streak }}-Day Streak</span>
+              <span class="d-inline d-sm-none">{{ streak }}d</span>
+            </v-chip>
+            <v-chip
+              v-else
+              color="grey-darken-1"
+              variant="tonal"
+              density="comfortable"
+              class="font-weight-bold text-caption text-sm-body-2 px-2 px-sm-3"
+              prepend-icon="mdi-fire"
+            >
+              <span class="d-none d-sm-inline">0-Day Streak</span>
+              <span class="d-inline d-sm-none">0d</span>
+              <v-tooltip activator="parent" location="bottom">Practice today to ignite your streak!</v-tooltip>
+            </v-chip>
+
+            <!-- Avatar Dropdown Menu -->
+            <v-menu location="bottom end" transition="scale-transition">
+              <template #activator="{ props: menuProps }">
+                <v-avatar
+                  v-bind="menuProps"
+                  size="36"
+                  color="primary-lighten-4"
+                  class="border cursor-pointer elevation-1"
+                >
+                  <v-img v-if="userAvatar" :src="userAvatar" alt="Avatar" />
+                  <v-icon v-else size="small" color="primary">mdi-account</v-icon>
+                </v-avatar>
+              </template>
+
+              <v-list class="pa-1 border rounded-lg shadow-lg" min-width="220">
+                <!-- User Header in Menu -->
+                <v-list-item class="border-b mb-1 pb-2">
+                  <template #prepend>
+                    <v-avatar size="32" color="primary-lighten-4" class="mr-2">
+                      <v-img v-if="userAvatar" :src="userAvatar" />
+                      <v-icon v-else size="x-small" color="primary">mdi-account</v-icon>
+                    </v-avatar>
+                  </template>
+                  <v-list-item-title class="font-weight-black text-caption text-sm-subtitle-2">
+                    {{ userName }}
+                  </v-list-item-title>
+                  <v-list-item-subtitle class="text-caption text-grey">
+                    Role: {{ userRole.toUpperCase() }}
+                  </v-list-item-subtitle>
+                </v-list-item>
+
+                <!-- Menu Actions -->
+                <template v-if="!isMyHanhDomain && ['admin', 'super_admin'].includes(userRole)">
+                  <v-list-item class="rounded mb-1 bg-purple-lighten-5" prepend-icon="mdi-shield-crown" color="purple-darken-3" to="/admin">
+                    <v-list-item-title class="text-caption font-weight-black text-purple-darken-3">Admin Console</v-list-item-title>
+                  </v-list-item>
+                </template>
+                <template v-if="['teacher', 'admin', 'super_admin'].includes(userRole)">
+                  <v-list-item class="rounded mb-1 bg-indigo-lighten-5" prepend-icon="mdi-school" color="indigo-darken-3" to="/teacher">
+                    <v-list-item-title class="text-caption font-weight-black text-indigo-darken-3">Teacher Hub</v-list-item-title>
+                  </v-list-item>
                 </template>
 
-                <v-list class="pa-1 border rounded-lg shadow-lg" min-width="220">
-                  <!-- User Header in Menu -->
-                  <v-list-item class="border-b mb-1 pb-2">
-                    <template #prepend>
-                      <v-avatar size="32" color="primary-lighten-4" class="mr-2">
-                        <v-img v-if="userAvatar" :src="userAvatar" />
-                        <v-icon v-else size="x-small" color="primary">mdi-account</v-icon>
-                      </v-avatar>
-                    </template>
-                    <v-list-item-title class="font-weight-black text-caption text-sm-subtitle-2">
-                      {{ userName }}
-                    </v-list-item-title>
-                    <v-list-item-subtitle class="text-caption text-grey">
-                      Role: {{ userRole.toUpperCase() }}
-                    </v-list-item-subtitle>
-                  </v-list-item>
+                <v-list-item class="rounded mb-1" prepend-icon="mdi-account-circle-outline" to="/profile">
+                  <v-list-item-title class="text-caption font-weight-bold">User Profile</v-list-item-title>
+                </v-list-item>
 
-                  <!-- Menu Actions -->
-                  <template v-if="!isMyHanhDomain && ['admin', 'super_admin'].includes(userRole)">
-                    <v-list-item class="rounded mb-1 bg-purple-lighten-5" prepend-icon="mdi-shield-crown" color="purple-darken-3" to="/admin">
-                      <v-list-item-title class="text-caption font-weight-black text-purple-darken-3">Admin Console</v-list-item-title>
-                    </v-list-item>
-                  </template>
-                  <template v-if="['teacher', 'admin', 'super_admin'].includes(userRole)">
-                    <v-list-item class="rounded mb-1 bg-indigo-lighten-5" prepend-icon="mdi-school" color="indigo-darken-3" to="/teacher">
-                      <v-list-item-title class="text-caption font-weight-black text-indigo-darken-3">Teacher Hub</v-list-item-title>
-                    </v-list-item>
-                  </template>
+                <v-list-item v-if="!isMyHanhDomain" class="rounded mb-1" prepend-icon="mdi-cards-variant" color="primary" to="/flashcards">
+                  <v-list-item-title class="text-caption font-weight-bold">Vocabulary Flashcards</v-list-item-title>
+                </v-list-item>
 
-                  <v-list-item class="rounded mb-1" prepend-icon="mdi-account-circle-outline" to="/profile">
-                    <v-list-item-title class="text-caption font-weight-bold">User Profile</v-list-item-title>
-                  </v-list-item>
+                <v-list-item v-if="!isMyHanhDomain" class="rounded mb-1" prepend-icon="mdi-image-filter-frames" color="primary" to="/picture-practice">
+                  <v-list-item-title class="text-caption font-weight-bold">Describe the Picture</v-list-item-title>
+                </v-list-item>
 
-                  <v-list-item v-if="!isMyHanhDomain" class="rounded mb-1" prepend-icon="mdi-cards-variant" color="primary" to="/flashcards">
-                    <v-list-item-title class="text-caption font-weight-bold">Vocabulary Flashcards</v-list-item-title>
-                  </v-list-item>
+                <v-list-item class="rounded mb-1" prepend-icon="mdi-trophy-award" color="amber-darken-3" @click="showAchievements = true">
+                  <v-list-item-title class="text-caption font-weight-bold text-amber-darken-4">Achievements & Badges</v-list-item-title>
+                </v-list-item>
 
-                  <v-list-item v-if="!isMyHanhDomain" class="rounded mb-1" prepend-icon="mdi-image-filter-frames" color="primary" to="/picture-practice">
-                    <v-list-item-title class="text-caption font-weight-bold">Describe the Picture</v-list-item-title>
-                  </v-list-item>
+                <v-list-item class="rounded mb-1" prepend-icon="mdi-theme-light-dark" @click="cycleTheme">
+                  <v-list-item-title class="text-caption font-weight-bold">Toggle Theme Mode</v-list-item-title>
+                </v-list-item>
 
-                  <v-list-item class="rounded mb-1" prepend-icon="mdi-trophy-award" color="amber-darken-3" @click="showAchievements = true">
-                    <v-list-item-title class="text-caption font-weight-bold text-amber-darken-4">Achievements & Badges</v-list-item-title>
-                  </v-list-item>
+                <v-divider class="my-1" />
 
-                  <v-list-item class="rounded mb-1" prepend-icon="mdi-theme-light-dark" @click="cycleTheme">
-                    <v-list-item-title class="text-caption font-weight-bold">Toggle Theme Mode</v-list-item-title>
-                  </v-list-item>
-
-                  <v-divider class="my-1" />
-
-                  <v-list-item class="rounded" prepend-icon="mdi-logout" color="error" @click="confirmLogout">
-                    <v-list-item-title class="text-caption font-weight-bold text-error">Sign Out</v-list-item-title>
-                  </v-list-item>
-                </v-list>
-              </v-menu>
-            </div>
+                <v-list-item class="rounded" prepend-icon="mdi-logout" color="error" @click="confirmLogout">
+                  <v-list-item-title class="text-caption font-weight-bold text-error">Sign Out</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-menu>
           </div>
-        </v-app-bar>
+        </div>
+      </v-app-bar>
 
-        <v-main class="pt-16 pb-16 pb-sm-4">
-          <v-container fluid class="px-2 px-sm-4 px-md-8 px-lg-12 py-3">
+      <v-main class="pb-16 pb-sm-4">
+        <v-container fluid class="px-2 px-sm-4 px-md-8 px-lg-12 py-3">
             <!-- Dynamic Router View -->
             <router-view v-slot="{ Component }">
               <component
@@ -418,7 +562,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useTheme } from 'vuetify'
+import { useTheme, useDisplay } from 'vuetify'
 import LoginPage from '@/components/LoginPage.vue'
 import PracticeTab from '@/components/PracticeTab.vue'
 import LeaderboardTab from '@/components/LeaderboardTab.vue'
@@ -430,8 +574,39 @@ import WeakWordsDialog from '@/components/WeakWordsDialog.vue'
 import AIAgentWidget from '@/components/AIAgentWidget.vue'
 
 const theme = useTheme()
+const { mdAndUp } = useDisplay()
 const router = useRouter()
 const route = useRoute()
+
+// Sidebar State & Rail Mode Toggle
+const drawer = ref(true)
+const isRail = ref(localStorage.getItem('fluent_sidebar_rail') === 'true')
+
+const toggleSidebar = () => {
+  if (mdAndUp.value) {
+    isRail.value = !isRail.value
+    localStorage.setItem('fluent_sidebar_rail', String(isRail.value))
+  } else {
+    drawer.value = !drawer.value
+  }
+}
+
+// Dynamic Active Page Info (Title & Icon Breadcrumb)
+const activePageInfo = computed(() => {
+  const p = route.path
+  if (p === '/' || p === '/practice') return { title: 'Speaking Studio', icon: 'mdi-microphone', color: 'primary' }
+  if (p.startsWith('/shadowing')) return { title: 'Shadowing Studio', icon: 'mdi-waveform', color: 'secondary' }
+  if (p.startsWith('/flashcards')) return { title: 'Vocabulary Flashcards', icon: 'mdi-cards-variant', color: 'primary' }
+  if (p.startsWith('/picture-practice')) return { title: 'Describe Picture', icon: 'mdi-image-filter-frames', color: 'primary' }
+  if (p.startsWith('/homework')) return { title: 'Homework Studio', icon: 'mdi-clipboard-text-outline', color: 'info' }
+  if (p.startsWith('/leaderboard')) return { title: 'Leaderboard Ranking', icon: 'mdi-trophy-outline', color: 'warning' }
+  if (p.startsWith('/history')) return { title: 'History Log', icon: 'mdi-history', color: 'grey-darken-2' }
+  if (p.startsWith('/stats')) return { title: 'Learning Analytics', icon: 'mdi-chart-bar', color: 'primary' }
+  if (p.startsWith('/profile')) return { title: 'User Profile', icon: 'mdi-account-circle-outline', color: 'primary' }
+  if (p.startsWith('/teacher')) return { title: 'Educator Classroom Hub', icon: 'mdi-school', color: 'indigo' }
+  if (p.startsWith('/admin')) return { title: 'System Administration', icon: 'mdi-shield-crown', color: 'purple-darken-3' }
+  return { title: 'Learning Studio', icon: 'mdi-school', color: 'primary' }
+})
 
 // Routing
 const isAdminRoute = computed(() => route.path === '/admin')
@@ -944,6 +1119,20 @@ const testConnection = async () => {
 </script>
 
 <style scoped>
+.fluent-sidebar :deep(.v-list-item) {
+  min-height: 40px;
+}
+
+.fluent-sidebar :deep(.sidebar-item-active) {
+  background-color: rgba(3, 169, 244, 0.12) !important;
+  color: #0288D1 !important;
+  font-weight: 700 !important;
+}
+
+.sidebar-brand-header {
+  height: 60px;
+}
+
 .custom-bottom-nav {
   position: fixed;
   bottom: 0;
