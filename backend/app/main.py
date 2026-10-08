@@ -17,6 +17,16 @@ except ImportError:
         hash_password, verify_password, create_access_token, decode_access_token,
         extract_bearer_token, get_current_user_from_db, record_audit_log
     )
+try:
+    from hf_service import (
+        generate_deck_content, generate_vocabulary_image,
+        generate_picture_scenario, evaluate_picture_speaking
+    )
+except ImportError:
+    from app.hf_service import (
+        generate_deck_content, generate_vocabulary_image,
+        generate_picture_scenario, evaluate_picture_speaking
+    )
 from fastapi.responses import StreamingResponse, Response, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -1763,9 +1773,54 @@ def init_db():
                 IsXoa INTEGER DEFAULT 0
             )
         ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS flashcard_decks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                title TEXT NOT NULL,
+                topic TEXT NOT NULL,
+                difficulty TEXT DEFAULT 'intermediate',
+                card_count INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                IsXoa INTEGER DEFAULT 0
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS flashcard_cards (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                deck_id INTEGER NOT NULL,
+                word TEXT NOT NULL,
+                ipa TEXT,
+                meaning TEXT,
+                example_sentence TEXT,
+                pronunciation_tip TEXT,
+                image_url TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                IsXoa INTEGER DEFAULT 0
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS picture_scenarios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER DEFAULT 1,
+                topic TEXT NOT NULL,
+                title TEXT NOT NULL,
+                image_url TEXT,
+                image_prompt TEXT,
+                prompt_guide TEXT,
+                keywords_json TEXT,
+                guiding_questions_json TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                IsXoa INTEGER DEFAULT 0
+            )
+        ''')
         
         # Migrations: Thêm các cột phân quyền nếu bảng đã tồn tại từ trước
-        tables = ["weak_words", "users", "history", "achievements", "user_settings", "classrooms", "class_enrollments", "assignments", "submissions", "tenants"]
+        tables = [
+            "weak_words", "users", "history", "achievements", "user_settings",
+            "classrooms", "class_enrollments", "assignments", "submissions", "tenants",
+            "flashcard_decks", "flashcard_cards", "picture_scenarios"
+        ]
         for t in tables:
             try:
                 cursor.execute(f"ALTER TABLE {t} ADD COLUMN IsXoa INTEGER DEFAULT 0")
@@ -6508,6 +6563,265 @@ def export_student_history_zip(req: HistoryQueryRequest):
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+# ==========================================
+# MULTIMODAL AI & FLASHCARDS EXTENSION
+# ==========================================
+
+class FlashcardItemSchema(BaseModel):
+    word: str
+    ipa: Optional[str] = ""
+    meaning: Optional[str] = ""
+    example: Optional[str] = ""
+    pronunciation_tip: Optional[str] = ""
+    image_url: Optional[str] = ""
+
+class GenerateFlashcardsRequest(BaseModel):
+    topic: str
+    difficulty: Optional[str] = "intermediate"
+    count: Optional[int] = 5
+
+class CreateDeckRequest(BaseModel):
+    user_id: int = 1
+    title: str
+    topic: str
+    difficulty: Optional[str] = "intermediate"
+    cards: List[FlashcardItemSchema] = []
+
+class GenerateImageRequest(BaseModel):
+    word: str
+    context: Optional[str] = ""
+    card_id: Optional[int] = None
+
+class CreatePictureScenarioRequest(BaseModel):
+    user_id: Optional[int] = 1
+    topic: Optional[str] = "Daily Life"
+    level: Optional[str] = "intermediate"
+
+class EvaluatePictureRequest(BaseModel):
+    scenario_id: int
+    transcription: str
+    user_id: Optional[int] = 1
+
+def get_multimodal_db_conn():
+    return sqlite3.connect(DB_PATH, timeout=20.0)
+
+@app.post("/api/flashcards/generate")
+def api_generate_flashcards(req: GenerateFlashcardsRequest):
+    """Generate topic-based flashcards with phonetics and Vietnamese tips using LLM."""
+    topic = req.topic.strip()
+    if not topic:
+        raise HTTPException(status_code=400, detail="Topic cannot be empty")
+    cards = generate_deck_content(topic=topic, level=req.difficulty or "intermediate", count=req.count or 5)
+    return {"status": "success", "data": cards}
+
+@app.post("/api/flashcards/decks")
+def api_create_flashcard_deck(req: CreateDeckRequest):
+    """Save an AI or custom generated flashcard deck and its cards to SQLite."""
+    if not req.title.strip():
+        raise HTTPException(status_code=400, detail="Deck title cannot be empty")
+    conn = get_multimodal_db_conn()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO flashcard_decks (user_id, title, topic, difficulty, card_count) VALUES (?, ?, ?, ?, ?)",
+            (req.user_id, req.title.strip(), req.topic.strip(), req.difficulty, len(req.cards))
+        )
+        deck_id = cursor.lastrowid
+        for card in req.cards:
+            cursor.execute(
+                """INSERT INTO flashcard_cards 
+                (deck_id, word, ipa, meaning, example_sentence, pronunciation_tip, image_url) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (deck_id, card.word.strip(), card.ipa or "", card.meaning or "", card.example or "", card.pronunciation_tip or "", card.image_url or "")
+            )
+        conn.commit()
+        return {"status": "success", "deck_id": deck_id, "message": "Deck created successfully"}
+    finally:
+        conn.close()
+
+@app.get("/api/flashcards/decks")
+def api_get_flashcard_decks(user_id: int = 1):
+    """Retrieve all flashcard decks for a user."""
+    conn = get_multimodal_db_conn()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT id, user_id, title, topic, difficulty, card_count, created_at FROM flashcard_decks WHERE user_id = ? AND IsXoa = 0 ORDER BY id DESC",
+            (user_id,)
+        )
+        rows = cursor.fetchall()
+        decks = []
+        for r in rows:
+            decks.append({
+                "id": r[0],
+                "user_id": r[1],
+                "title": r[2],
+                "topic": r[3],
+                "difficulty": r[4],
+                "card_count": r[5],
+                "created_at": r[6]
+            })
+        return {"status": "success", "decks": decks}
+    finally:
+        conn.close()
+
+@app.get("/api/flashcards/decks/{deck_id}")
+def api_get_flashcard_deck_detail(deck_id: int):
+    """Retrieve detailed deck metadata along with all flashcard cards."""
+    conn = get_multimodal_db_conn()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT id, user_id, title, topic, difficulty, card_count, created_at FROM flashcard_decks WHERE id = ? AND IsXoa = 0", (deck_id,))
+        deck_row = cursor.fetchone()
+        if not deck_row:
+            raise HTTPException(status_code=404, detail="Flashcard deck not found")
+        
+        deck = {
+            "id": deck_row[0],
+            "user_id": deck_row[1],
+            "title": deck_row[2],
+            "topic": deck_row[3],
+            "difficulty": deck_row[4],
+            "card_count": deck_row[5],
+            "created_at": deck_row[6]
+        }
+        
+        cursor.execute(
+            """SELECT id, deck_id, word, ipa, meaning, example_sentence, pronunciation_tip, image_url, created_at 
+            FROM flashcard_cards WHERE deck_id = ? AND IsXoa = 0 ORDER BY id ASC""",
+            (deck_id,)
+        )
+        card_rows = cursor.fetchall()
+        cards = []
+        for cr in card_rows:
+            cards.append({
+                "id": cr[0],
+                "deck_id": cr[1],
+                "word": cr[2],
+                "ipa": cr[3],
+                "meaning": cr[4],
+                "example": cr[5],
+                "pronunciation_tip": cr[6],
+                "image_url": cr[7],
+                "created_at": cr[8]
+            })
+        return {"status": "success", "deck": deck, "cards": cards}
+    finally:
+        conn.close()
+
+@app.delete("/api/flashcards/decks/{deck_id}")
+def api_delete_flashcard_deck(deck_id: int):
+    """Soft delete a flashcard deck and its cards."""
+    conn = get_multimodal_db_conn()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("UPDATE flashcard_decks SET IsXoa = 1 WHERE id = ?", (deck_id,))
+        cursor.execute("UPDATE flashcard_cards SET IsXoa = 1 WHERE deck_id = ?", (deck_id,))
+        conn.commit()
+        return {"status": "success", "message": "Deck deleted successfully"}
+    finally:
+        conn.close()
+
+@app.post("/api/ai/generate-image")
+def api_generate_image(req: GenerateImageRequest):
+    """Generate or retrieve cached educational visual illustration using FLUX.1."""
+    if not req.word.strip():
+        raise HTTPException(status_code=400, detail="Word cannot be empty")
+    img_url = generate_vocabulary_image(word=req.word.strip(), context=req.context or "")
+    if not img_url:
+        img_url = "/logo-augusttrung.png"
+    
+    # If card_id provided, update card's image_url
+    if req.card_id:
+        conn = get_multimodal_db_conn()
+        cursor = conn.cursor()
+        try:
+            cursor.execute("UPDATE flashcard_cards SET image_url = ? WHERE id = ?", (img_url, req.card_id))
+            conn.commit()
+        except Exception:
+            pass
+        finally:
+            conn.close()
+            
+    return {"status": "success", "image_url": img_url}
+
+@app.post("/api/picture-practice/create-scenario")
+def api_create_picture_scenario(req: CreatePictureScenarioRequest):
+    """Create a Describe the Picture practice challenge with scene image and prompt."""
+    scenario = generate_picture_scenario(topic=req.topic or "Daily Life", level=req.level or "intermediate")
+    conn = get_multimodal_db_conn()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """INSERT INTO picture_scenarios 
+            (user_id, topic, title, image_url, image_prompt, prompt_guide, keywords_json, guiding_questions_json) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                req.user_id or 1,
+                req.topic or "Daily Life",
+                scenario.get("title", "Picture Speaking Scenario"),
+                scenario.get("image_url", ""),
+                scenario.get("image_prompt", ""),
+                scenario.get("title", ""),
+                json.dumps(scenario.get("keywords", [])),
+                json.dumps(scenario.get("guiding_questions", []))
+            )
+        )
+        scenario_id = cursor.lastrowid
+        conn.commit()
+        scenario["scenario_id"] = scenario_id
+        return {"status": "success", **scenario}
+    finally:
+        conn.close()
+
+@app.get("/api/picture-practice/scenarios")
+def api_list_picture_scenarios(user_id: int = 1):
+    """Get recent picture practice scenarios."""
+    conn = get_multimodal_db_conn()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT id, topic, title, image_url, keywords_json, guiding_questions_json, created_at FROM picture_scenarios WHERE user_id = ? AND IsXoa = 0 ORDER BY id DESC LIMIT 20",
+            (user_id,)
+        )
+        rows = cursor.fetchall()
+        scenarios = []
+        for r in rows:
+            scenarios.append({
+                "scenario_id": r[0],
+                "topic": r[1],
+                "title": r[2],
+                "image_url": r[3],
+                "keywords": json.loads(r[4]) if r[4] else [],
+                "guiding_questions": json.loads(r[5]) if r[5] else [],
+                "created_at": r[6]
+            })
+        return {"status": "success", "scenarios": scenarios}
+    finally:
+        conn.close()
+
+@app.post("/api/picture-practice/evaluate")
+def api_evaluate_picture_speaking(req: EvaluatePictureRequest):
+    """Evaluate candidate speech transcription against picture scenario."""
+    conn = get_multimodal_db_conn()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT topic, keywords_json, guiding_questions_json FROM picture_scenarios WHERE id = ?", (req.scenario_id,))
+        row = cursor.fetchone()
+        topic = row[0] if row else "General"
+        keywords = json.loads(row[1]) if row and row[1] else ["detail", "action", "setting"]
+        guiding_questions = json.loads(row[2]) if row and row[2] else ["What is in the scene?"]
+    finally:
+        conn.close()
+
+    eval_result = evaluate_picture_speaking(
+        transcription=req.transcription,
+        topic=topic,
+        keywords=keywords,
+        guiding_questions=guiding_questions
+    )
+    return {"status": "success", **eval_result}
 
 if __name__ == "__main__":
     import uvicorn
