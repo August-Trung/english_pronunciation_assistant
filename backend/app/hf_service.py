@@ -622,52 +622,237 @@ GROUNDED_PHOTO_CATALOG = {
             ],
             "keywords": ["winding pathway", "lush lawn", "shaded trees", "park bench", "green space"]
         }
+    ],
+    "zoo": [
+        {
+            "url": "https://images.unsplash.com/photo-1543372742-e7d0b9947a2b?auto=format&fit=crop&w=1000&q=80",
+            "title": "A Visit to the Zoo Wildlife Habitat",
+            "elements": "Two tall giraffes standing gracefully in an outdoor savanna enclosure surrounded by leafy acacia trees, a protective wooden fence, and zoo visitors observing the animals under bright daylight.",
+            "has_people": True,
+            "people_details": "Zoo visitors watching and admiring the giraffes over the protective enclosure fence.",
+            "guiding_questions": [
+                "What wild animals can you observe in this zoo enclosure, and how are they interacting with their habitat?",
+                "What safety barriers and visitor viewing features are visible around the animal enclosure?",
+                "Why are zoological parks important for wildlife conservation, education, and family recreation?"
+            ],
+            "keywords": ["tall giraffes", "zoo enclosure", "savanna habitat", "wooden fence", "wildlife conservation"]
+        },
+        {
+            "url": "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1000&q=80",
+            "title": "Zebras Grazing at an Open Safari Reserve",
+            "elements": "A herd of wild striped zebras grazing naturally across an expansive grassland reserve with rolling hills and trees in the distance under a partly cloudy sky.",
+            "has_people": False,
+            "people_details": "None",
+            "guiding_questions": [
+                "What wild animals and terrain features can you identify in this expansive safari landscape?",
+                "How do the zebras' black and white stripes serve as natural camouflage in the wild?",
+                "What measures are essential to protect endangered wildlife in natural safari habitats?"
+            ],
+            "keywords": ["striped zebras", "safari reserve", "open grassland", "natural grazing", "wildlife sanctuary"]
+        }
+    ],
+    "beach": [
+        {
+            "url": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000&q=80",
+            "title": "A Tropical Sandy Beach on a Sunny Day",
+            "elements": "Pristine white sand shoreline with turquoise ocean waves rolling onto the beach, lush green palm trees in the background, and clear blue skies. No swimmers in the water.",
+            "has_people": False,
+            "people_details": "None",
+            "guiding_questions": [
+                "What coastal features, water colors, and tropical vegetation can you identify in this seaside scene?",
+                "What mood or atmosphere does the calm ocean and sunny weather convey?",
+                "What recreational water sports or relaxation activities do people enjoy at coastal beaches?"
+            ],
+            "keywords": ["turquoise ocean", "white sand", "tropical coast", "rolling waves", "sunlit beach"]
+        }
+    ],
+    "sports": [
+        {
+            "url": "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1000&q=80",
+            "title": "A Competitive Football Match on the Pitch",
+            "elements": "Football players in athletic team kits running and contesting possession of the ball on a vibrant green grass pitch with stadium floodlights and spectators cheering in the stands.",
+            "has_people": True,
+            "people_details": "Athletic soccer players actively competing for the ball during an intense match.",
+            "guiding_questions": [
+                "What athletic actions and movements are the players performing on the football pitch?",
+                "How do the stadium environment and spectator support energize the sporting competition?",
+                "Why are team coordination, agility, and sportsmanship essential in team sports?"
+            ],
+            "keywords": ["football pitch", "athletic competition", "ball possession", "team coordination", "stadium match"]
+        }
+    ],
+    "traffic": [
+        {
+            "url": "https://images.unsplash.com/photo-1506521781263-d8422e82f27a?auto=format&fit=crop&w=1000&q=80",
+            "title": "Bustling Urban Traffic During Rush Hour",
+            "elements": "A multi-lane city avenue congested with commuter cars, yellow cabs, public transit buses, crosswalks, traffic signals, and distant skyscrapers under daytime skies.",
+            "has_people": True,
+            "people_details": "Commuters and drivers navigating the busy metropolitan traffic intersection.",
+            "guiding_questions": [
+                "What types of vehicles and road transit infrastructure can you identify in this urban street?",
+                "What daily challenges and delays do city residents experience during morning and evening rush hours?",
+                "What modern transportation solutions could help reduce metropolitan traffic congestion?"
+            ],
+            "keywords": ["rush hour", "public transit", "traffic congestion", "city avenue", "urban commuters"]
+        }
+    ],
+    "camping": [
+        {
+            "url": "https://images.unsplash.com/photo-1510312305653-8ed496efae75?auto=format&fit=crop&w=1000&q=80",
+            "title": "An Outdoor Camping Site in the Pine Woods",
+            "elements": "A sturdy outdoor camping tent pitched in a clearing among tall pine trees, camp chairs, backpacks, and soft morning sunlight streaming through the woodland canopy.",
+            "has_people": False,
+            "people_details": "None",
+            "guiding_questions": [
+                "What camping gear, shelter, and natural forest elements can you observe at this campsite?",
+                "How does spending a weekend camping in nature contribute to stress relief and wellness?",
+                "What essential safety preparations and equipment are required when venturing on a camping trip?"
+            ],
+            "keywords": ["camping tent", "pine woods", "outdoor shelter", "morning sunlight", "wilderness campsite"]
+        }
+    ],
+    "family": [
+        {
+            "url": "https://images.unsplash.com/photo-1543353071-10c8ba85a904?auto=format&fit=crop&w=1000&q=80",
+            "title": "A Warm Family Gathering Around the Dining Table",
+            "elements": "Family members sitting happily together around a wooden dining table laden with home-cooked dishes, salads, and drinks, enjoying lively conversation and shared companionship in a cozy home.",
+            "has_people": True,
+            "people_details": "Family members of different ages smiling and talking while dining together.",
+            "guiding_questions": [
+                "What are the family members doing around the dinner table, and what emotions are visible?",
+                "What types of food, tableware, and interior decorations characterize this warm dining setting?",
+                "Why is regularly sharing meals together valuable for family bonding and communication?"
+            ],
+            "keywords": ["family dinner", "shared meal", "dining table", "warm companionship", "home-cooked food"]
+        }
+    ],
+    "shopping": [
+        {
+            "url": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1000&q=80",
+            "title": "A Chic Clothing Retail Boutique",
+            "elements": "A stylish fashion boutique with neatly organized clothing racks, hanger displays, apparel shelves, polished wooden floors, and elegant warm lighting.",
+            "has_people": False,
+            "people_details": "None",
+            "guiding_questions": [
+                "How are the fashion items, racks, and display tables organized inside this retail store?",
+                "How does the boutique's minimalist decor and warm lighting influence customer mood and purchasing choices?",
+                "What advantages does in-store shopping provide compared to purchasing fashion online?"
+            ],
+            "keywords": ["clothing racks", "retail boutique", "fashion display", "warm lighting", "apparel shopping"]
+        }
+    ],
+    "music": [
+        {
+            "url": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=1000&q=80",
+            "title": "An Electrifying Live Concert and Festival Stage",
+            "elements": "A music artist performing on an illuminated festival stage with dazzling colored spotlight beams, audio speakers, and an excited audience raising their hands in celebration.",
+            "has_people": True,
+            "people_details": "Concertgoers and enthusiastic music fans raising their arms toward the illuminated stage.",
+            "guiding_questions": [
+                "What is taking place on the concert stage, and how is the audience responding to the music?",
+                "What visual and audio stage effects, spotlights, and equipment enhance the performance?",
+                "Why do live music events and festivals evoke strong emotional connections among attendees?"
+            ],
+            "keywords": ["concert stage", "live music", "spotlight beams", "cheering crowd", "festival atmosphere"]
+        }
+    ],
+    "farm": [
+        {
+            "url": "https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=1000&q=80",
+            "title": "A Peaceful Countryside Pasture and Cattle Farm",
+            "elements": "Spotted dairy cows grazing peacefully across expansive rolling green hills under a wide open sky, with rustic wooden fences and distant farm buildings.",
+            "has_people": False,
+            "people_details": "None",
+            "guiding_questions": [
+                "What farm animals, vegetation, and countryside landscape features can you observe in this scene?",
+                "What does the serene green pasture convey about rural farming life and agriculture?",
+                "Why are sustainable farming practices vital for food security and environmental health?"
+            ],
+            "keywords": ["grazing cattle", "rolling hills", "green pasture", "rustic farm", "countryside landscape"]
+        }
     ]
 }
+
+def classify_topic_semantic(topic_text: str) -> str:
+    """Intelligently map arbitrary user topic into the best visual scene category via fast LLM."""
+    valid_cats = list(GROUNDED_PHOTO_CATALOG.keys())
+    try:
+        prompt = (
+            f"Given the speaking practice topic: '{topic_text}', select the single most appropriate visual scene category from this list: "
+            f"{json.dumps(valid_cats)}. "
+            "Return ONLY a JSON object: {\"category\": \"<one of the list>\"}."
+        )
+        resp = call_llm([{"role": "user", "content": prompt}], json_mode=True)
+        data = parse_json_safely(resp)
+        cat = data.get("category", "") if isinstance(data, dict) else ""
+        if cat in GROUNDED_PHOTO_CATALOG:
+            return cat
+    except Exception as e:
+        logger.warning(f"Semantic topic classification notice: {e}")
+    return "nature"
 
 def get_grounded_scene(topic: str = "", title: str = "", context: str = "") -> Dict[str, Any]:
     combined = f"{topic} {title} {context}".lower()
 
-    if any(k in combined for k in ["science", "lab", "chemist", "biolog", "physics", "experiment", "research"]):
+    if any(k in combined for k in ["zoo", "animal", "safari", "wildlife", "giraffe", "elephant", "zebra", "lion", "tiger", "bear", "sở thú", "thảo cầm viên", "động vật", "muông thú"]):
+        category = "zoo"
+    elif any(k in combined for k in ["beach", "sea", "ocean", "coast", "shore", "island", "sand", "summer", "biển", "bãi biển"]):
+        category = "beach"
+    elif any(k in combined for k in ["sport", "football", "soccer", "basketball", "tennis", "match", "stadium", "athlete", "thể thao", "bóng đá", "sân vận động"]):
+        category = "sports"
+    elif any(k in combined for k in ["traffic", "commute", "public transit", "subway", "road congestion", "giao thông", "kẹt xe", "xe buýt"]):
+        category = "traffic"
+    elif any(k in combined for k in ["camp", "camping", "tent", "campfire", "hiking", "picnic", "cắm trại", "dã ngoại"]):
+        category = "camping"
+    elif any(k in combined for k in ["family", "parents", "children", "dining table", "living room", "gia đình", "bữa cơm", "sum họp"]):
+        category = "family"
+    elif any(k in combined for k in ["shopping", "mall", "boutique", "fashion", "retail store", "clothing rack", "mua sắm"]):
+        category = "shopping"
+    elif any(k in combined for k in ["concert", "festival", "musical band", "singing", "music stage", "âm nhạc", "hòa nhạc", "ca nhạc"]):
+        category = "music"
+    elif any(k in combined for k in ["farm", "farmer", "agriculture", "cattle", "pasture", "rural", "countryside", "nông trại", "đồng quê", "chăn nuôi"]):
+        category = "farm"
+    elif any(k in combined for k in ["science", "chemist", "biolog", "physics", "experiment", "research lab", "thí nghiệm", "phòng lab"]):
         category = "science"
-    elif any(k in combined for k in ["hospital", "doctor", "nurse", "clinic", "medical", "patient", "emergency"]):
+    elif any(k in combined for k in ["hospital", "doctor", "nurse", "clinic", "medical", "patient", "emergency", "bệnh viện", "bác sĩ", "phòng khám"]):
         category = "hospital"
-    elif any(k in combined for k in ["cafe", "coffee", "latte", "espresso", "barista"]):
+    elif any(k in combined for k in ["cafe", "coffee", "latte", "espresso", "barista", "quán cafe", "cà phê"]):
         category = "cafe"
-    elif any(k in combined for k in ["airport", "flight", "plane", "terminal", "boarding", "departure"]):
+    elif any(k in combined for k in ["airport", "flight", "airplane", "terminal", "boarding", "departure", "sân bay", "máy bay", "hàng không"]):
         category = "airport"
-    elif any(k in combined for k in ["portrait", "businesswoman", "executive", "leader", "blazer", "headshot"]):
+    elif any(k in combined for k in ["portrait", "businesswoman", "executive", "blazer", "headshot", "chân dung", "nữ doanh nhân"]):
         category = "portrait"
-    elif any(k in combined for k in ["interview", "candidate", "hire", "resume", "cv", "recruitment"]):
+    elif any(k in combined for k in ["interview", "candidate", "hire", "resume", "cv", "recruitment", "phỏng vấn", "tuyển dụng"]):
         category = "interview"
-    elif any(k in combined for k in ["office", "meeting", "business", "colleague", "workplace", "corporat"]):
+    elif any(k in combined for k in ["meeting", "coworking", "colleague", "workplace", "corporat", "văn phòng", "họp hành"]):
         category = "office"
-    elif any(k in combined for k in ["market", "supermarket", "grocery", "shop", "store", "vendor"]):
+    elif any(k in combined for k in ["supermarket", "grocery", "market vendor", "chợ", "siêu thị"]):
         category = "market"
-    elif any(k in combined for k in ["library", "book", "study", "reading", "shelf"]):
+    elif any(k in combined for k in ["library", "hardcover book", "reading hall", "bookshelf", "thư viện", "đọc sách"]):
         category = "library"
-    elif any(k in combined for k in ["park", "garden", "outdoor", "lawn", "walk"]):
+    elif any(k in combined for k in ["park pathway", "garden lawn", "botanical", "công viên", "vườn hoa"]):
         category = "park"
-    elif any(k in combined for k in ["class", "school", "teach", "student", "learn", "lecture"]):
+    elif any(k in combined for k in ["classroom", "school", "teach", "student", "lecture", "lớp học", "trường học", "giảng đường"]):
         category = "classroom"
-    elif any(k in combined for k in ["restaurant", "dinner", "lunch", "eat", "dining", "meal", "food"]):
+    elif any(k in combined for k in ["restaurant", "dining room", "fine dining", "meal course", "nhà hàng"]):
         category = "restaurant"
-    elif any(k in combined for k in ["hotel", "reception", "resort", "lobby", "check-in"]):
+    elif any(k in combined for k in ["hotel resort", "resort pool", "hotel lobby", "check-in", "khách sạn", "khu nghỉ dưỡng"]):
         category = "hotel"
-    elif any(k in combined for k in ["tech", "comput", "ai", "software", "program", "code"]):
+    elif any(k in combined for k in ["technology", "computer", "software", "coding", "developer", "artificial intelligence", "công nghệ", "máy tính", "lập trình"]):
         category = "technology"
-    elif any(k in combined for k in ["kitchen", "cook", "bake", "chef", "recipe"]):
+    elif any(k in combined for k in ["kitchen", "cooking", "baking", "chef", "recipe", "nhà bếp", "nấu ăn", "gian bếp"]):
         category = "kitchen"
-    elif any(k in combined for k in ["nature", "mountain", "beach", "lake", "forest", "hiking"]):
+    elif any(k in combined for k in ["mountain", "hiking trail", "wilderness", "thiên nhiên", "núi rừng", "leo núi"]):
         category = "nature"
-    elif any(k in combined for k in ["fitness", "gym", "sport", "workout", "exercise", "athlet"]):
+    elif any(k in combined for k in ["fitness", "gym", "workout", "weight training", "tập gym", "thể hình"]):
         category = "fitness"
-    elif any(k in combined for k in ["art", "museum", "gallery", "paint", "exhibit"]):
+    elif any(k in combined for k in ["artwork", "art gallery", "fine art", "museum hall", "painting exhibit", "bảo tàng", "nghệ thuật", "triển lãm"]):
         category = "art"
-    elif any(k in combined for k in ["city", "street", "urban", "downtown", "traffic", "build"]):
+    elif any(k in combined for k in ["city skyline", "downtown skyscrapers", "urban street", "thành phố", "đô thị"]):
         category = "city"
     else:
-        category = "cafe"
+        # Instead of blind cafe fallback, use semantic LLM classification
+        category = classify_topic_semantic(combined)
 
     pool = GROUNDED_PHOTO_CATALOG[category]
     # Check if context wants people or empty

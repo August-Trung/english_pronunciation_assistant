@@ -540,49 +540,95 @@ const PHOTO_CATALOG = {
   art: [
     'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?auto=format&fit=crop&w=1000&q=80',
     'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1000&q=80'
+  ],
+  zoo: [
+    'https://images.unsplash.com/photo-1543372742-e7d0b9947a2b?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1000&q=80'
+  ],
+  beach: [
+    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000&q=80'
+  ],
+  sports: [
+    'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1000&q=80'
+  ],
+  traffic: [
+    'https://images.unsplash.com/photo-1506521781263-d8422e82f27a?auto=format&fit=crop&w=1000&q=80'
+  ],
+  camping: [
+    'https://images.unsplash.com/photo-1510312305653-8ed496efae75?auto=format&fit=crop&w=1000&q=80'
+  ],
+  family: [
+    'https://images.unsplash.com/photo-1543353071-10c8ba85a904?auto=format&fit=crop&w=1000&q=80'
+  ],
+  shopping: [
+    'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1000&q=80'
+  ],
+  music: [
+    'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=1000&q=80'
+  ],
+  farm: [
+    'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=1000&q=80'
   ]
 }
 
 const resolveScenePhoto = (topic, title) => {
   const combined = `${topic || ''} ${title || ''}`.toLowerCase()
-  let pool = PHOTO_CATALOG.cafe
-  if (/science|lab|chemist|biolog|physics|experiment|research/.test(combined)) {
+  let pool = PHOTO_CATALOG.nature
+  if (/zoo|animal|safari|wildlife|giraffe|elephant|zebra|lion|tiger|bear|sở thú|thảo cầm viên|động vật/.test(combined)) {
+    pool = PHOTO_CATALOG.zoo
+  } else if (/beach|sea|ocean|coast|shore|island|sand|summer|biển|bãi biển/.test(combined)) {
+    pool = PHOTO_CATALOG.beach
+  } else if (/sport|football|soccer|basketball|tennis|stadium|athlete|thể thao|bóng đá/.test(combined)) {
+    pool = PHOTO_CATALOG.sports
+  } else if (/traffic|commute|subway|transit|road congestion|giao thông|kẹt xe|xe buýt/.test(combined)) {
+    pool = PHOTO_CATALOG.traffic
+  } else if (/camp|camping|tent|campfire|hiking|picnic|cắm trại|dã ngoại/.test(combined)) {
+    pool = PHOTO_CATALOG.camping
+  } else if (/family|parents|children|dining table|living room|gia đình|bữa cơm/.test(combined)) {
+    pool = PHOTO_CATALOG.family
+  } else if (/shopping|mall|boutique|fashion|retail|clothing rack|mua sắm/.test(combined)) {
+    pool = PHOTO_CATALOG.shopping
+  } else if (/concert|festival|musical|singing|music stage|âm nhạc|hòa nhạc/.test(combined)) {
+    pool = PHOTO_CATALOG.music
+  } else if (/farm|farmer|agriculture|cattle|pasture|rural|countryside|nông trại/.test(combined)) {
+    pool = PHOTO_CATALOG.farm
+  } else if (/science|chemist|biolog|physics|experiment|research lab|thí nghiệm/.test(combined)) {
     pool = PHOTO_CATALOG.science
-  } else if (/cafe|coffee|latte|espresso|barista/.test(combined)) {
+  } else if (/cafe|coffee|latte|espresso|barista|quán cafe|cà phê/.test(combined)) {
     pool = PHOTO_CATALOG.cafe
-  } else if (/airport|flight|plane|terminal|boarding|departure/.test(combined)) {
+  } else if (/airport|flight|airplane|terminal|boarding|departure|sân bay/.test(combined)) {
     pool = PHOTO_CATALOG.airport
-  } else if (/portrait|businesswoman|executive|leader|blazer|headshot/.test(combined)) {
+  } else if (/portrait|businesswoman|executive|blazer|headshot|chân dung/.test(combined)) {
     pool = PHOTO_CATALOG.portrait
-  } else if (/interview|candidate|hire|resume|cv/.test(combined)) {
+  } else if (/interview|candidate|hire|resume|cv|recruitment|phỏng vấn/.test(combined)) {
     pool = PHOTO_CATALOG.interview
-  } else if (/office|meeting|business|colleague|workplace|corporat/.test(combined)) {
+  } else if (/meeting|coworking|colleague|workplace|corporat|văn phòng/.test(combined)) {
     pool = PHOTO_CATALOG.office
-  } else if (/market|supermarket|grocery|shop|store|vendor/.test(combined)) {
+  } else if (/supermarket|grocery|market vendor|chợ|siêu thị/.test(combined)) {
     pool = PHOTO_CATALOG.market
-  } else if (/library|book|study|reading|shelf/.test(combined)) {
+  } else if (/library|hardcover book|reading hall|bookshelf|thư viện/.test(combined)) {
     pool = PHOTO_CATALOG.library
-  } else if (/hospital|doctor|nurse|clinic|medical|patient/.test(combined)) {
+  } else if (/hospital|doctor|nurse|clinic|medical|patient|bệnh viện/.test(combined)) {
     pool = PHOTO_CATALOG.hospital
-  } else if (/park|garden|outdoor|lawn|walk/.test(combined)) {
+  } else if (/park pathway|garden lawn|botanical|công viên|vườn/.test(combined)) {
     pool = PHOTO_CATALOG.park
-  } else if (/class|school|teach|student|learn|lecture/.test(combined)) {
+  } else if (/classroom|school|teach|student|lecture|lớp học|trường học/.test(combined)) {
     pool = PHOTO_CATALOG.classroom
-  } else if (/restaurant|dinner|lunch|eat|dining|meal|food/.test(combined)) {
+  } else if (/restaurant|dining room|fine dining|meal course|nhà hàng/.test(combined)) {
     pool = PHOTO_CATALOG.restaurant
-  } else if (/hotel|reception|resort|lobby|check-in/.test(combined)) {
+  } else if (/hotel resort|resort pool|hotel lobby|check-in|khách sạn/.test(combined)) {
     pool = PHOTO_CATALOG.hotel
-  } else if (/tech|comput|ai|software|program|code/.test(combined)) {
+  } else if (/technology|computer|software|coding|developer|artificial intelligence|công nghệ/.test(combined)) {
     pool = PHOTO_CATALOG.technology
-  } else if (/kitchen|cook|bake|chef|recipe/.test(combined)) {
+  } else if (/kitchen|cooking|baking|chef|recipe|nhà bếp|nấu ăn/.test(combined)) {
     pool = PHOTO_CATALOG.kitchen
-  } else if (/nature|mountain|beach|lake|forest|hiking/.test(combined)) {
+  } else if (/mountain|hiking trail|wilderness|thiên nhiên|núi rừng/.test(combined)) {
     pool = PHOTO_CATALOG.nature
-  } else if (/fitness|gym|sport|workout|exercise|athlet/.test(combined)) {
+  } else if (/fitness|gym|workout|weight training|tập gym/.test(combined)) {
     pool = PHOTO_CATALOG.fitness
-  } else if (/art|museum|gallery|paint|exhibit/.test(combined)) {
+  } else if (/artwork|art gallery|fine art|museum hall|triển lãm|bảo tàng/.test(combined)) {
     pool = PHOTO_CATALOG.art
-  } else if (/city|street|urban|downtown|traffic|build/.test(combined)) {
+  } else if (/city skyline|downtown skyscrapers|urban street|thành phố/.test(combined)) {
     pool = PHOTO_CATALOG.city
   }
   let hash = 0
@@ -623,6 +669,14 @@ const scenarioLevel = ref('Intermediate')
 const topicCategories = ['All', 'Workplace & Career', 'Healthcare & Services', 'Daily Life & Leisure', 'Travel & Transportation', 'Education & Science', 'Technology & Computing', 'Sports & Wellness', 'Arts & Culture']
 const selectedCategory = ref('All')
 const aiSuggestedTopics = ref([
+  {
+    id: 'zoo-wildlife',
+    title: 'A Visit to the Zoo Wildlife Habitat',
+    category: 'Daily Life & Leisure',
+    level: 'Beginner',
+    description: 'Observe tall giraffes, savanna enclosures, animal behaviors, and visitor interactions.',
+    icon: 'mdi-paw'
+  },
   {
     id: 'hospital-hallway',
     title: 'A Quiet Hospital Reception and Emergency Hallway',
