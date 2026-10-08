@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid class="pa-0 max-width-800">
+  <v-container fluid class="pa-0 max-width-1400">
     <!-- Header Banner -->
     <v-card border flat class="pa-3 pa-sm-4 mb-4 text-white rounded-lg" style="background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);">
       <div class="d-flex align-center justify-space-between flex-wrap ga-2">
@@ -84,7 +84,7 @@
         </div>
 
         <v-row dense>
-          <v-col v-for="d in decks" :key="d.id" cols="12" sm="6">
+          <v-col v-for="d in decks" :key="d.id" cols="12" sm="6" md="4" lg="3">
             <v-card border flat class="pa-4 rounded-lg bg-white h-100 d-flex flex-column justify-space-between hover-card">
               <div>
                 <div class="d-flex align-center justify-space-between mb-2">
@@ -127,183 +127,240 @@
       <!-- Active Deck Study Studio -->
       <div v-else>
         <!-- Deck Header Navigation -->
-        <div class="d-flex align-center justify-space-between mb-3">
+        <div class="d-flex align-center justify-space-between mb-3 flex-wrap ga-2">
           <div class="d-flex align-center ga-2">
             <v-btn size="small" variant="text" icon="mdi-arrow-left" @click="selectedDeck = null" />
             <div>
-              <div class="text-subtitle-2 font-weight-black text-grey-darken-4 leading-tight">{{ selectedDeck.title }}</div>
-              <div class="text-caption text-grey">Card {{ activeCardIndex + 1 }} of {{ activeCards.length }}</div>
+              <div class="text-subtitle-1 font-weight-black text-grey-darken-4 leading-tight">{{ selectedDeck.title }}</div>
+              <div class="text-caption text-grey">Card {{ activeCardIndex + 1 }} of {{ activeCards.length }} &bull; Topic: {{ selectedDeck.topic }}</div>
             </div>
           </div>
 
           <div class="d-flex align-center ga-1">
-            <v-btn size="x-small" variant="text" color="grey-darken-2" prepend-icon="mdi-shuffle" @click="shuffleDeck">
+            <v-btn size="small" variant="tonal" color="grey-darken-2" class="text-none font-weight-bold" prepend-icon="mdi-shuffle" @click="shuffleDeck">
               Shuffle
             </v-btn>
-            <v-btn size="x-small" variant="text" color="primary" prepend-icon="mdi-refresh" @click="activeCardIndex = 0; isAiFlipped = false">
+            <v-btn size="small" variant="tonal" color="primary" class="text-none font-weight-bold" prepend-icon="mdi-refresh" @click="activeCardIndex = 0; isAiFlipped = false">
               Restart
             </v-btn>
           </div>
         </div>
 
-        <!-- 3D Multimodal Flip Card -->
-        <div v-if="activeCard" class="multimodal-card mb-4" @click="isAiFlipped = !isAiFlipped">
-          <div class="card-inner" :class="{ 'is-flipped': isAiFlipped }">
-            <!-- Front Side -->
-            <div class="card-face card-front pa-4 d-flex flex-column align-center justify-space-between">
-              <div class="w-100 d-flex justify-space-between align-center text-caption text-grey mb-1">
-                <v-chip size="x-small" color="primary" variant="flat">FRONT SIDE</v-chip>
-                <span>Click card to reveal meaning & tips</span>
-              </div>
+        <!-- 2-Column Study Layout -->
+        <v-row class="ma-0 ga-3">
+          <!-- Left Column: 3D Flip Card & Navigation (Col 7 on md, 8 on lg) -->
+          <v-col cols="12" md="7" lg="8" class="pa-0">
+            <!-- 3D Multimodal Flip Card -->
+            <div v-if="activeCard" class="multimodal-card mb-4" @click="isAiFlipped = !isAiFlipped">
+              <div class="card-inner" :class="{ 'is-flipped': isAiFlipped }">
+                <!-- Front Side -->
+                <div class="card-face card-front pa-4 d-flex flex-column align-center justify-space-between">
+                  <div class="w-100 d-flex justify-space-between align-center text-caption text-grey mb-1">
+                    <v-chip size="x-small" color="primary" variant="flat">FRONT SIDE</v-chip>
+                    <span>Click card to reveal meaning & tips</span>
+                  </div>
 
-              <!-- AI Visual Illustration -->
-              <div class="image-container w-100 my-2 rounded-lg overflow-hidden position-relative border" @click.stop>
-                <v-img
-                  :src="activeCardImage"
-                  height="200"
-                  cover
-                  class="bg-grey-lighten-4"
-                  @error="handleCardImageError"
-                >
-                  <template #placeholder>
-                    <div class="d-flex align-center justify-center fill-height">
-                      <v-progress-circular indeterminate color="primary" size="32" />
+                  <!-- AI Visual Illustration -->
+                  <div class="image-container w-100 my-2 rounded-lg overflow-hidden position-relative border" @click.stop>
+                    <v-img
+                      :src="activeCardImage"
+                      height="220"
+                      cover
+                      class="bg-grey-lighten-4"
+                      @error="handleCardImageError"
+                    >
+                      <template #placeholder>
+                        <div class="d-flex align-center justify-center fill-height">
+                          <v-progress-circular indeterminate color="primary" size="32" />
+                        </div>
+                      </template>
+                    </v-img>
+                    <v-btn
+                      size="x-small"
+                      color="black"
+                      variant="flat"
+                      class="position-absolute bottom-0 right-0 ma-2 text-none font-weight-bold"
+                      style="opacity: 0.85;"
+                      prepend-icon="mdi-image-refresh"
+                      :loading="isGeneratingImage"
+                      @click="generateImageForActiveCard"
+                    >
+                      Regenerate Visual
+                    </v-btn>
+                  </div>
+
+                  <!-- Word & Pronunciation -->
+                  <div class="text-center py-2">
+                    <div class="text-h4 font-weight-black text-grey-darken-4 mb-1">
+                      {{ activeCard.word }}
                     </div>
-                  </template>
-                </v-img>
-                <v-btn
-                  size="x-small"
-                  color="black"
-                  variant="flat"
-                  class="position-absolute bottom-0 right-0 ma-2 text-none font-weight-bold"
-                  style="opacity: 0.85;"
-                  prepend-icon="mdi-image-refresh"
-                  :loading="isGeneratingImage"
-                  @click="generateImageForActiveCard"
-                >
-                  Regenerate Visual
-                </v-btn>
-              </div>
+                    <div class="text-subtitle-1 text-primary font-italic font-weight-bold mb-2">
+                      /{{ activeCard.ipa || '...' }}/
+                    </div>
+                    <v-btn
+                      color="indigo-darken-2"
+                      variant="tonal"
+                      size="small"
+                      class="text-none font-weight-bold"
+                      prepend-icon="mdi-volume-high"
+                      @click.stop="playAudio(activeCard.word)"
+                    >
+                      Listen Native Audio
+                    </v-btn>
+                  </div>
 
-              <!-- Word & Pronunciation -->
-              <div class="text-center py-2">
-                <div class="text-h4 font-weight-black text-grey-darken-4 mb-1">
-                  {{ activeCard.word }}
-                </div>
-                <div class="text-subtitle-1 text-primary font-italic font-weight-bold mb-2">
-                  /{{ activeCard.ipa || '...' }}/
-                </div>
-                <v-btn
-                  color="indigo-darken-2"
-                  variant="tonal"
-                  size="small"
-                  class="text-none font-weight-bold"
-                  prepend-icon="mdi-volume-high"
-                  @click.stop="playAudio(activeCard.word)"
-                >
-                  Listen Native Audio
-                </v-btn>
-              </div>
-
-              <div class="text-caption text-grey mt-2">
-                <v-icon size="x-small">mdi-swap-horizontal</v-icon> Click anywhere on the card to flip
-              </div>
-            </div>
-
-            <!-- Back Side -->
-            <div class="card-face card-back pa-4 d-flex flex-column justify-space-between" @click.stop>
-              <div>
-                <div class="d-flex justify-space-between align-center mb-2">
-                  <v-chip size="x-small" color="secondary" variant="flat">BACK SIDE (DETAILS)</v-chip>
-                  <v-btn size="x-small" variant="text" icon="mdi-close" @click="isAiFlipped = false" />
+                  <div class="text-caption text-grey mt-2">
+                    <v-icon size="x-small">mdi-swap-horizontal</v-icon> Click anywhere on the card to flip
+                  </div>
                 </div>
 
-                <div class="d-flex align-center justify-space-between mb-3 border-b pb-2">
+                <!-- Back Side -->
+                <div class="card-face card-back pa-4 d-flex flex-column justify-space-between" @click.stop>
                   <div>
-                    <span class="text-h5 font-weight-black text-grey-darken-4">{{ activeCard.word }}</span>
-                    <span class="text-subtitle-2 text-primary ml-2 font-italic">/{{ activeCard.ipa }}/</span>
+                    <div class="d-flex justify-space-between align-center mb-2">
+                      <v-chip size="x-small" color="secondary" variant="flat">BACK SIDE (DETAILS)</v-chip>
+                      <v-btn size="x-small" variant="text" icon="mdi-close" @click="isAiFlipped = false" />
+                    </div>
+
+                    <div class="d-flex align-center justify-space-between mb-3 border-b pb-2">
+                      <div>
+                        <span class="text-h5 font-weight-black text-grey-darken-4">{{ activeCard.word }}</span>
+                        <span class="text-subtitle-2 text-primary ml-2 font-italic">/{{ activeCard.ipa }}/</span>
+                      </div>
+                      <v-btn icon="mdi-volume-high" size="small" variant="text" color="primary" @click="playAudio(activeCard.word)" />
+                    </div>
+
+                    <!-- Vietnamese Meaning -->
+                    <div class="mb-3">
+                      <div class="text-caption font-weight-black text-indigo-darken-3 mb-1">VIETNAMESE MEANING</div>
+                      <div class="text-body-1 font-weight-bold text-grey-darken-4 bg-indigo-lighten-5 pa-2 rounded">
+                        {{ activeCard.meaning || 'No definition available' }}
+                      </div>
+                    </div>
+
+                    <!-- Example Sentence -->
+                    <div class="mb-3">
+                      <div class="text-caption font-weight-black text-grey-darken-2 mb-1">PRACTICAL EXAMPLE</div>
+                      <div class="text-body-2 text-grey-darken-3 font-italic bg-grey-lighten-4 pa-2 rounded border">
+                        "{{ activeCard.example || 'Example context not set.' }}"
+                      </div>
+                    </div>
+
+                    <!-- Pronunciation Tip -->
+                    <div class="mb-3" v-if="activeCard.pronunciation_tip">
+                      <div class="text-caption font-weight-black text-deep-orange-darken-3 mb-1">PRONUNCIATION TIP (IPA & MOUTH SHAPE)</div>
+                      <div class="text-caption text-grey-darken-4 bg-amber-lighten-5 border border-amber pa-2 rounded">
+                        {{ activeCard.pronunciation_tip }}
+                      </div>
+                    </div>
                   </div>
-                  <v-btn icon="mdi-volume-high" size="small" variant="text" color="primary" @click="playAudio(activeCard.word)" />
-                </div>
 
-                <!-- Vietnamese Meaning -->
-                <div class="mb-3">
-                  <div class="text-caption font-weight-black text-indigo-darken-3 mb-1">VIETNAMESE MEANING</div>
-                  <div class="text-body-1 font-weight-bold text-grey-darken-4 bg-indigo-lighten-5 pa-2 rounded">
-                    {{ activeCard.meaning || 'No definition available' }}
-                  </div>
-                </div>
+                  <!-- Quick Audio Practice on Card -->
+                  <div class="border-t pt-2 mt-2">
+                    <div class="d-flex align-center justify-space-between">
+                      <v-btn
+                        :color="isRecordingCard ? 'error' : 'primary'"
+                        :variant="isRecordingCard ? 'flat' : 'outlined'"
+                        size="small"
+                        class="text-none font-weight-bold"
+                        :prepend-icon="isRecordingCard ? 'mdi-stop' : 'mdi-microphone'"
+                        :loading="isEvaluatingCard"
+                        @click="toggleCardRecording"
+                      >
+                        {{ isRecordingCard ? 'Stop & Grade Speaking' : 'Test Your Pronunciation' }}
+                      </v-btn>
 
-                <!-- Example Sentence -->
-                <div class="mb-3">
-                  <div class="text-caption font-weight-black text-grey-darken-2 mb-1">PRACTICAL EXAMPLE</div>
-                  <div class="text-body-2 text-grey-darken-3 font-italic bg-grey-lighten-4 pa-2 rounded border">
-                    "{{ activeCard.example || 'Example context not set.' }}"
-                  </div>
-                </div>
-
-                <!-- Pronunciation Tip -->
-                <div class="mb-3" v-if="activeCard.pronunciation_tip">
-                  <div class="text-caption font-weight-black text-deep-orange-darken-3 mb-1">PRONUNCIATION TIP (IPA & MOUTH SHAPE)</div>
-                  <div class="text-caption text-grey-darken-4 bg-amber-lighten-5 border border-amber pa-2 rounded">
-                    {{ activeCard.pronunciation_tip }}
-                  </div>
-                </div>
-              </div>
-
-              <!-- Quick Audio Practice on Card -->
-              <div class="border-t pt-2 mt-2">
-                <div class="d-flex align-center justify-space-between">
-                  <v-btn
-                    :color="isRecordingCard ? 'error' : 'primary'"
-                    :variant="isRecordingCard ? 'flat' : 'outlined'"
-                    size="small"
-                    class="text-none font-weight-bold"
-                    :prepend-icon="isRecordingCard ? 'mdi-stop' : 'mdi-microphone'"
-                    :loading="isEvaluatingCard"
-                    @click="toggleCardRecording"
-                  >
-                    {{ isRecordingCard ? 'Stop & Grade Speaking' : 'Test Your Pronunciation' }}
-                  </v-btn>
-
-                  <div v-if="cardScore !== null" class="d-flex align-center ga-1">
-                    <span class="text-caption font-weight-bold">Score:</span>
-                    <v-chip :color="cardScore >= 80 ? 'success' : 'warning'" size="small" class="font-weight-black">
-                      {{ cardScore }}%
-                    </v-chip>
+                      <div v-if="cardScore !== null" class="d-flex align-center ga-1">
+                        <span class="text-caption font-weight-bold">Score:</span>
+                        <v-chip :color="cardScore >= 80 ? 'success' : 'warning'" size="small" class="font-weight-black">
+                          {{ cardScore }}%
+                        </v-chip>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        <!-- Navigation Controls Below Card -->
-        <div class="d-flex align-center justify-space-between ga-2">
-          <v-btn
-            variant="tonal"
-            color="grey-darken-2"
-            size="small"
-            class="text-none flex-grow-1 font-weight-bold"
-            prepend-icon="mdi-chevron-left"
-            :disabled="activeCardIndex === 0"
-            @click="prevCard"
-          >
-            Previous Card
-          </v-btn>
+            <!-- Navigation Controls Below Card -->
+            <div class="d-flex align-center justify-space-between ga-2">
+              <v-btn
+                variant="tonal"
+                color="grey-darken-2"
+                size="small"
+                class="text-none flex-grow-1 font-weight-bold"
+                prepend-icon="mdi-chevron-left"
+                :disabled="activeCardIndex === 0"
+                @click="prevCard"
+              >
+                Previous Card
+              </v-btn>
 
-          <v-btn
-            variant="flat"
-            color="primary"
-            size="small"
-            class="text-none flex-grow-1 font-weight-bold"
-            append-icon="mdi-chevron-right"
-            :disabled="activeCardIndex >= activeCards.length - 1"
-            @click="nextCard"
-          >
-            Next Card
-          </v-btn>
-        </div>
+              <v-btn
+                variant="flat"
+                color="primary"
+                size="small"
+                class="text-none flex-grow-1 font-weight-bold"
+                append-icon="mdi-chevron-right"
+                :disabled="activeCardIndex >= activeCards.length - 1"
+                @click="nextCard"
+              >
+                Next Card
+              </v-btn>
+            </div>
+          </v-col>
+
+          <!-- Right Column: Study Companion Panel (Col 5 on md, 4 on lg) -->
+          <v-col cols="12" md="5" lg="4" class="pa-0">
+            <v-card border flat rounded="lg" class="pa-3 bg-white">
+              <div class="d-flex align-center justify-space-between mb-2">
+                <div class="text-caption font-weight-black text-grey-darken-3 d-flex align-center ga-1">
+                  <v-icon color="indigo" size="small">mdi-format-list-bulleted</v-icon>
+                  <span>DECK CARDS ({{ activeCards.length }})</span>
+                </div>
+                <v-chip size="x-small" color="indigo" variant="tonal" class="font-weight-bold">
+                  {{ Math.round(((activeCardIndex + 1) / activeCards.length) * 100) }}% Completed
+                </v-chip>
+              </div>
+
+              <!-- Linear Progress -->
+              <v-progress-linear
+                :model-value="((activeCardIndex + 1) / activeCards.length) * 100"
+                color="indigo"
+                height="6"
+                rounded
+                class="mb-3"
+              />
+
+              <!-- Card List Navigation -->
+              <v-list density="compact" class="pa-0 overflow-y-auto" style="max-height: 420px;">
+                <v-list-item
+                  v-for="(c, c_idx) in activeCards"
+                  :key="c.id || c_idx"
+                  rounded="lg"
+                  class="mb-1 border cursor-pointer"
+                  :class="activeCardIndex === c_idx ? 'bg-indigo-lighten-5 border-indigo' : 'bg-grey-lighten-5'"
+                  @click="activeCardIndex = c_idx; isAiFlipped = false"
+                >
+                  <template #prepend>
+                    <v-avatar size="24" :color="activeCardIndex === c_idx ? 'indigo' : 'grey-lighten-2'" class="mr-2">
+                      <span class="text-caption font-weight-bold" :class="activeCardIndex === c_idx ? 'text-white' : 'text-grey-darken-3'">
+                        {{ c_idx + 1 }}
+                      </span>
+                    </v-avatar>
+                  </template>
+
+                  <v-list-item-title class="font-weight-black text-caption" :class="activeCardIndex === c_idx ? 'text-indigo-darken-3' : 'text-grey-darken-3'">
+                    {{ c.word }}
+                  </v-list-item-title>
+                  <v-list-item-subtitle class="text-caption text-grey" style="font-size: 10px;">
+                    /{{ c.ipa }}/ &bull; {{ c.meaning }}
+                  </v-list-item-subtitle>
+                </v-list-item>
+              </v-list>
+            </v-card>
+          </v-col>
+        </v-row>
       </div>
     </div>
 
@@ -1114,8 +1171,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.max-width-800 {
-  max-width: 800px;
+.max-width-1400 {
+  max-width: 1400px;
   margin: 0 auto;
 }
 

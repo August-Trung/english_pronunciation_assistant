@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid class="pa-4 pa-md-6" style="max-width: 1200px;">
+  <v-container fluid class="pa-4 pa-md-6">
     <!-- Modern Vuetify Notification Toast -->
     <v-snackbar
       v-model="toast.show"

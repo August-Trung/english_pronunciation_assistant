@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid class="pa-4 pa-md-6" style="max-width: 900px;">
+  <v-container fluid class="pa-4 pa-md-6" style="max-width: 1400px;">
     <!-- Vuetify Toast Notification -->
     <v-snackbar
       v-model="toast.show"
@@ -42,37 +42,10 @@
       </div>
     </v-card>
 
-    <!-- Enrolled Classes Roster Bar & Leave Class Action -->
-    <v-card v-if="enrolledClasses.length" border flat class="pa-3 mb-4 bg-white rounded-lg">
-      <div class="text-caption font-weight-black text-secondary mb-2 d-flex align-center justify-space-between">
-        <span>MY ENROLLED CLASSROOMS ({{ enrolledClasses.length }})</span>
-        <span class="text-grey font-weight-regular">Click badge to view options</span>
-      </div>
-      <div class="d-flex align-center flex-wrap ga-2">
-        <v-chip
-          v-for="cls in enrolledClasses"
-          :key="cls.class_id"
-          color="indigo"
-          variant="tonal"
-          size="medium"
-          class="font-weight-bold"
-          prepend-icon="mdi-google-classroom"
-        >
-          {{ cls.class_name }} ({{ cls.join_code || 'Enrolled' }})<span v-if="cls.teacher_name" class="ml-1 opacity-75">• {{ cls.teacher_name }}</span>
-          <template #append>
-            <v-btn
-              icon="mdi-exit-to-app"
-              variant="text"
-              size="x-small"
-              color="error"
-              class="ml-1"
-              title="Leave Class"
-              @click.stop="openLeaveClassModal(cls)"
-            />
-          </template>
-        </v-chip>
-      </div>
-    </v-card>
+    <!-- 2-Column Responsive Workspace -->
+    <v-row class="ma-0 ga-3">
+      <!-- Left Column: Filter & Assignments Feed (Cols 12, md 8) -->
+      <v-col cols="12" md="8" class="pa-0">
 
     <!-- Filter Tabs by Classroom if Student is in Multiple Classes -->
     <div v-if="enrolledClasses.length > 1" class="d-flex align-center ga-2 overflow-x-auto pb-2 mb-3">
@@ -252,6 +225,71 @@
         </template>
       </div>
     </div>
+  </v-col>
+
+  <!-- Right Column: Classrooms & Performance Sidebar (Cols 12, md 4) -->
+  <v-col cols="12" md="4" class="pa-0">
+    <div class="sticky-side d-flex flex-column ga-3">
+      <!-- Summary Metrics Card -->
+      <v-card border flat class="pa-4 bg-white rounded-lg">
+        <div class="text-caption font-weight-black text-secondary mb-2 d-flex align-center ga-1">
+          <v-icon size="small" color="secondary">mdi-chart-pie</v-icon>
+          <span>HOMEWORK PROGRESS</span>
+        </div>
+        <div class="d-flex align-center justify-space-between mb-2">
+          <span class="text-caption font-weight-bold text-grey-darken-2">Submitted Rate:</span>
+          <span class="text-subtitle-2 font-weight-black text-primary">
+            {{ assignments.filter(a => a.is_submitted).length }} / {{ assignments.length }}
+          </span>
+        </div>
+        <v-progress-linear
+          :model-value="assignments.length ? (assignments.filter(a => a.is_submitted).length / assignments.length) * 100 : 0"
+          color="primary"
+          height="8"
+          rounded
+          class="mb-3"
+        />
+      </v-card>
+
+      <!-- Enrolled Classes Card -->
+      <v-card v-if="enrolledClasses.length" border flat class="pa-4 bg-white rounded-lg">
+        <div class="text-caption font-weight-black text-secondary mb-3 d-flex align-center justify-space-between">
+          <span>MY CLASSROOMS ({{ enrolledClasses.length }})</span>
+          <v-btn size="x-small" variant="text" color="primary" @click="showJoinClassModal = true">
+            + Join Another
+          </v-btn>
+        </div>
+        <div class="d-flex flex-column ga-2">
+          <div
+            v-for="cls in enrolledClasses"
+            :key="cls.class_id"
+            class="pa-2.5 rounded-lg border bg-grey-lighten-5 d-flex align-center justify-space-between"
+          >
+            <div>
+              <div class="font-weight-black text-caption text-indigo-darken-3 d-flex align-center ga-1">
+                <v-icon size="x-small" color="indigo">mdi-google-classroom</v-icon>
+                <span>{{ cls.class_name }}</span>
+              </div>
+              <div class="text-caption text-grey" style="font-size: 10px;">
+                Code: <strong>{{ cls.join_code || 'Enrolled' }}</strong>
+                <span v-if="cls.teacher_name"> &bull; Teacher: {{ cls.teacher_name }}</span>
+              </div>
+            </div>
+
+            <v-btn
+              icon="mdi-exit-to-app"
+              variant="text"
+              size="small"
+              color="error"
+              title="Leave Class"
+              @click.stop="openLeaveClassModal(cls)"
+            />
+          </div>
+        </div>
+      </v-card>
+    </div>
+  </v-col>
+</v-row>
 
     <!-- Modal 1: Join Class Dialog -->
     <v-dialog v-model="showJoinClassModal" max-width="450">

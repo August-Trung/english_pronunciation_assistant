@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid class="pa-0 max-width-1100">
+  <v-container fluid class="pa-0 max-width-1400">
     <!-- Header Banner -->
     <v-card border flat class="pa-3 pa-sm-4 mb-4 text-white rounded-lg" style="background: linear-gradient(135deg, #0EA5E9 0%, #2563EB 100%);">
       <div class="d-flex align-center justify-space-between flex-wrap ga-2">
@@ -988,8 +988,8 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.max-width-1100 {
-  max-width: 1100px;
+.max-width-1400 {
+  max-width: 1400px;
   margin: 0 auto;
 }
 .max-width-500 {
