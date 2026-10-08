@@ -73,6 +73,12 @@
               <v-btn to="/shadowing" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-waveform" class="font-weight-bold text-none text-body-2">
                 Shadowing
               </v-btn>
+              <v-btn to="/flashcards" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-cards-variant" class="font-weight-bold text-none text-body-2">
+                Flashcards
+              </v-btn>
+              <v-btn to="/picture-practice" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-image-filter-frames" class="font-weight-bold text-none text-body-2">
+                Describe Picture
+              </v-btn>
 
               <!-- Leaderboard Pill -->
               <v-btn to="/leaderboard" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-trophy-outline" class="font-weight-bold text-none text-body-2">
@@ -196,8 +202,12 @@
                     <v-list-item-title class="text-caption font-weight-bold">User Profile</v-list-item-title>
                   </v-list-item>
 
-                  <v-list-item v-if="!isMyHanhDomain" class="rounded mb-1" prepend-icon="mdi-cards-outline" color="error" to="/flashcards">
-                    <v-list-item-title class="text-caption font-weight-bold text-error">Weak Words Flashcards</v-list-item-title>
+                  <v-list-item v-if="!isMyHanhDomain" class="rounded mb-1" prepend-icon="mdi-cards-variant" color="primary" to="/flashcards">
+                    <v-list-item-title class="text-caption font-weight-bold">AI Flashcards Studio</v-list-item-title>
+                  </v-list-item>
+
+                  <v-list-item v-if="!isMyHanhDomain" class="rounded mb-1" prepend-icon="mdi-image-filter-frames" color="primary" to="/picture-practice">
+                    <v-list-item-title class="text-caption font-weight-bold">Describe Picture Studio</v-list-item-title>
                   </v-list-item>
 
                   <v-list-item class="rounded mb-1" prepend-icon="mdi-trophy-award" color="amber-darken-3" @click="showAchievements = true">

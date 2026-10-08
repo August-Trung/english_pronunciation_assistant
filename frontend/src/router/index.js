@@ -20,6 +20,7 @@ const routes = [
   { path: '/admin', name: 'admin', component: AdminView },
   { path: '/parent', name: 'parent', component: ParentView },
   { path: '/flashcards', name: 'flashcards', component: FlashcardsView },
+  { path: '/picture-practice', name: 'picture-practice', component: () => import('@/views/PicturePracticeView.vue') },
   { path: '/leaderboard', name: 'leaderboard', component: LeaderboardView },
   { path: '/stats', name: 'stats', component: StatsView },
   { path: '/settings', name: 'settings', component: SettingsView },
