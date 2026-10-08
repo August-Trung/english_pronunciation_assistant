@@ -346,11 +346,11 @@
                   <v-list-item-title class="text-caption font-weight-bold">User Profile</v-list-item-title>
                 </v-list-item>
 
-                <v-list-item v-if="!isMyHanhDomain" class="rounded mb-1" prepend-icon="mdi-cards-variant" color="primary" to="/flashcards">
+                <v-list-item class="rounded mb-1" prepend-icon="mdi-cards-variant" color="primary" to="/flashcards">
                   <v-list-item-title class="text-caption font-weight-bold">Vocabulary Flashcards</v-list-item-title>
                 </v-list-item>
 
-                <v-list-item v-if="!isMyHanhDomain" class="rounded mb-1" prepend-icon="mdi-image-filter-frames" color="primary" to="/picture-practice">
+                <v-list-item class="rounded mb-1" prepend-icon="mdi-image-filter-frames" color="primary" to="/picture-practice">
                   <v-list-item-title class="text-caption font-weight-bold">Describe the Picture</v-list-item-title>
                 </v-list-item>
 
