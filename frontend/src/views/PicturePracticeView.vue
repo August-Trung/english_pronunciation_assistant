@@ -91,7 +91,7 @@
             <!-- Picture Image Canvas with Hover Zoom -->
             <div class="image-wrapper rounded-lg overflow-hidden border mb-3 position-relative cursor-pointer" @click="showImagePreview = true">
               <v-img
-                :src="currentScenario.image_url || '/logo-augusttrung.png'"
+                :src="getImageUrl(currentScenario.image_url)"
                 height="280"
                 cover
                 class="bg-grey-lighten-4"
@@ -320,7 +320,7 @@
     <v-dialog v-model="showImagePreview" max-width="800">
       <v-card class="pa-2 bg-black text-right">
         <v-btn icon="mdi-close" variant="text" color="white" size="small" @click="showImagePreview = false" />
-        <v-img :src="currentScenario?.image_url" max-height="600" contain />
+        <v-img :src="getImageUrl(currentScenario?.image_url)" max-height="600" contain />
       </v-card>
     </v-dialog>
 
@@ -404,6 +404,13 @@ const props = defineProps({
   backendUrl: String,
   userId: Number
 })
+
+const getImageUrl = (url) => {
+  if (!url) return '/logo-augusttrung.png'
+  if (url.startsWith('http') || url.startsWith('data:')) return url
+  const base = props.backendUrl?.replace(/\/$/, '') || 'https://agrse-fluent-english-backend.hf.space'
+  return `${base}${url.startsWith('/') ? '' : '/'}${url}`
+}
 
 const scenarios = ref([])
 const currentScenario = ref(null)

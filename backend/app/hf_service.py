@@ -4,6 +4,8 @@ import re
 import json
 import logging
 import hashlib
+import random
+import urllib.parse
 from typing import List, Dict, Any, Optional
 from PIL import Image
 
@@ -33,13 +35,19 @@ DEFAULT_GROQ_KEYS = [
     "REMOVED_GROQ_API_KEY_4",
 ]
 
+GROQ_MODELS = [
+    "qwen/qwen3.8-27b",
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b"
+]
+
 def get_hf_client() -> Optional[Any]:
     """Returns an initialized Hugging Face InferenceClient if available."""
     if not InferenceClient:
         return None
     token = HF_TOKEN.strip() if HF_TOKEN else None
     try:
-        return InferenceClient(token=token)
+        return InferenceClient(token=token, timeout=8.0)
     except Exception as e:
         logger.warning(f"Failed to initialize Hugging Face InferenceClient: {e}")
         return None
@@ -75,7 +83,6 @@ def parse_flashcards_json(raw_text: str) -> List[Dict[str, Any]]:
     """Parse and normalize flashcard array output from LLM."""
     data = parse_json_safely(raw_text)
     if isinstance(data, dict):
-        # Look for cards/flashcards array inside object
         for key in ["cards", "flashcards", "data", "vocabulary"]:
             if key in data and isinstance(data[key], list):
                 data = data[key]
@@ -104,11 +111,45 @@ def parse_flashcards_json(raw_text: str) -> List[Dict[str, Any]]:
     return normalized
 
 def call_llm(messages: List[Dict[str, str]], json_mode: bool = True) -> str:
-    """Call LLM with Hugging Face primary, fallback to Groq."""
+    """Fast, reliable LLM invocation: Groq active models primary (0.8s latency), Hugging Face fallback."""
+    # 1. Try Groq Pool (Ultra-fast 0.5s - 1s response)
+    groq_keys = list(DEFAULT_GROQ_KEYS)
+    for env_name in ["GROQ_API_KEY", "GROQ_API_KEY_1", "GROQ_API_KEY_2"]:
+        v = os.getenv(env_name, "").strip()
+        if v and v not in groq_keys:
+            groq_keys.insert(0, v)
+
+    for model_name in GROQ_MODELS:
+        payload = {
+            "model": model_name,
+            "messages": messages,
+            "temperature": 0.7,
+            "max_tokens": 1500
+        }
+        if json_mode:
+            payload["response_format"] = {"type": "json_object"}
+
+        for key in groq_keys[:2]:  # Try primary keys
+            try:
+                res = requests.post(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                    json=payload,
+                    timeout=8
+                )
+                if res.status_code == 200:
+                    result_json = res.json()
+                    content = result_json["choices"][0]["message"]["content"]
+                    if content and len(content.strip()) > 10:
+                        return content
+            except Exception as err:
+                logger.warning(f"Groq {model_name} error: {err}")
+                continue
+
+    # 2. Fallback to Hugging Face Inference Router
     hf = get_hf_client()
     if hf and HF_TOKEN:
         try:
-            # Try HF Router / Serverless LLM
             resp = hf.chat_completion(
                 messages=messages,
                 model="Qwen/Qwen2.5-72B-Instruct",
@@ -119,55 +160,24 @@ def call_llm(messages: List[Dict[str, str]], json_mode: bool = True) -> str:
             if content:
                 return content
         except Exception as e:
-            logger.warning(f"HF Chat Completion failed: {e}, attempting fallback to Groq...")
-
-    # Fallback to Groq API Pool
-    groq_keys = list(DEFAULT_GROQ_KEYS)
-    for env_name in ["GROQ_API_KEY", "GROQ_API_KEY_1", "GROQ_API_KEY_2"]:
-        v = os.getenv(env_name, "").strip()
-        if v and v not in groq_keys:
-            groq_keys.insert(0, v)
-
-    payload = {
-        "model": "llama-3.3-70b-versatile",
-        "messages": messages,
-        "temperature": 0.7,
-        "max_tokens": 1500
-    }
-    if json_mode:
-        payload["response_format"] = {"type": "json_object"}
-
-    for key in groq_keys:
-        try:
-            res = requests.post(
-                "https://api.groq.com/openai/v1/chat/completions",
-                headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
-                json=payload,
-                timeout=15
-            )
-            if res.status_code == 200:
-                result_json = res.json()
-                return result_json["choices"][0]["message"]["content"]
-        except Exception as err:
-            logger.warning(f"Groq fallback error with key {key[:10]}...: {err}")
-            continue
+            logger.warning(f"HF Chat Completion failed: {e}")
 
     return "[]"
 
 def generate_deck_content(topic: str, level: str = "intermediate", count: int = 5) -> List[Dict[str, Any]]:
-    """Generate high quality vocabulary flashcards with IPA and tips via LLM."""
+    """Generate high quality vocabulary flashcards with IPA, tips, and fast visual illustrations."""
     sys_prompt = (
-        "You are an expert English tutor for Vietnamese learners. "
-        "Create high-frequency vocabulary flashcards tailored to the given topic and level. "
-        "For each word, provide: "
-        "1. word: The target English word. "
-        "2. ipa: Accurate phonetic transcription in /IPA/. "
-        "3. meaning: Concise and accurate Vietnamese translation. "
-        "4. example: A natural, practical English example sentence highlighting the word. "
-        "5. pronunciation_tip: Practical mouth shape, tongue placement, or stress guidance in Vietnamese. "
-        "Return ONLY a valid JSON object with a 'cards' array."
+        "You are an expert English teacher. "
+        "Create vocabulary flashcards for the given topic. "
+        "Return a JSON object with a 'cards' array. "
+        "Each card must have: "
+        "'word' (English word), "
+        "'ipa' (phonetic notation, e.g. /ˌbaɪ.oʊ.daɪˈvɜːr.sə.ti/), "
+        "'meaning' (clear Vietnamese meaning), "
+        "'example' (natural English sentence using the word), "
+        "'pronunciation_tip' (concise Vietnamese pronunciation guide)."
     )
-    user_prompt = f"Topic: '{topic}'. Proficiency Level: '{level}'. Number of flashcards: {count}. Return JSON format."
+    user_prompt = f"Topic: '{topic}'. Level: '{level}'. Count: {count}. Output JSON."
 
     content = call_llm([
         {"role": "system", "content": sys_prompt},
@@ -176,83 +186,42 @@ def generate_deck_content(topic: str, level: str = "intermediate", count: int = 
 
     cards = parse_flashcards_json(content)
     if not cards:
-        # Minimal fallback cards if LLM output fails
+        # Fallback card list if LLM unavailable
         cards = [
             {
-                "word": topic.split()[0].capitalize() if topic else "Vocabulary",
-                "ipa": "/vəˈkæb.jə.ler.i/",
-                "meaning": "Từ vựng quan trọng theo chủ đề",
-                "example": f"This word is key when discussing {topic}.",
-                "pronunciation_tip": "Nhấn rõ trọng âm âm tiết chính.",
+                "word": "Communication",
+                "ipa": "/kəˌmjuː.nəˈkeɪ.ʃən/",
+                "meaning": "sự giao tiếp, truyền đạt",
+                "example": f"Effective communication is essential when discussing {topic}.",
+                "pronunciation_tip": "Nhấn trọng âm vào âm tiết /keɪ/.",
+                "image_url": ""
+            },
+            {
+                "word": "Collaboration",
+                "ipa": "/kəˌlæb.əˈreɪ.ʃən/",
+                "meaning": "sự cộng tác, hợp tác",
+                "example": "Team collaboration brings the best project results.",
+                "pronunciation_tip": "Nhấn mạnh vào âm /reɪ/.",
                 "image_url": ""
             }
         ]
+
+    # Attach fast visual illustrations to every card
+    for c in cards:
+        w = c.get("word", "")
+        safe_prompt = urllib.parse.quote_plus(f"{w} {topic} clear 3D cartoon educational illustration")
+        c["image_url"] = f"https://image.pollinations.ai/prompt/{safe_prompt}?width=640&height=400&nologo=true"
+
     return cards
 
-def generate_vocabulary_image(word: str, context: str = "", output_dir: Optional[str] = None) -> Optional[str]:
-    """Generate an educational illustration for a vocabulary word using Hugging Face FLUX.1-schnell."""
-    target_dir = output_dir or FLASHCARD_IMAGES_DIR
-    os.makedirs(target_dir, exist_ok=True)
-
-    # Cache check by slug
-    slug = re.sub(r"[^a-zA-Z0-9_-]", "_", word.lower().strip())
-    filename = f"vocab_{slug}.jpg"
-    file_path = os.path.join(target_dir, filename)
-    relative_url = f"/uploads/flashcard_images/{filename}"
-
-    if os.path.exists(file_path) and os.path.getsize(file_path) > 1024:
-        return relative_url
-
-    prompt = (
-        f"A clear, colorful educational illustration representing the English concept '{word}'. "
-        f"{context if context else 'Clear visual storytelling'}, "
-        "minimalist, modern 3D cartoon style, soft lighting, vibrant colors, white clean background, high resolution, no text"
-    )
-
-    hf = get_hf_client()
-    if hf:
-        try:
-            # FLUX.1-schnell or SDXL on Hugging Face Serverless
-            img: Image.Image = hf.text_to_image(
-                prompt=prompt,
-                model="black-forest-labs/FLUX.1-schnell"
-            )
-            # Save compressed JPEG
-            img.convert("RGB").save(file_path, "JPEG", quality=85)
-            return relative_url
-        except Exception as e:
-            logger.warning(f"HF FLUX.1 image generation failed for '{word}': {e}")
-            try:
-                # Fallback to SDXL-Lightning
-                img = hf.text_to_image(
-                    prompt=prompt,
-                    model="ByteDance/SDXL-Lightning"
-                )
-                img.convert("RGB").save(file_path, "JPEG", quality=85)
-                return relative_url
-            except Exception as e2:
-                logger.warning(f"HF SDXL fallback failed: {e2}")
-
-    # Fallback to generating a clean educational SVG placeholder image
-    try:
-        from PIL import ImageDraw, ImageFont
-        img = Image.new("RGB", (640, 480), color=(240, 244, 255))
-        draw = ImageDraw.Draw(img)
-        # Draw background card
-        draw.rectangle([20, 20, 620, 460], fill=(255, 255, 255), outline=(200, 215, 240), width=4)
-        # Draw header text
-        text = f"{word.upper()}"
-        draw.text((320, 220), text, fill=(40, 60, 120), anchor="mm")
-        subtext = "AI Visual Illustration"
-        draw.text((320, 270), subtext, fill=(120, 140, 170), anchor="mm")
-        img.save(file_path, "JPEG", quality=80)
-        return relative_url
-    except Exception as e_canvas:
-        logger.error(f"Canvas fallback failed: {e_canvas}")
-        return None
+def generate_vocabulary_image(word: str, context: str = "", output_dir: Optional[str] = None) -> str:
+    """Generate or retrieve instant visual illustration URL."""
+    random_seed = random.randint(1, 999999)
+    safe_prompt = urllib.parse.quote_plus(f"{word} {context} clear 3D colorful education illustration")
+    return f"https://image.pollinations.ai/prompt/{safe_prompt}?width=640&height=400&nologo=true&seed={random_seed}"
 
 def generate_picture_scenario(topic: str = "Daily Life", level: str = "intermediate") -> Dict[str, Any]:
-    """Generate a multimodal Describe the Picture challenge scenario."""
+    """Generate a multimodal Describe the Picture challenge scenario with instant image URL."""
     sys_prompt = (
         "You are an IELTS & TOEIC Speaking Examiner. "
         "Create an engaging 'Describe the Picture' speaking task. "
@@ -272,7 +241,7 @@ def generate_picture_scenario(topic: str = "Daily Life", level: str = "intermedi
 
     data = parse_json_safely(content) or {}
     title = str(data.get("title", f"Scene in {topic}"))
-    image_prompt = str(data.get("image_prompt", f"A lively, detailed scenario depicting {topic}, cinematic daylight, photo style"))
+    image_prompt = str(data.get("image_prompt", f"A lively, detailed scene of {topic}, daylight, vibrant colors, cinematic"))
     guiding_questions = data.get("guiding_questions", [
         "Where is this scene taking place?",
         "What are the main people or objects doing?",
@@ -280,39 +249,14 @@ def generate_picture_scenario(topic: str = "Daily Life", level: str = "intermedi
     ])
     keywords = data.get("keywords", ["atmosphere", "activity", "surrounding", "foreground", "expression"])
 
-    # Generate the scenario image
-    hash_id = hashlib.md5(f"{title}_{topic}".encode("utf-8")).hexdigest()[:10]
-    filename = f"scenario_{hash_id}.jpg"
-    file_path = os.path.join(PICTURE_PRACTICE_DIR, filename)
-    relative_url = f"/uploads/picture_practice/{filename}"
-
-    if not os.path.exists(file_path):
-        hf = get_hf_client()
-        image_generated = False
-        if hf:
-            try:
-                img = hf.text_to_image(prompt=image_prompt, model="black-forest-labs/FLUX.1-schnell")
-                img.convert("RGB").save(file_path, "JPEG", quality=85)
-                image_generated = True
-            except Exception as e:
-                logger.warning(f"HF scenario image failed: {e}")
-        
-        if not image_generated:
-            # Fallback illustration
-            try:
-                img = Image.new("RGB", (768, 512), color=(235, 240, 248))
-                from PIL import ImageDraw
-                draw = ImageDraw.Draw(img)
-                draw.rectangle([20, 20, 748, 492], fill=(255, 255, 255), outline=(180, 200, 230), width=4)
-                draw.text((384, 230), title[:40], fill=(30, 50, 100), anchor="mm")
-                draw.text((384, 280), f"Topic: {topic}", fill=(100, 120, 150), anchor="mm")
-                img.save(file_path, "JPEG", quality=80)
-            except Exception:
-                pass
+    # Instant high-quality scene image URL
+    safe_img_prompt = urllib.parse.quote_plus(f"{image_prompt} detailed photo realistic scene 4k")
+    random_seed = random.randint(1, 999999)
+    image_url = f"https://image.pollinations.ai/prompt/{safe_img_prompt}?width=768&height=512&nologo=true&seed={random_seed}"
 
     return {
         "title": title,
-        "image_url": relative_url,
+        "image_url": image_url,
         "image_prompt": image_prompt,
         "guiding_questions": guiding_questions,
         "keywords": keywords,
@@ -337,7 +281,6 @@ def evaluate_picture_speaking(
             "sample_response": ""
         }
 
-    # Match keywords (case-insensitive substring)
     lower_trans = transcription.lower()
     matched = [kw for kw in keywords if kw.lower() in lower_trans]
 

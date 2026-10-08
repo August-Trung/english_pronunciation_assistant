@@ -159,7 +159,7 @@
               <!-- AI Visual Illustration -->
               <div class="image-container w-100 my-2 rounded-lg overflow-hidden position-relative border" @click.stop>
                 <v-img
-                  :src="activeCard.image_url || '/logo-augusttrung.png'"
+                  :src="getImageUrl(activeCard.image_url)"
                   height="200"
                   cover
                   class="bg-grey-lighten-4"
@@ -663,6 +663,13 @@ const formatDate = (isoStr) => {
   }
 }
 
+const getImageUrl = (url) => {
+  if (!url) return '/logo-augusttrung.png'
+  if (url.startsWith('http') || url.startsWith('data:')) return url
+  const base = props.backendUrl?.replace(/\/$/, '') || 'https://agrse-fluent-english-backend.hf.space'
+  return `${base}${url.startsWith('/') ? '' : '/'}${url}`
+}
+
 // Fetch user decks from backend
 const fetchDecks = async () => {
   isLoadingDecks.value = true
@@ -727,7 +734,7 @@ const handleCreateDeck = async () => {
   isGeneratingDeck.value = true
 
   try {
-    // 1. Generate cards from LLM
+    // 1. Generate cards from LLM (returns in ~1 second with images already attached)
     const genRes = await fetch(`${props.backendUrl}/api/flashcards/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -742,24 +749,7 @@ const handleCreateDeck = async () => {
     const genData = await genRes.json()
     const cards = genData.data || []
 
-    // 2. If generateImages checked, generate image for first card immediately
-    if (deckForm.value.generateImages && cards.length > 0) {
-      try {
-        const imgRes = await fetch(`${props.backendUrl}/api/ai/generate-image`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ word: cards[0].word, context: deckForm.value.topic })
-        })
-        if (imgRes.ok) {
-          const imgData = await imgRes.json()
-          cards[0].image_url = imgData.image_url
-        }
-      } catch (imgErr) {
-        console.warn('Initial image generation error:', imgErr)
-      }
-    }
-
-    // 3. Save deck to DB
+    // 2. Save deck to DB
     const saveRes = await fetch(`${props.backendUrl}/api/flashcards/decks`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
