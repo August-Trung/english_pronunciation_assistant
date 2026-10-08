@@ -9,10 +9,10 @@
           </v-avatar>
           <div>
             <div class="text-subtitle-1 text-sm-h6 font-weight-black tracking-tight leading-tight">
-              MULTIMODAL AI FLASHCARDS STUDIO
+              VOCABULARY FLASHCARDS
             </div>
             <div class="text-caption text-indigo-lighten-4">
-              Dual-Coding vocabulary mastery powered by Hugging Face FLUX.1 Visuals & Qwen LLM
+              Learn new words faster with picture illustrations and interactive pronunciation practice
             </div>
           </div>
         </div>
@@ -451,7 +451,7 @@
         </div>
 
         <div class="text-caption text-grey-darken-1 mb-3">
-          Enter any topic to let Hugging Face Qwen LLM create a structured vocabulary set with phonetic IPA, Vietnamese explanations, and practical sentences.
+          Enter any topic to automatically create a custom vocabulary study deck with phonetic guide, meanings, and practical sentences.
         </div>
 
         <v-text-field
@@ -506,7 +506,7 @@
 
         <v-checkbox
           v-model="deckForm.generateImages"
-          label="Auto-generate AI Visuals with FLUX.1 (takes 5-10s)"
+          label="Include illustration pictures for cards"
           color="primary"
           density="compact"
           hide-details

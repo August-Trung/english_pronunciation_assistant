@@ -9,10 +9,10 @@
           </v-avatar>
           <div>
             <div class="text-subtitle-1 text-sm-h6 font-weight-black tracking-tight leading-tight">
-              DESCRIBE THE PICTURE SPEAKING STUDIO
+              DESCRIBE THE PICTURE
             </div>
             <div class="text-caption text-blue-lighten-4">
-              IELTS & TOEIC Speaking simulation with Hugging Face FLUX.1 Visual Scenarios & AI Evaluation
+              Practice speaking fluently by describing pictures with instant feedback
             </div>
           </div>
         </div>
@@ -205,7 +205,7 @@
             <v-progress-circular indeterminate color="primary" size="56" width="5" class="mb-4" />
             <div class="text-subtitle-1 font-weight-black text-grey-darken-4 mb-1">Evaluating Your Response...</div>
             <div class="text-caption text-grey max-width-350 mx-auto">
-              Whisper AI is transcribing your speech, while our LLM Examiner analyzes your fluency, grammar, and vocabulary coverage.
+              Analyzing your speech and evaluating your fluency, grammar, and vocabulary...
             </div>
           </div>
 
@@ -218,8 +218,8 @@
                     <v-icon color="indigo">mdi-star-circle</v-icon>
                   </v-avatar>
                   <div>
-                    <div class="text-subtitle-2 font-weight-black text-grey-darken-4">EXAMINER ASSESSMENT REPORT</div>
-                    <div class="text-caption text-grey">Multimodal AI Scoring</div>
+                    <div class="text-subtitle-2 font-weight-black text-grey-darken-4">SPEAKING ASSESSMENT REPORT</div>
+                    <div class="text-caption text-grey">Performance Breakdown</div>
                   </div>
                 </div>
 
@@ -338,7 +338,7 @@
         </div>
 
         <div class="text-caption text-grey-darken-1 mb-3">
-          Hugging Face FLUX.1 will generate a vivid scene illustration, while Qwen LLM prepares guiding questions and target vocabulary.
+          Create an engaging picture scene with guiding questions and key vocabulary to practice your speaking skills.
         </div>
 
         <v-text-field
