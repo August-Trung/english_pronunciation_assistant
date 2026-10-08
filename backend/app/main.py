@@ -21,13 +21,15 @@ try:
     from hf_service import (
         generate_deck_content, generate_vocabulary_image,
         generate_picture_scenario, evaluate_picture_speaking,
-        generate_educational_svg, resolve_scene_photo
+        generate_educational_svg, resolve_scene_photo,
+        suggest_picture_topics
     )
 except ImportError:
     from app.hf_service import (
         generate_deck_content, generate_vocabulary_image,
         generate_picture_scenario, evaluate_picture_speaking,
-        generate_educational_svg, resolve_scene_photo
+        generate_educational_svg, resolve_scene_photo,
+        suggest_picture_topics
     )
 from fastapi.responses import StreamingResponse, Response, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -1890,6 +1892,21 @@ def init_db():
             pass
         cursor.execute("UPDATE assignments SET status = 'active' WHERE status IS NULL OR status = ''")
 
+        # Multimodal Picture Speaking Migrations for assignments
+        assignment_cols = [
+            ("assignment_type", "TEXT DEFAULT 'sentence'"),
+            ("image_url", "TEXT DEFAULT ''"),
+            ("guiding_questions", "TEXT DEFAULT ''"),
+            ("target_keywords", "TEXT DEFAULT ''"),
+            ("time_limit_seconds", "INTEGER DEFAULT 60")
+        ]
+        for col, col_type in assignment_cols:
+            try:
+                cursor.execute(f"ALTER TABLE assignments ADD COLUMN {col} {col_type}")
+            except Exception:
+                pass
+        cursor.execute("UPDATE assignments SET assignment_type = 'sentence' WHERE assignment_type IS NULL OR assignment_type = ''")
+
         # P3 Migrations: Tenant status (active, trial, suspended, expired)
         try:
             cursor.execute("ALTER TABLE tenants ADD COLUMN status TEXT DEFAULT 'active'")
@@ -3185,7 +3202,8 @@ def get_class_gradebook(
         students_rows = cursor.fetchall()
         
         cursor.execute("""
-            SELECT id, title, topic_sentence, target_ipa, due_date, created_at, COALESCE(status, 'active')
+            SELECT id, title, topic_sentence, target_ipa, due_date, created_at, COALESCE(status, 'active'),
+                   COALESCE(assignment_type, 'sentence'), COALESCE(image_url, ''), guiding_questions, target_keywords, COALESCE(time_limit_seconds, 60)
             FROM assignments
             WHERE class_id = ? AND (IsXoa IS NULL OR IsXoa = 0)
             ORDER BY id DESC
@@ -3203,7 +3221,25 @@ def get_class_gradebook(
         conn.close()
         
         students = [{"id": r[0], "name": r[1] or f"Learner #{r[0]}", "email": r[2], "avatar": r[3]} for r in students_rows]
-        assignments = [{"id": r[0], "title": r[1], "topic_sentence": r[2], "target_ipa": r[3], "due_date": r[4], "created_at": r[5], "status": r[6]} for r in assignment_rows]
+        assignments = []
+        for r in assignment_rows:
+            try:
+                g_q = json.loads(r[9]) if r[9] else []
+            except Exception:
+                g_q = []
+            try:
+                t_k = json.loads(r[10]) if r[10] else []
+            except Exception:
+                t_k = []
+            assignments.append({
+                "id": r[0], "title": r[1], "topic_sentence": r[2], "target_ipa": r[3],
+                "due_date": r[4], "created_at": r[5], "status": r[6],
+                "assignment_type": r[7] or "sentence",
+                "image_url": r[8] or "",
+                "guiding_questions": g_q,
+                "target_keywords": t_k,
+                "time_limit_seconds": r[11] or 60
+            })
         submissions = [{
             "id": r[0], "assignment_id": r[1], "student_id": r[2], "student_name": r[3],
             "audio_url": r[4], "transcribed_text": r[5], "score": r[6], "ipa_json": r[7],
@@ -3234,6 +3270,11 @@ class CreateAssignmentRequest(BaseModel):
     topic_sentence: str
     target_ipa: str = ""
     due_date: str = ""
+    assignment_type: Optional[str] = "sentence"
+    image_url: Optional[str] = ""
+    guiding_questions: Optional[List[str]] = None
+    target_keywords: Optional[List[str]] = None
+    time_limit_seconds: Optional[int] = 60
 
 @app.post("/api/assignments/create")
 def create_assignment(
@@ -3247,9 +3288,14 @@ def create_assignment(
         
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
+        questions_json = json.dumps(req.guiding_questions or [])
+        keywords_json = json.dumps(req.target_keywords or [])
+        asg_type = req.assignment_type or "sentence"
         cursor.execute(
-            "INSERT INTO assignments (class_id, teacher_id, tenant_id, title, topic_sentence, target_ipa, due_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'active')",
-            (req.class_id, teacher_id, tenant_id, req.title.strip(), req.topic_sentence.strip(), req.target_ipa.strip(), req.due_date.strip())
+            """INSERT INTO assignments 
+            (class_id, teacher_id, tenant_id, title, topic_sentence, target_ipa, due_date, status, assignment_type, image_url, guiding_questions, target_keywords, time_limit_seconds) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?)""",
+            (req.class_id, teacher_id, tenant_id, req.title.strip(), req.topic_sentence.strip(), req.target_ipa.strip(), req.due_date.strip(), asg_type, req.image_url or "", questions_json, keywords_json, req.time_limit_seconds or 60)
         )
         conn.commit()
         assignment_id = cursor.lastrowid
@@ -3878,7 +3924,8 @@ def get_student_assignments(student_id: int):
         cursor = conn.cursor()
         cursor.execute("""
             SELECT a.id, a.class_id, c.name as class_name, c.join_code, a.title, a.topic_sentence, a.target_ipa, a.due_date,
-                   s.id as submission_id, s.score, s.audio_url, s.teacher_feedback
+                   s.id as submission_id, s.score, s.audio_url, s.teacher_feedback,
+                   COALESCE(a.assignment_type, 'sentence'), COALESCE(a.image_url, ''), a.guiding_questions, a.target_keywords, COALESCE(a.time_limit_seconds, 60)
             FROM class_enrollments e
             JOIN classrooms c ON e.class_id = c.id
             JOIN assignments a ON a.class_id = c.id
@@ -3891,6 +3938,14 @@ def get_student_assignments(student_id: int):
         
         assignments = []
         for r in rows:
+            try:
+                g_q = json.loads(r[14]) if r[14] else []
+            except Exception:
+                g_q = []
+            try:
+                t_k = json.loads(r[15]) if r[15] else []
+            except Exception:
+                t_k = []
             assignments.append({
                 "assignment_id": r[0],
                 "class_id": r[1],
@@ -3904,7 +3959,12 @@ def get_student_assignments(student_id: int):
                 "submission_id": r[8],
                 "score": r[9],
                 "audio_url": r[10],
-                "teacher_feedback": r[11]
+                "teacher_feedback": r[11],
+                "assignment_type": r[12] or "sentence",
+                "image_url": r[13] or "",
+                "guiding_questions": g_q,
+                "target_keywords": t_k,
+                "time_limit_seconds": r[16] or 60
             })
         return {"assignments": assignments}
     except Exception as e:
@@ -3931,26 +3991,51 @@ async def submit_assignment(
             
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
-        cursor.execute("SELECT topic_sentence FROM assignments WHERE id = ?", (assignment_id,))
+        cursor.execute("SELECT topic_sentence, COALESCE(assignment_type, 'sentence'), title, guiding_questions, target_keywords FROM assignments WHERE id = ?", (assignment_id,))
         asg_row = cursor.fetchone()
         target_sentence = asg_row[0] if asg_row else "Practice English pronunciation"
-        
+        asg_type = asg_row[1] if asg_row else "sentence"
+        asg_title = asg_row[2] if asg_row else ""
+        try:
+            g_questions = json.loads(asg_row[3]) if (asg_row and asg_row[3]) else []
+        except Exception:
+            g_questions = []
+        try:
+            t_keywords = json.loads(asg_row[4]) if (asg_row and asg_row[4]) else []
+        except Exception:
+            t_keywords = []
+
         # Transcribe & analyze audio
         transcription, whisper_conf = transcribe_audio(temp_audio_path)
         if not transcription:
             transcription = target_sentence
             
-        word_count = len(transcription.split())
-        wps, speech_cat = calculate_speech_rate(word_count, 10.0)
-        is_fluent, confidence_level = detect_fluent_speaker(transcription, word_count, wps)
-        pron_score, pron_level, quality_score, warnings = check_pronunciation(transcription, whisper_conf, word_count, is_fluent)
-        score_val = pron_score * 5.0 # Scale to 10
+        feedback_str = None
+        if asg_type == "picture":
+            eval_res = evaluate_picture_speaking(
+                transcription=transcription,
+                topic=asg_title or target_sentence,
+                keywords=t_keywords,
+                guiding_questions=g_questions
+            )
+            score_val = round((eval_res.get("overall_score", 70) / 10.0), 1)
+            feedback_str = eval_res.get("feedback", "")
+            if eval_res.get("sample_response"):
+                feedback_str += f"\n\n[Gợi ý câu trả lời mẫu]: {eval_res.get('sample_response')}"
+            ipa_data = json.dumps({"confidence": whisper_conf, "picture_eval": eval_res})
+        else:
+            word_count = len(transcription.split())
+            wps, speech_cat = calculate_speech_rate(word_count, 10.0)
+            is_fluent, confidence_level = detect_fluent_speaker(transcription, word_count, wps)
+            pron_score, pron_level, quality_score, warnings = check_pronunciation(transcription, whisper_conf, word_count, is_fluent)
+            score_val = pron_score * 5.0 # Scale to 10
+            ipa_data = json.dumps({"confidence": whisper_conf})
         
         audio_size_bytes = len(audio_bytes)
         cursor.execute("""
-            INSERT INTO submissions (assignment_id, student_id, student_name, audio_url, audio_size_bytes, transcribed_text, score, ipa_json)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (assignment_id, student_id, student_name, supabase_url or "", audio_size_bytes, transcription, score_val, json.dumps({"confidence": whisper_conf})))
+            INSERT INTO submissions (assignment_id, student_id, student_name, audio_url, audio_size_bytes, transcribed_text, score, ipa_json, teacher_feedback)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (assignment_id, student_id, student_name, supabase_url or "", audio_size_bytes, transcription, score_val, ipa_data, feedback_str))
         conn.commit()
         sub_id = cursor.lastrowid
         conn.close()
@@ -6767,6 +6852,17 @@ def api_generate_image(req: GenerateImageRequest):
             conn.close()
             
     return {"status": "success", "image_url": img_url}
+
+class SuggestTopicsRequest(BaseModel):
+    category: Optional[str] = "all"
+    level: Optional[str] = "intermediate"
+    count: Optional[int] = 6
+
+@app.post("/api/picture-practice/suggest-topics")
+def api_suggest_picture_topics(req: SuggestTopicsRequest):
+    """Suggest inspiring IELTS & TOEIC speaking topics with pre-aligned grounded visual scenes."""
+    topics = suggest_picture_topics(category=req.category or "all", level=req.level or "intermediate", count=req.count or 6)
+    return {"status": "success", "topics": topics}
 
 @app.post("/api/picture-practice/create-scenario")
 def api_create_picture_scenario(req: CreatePictureScenarioRequest):

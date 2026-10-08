@@ -469,6 +469,15 @@
                         <span class="text-subtitle-2 font-weight-black text-primary">{{ asg.title }}</span>
                         <v-chip
                           size="x-small"
+                          :color="asg.assignment_type === 'picture' ? 'purple-darken-2' : 'indigo-darken-2'"
+                          variant="tonal"
+                          class="font-weight-bold"
+                          :prepend-icon="asg.assignment_type === 'picture' ? 'mdi-image-filter-frames' : 'mdi-waveform'"
+                        >
+                          {{ asg.assignment_type === 'picture' ? 'Describe Picture' : 'Sentence Reading' }}
+                        </v-chip>
+                        <v-chip
+                          size="x-small"
                           :color="asg.status === 'closed' ? 'grey-darken-1' : 'teal'"
                           variant="flat"
                           class="font-weight-bold"
@@ -1059,46 +1068,159 @@
       </v-card>
     </v-dialog>
 
-    <!-- Modal: 1-Click Assignment Creation -->
-    <v-dialog v-model="showCreateAssignmentModal" max-width="500">
-      <v-card border rounded="lg" class="pa-4">
-        <div class="text-subtitle-1 font-weight-black text-secondary mb-3 d-flex align-center ga-2">
-          <v-icon color="secondary">mdi-send</v-icon>
-          <span>Assign Homework to {{ selectedClass?.name }}</span>
+    <!-- Modal: 1-Click Assignment Creation with AI Picture Speaking & Sentence -->
+    <v-dialog v-model="showCreateAssignmentModal" max-width="600">
+      <v-card border rounded="lg" class="pa-4 bg-white">
+        <div class="d-flex align-center justify-space-between mb-3 border-b pb-2">
+          <div class="d-flex align-center ga-2">
+            <v-avatar color="purple-lighten-5" size="36">
+              <v-icon color="purple-darken-3">mdi-send</v-icon>
+            </v-avatar>
+            <div class="text-subtitle-1 font-weight-black text-secondary">
+              Assign Homework to {{ selectedClass?.name }}
+            </div>
+          </div>
+          <v-btn icon="mdi-close" variant="text" size="small" @click="showCreateAssignmentModal = false" />
         </div>
 
+        <!-- Format Switcher -->
+        <div class="mb-3">
+          <div class="text-caption font-weight-bold text-grey mb-1">Homework Format:</div>
+          <v-btn-toggle v-model="newAsgType" mandatory color="purple-darken-2" density="comfortable" class="w-100 border">
+            <v-btn value="sentence" class="flex-grow-1 text-none font-weight-bold" prepend-icon="mdi-waveform">
+              Sentence Reading
+            </v-btn>
+            <v-btn value="picture" class="flex-grow-1 text-none font-weight-bold" prepend-icon="mdi-image-filter-frames">
+              Describe Picture (IELTS/TOEIC)
+            </v-btn>
+          </v-btn-toggle>
+        </div>
+
+        <!-- Common: Assignment Title -->
         <v-text-field
           v-model="newAsgTitle"
           label="Assignment Title:"
-          placeholder="Example: Unit 3 - Practice Daily Routine Sentence"
+          :placeholder="newAsgType === 'picture' ? 'e.g. IELTS Speaking Part 2 - Modern Airport' : 'e.g. Unit 3 - Practice Daily Routine Sentence'"
           variant="outlined"
           density="comfortable"
           class="mb-2"
           prepend-inner-icon="mdi-format-title"
         />
 
-        <v-textarea
-          v-model="newAsgSentence"
-          label="Model Reading Sentence:"
-          placeholder="Example: Learning a new language opens up a world of opportunities."
-          variant="outlined"
-          density="comfortable"
-          rows="3"
-          class="mb-2"
-          prepend-inner-icon="mdi-subtitles"
-        />
+        <!-- Branch 1: Sentence Reading -->
+        <div v-if="newAsgType === 'sentence'">
+          <v-textarea
+            v-model="newAsgSentence"
+            label="Model Reading Sentence:"
+            placeholder="Example: Learning a new language opens up a world of opportunities."
+            variant="outlined"
+            density="comfortable"
+            rows="3"
+            class="mb-2"
+            prepend-inner-icon="mdi-subtitles"
+          />
+        </div>
+
+        <!-- Branch 2: Picture Speaking with AI Generator -->
+        <div v-else>
+          <div class="mb-2">
+            <div class="d-flex align-center justify-space-between mb-1">
+              <span class="text-caption font-weight-bold text-grey">Topic or Speaking Theme:</span>
+              <v-btn
+                color="purple-darken-2"
+                variant="flat"
+                size="x-small"
+                class="text-none font-weight-bold"
+                prepend-icon="mdi-sparkles"
+                :loading="isGeneratingAsgPicture"
+                @click="generateAIPictureScenario"
+              >
+                AI Generate Scene & Questions
+              </v-btn>
+            </div>
+            <v-text-field
+              v-model="newAsgPictureTopic"
+              placeholder="e.g. Hospital Emergency Hallway, Airport Lounge, Tech Office..."
+              variant="outlined"
+              density="comfortable"
+              class="mb-2"
+              prepend-inner-icon="mdi-image-search-outline"
+            />
+          </div>
+
+          <!-- Quick Topic Idea Chips for Teachers -->
+          <div class="mb-3">
+            <div class="text-caption font-weight-bold text-grey mb-1">Suggested Curricular Themes:</div>
+            <div class="d-flex flex-wrap ga-1">
+              <v-chip
+                v-for="theme in teacherTopicIdeas"
+                :key="theme"
+                size="x-small"
+                variant="tonal"
+                color="purple-darken-2"
+                class="cursor-pointer font-weight-bold"
+                @click="selectTeacherTopicIdea(theme)"
+              >
+                {{ theme }}
+              </v-chip>
+            </div>
+          </div>
+
+          <!-- Scenario Preview Card if picture generated -->
+          <div v-if="newAsgImageUrl" class="pa-3 border rounded-lg bg-grey-lighten-5 mb-3">
+            <div class="d-flex align-center justify-space-between mb-2">
+              <span class="text-caption font-weight-black text-purple-darken-3 d-flex align-center ga-1">
+                <v-icon size="x-small" color="purple-darken-3">mdi-check-circle</v-icon>
+                <span>GENERATED SCENARIO PREVIEW</span>
+              </span>
+              <v-chip size="x-small" color="purple" variant="tonal" class="font-weight-bold">
+                60s Time Limit
+              </v-chip>
+            </div>
+
+            <div class="d-flex ga-3 flex-column flex-sm-row mb-2">
+              <v-img
+                :src="newAsgImageUrl"
+                height="120"
+                width="180"
+                cover
+                class="rounded border bg-white flex-shrink-0"
+              />
+              <div class="flex-grow-1">
+                <v-textarea
+                  v-model="newAsgGuidingQuestionsText"
+                  label="Guiding Questions (1 per line):"
+                  rows="3"
+                  variant="outlined"
+                  density="compact"
+                  class="mb-1 text-caption"
+                  hide-details
+                />
+              </div>
+            </div>
+
+            <v-text-field
+              v-model="newAsgTargetKeywordsText"
+              label="Target Keywords (comma-separated):"
+              variant="outlined"
+              density="compact"
+              hide-details
+              class="bg-white text-caption"
+            />
+          </div>
+        </div>
 
         <v-text-field
           v-model="newAsgDueDate"
           label="Due Date (Optional):"
-          placeholder="Example: 2026-08-05"
+          placeholder="Example: 2026-10-30"
           variant="outlined"
           density="comfortable"
           class="mb-3"
           prepend-inner-icon="mdi-calendar-clock"
         />
 
-        <v-card-actions class="px-0 pb-0">
+        <v-card-actions class="px-0 pb-0 border-t pt-2">
           <v-spacer />
           <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showCreateAssignmentModal = false">Cancel</v-btn>
           <v-btn color="secondary" variant="flat" class="text-none font-weight-bold" :loading="isCreatingAsg" @click="submitCreateAssignment">
@@ -1682,10 +1804,69 @@ const printQrPoster = () => {
 }
 
 const showCreateAssignmentModal = ref(false)
+const newAsgType = ref('sentence')
 const newAsgTitle = ref('')
 const newAsgSentence = ref('')
+const newAsgPictureTopic = ref('')
+const newAsgImageUrl = ref('')
+const newAsgGuidingQuestionsText = ref('')
+const newAsgTargetKeywordsText = ref('')
+const isGeneratingAsgPicture = ref(false)
 const newAsgDueDate = ref('')
 const isCreatingAsg = ref(false)
+
+const teacherTopicIdeas = [
+  'Hospital Emergency Hallway',
+  'A University Science Research Lab',
+  'Airport Departure Terminal',
+  'Professional Job Interview',
+  'A Bustling Urban Coffee Shop',
+  'Modern Collaborative Office'
+]
+
+const selectTeacherTopicIdea = (theme) => {
+  newAsgPictureTopic.value = theme
+  if (!newAsgTitle.value.trim() || newAsgTitle.value.startsWith('Speaking Practice:')) {
+    newAsgTitle.value = `Speaking Practice: ${theme}`
+  }
+}
+
+const generateAIPictureScenario = async () => {
+  const topic = newAsgPictureTopic.value.trim() || 'Daily Life'
+  isGeneratingAsgPicture.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/picture-practice/create-scenario`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        topic: topic,
+        level: 'intermediate',
+        user_id: props.userId || 1
+      })
+    })
+    if (res.ok) {
+      const data = await res.json()
+      newAsgImageUrl.value = data.image_url || ''
+      if (!newAsgTitle.value.trim() || newAsgTitle.value.startsWith('Speaking Practice:')) {
+        newAsgTitle.value = data.title || `Describe the Picture: ${topic}`
+      }
+      if (Array.isArray(data.guiding_questions)) {
+        newAsgGuidingQuestionsText.value = data.guiding_questions.join('\n')
+      }
+      if (Array.isArray(data.keywords)) {
+        newAsgTargetKeywordsText.value = data.keywords.join(', ')
+      }
+      notify('AI picture scenario generated with authentic visual questions!', 'success')
+    } else {
+      notify('Failed to generate picture scenario.', 'error')
+    }
+  } catch (err) {
+    console.error('Error generating picture scenario:', err)
+    notify('Network error generating picture scenario.', 'error')
+  } finally {
+    isGeneratingAsgPicture.value = false
+  }
+}
 
 const showSubmissionsModal = ref(false)
 const selectedStudent = ref(null)
@@ -2167,7 +2348,19 @@ const submitCreateClass = async () => {
 }
 
 const submitCreateAssignment = async () => {
-  if (!newAsgTitle.value.trim() || !newAsgSentence.value.trim()) return
+  const isPicture = newAsgType.value === 'picture'
+  if (!newAsgTitle.value.trim()) {
+    notify('Please enter an assignment title.', 'warning')
+    return
+  }
+  if (!isPicture && !newAsgSentence.value.trim()) {
+    notify('Please enter the model reading sentence.', 'warning')
+    return
+  }
+  if (isPicture && !newAsgImageUrl.value && !newAsgPictureTopic.value.trim()) {
+    notify('Please enter a topic or generate an AI picture scenario first.', 'warning')
+    return
+  }
   const tid = getActiveTeacherId()
   if (!tid) {
     notify('Please sign in as a teacher to assign homework.', 'warning', 'mdi-school')
@@ -2175,6 +2368,13 @@ const submitCreateAssignment = async () => {
   }
   isCreatingAsg.value = true
   try {
+    const gQuestions = newAsgGuidingQuestionsText.value
+      ? newAsgGuidingQuestionsText.value.split('\n').map(q => q.trim()).filter(Boolean)
+      : []
+    const tKeywords = newAsgTargetKeywordsText.value
+      ? newAsgTargetKeywordsText.value.split(',').map(k => k.trim()).filter(Boolean)
+      : []
+
     const res = await fetch(`${props.backendUrl}/api/assignments/create`, {
       method: 'POST',
       headers: getTeacherAuthHeaders(),
@@ -2182,13 +2382,22 @@ const submitCreateAssignment = async () => {
         class_id: selectedClassId.value,
         teacher_id: tid,
         title: newAsgTitle.value.trim(),
-        topic_sentence: newAsgSentence.value.trim(),
-        due_date: newAsgDueDate.value.trim()
+        topic_sentence: (isPicture ? (newAsgPictureTopic.value.trim() || newAsgTitle.value.trim()) : newAsgSentence.value.trim()),
+        due_date: newAsgDueDate.value.trim(),
+        assignment_type: newAsgType.value,
+        image_url: newAsgImageUrl.value.trim(),
+        guiding_questions: gQuestions,
+        target_keywords: tKeywords,
+        time_limit_seconds: 60
       })
     })
     if (res.ok) {
       newAsgTitle.value = ''
       newAsgSentence.value = ''
+      newAsgPictureTopic.value = ''
+      newAsgImageUrl.value = ''
+      newAsgGuidingQuestionsText.value = ''
+      newAsgTargetKeywordsText.value = ''
       newAsgDueDate.value = ''
       showCreateAssignmentModal.value = false
       notify('Homework assigned to classroom!', 'success')

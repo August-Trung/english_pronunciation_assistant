@@ -344,29 +344,75 @@
 
         <v-text-field
           v-model="scenarioTopic"
-          label="Scenario Topic / Theme"
-          placeholder="e.g. Modern Airport Terminal, Crowded Weekend Market, High-Tech Office..."
+          label="Custom Topic or Speaking Scenario"
+          placeholder="e.g. Modern Airport Terminal, Hospital Emergency Hallway, High-Tech Lab..."
           variant="outlined"
           density="comfortable"
           class="mb-2"
           prepend-inner-icon="mdi-image-search-outline"
+          clearable
         />
 
-        <!-- Topic suggestions -->
+        <!-- Category & AI Spark Topics -->
         <div class="mb-3">
-          <div class="text-caption font-weight-bold text-grey mb-1">Quick Ideas:</div>
-          <div class="d-flex flex-wrap ga-1">
-            <v-chip
-              v-for="idea in suggestedTopics"
-              :key="idea"
+          <div class="d-flex align-center justify-space-between mb-1">
+            <span class="text-caption font-weight-black text-secondary d-flex align-center ga-1">
+              <v-icon size="x-small" color="secondary">mdi-sparkles</v-icon>
+              <span>AI TOPIC SPARK (IELTS & TOEIC THEMES)</span>
+            </span>
+            <v-btn
+              variant="text"
               size="x-small"
-              variant="tonal"
-              color="blue-darken-2"
-              class="cursor-pointer font-weight-bold"
-              @click="scenarioTopic = idea"
+              color="primary"
+              class="text-none font-weight-bold"
+              :loading="isLoadingTopics"
+              prepend-icon="mdi-refresh"
+              @click="fetchSuggestedTopics"
             >
-              {{ idea }}
+              Refresh Ideas
+            </v-btn>
+          </div>
+
+          <div class="d-flex flex-wrap ga-1 mb-2">
+            <v-chip
+              v-for="cat in topicCategories"
+              :key="cat"
+              :color="selectedCategory === cat ? 'primary' : 'grey-lighten-3'"
+              :variant="selectedCategory === cat ? 'flat' : 'tonal'"
+              size="x-small"
+              class="font-weight-bold cursor-pointer"
+              @click="selectCategory(cat)"
+            >
+              {{ cat }}
             </v-chip>
+          </div>
+
+          <!-- Suggested Topics Grid -->
+          <div class="d-flex flex-column ga-1 overflow-y-auto" style="max-height: 180px;">
+            <div
+              v-for="item in filteredSuggestedTopics"
+              :key="item.id"
+              class="pa-2 border rounded cursor-pointer d-flex align-center justify-space-between transition-all"
+              :class="scenarioTopic === item.title ? 'bg-blue-lighten-5 border-blue' : 'bg-grey-lighten-5'"
+              @click="selectTopicItem(item)"
+            >
+              <div class="d-flex align-center ga-2 text-truncate mr-2">
+                <v-icon size="small" :color="scenarioTopic === item.title ? 'primary' : 'grey-darken-1'">
+                  {{ item.icon || 'mdi-image-outline' }}
+                </v-icon>
+                <div class="text-truncate">
+                  <div class="text-caption font-weight-black text-grey-darken-4 text-truncate">
+                    {{ item.title }}
+                  </div>
+                  <div class="text-caption text-grey text-truncate" style="font-size: 11px;">
+                    {{ item.description }}
+                  </div>
+                </div>
+              </div>
+              <v-chip size="x-small" color="indigo" variant="tonal" class="font-weight-bold flex-shrink-0">
+                {{ item.category }}
+              </v-chip>
+            </div>
           </div>
         </div>
 
@@ -572,13 +618,134 @@ const showImagePreview = ref(false)
 const scenarioTopic = ref('')
 const scenarioLevel = ref('Intermediate')
 
-const suggestedTopics = [
-  'City Street Cafe',
-  'Airport Departure Lounge',
-  'University Science Lab',
-  'Crowded Weekend Market',
-  'Hospital Emergency Room'
-]
+const topicCategories = ['All', 'Workplace & Career', 'Healthcare & Services', 'Daily Life & Leisure', 'Travel & Transportation', 'Education & Science', 'Technology & Computing', 'Sports & Wellness', 'Arts & Culture']
+const selectedCategory = ref('All')
+const aiSuggestedTopics = ref([
+  {
+    id: 'hospital-hallway',
+    title: 'A Quiet Hospital Reception and Emergency Hallway',
+    category: 'Healthcare & Services',
+    level: 'Intermediate',
+    description: 'Analyze medical facility architecture, emergency intake counters, and clinical atmosphere.',
+    icon: 'mdi-hospital-building'
+  },
+  {
+    id: 'medical-consult',
+    title: 'A Medical Consultation in a Clinic Room',
+    category: 'Healthcare & Services',
+    level: 'Intermediate',
+    description: 'Describe caring doctor-patient communication, clinical instruments, and healthcare dialogue.',
+    icon: 'mdi-doctor'
+  },
+  {
+    id: 'science-lab',
+    title: 'A University Science Research Laboratory',
+    category: 'Education & Science',
+    level: 'Advanced',
+    description: 'Explain experimental procedures, laboratory equipment, protective gear, and scientific inquiry.',
+    icon: 'mdi-flask'
+  },
+  {
+    id: 'job-interview',
+    title: 'A Professional Job Interview Discussion',
+    category: 'Workplace & Career',
+    level: 'Intermediate',
+    description: 'Describe candidate and interviewer interactions, corporate setting, and professional attire.',
+    icon: 'mdi-account-tie'
+  },
+  {
+    id: 'open-office',
+    title: 'A Collaborative Team Meeting in an Open-Plan Office',
+    category: 'Workplace & Career',
+    level: 'Intermediate',
+    description: 'Discuss project collaboration, modern open-plan workplace design, and team dynamics.',
+    icon: 'mdi-briefcase-account'
+  },
+  {
+    id: 'airport-terminal',
+    title: 'A Modern International Airport Terminal',
+    category: 'Travel & Transportation',
+    level: 'Intermediate',
+    description: 'Observe travelers with luggage, boarding gate procedures, and expansive glass architecture.',
+    icon: 'mdi-airplane'
+  },
+  {
+    id: 'urban-cafe',
+    title: 'A Bustling Urban Coffee Shop',
+    category: 'Daily Life & Leisure',
+    level: 'Beginner',
+    description: 'Describe cafe patrons, barista activities, cozy interior lighting, and social routines.',
+    icon: 'mdi-coffee'
+  },
+  {
+    id: 'farmers-market',
+    title: 'A Vibrant Outdoor Farmers Market',
+    category: 'Daily Life & Leisure',
+    level: 'Beginner',
+    description: 'Detail colorful fresh produce displays, vendor-customer transactions, and market atmosphere.',
+    icon: 'mdi-storefront'
+  },
+  {
+    id: 'university-library',
+    title: 'A Grand University Library Study Hall',
+    category: 'Education & Science',
+    level: 'Intermediate',
+    description: 'Focus on quiet academic study spaces, towering bookshelves, and focused learning habits.',
+    icon: 'mdi-bookshelf'
+  },
+  {
+    id: 'coding-workspace',
+    title: 'A Software Developer Workspace with Code on Screen',
+    category: 'Technology & Computing',
+    level: 'Advanced',
+    description: 'Discuss tech workstation setup, digital programming tasks, and focused workplace productivity.',
+    icon: 'mdi-laptop'
+  }
+])
+const isLoadingTopics = ref(false)
+
+const selectCategory = (cat) => {
+  selectedCategory.value = cat
+}
+
+const selectTopicItem = (item) => {
+  scenarioTopic.value = item.title
+  if (item.level) {
+    if (item.level.toLowerCase().includes('upper') || item.level.toLowerCase().includes('advanced')) {
+      scenarioLevel.value = 'Advanced'
+    } else if (item.level.toLowerCase().includes('pre') || item.level.toLowerCase().includes('beginner')) {
+      scenarioLevel.value = 'Beginner'
+    } else {
+      scenarioLevel.value = 'Intermediate'
+    }
+  }
+}
+
+const filteredSuggestedTopics = computed(() => {
+  if (selectedCategory.value === 'All') return aiSuggestedTopics.value
+  return aiSuggestedTopics.value.filter(t => t.category === selectedCategory.value)
+})
+
+const fetchSuggestedTopics = async () => {
+  isLoadingTopics.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/picture-practice/suggest-topics`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ category: selectedCategory.value === 'All' ? 'all' : selectedCategory.value, count: 12 })
+    })
+    if (res.ok) {
+      const data = await res.json()
+      if (data.topics && data.topics.length > 0) {
+        aiSuggestedTopics.value = data.topics
+      }
+    }
+  } catch (err) {
+    console.warn('Failed to fetch suggested topics:', err)
+  } finally {
+    isLoadingTopics.value = false
+  }
+}
 
 // Recording state
 const isRecording = ref(false)
@@ -756,6 +923,7 @@ const resetChallenge = () => {
 
 onMounted(() => {
   fetchScenarios()
+  fetchSuggestedTopics()
 })
 
 onUnmounted(() => {

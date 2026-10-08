@@ -109,10 +109,19 @@
       >
         <div class="d-flex align-center justify-space-between flex-wrap ga-2 mb-2">
           <div>
-            <div class="d-flex align-center ga-2">
+            <div class="d-flex align-center ga-2 flex-wrap">
               <span class="text-subtitle-1 font-weight-black text-primary">{{ asg.title }}</span>
               <v-chip color="indigo" size="x-small" variant="flat" class="font-weight-bold">
                 {{ asg.class_name }}
+              </v-chip>
+              <v-chip
+                size="x-small"
+                :color="asg.assignment_type === 'picture' ? 'purple-darken-2' : 'teal-darken-2'"
+                variant="tonal"
+                class="font-weight-bold"
+                :prepend-icon="asg.assignment_type === 'picture' ? 'mdi-image-filter-frames' : 'mdi-waveform'"
+              >
+                {{ asg.assignment_type === 'picture' ? 'Describe Picture (60s)' : 'Sentence Reading' }}
               </v-chip>
             </div>
             <div class="text-caption text-grey">Due Date: {{ asg.due_date || 'No Deadline' }}</div>
@@ -128,35 +137,88 @@
           </v-chip>
         </div>
 
-        <!-- Target Sentence Card -->
-        <div class="pa-3 bg-purple-lighten-5 rounded border border-purple mb-3">
+        <!-- Format Branch 1: Picture Speaking Challenge -->
+        <div v-if="asg.assignment_type === 'picture'" class="mb-3">
+          <div class="d-flex ga-3 flex-column flex-md-row mb-2">
+            <!-- Scene Image -->
+            <div v-if="asg.image_url" class="rounded overflow-hidden border flex-shrink-0" style="max-width: 320px;">
+              <v-img
+                :src="asg.image_url"
+                height="200"
+                cover
+                class="bg-grey-lighten-4"
+              />
+            </div>
+
+            <!-- Guiding Questions & Target Keywords -->
+            <div class="flex-grow-1 d-flex flex-column justify-space-between ga-2">
+              <div v-if="asg.guiding_questions && asg.guiding_questions.length" class="bg-blue-lighten-5 pa-3 rounded border border-blue">
+                <div class="text-caption font-weight-black text-blue-darken-3 mb-1 d-flex align-center ga-1">
+                  <v-icon size="x-small">mdi-help-circle-outline</v-icon>
+                  <span>GUIDING QUESTIONS (STRUCTURE YOUR TALK):</span>
+                </div>
+                <ul class="text-caption text-grey-darken-3 pl-4 mb-0">
+                  <li v-for="(q, idx) in asg.guiding_questions" :key="idx" class="mb-1">
+                    {{ q }}
+                  </li>
+                </ul>
+              </div>
+
+              <div v-if="asg.target_keywords && asg.target_keywords.length">
+                <div class="text-caption font-weight-black text-grey-darken-3 mb-1 d-flex align-center ga-1">
+                  <v-icon size="x-small">mdi-format-list-checks</v-icon>
+                  <span>TARGET KEYWORDS (TRY TO INCLUDE):</span>
+                </div>
+                <div class="d-flex flex-wrap ga-1">
+                  <v-chip
+                    v-for="kw in asg.target_keywords"
+                    :key="kw"
+                    size="x-small"
+                    color="grey-darken-2"
+                    variant="outlined"
+                    class="font-weight-bold"
+                  >
+                    {{ kw }}
+                  </v-chip>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Format Branch 2: Standard Sentence Reading -->
+        <div v-else class="pa-3 bg-purple-lighten-5 rounded border border-purple mb-3">
           <div class="text-caption font-weight-bold text-purple-darken-3 mb-1">Assigned Model Reading Sentence:</div>
           <div class="text-body-1 font-weight-black text-secondary">"{{ asg.topic_sentence }}"</div>
         </div>
 
         <!-- Submission Controls or Result -->
-        <div v-if="!asg.is_submitted" class="d-flex align-center ga-2">
+        <div v-if="!asg.is_submitted" class="d-flex align-center flex-wrap ga-2">
           <v-btn
-            :color="isRecording ? 'error' : 'primary'"
+            :color="currentRecordingAsgId === asg.assignment_id ? 'error' : 'primary'"
             variant="flat"
             class="font-weight-black text-none"
-            :prepend-icon="isRecording ? 'mdi-stop' : 'mdi-microphone'"
+            :prepend-icon="currentRecordingAsgId === asg.assignment_id ? 'mdi-stop' : 'mdi-microphone'"
             @click="toggleRecording(asg)"
           >
-            {{ isRecording ? 'Stop & Submit Recording' : 'Start Voice Recording' }}
+            {{ currentRecordingAsgId === asg.assignment_id ? 'Stop & Submit Voice Recording' : (asg.assignment_type === 'picture' ? 'Start 60s Speaking Recording' : 'Start Voice Recording') }}
           </v-btn>
-          <span v-if="isRecording" class="text-caption text-error font-weight-bold animate-pulse">
-            🔴 Recording voice submission...
+          <span v-if="currentRecordingAsgId === asg.assignment_id" class="text-caption text-error font-weight-bold">
+            🔴 Recording in progress ({{ remainingSeconds }}s remaining)...
           </span>
         </div>
 
         <div v-else class="bg-grey-lighten-5 pa-3 rounded border">
-          <div class="text-caption font-weight-bold text-grey-darken-3 mb-1">Submitted Audio on Supabase Storage:</div>
+          <div class="d-flex align-center justify-space-between mb-1">
+            <span class="text-caption font-weight-bold text-grey-darken-3">Submitted Audio:</span>
+            <v-chip size="x-small" color="success" variant="flat" class="font-weight-bold">Score: {{ asg.score?.toFixed(1) }}/10</v-chip>
+          </div>
           <div v-if="asg.audio_url" class="d-flex align-center ga-2 mb-2">
             <audio controls :src="asg.audio_url" class="w-100" style="height: 32px;" />
           </div>
-          <div v-if="asg.teacher_feedback" class="text-caption text-indigo font-weight-bold">
-            Teacher Feedback: {{ asg.teacher_feedback }}
+          <div v-if="asg.teacher_feedback" class="text-caption text-grey-darken-3 bg-white pa-2 rounded border" style="white-space: pre-line;">
+            <div class="font-weight-bold text-indigo mb-1">Assessment & Feedback:</div>
+            {{ asg.teacher_feedback }}
           </div>
         </div>
       </v-card>
@@ -294,7 +356,9 @@ const targetLeaveClass = ref(null)
 const leaveInput = ref('')
 const isLeaving = ref(false)
 
-const isRecording = ref(false)
+const currentRecordingAsgId = ref(null)
+const remainingSeconds = ref(60)
+let timerInterval = null
 let mediaRecorder = null
 let audioChunks = []
 
@@ -451,23 +515,42 @@ const handleUrlJoinCode = async () => {
 }
 
 const toggleRecording = async (asg) => {
-  if (!isRecording.value) {
+  if (currentRecordingAsgId.value !== asg.assignment_id) {
+    if (currentRecordingAsgId.value && mediaRecorder) {
+      mediaRecorder.stop()
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       mediaRecorder = new MediaRecorder(stream)
       audioChunks = []
-      mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data)
-      mediaRecorder.onstop = () => uploadSubmission(asg)
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunks.push(e.data)
+      }
+      mediaRecorder.onstop = () => {
+        stream.getTracks().forEach(t => t.stop())
+        if (timerInterval) clearInterval(timerInterval)
+        uploadSubmission(asg)
+      }
       mediaRecorder.start()
-      isRecording.value = true
+      currentRecordingAsgId.value = asg.assignment_id
+      remainingSeconds.value = asg.time_limit_seconds || 60
+
+      timerInterval = setInterval(() => {
+        if (remainingSeconds.value > 1) {
+          remainingSeconds.value--
+        } else {
+          toggleRecording(asg)
+        }
+      }, 1000)
     } catch (e) {
       notify('Microphone access denied: ' + e.message, 'error', 'mdi-microphone-off')
     }
   } else {
-    if (mediaRecorder) {
+    if (timerInterval) clearInterval(timerInterval)
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
       mediaRecorder.stop()
-      isRecording.value = false
     }
+    currentRecordingAsgId.value = null
   }
 }
 
@@ -486,7 +569,7 @@ const uploadSubmission = async (asg) => {
       body: formData
     })
     if (res.ok) {
-      notify('Submission successful! Voice file uploaded to Supabase Storage.', 'success', 'mdi-cloud-upload')
+      notify('Submission successful! AI speech score recorded.', 'success', 'mdi-check-circle')
       await fetchStudentAssignments()
     }
   } catch (e) {

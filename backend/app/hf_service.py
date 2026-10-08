@@ -272,137 +272,525 @@ def generate_educational_svg(title: str, topic: str = "", subtitle: str = "", ca
     b64 = base64.b64encode(svg.encode('utf-8')).decode('utf-8')
     return f"data:image/svg+xml;base64,{b64}"
 
-PHOTO_CATALOG = {
+GROUNDED_PHOTO_CATALOG = {
     "science": [
-        "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1518152006812-edab29b069ac?auto=format&fit=crop&w=1000&q=80"
-    ],
-    "cafe": [
-        "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1000&q=80"
-    ],
-    "airport": [
-        "https://images.unsplash.com/photo-1530521954074-e64f6810b32d?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1520437358207-323b43b50729?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1517400508447-f8dd518b86db?auto=format&fit=crop&w=1000&q=80"
-    ],
-    "office": [
-        "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1000&q=80"
-    ],
-    "interview": [
-        "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1000&q=80"
-    ],
-    "market": [
-        "https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1534723452862-4c874018d66d?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=1000&q=80"
-    ],
-    "library": [
-        "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=1000&q=80"
+        {
+            "url": "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1000&q=80",
+            "title": "A University Science Research Laboratory",
+            "elements": "Two researchers in white lab coats, protective goggles, and blue gloves conducting chemical experiments with glass beakers, test tubes with colorful fluids, and electronic laboratory monitors in a modern research lab.",
+            "has_people": True,
+            "people_details": "Two scientists in white lab coats collaborating over laboratory glassware and scientific apparatus.",
+            "guiding_questions": [
+                "What experiments or tests are the scientists performing with the laboratory glassware?",
+                "What protective gear and specialized equipment can you see in this research environment?",
+                "How does this modern laboratory setup support scientific discovery and innovation?"
+            ],
+            "keywords": ["white lab coat", "laboratory glassware", "chemical solution", "protective goggles", "scientific research"]
+        },
+        {
+            "url": "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=1000&q=80",
+            "title": "Precision Scientific Glassware and Clinical Equipment",
+            "elements": "A clean, sterile laboratory workstation equipped with precision glass test tubes, chemical flasks containing blue liquids, measuring pipettes, and racks under bright clinical lighting. No people are in the frame.",
+            "has_people": False,
+            "people_details": "None",
+            "guiding_questions": [
+                "What types of scientific glassware and analytical instruments are arranged on the workbench?",
+                "What impression does the sterile, organized layout convey about laboratory standards?",
+                "What scientific experiments or pharmaceutical tests might be conducted using these instruments?"
+            ],
+            "keywords": ["glass flasks", "sterile workstation", "chemical reagents", "precision instruments", "laboratory equipment"]
+        }
     ],
     "hospital": [
-        "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=1000&q=80"
+        {
+            "url": "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1000&q=80",
+            "title": "A Quiet Hospital Reception and Emergency Hallway",
+            "elements": "An empty modern hospital reception lobby with a curved wooden counter, blue tiled walls, an emergency exit and elevator on the left, an informational bulletin board on the right, bright ceiling strip lighting, and a polished tiled floor. There are no medical staff or patients present.",
+            "has_people": False,
+            "people_details": "None",
+            "guiding_questions": [
+                "What specific medical facilities, signs, and architectural features can you identify in this reception area?",
+                "What does the quiet, deserted atmosphere suggest about the time of day or the section of the hospital?",
+                "If a patient arrived at this counter, what reception or admission procedures would take place?"
+            ],
+            "keywords": ["reception counter", "sterile corridor", "tiled walls", "information board", "deserted hall"]
+        },
+        {
+            "url": "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=1000&q=80",
+            "title": "A Medical Consultation in a Clinic Room",
+            "elements": "A female doctor in medical scrubs wearing a stethoscope around her neck, gently talking and consulting with an elderly patient in a clinic examination room.",
+            "has_people": True,
+            "people_details": "A caring doctor speaking attentively with an elderly patient.",
+            "guiding_questions": [
+                "What are the doctor and the patient doing, and what expressions can you observe on their faces?",
+                "What medical attire and instruments indicate the professional healthcare setting?",
+                "Why is compassionate, clear communication essential during medical consultations?"
+            ],
+            "keywords": ["medical consultation", "stethoscope", "compassionate care", "clinical examination", "healthcare professional"]
+        }
     ],
-    "city": [
-        "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=1000&q=80"
+    "cafe": [
+        {
+            "url": "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1000&q=80",
+            "title": "A Bustling Urban Coffee Shop",
+            "elements": "A warm, brightly lit cafe interior with customers seated at wooden tables, a barista behind the espresso bar, warm pendant lighting, and chalkboard menus on the brick wall.",
+            "has_people": True,
+            "people_details": "Customers sitting at wooden tables enjoying drinks, and staff working behind the coffee counter.",
+            "guiding_questions": [
+                "What activities are the customers and cafe staff engaged in throughout the coffee shop?",
+                "How do the lighting, furniture, and decoration create a welcoming atmosphere?",
+                "Why do many people choose coffee shops like this for studying, working, or meeting friends?"
+            ],
+            "keywords": ["espresso bar", "wooden tables", "warm ambiance", "pendant lighting", "social gathering"]
+        },
+        {
+            "url": "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1000&q=80",
+            "title": "A Cozy Sunlit Cafe Corner",
+            "elements": "A tranquil coffee shop corner with a round wooden table, a ceramic cup of latte with art foam, an open book, and soft morning sunlight coming through the window. No people are in the frame.",
+            "has_people": False,
+            "people_details": "None",
+            "guiding_questions": [
+                "What items are arranged on the cafe table in this quiet corner?",
+                "How does the natural sunlight and table setting create a peaceful, contemplative mood?",
+                "What makes a quiet cafe spot like this appealing for reading and relaxation?"
+            ],
+            "keywords": ["latte art", "wooden table", "natural sunlight", "open book", "peaceful atmosphere"]
+        }
     ],
-    "park": [
-        "https://images.unsplash.com/photo-1496347646636-ea47f7d6b37b?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1519331379826-f10be5486c6f?auto=format&fit=crop&w=1000&q=80"
+    "airport": [
+        {
+            "url": "https://images.unsplash.com/photo-1530521954074-e64f6810b32d?auto=format&fit=crop&w=1000&q=80",
+            "title": "A Modern International Airport Terminal",
+            "elements": "Passengers with roller suitcases and backpacks waiting in an expansive airport terminal with floor-to-ceiling glass windows looking out onto parked airplanes, departure gate signs, and waiting row seats.",
+            "has_people": True,
+            "people_details": "Travelers waiting with their luggage near the boarding gates, some walking and others seated.",
+            "guiding_questions": [
+                "What are the travelers in the terminal doing while waiting for their flights?",
+                "What airport facilities and exterior views of the airfield can you observe through the windows?",
+                "What feelings or thoughts might passengers experience as they prepare to board an international journey?"
+            ],
+            "keywords": ["departure gate", "roller luggage", "glass facade", "boarding gate", "international travel"]
+        },
+        {
+            "url": "https://images.unsplash.com/photo-1520437358207-323b43b50729?auto=format&fit=crop&w=1000&q=80",
+            "title": "An Airplane on the Runway at Sunset",
+            "elements": "A commercial jet airliner parked on the airport tarmac bathed in glowing orange sunset light, with terminal silhouettes and ground service vehicles in the distance. No passengers visible close up.",
+            "has_people": False,
+            "people_details": "None",
+            "guiding_questions": [
+                "What does the commercial airplane on the tarmac and the sunset lighting show about airport operations?",
+                "What ground vehicles and airfield structures are visible around the aircraft?",
+                "What mood or impressions does this sunset airfield view convey to an observer?"
+            ],
+            "keywords": ["commercial airliner", "airport tarmac", "golden sunset", "ground operations", "runway view"]
+        }
+    ],
+    "office": [
+        {
+            "url": "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1000&q=80",
+            "title": "A Collaborative Team Meeting in an Open-Plan Office",
+            "elements": "A diverse group of young business professionals gathered around a conference table with open laptops, notebooks, and coffee mugs, smiling and actively discussing a project.",
+            "has_people": True,
+            "people_details": "Group of colleagues sitting together around a wooden desk, exchanging ideas with laptops open.",
+            "guiding_questions": [
+                "How are the team members interacting with one another around the conference table?",
+                "What tools and devices are they using to support their collaboration?",
+                "What aspects of their body language and expressions indicate a productive workplace culture?"
+            ],
+            "keywords": ["team collaboration", "conference table", "open laptops", "workplace culture", "brainstorming session"]
+        },
+        {
+            "url": "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1000&q=80",
+            "title": "A Sleek Contemporary Corporate Office Space",
+            "elements": "A minimalist corporate office interior with glass partition walls, ergonomic office chairs, tidy modern desks with desktop monitors, and soft diffused ceiling lighting. No employees are currently seated.",
+            "has_people": False,
+            "people_details": "None",
+            "guiding_questions": [
+                "How is the furniture and glass architecture organized in this contemporary workplace?",
+                "What does the tidy and unoccupied environment suggest about professional standards?",
+                "How does the layout of a modern office influence employee productivity and communication?"
+            ],
+            "keywords": ["glass partitions", "ergonomic chairs", "desktop monitors", "minimalist office", "corporate workspace"]
+        }
+    ],
+    "interview": [
+        {
+            "url": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=1000&q=80",
+            "title": "A Professional Job Interview Discussion",
+            "elements": "A candidate and an interviewer in professional business attire seated across a modern desk, engaging in a focused professional conversation with a resume and notepad.",
+            "has_people": True,
+            "people_details": "Professional interviewer and job candidate in business attire having an interview conversation.",
+            "guiding_questions": [
+                "What are the interviewer and the candidate doing, and how is their interaction structured?",
+                "What professional documents or workspace items are present on the desk?",
+                "What key qualities or communication skills should a candidate demonstrate in this situation?"
+            ],
+            "keywords": ["job interview", "business attire", "candidate evaluation", "professional resume", "verbal communication"]
+        }
+    ],
+    "market": [
+        {
+            "url": "https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&w=1000&q=80",
+            "title": "A Vibrant Outdoor Farmers Market",
+            "elements": "Stalls stacked high with colorful fresh fruits, crisp vegetables, wooden crates, and handwritten price tags under shaded market canopies, with shoppers browsing the produce.",
+            "has_people": True,
+            "people_details": "Shoppers and local vendors interacting around vibrant fruit and vegetable stalls.",
+            "guiding_questions": [
+                "What variety of fresh fruits and vegetables are displayed in the market stalls?",
+                "What actions are the shoppers and stall vendors taking as they buy and sell goods?",
+                "What are the advantages of shopping at a local farmers market compared to a supermarket?"
+            ],
+            "keywords": ["fresh produce", "wooden crates", "colorful display", "local vendors", "organic groceries"]
+        }
+    ],
+    "library": [
+        {
+            "url": "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=1000&q=80",
+            "title": "A Grand University Library Study Hall",
+            "elements": "Tall wooden bookshelves lined with thousands of hardcover books, long study desks with classic green reading lamps, arched windows letting in natural sunlight, and students studying quietly.",
+            "has_people": True,
+            "people_details": "Students seated quietly at long study tables, reading books and taking notes.",
+            "guiding_questions": [
+                "How is the library arranged to support quiet reading and focused research?",
+                "What architectural details, lamps, and bookshelves can you see in this study hall?",
+                "Why do traditional libraries remain valuable spaces for academic learning in the digital age?"
+            ],
+            "keywords": ["tall bookshelves", "study desks", "reading lamps", "academic atmosphere", "quiet study"]
+        }
     ],
     "classroom": [
-        "https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1000&q=80"
+        {
+            "url": "https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1000&q=80",
+            "title": "A Bright Modern Classroom",
+            "elements": "An empty, well-organized primary classroom with colorful educational posters on the walls, neat student desks and chairs, a chalkboard, and bright sunlight streaming through large windows.",
+            "has_people": False,
+            "people_details": "None",
+            "guiding_questions": [
+                "What learning materials, posters, and furniture are arranged in this classroom?",
+                "How does the colorful and neat arrangement create an engaging learning environment for children?",
+                "What classroom activities might take place here during a typical school day?"
+            ],
+            "keywords": ["student desks", "educational posters", "chalkboard", "natural sunlight", "organized classroom"]
+        }
     ],
     "restaurant": [
-        "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?auto=format&fit=crop&w=1000&q=80"
+        {
+            "url": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80",
+            "title": "An Elegant Restaurant Dining Room",
+            "elements": "A sophisticated restaurant interior with neatly arranged dining tables, comfortable seating, glassware, warm ambient lighting, and decorative wall art. No diners are currently seated.",
+            "has_people": False,
+            "people_details": "None",
+            "guiding_questions": [
+                "How is the table setting and interior decor arranged to welcome dining guests?",
+                "What does the lighting and interior design suggest about the style and atmosphere of this restaurant?",
+                "What occasion or meal would be best suited for dining in an establishment like this?"
+            ],
+            "keywords": ["dining tables", "glassware", "ambient lighting", "sophisticated decor", "fine dining"]
+        }
     ],
     "hotel": [
-        "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1000&q=80"
+        {
+            "url": "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1000&q=80",
+            "title": "A Luxury Hotel Resort and Poolside",
+            "elements": "A sunlit luxury resort with pristine blue swimming pool, comfortable sun loungers, palm trees, and modern hotel architecture under clear blue skies. No guests are in the water.",
+            "has_people": False,
+            "people_details": "None",
+            "guiding_questions": [
+                "What resort amenities, swimming pool features, and landscape elements can you observe?",
+                "How does the sunshine and palm tree setting convey a sense of relaxation and vacation?",
+                "What leisure activities could travelers enjoy at this resort?"
+            ],
+            "keywords": ["swimming pool", "sun loungers", "palm trees", "tropical resort", "leisure relaxation"]
+        }
     ],
     "technology": [
-        "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1000&q=80"
+        {
+            "url": "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1000&q=80",
+            "title": "A Software Developer Workspace with Code on Screen",
+            "elements": "A developer desk with a laptop displaying lines of programming code, a notebook, coffee mug, and smartphone on a clean wooden desk. No person is in the frame.",
+            "has_people": False,
+            "people_details": "None",
+            "guiding_questions": [
+                "What equipment, digital screens, and personal items are placed on the developer desk?",
+                "What does the code displayed on the screen indicate about the nature of the work being done?",
+                "Why is an organized workstation important for focus and productivity in technology jobs?"
+            ],
+            "keywords": ["programming code", "developer desk", "laptop screen", "workspace setup", "digital technology"]
+        }
     ],
     "kitchen": [
-        "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1507048331197-7d4ac70811cf?auto=format&fit=crop&w=1000&q=80"
+        {
+            "url": "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=1000&q=80",
+            "title": "A Modern Kitchen Countertop Prepared for Cooking",
+            "elements": "A modern kitchen island with fresh culinary ingredients, vegetables, cutting board, chef knife, olive oil bottles, and stainless steel cookware. No cook is in the frame.",
+            "has_people": False,
+            "people_details": "None",
+            "guiding_questions": [
+                "What culinary ingredients, utensils, and cookware are prepared on the kitchen counter?",
+                "What type of meal or recipe might someone be preparing with these fresh ingredients?",
+                "What makes a well-equipped kitchen enjoyable for cooking and dining at home?"
+            ],
+            "keywords": ["kitchen island", "fresh ingredients", "cutting board", "culinary preparation", "cookware"]
+        }
     ],
     "nature": [
-        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000&q=80"
+        {
+            "url": "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1000&q=80",
+            "title": "Majestic Mountain Peaks and Wilderness Valley",
+            "elements": "Towering snow-capped mountain peaks rising above a green valley with pine forests under a dramatic sky with drifting clouds. No hikers visible.",
+            "has_people": False,
+            "people_details": "None",
+            "guiding_questions": [
+                "What geographic features, terrain, and vegetation can you identify in this landscape?",
+                "What feeling or atmosphere does the dramatic sky and towering mountain range evoke?",
+                "What outdoor activities or challenges might travelers encounter in this wilderness area?"
+            ],
+            "keywords": ["mountain peaks", "pine forests", "wilderness valley", "rugged terrain", "dramatic clouds"]
+        }
     ],
     "fitness": [
-        "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1000&q=80"
+        {
+            "url": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1000&q=80",
+            "title": "A Modern Fitness Center with Strength Equipment",
+            "elements": "Rows of dumbbells on racks, barbell benches, weight plates, and mirrors in a spacious gym with dark industrial decor. No athletes currently lifting weights.",
+            "has_people": False,
+            "people_details": "None",
+            "guiding_questions": [
+                "What exercise equipment, weights, and facilities are available in this gym space?",
+                "How does the industrial design and lighting motivate people to exercise and stay healthy?",
+                "What physical fitness benefits can people achieve through consistent resistance training?"
+            ],
+            "keywords": ["dumbbell racks", "weight plates", "fitness center", "strength training", "exercise equipment"]
+        }
     ],
     "art": [
-        "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?auto=format&fit=crop&w=1000&q=80",
-        "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1000&q=80"
+        {
+            "url": "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?auto=format&fit=crop&w=1000&q=80",
+            "title": "An Art Gallery Exhibition Hall",
+            "elements": "A contemporary art exhibition hall with white walls, spotlight tracks, framed artwork on display, and clean polished gallery floors. No visitors visible.",
+            "has_people": False,
+            "people_details": "None",
+            "guiding_questions": [
+                "How are the artworks and gallery lighting presented to enhance the visitors' experience?",
+                "What does the minimalist, quiet space suggest about how people should engage with the exhibits?",
+                "Why is experiencing visual art in museums and galleries valuable for cultural appreciation?"
+            ],
+            "keywords": ["art gallery", "exhibition hall", "framed artwork", "gallery lighting", "cultural appreciation"]
+        }
+    ],
+    "city": [
+        {
+            "url": "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?auto=format&fit=crop&w=1000&q=80",
+            "title": "A Dense Urban City Skyline and Streets",
+            "elements": "High-rise skyscrapers towering over city streets with traffic, pedestrian sidewalks, and commercial buildings under clear daylight. Distantly visible vehicles and street infrastructure.",
+            "has_people": False,
+            "people_details": "Distantly visible street elements.",
+            "guiding_questions": [
+                "What architectural styles and infrastructure can you observe in this urban landscape?",
+                "What impression does this dense city setting give regarding commercial activity and lifestyle?",
+                "What are the benefits and challenges of living and working in a major metropolitan city?"
+            ],
+            "keywords": ["skyscrapers", "urban skyline", "metropolitan city", "pedestrian sidewalk", "city architecture"]
+        }
+    ],
+    "park": [
+        {
+            "url": "https://images.unsplash.com/photo-1496347646636-ea47f7d6b37b?auto=format&fit=crop&w=1000&q=80",
+            "title": "A Peaceful Public Park Pathway",
+            "elements": "A winding stone pathway through lush green lawns, mature trees providing shade, flowerbeds, and a wooden park bench in sunny afternoon light. No pedestrians in the frame.",
+            "has_people": False,
+            "people_details": "None",
+            "guiding_questions": [
+                "What natural elements, plants, and pathways can you identify in this public park?",
+                "How does this green space provide relaxation and relief from urban stress for city residents?",
+                "What recreational activities might people enjoy along this shaded park pathway?"
+            ],
+            "keywords": ["winding pathway", "lush lawn", "shaded trees", "park bench", "green space"]
+        }
     ]
+}
+
+def get_grounded_scene(topic: str = "", title: str = "", context: str = "") -> Dict[str, Any]:
+    combined = f"{topic} {title} {context}".lower()
+
+    if any(k in combined for k in ["science", "lab", "chemist", "biolog", "physics", "experiment", "research"]):
+        category = "science"
+    elif any(k in combined for k in ["hospital", "doctor", "nurse", "clinic", "medical", "patient", "emergency"]):
+        category = "hospital"
+    elif any(k in combined for k in ["cafe", "coffee", "latte", "espresso", "barista"]):
+        category = "cafe"
+    elif any(k in combined for k in ["airport", "flight", "plane", "terminal", "boarding", "departure"]):
+        category = "airport"
+    elif any(k in combined for k in ["interview", "candidate", "hire", "resume", "cv"]):
+        category = "interview"
+    elif any(k in combined for k in ["office", "meeting", "business", "colleague", "workplace", "corporat"]):
+        category = "office"
+    elif any(k in combined for k in ["market", "supermarket", "grocery", "shop", "store", "vendor"]):
+        category = "market"
+    elif any(k in combined for k in ["library", "book", "study", "reading", "shelf"]):
+        category = "library"
+    elif any(k in combined for k in ["park", "garden", "outdoor", "lawn", "walk"]):
+        category = "park"
+    elif any(k in combined for k in ["class", "school", "teach", "student", "learn", "lecture"]):
+        category = "classroom"
+    elif any(k in combined for k in ["restaurant", "dinner", "lunch", "eat", "dining", "meal", "food"]):
+        category = "restaurant"
+    elif any(k in combined for k in ["hotel", "reception", "resort", "lobby", "check-in"]):
+        category = "hotel"
+    elif any(k in combined for k in ["tech", "comput", "ai", "software", "program", "code"]):
+        category = "technology"
+    elif any(k in combined for k in ["kitchen", "cook", "bake", "chef", "recipe"]):
+        category = "kitchen"
+    elif any(k in combined for k in ["nature", "mountain", "beach", "lake", "forest", "hiking"]):
+        category = "nature"
+    elif any(k in combined for k in ["fitness", "gym", "sport", "workout", "exercise", "athlet"]):
+        category = "fitness"
+    elif any(k in combined for k in ["art", "museum", "gallery", "paint", "exhibit"]):
+        category = "art"
+    elif any(k in combined for k in ["city", "street", "urban", "downtown", "traffic", "build"]):
+        category = "city"
+    else:
+        category = "cafe"
+
+    pool = GROUNDED_PHOTO_CATALOG[category]
+    # Check if context wants people or empty
+    if any(k in combined for k in ["people", "crowd", "staff", "doctor", "talking", "discussing"]):
+        people_pool = [s for s in pool if s.get("has_people")]
+        if people_pool:
+            pool = people_pool
+    elif any(k in combined for k in ["empty", "quiet", "night", "interior", "counter", "bench", "equipment"]):
+        empty_pool = [s for s in pool if not s.get("has_people")]
+        if empty_pool:
+            pool = empty_pool
+
+    h = int(hashlib.md5(f"{topic}_{title}".encode("utf-8")).hexdigest(), 16)
+    return pool[h % len(pool)]
+
+# Backward compatible PHOTO_CATALOG mapping to lists of URLs
+PHOTO_CATALOG = {
+    cat: [item["url"] for item in items]
+    for cat, items in GROUNDED_PHOTO_CATALOG.items()
 }
 
 def resolve_scene_photo(topic: str = "", title: str = "", context: str = "") -> str:
     """Resolve an authentic, high-resolution photography scene for IELTS/TOEIC speaking tasks."""
-    combined = f"{topic} {title} {context}".lower()
+    scene = get_grounded_scene(topic=topic, title=title, context=context)
+    return scene.get("url", "")
 
-    if any(k in combined for k in ["science", "lab", "chemist", "biolog", "physics", "experiment", "research"]):
-        pool = PHOTO_CATALOG["science"]
-    elif any(k in combined for k in ["cafe", "coffee", "latte", "espresso", "barista"]):
-        pool = PHOTO_CATALOG["cafe"]
-    elif any(k in combined for k in ["airport", "flight", "plane", "terminal", "boarding", "departure"]):
-        pool = PHOTO_CATALOG["airport"]
-    elif any(k in combined for k in ["interview", "candidate", "hire", "resume", "cv"]):
-        pool = PHOTO_CATALOG["interview"]
-    elif any(k in combined for k in ["office", "meeting", "business", "colleague", "workplace", "corporat"]):
-        pool = PHOTO_CATALOG["office"]
-    elif any(k in combined for k in ["market", "supermarket", "grocery", "shop", "store", "vendor"]):
-        pool = PHOTO_CATALOG["market"]
-    elif any(k in combined for k in ["library", "book", "study", "reading", "shelf"]):
-        pool = PHOTO_CATALOG["library"]
-    elif any(k in combined for k in ["hospital", "doctor", "nurse", "clinic", "medical", "patient"]):
-        pool = PHOTO_CATALOG["hospital"]
-    elif any(k in combined for k in ["park", "garden", "outdoor", "lawn", "walk"]):
-        pool = PHOTO_CATALOG["park"]
-    elif any(k in combined for k in ["class", "school", "teach", "student", "learn", "lecture"]):
-        pool = PHOTO_CATALOG["classroom"]
-    elif any(k in combined for k in ["restaurant", "dinner", "lunch", "eat", "dining", "meal", "food"]):
-        pool = PHOTO_CATALOG["restaurant"]
-    elif any(k in combined for k in ["hotel", "reception", "resort", "lobby", "check-in"]):
-        pool = PHOTO_CATALOG["hotel"]
-    elif any(k in combined for k in ["tech", "comput", "ai", "software", "program", "code"]):
-        pool = PHOTO_CATALOG["technology"]
-    elif any(k in combined for k in ["kitchen", "cook", "bake", "chef", "recipe"]):
-        pool = PHOTO_CATALOG["kitchen"]
-    elif any(k in combined for k in ["nature", "mountain", "beach", "lake", "forest", "hiking"]):
-        pool = PHOTO_CATALOG["nature"]
-    elif any(k in combined for k in ["fitness", "gym", "sport", "workout", "exercise", "athlet"]):
-        pool = PHOTO_CATALOG["fitness"]
-    elif any(k in combined for k in ["art", "museum", "gallery", "paint", "exhibit"]):
-        pool = PHOTO_CATALOG["art"]
-    elif any(k in combined for k in ["city", "street", "urban", "downtown", "traffic", "build"]):
-        pool = PHOTO_CATALOG["city"]
-    else:
-        pool = PHOTO_CATALOG["cafe"]
+SUGGESTED_PICTURE_TOPICS = [
+    {
+        "id": "job-interview",
+        "title": "A Professional Job Interview Discussion",
+        "category": "Workplace & Career",
+        "level": "Intermediate",
+        "description": "Describe candidate and interviewer interactions, corporate setting, and professional attire.",
+        "icon": "mdi-account-tie"
+    },
+    {
+        "id": "open-office",
+        "title": "A Collaborative Team Meeting in an Open-Plan Office",
+        "category": "Workplace & Career",
+        "level": "Intermediate",
+        "description": "Discuss project collaboration, modern open-plan workplace design, and team dynamics.",
+        "icon": "mdi-briefcase-account"
+    },
+    {
+        "id": "hospital-hallway",
+        "title": "A Quiet Hospital Reception and Emergency Hallway",
+        "category": "Healthcare & Services",
+        "level": "Intermediate",
+        "description": "Analyze medical facility architecture, emergency intake counters, and clinical atmosphere.",
+        "icon": "mdi-hospital-building"
+    },
+    {
+        "id": "medical-consult",
+        "title": "A Medical Consultation in a Clinic Room",
+        "category": "Healthcare & Services",
+        "level": "Intermediate",
+        "description": "Describe caring doctor-patient communication, clinical instruments, and healthcare dialogue.",
+        "icon": "mdi-doctor"
+    },
+    {
+        "id": "science-lab",
+        "title": "A University Science Research Laboratory",
+        "category": "Education & Science",
+        "level": "Upper-Intermediate",
+        "description": "Explain experimental procedures, laboratory equipment, protective gear, and scientific inquiry.",
+        "icon": "mdi-flask"
+    },
+    {
+        "id": "urban-cafe",
+        "title": "A Bustling Urban Coffee Shop",
+        "category": "Daily Life & Leisure",
+        "level": "Pre-Intermediate",
+        "description": "Describe cafe patrons, barista activities, cozy interior lighting, and social routines.",
+        "icon": "mdi-coffee"
+    },
+    {
+        "id": "airport-terminal",
+        "title": "A Modern International Airport Terminal",
+        "category": "Travel & Transportation",
+        "level": "Intermediate",
+        "description": "Observe travelers with luggage, boarding gate procedures, and expansive glass architecture.",
+        "icon": "mdi-airplane"
+    },
+    {
+        "id": "farmers-market",
+        "title": "A Vibrant Outdoor Farmers Market",
+        "category": "Daily Life & Leisure",
+        "level": "Pre-Intermediate",
+        "description": "Detail colorful fresh produce displays, vendor-customer transactions, and market atmosphere.",
+        "icon": "mdi-storefront"
+    },
+    {
+        "id": "university-library",
+        "title": "A Grand University Library Study Hall",
+        "category": "Education & Science",
+        "level": "Intermediate",
+        "description": "Focus on quiet academic study spaces, towering bookshelves, and focused learning habits.",
+        "icon": "mdi-bookshelf"
+    },
+    {
+        "id": "coding-workspace",
+        "title": "A Software Developer Workspace with Code on Screen",
+        "category": "Technology & Computing",
+        "level": "Upper-Intermediate",
+        "description": "Discuss tech workstation setup, digital programming tasks, and focused workplace productivity.",
+        "icon": "mdi-laptop"
+    },
+    {
+        "id": "art-gallery",
+        "title": "An Art Gallery Exhibition Hall",
+        "category": "Arts & Culture",
+        "level": "Upper-Intermediate",
+        "description": "Examine minimalist museum architecture, gallery curation, and visual aesthetics.",
+        "icon": "mdi-palette"
+    },
+    {
+        "id": "peaceful-park",
+        "title": "A Peaceful Public Park Pathway",
+        "category": "Daily Life & Nature",
+        "level": "Pre-Intermediate",
+        "description": "Describe lush green urban parks, pedestrian stone paths, and relaxation in nature.",
+        "icon": "mdi-tree"
+    },
+    {
+        "id": "fitness-center",
+        "title": "A Modern Fitness Center with Strength Equipment",
+        "category": "Sports & Wellness",
+        "level": "Intermediate",
+        "description": "Analyze fitness gym facilities, resistance equipment, and active health lifestyles.",
+        "icon": "mdi-dumbbell"
+    }
+]
 
-    # Stable pseudo-random selection based on hash of topic and title
-    h = int(hashlib.md5(f"{topic}_{title}".encode("utf-8")).hexdigest(), 16)
-    return pool[h % len(pool)]
+def suggest_picture_topics(category: str = "all", level: str = "intermediate", count: int = 6) -> List[Dict[str, Any]]:
+    """Suggest inspiring, curated IELTS & TOEIC speaking topics with visual scenes."""
+    if category and category.lower() != "all":
+        filtered = [t for t in SUGGESTED_PICTURE_TOPICS if category.lower() in t.get("category", "").lower()]
+        if filtered:
+            return filtered[:count]
+    return SUGGESTED_PICTURE_TOPICS[:count]
 
 def generate_deck_content(topic: str, level: str = "intermediate", count: int = 5) -> List[Dict[str, Any]]:
     """Generate high quality vocabulary flashcards with IPA, tips, and fast visual illustrations."""
@@ -462,47 +850,65 @@ def generate_vocabulary_image(word: str, context: str = "", output_dir: Optional
     return resolve_scene_photo(topic=context, title=word)
 
 def generate_picture_scenario(topic: str = "Daily Life", level: str = "intermediate") -> Dict[str, Any]:
-    """Generate an authentic Describe the Picture challenge scenario with real scene photograph."""
+    """Generate an authentic Describe the Picture challenge scenario with real scene photograph and strictly grounded questions."""
+    # 1. Resolve authentic grounded photograph and physical visual metadata first
+    scene = get_grounded_scene(topic=topic, title="", context="")
+    
+    # 2. Instruct LLM to formulate questions and vocabulary strictly based on the real image elements
+    instruction = (
+        "DO NOT ask about people or their actions because there are NO people in this picture! "
+        "Instead, formulate questions about the physical environment, layout, objects, signs, lighting, and purpose of the space."
+        if not scene.get("has_people") else
+        "Formulate questions about the people, their interactions, expressions, clothing, and activities in this setting."
+    )
+    
     sys_prompt = (
         "You are an IELTS & TOEIC Speaking Examiner. "
-        "Create an engaging 'Describe the Picture' speaking task. "
+        "Create an engaging 'Describe the Picture' speaking task strictly grounded in the provided image. "
+        "You are given the EXACT visual elements present in the photograph. "
+        "CRITICAL RULE: Guiding questions and keywords MUST reference only what is physically observable in this image! "
+        f"{instruction} "
         "Provide: "
-        "1. title: An engaging title for the picture scene (e.g. 'A Lively Coffee Shop on a Rainy Afternoon'). "
-        "2. image_prompt: A vivid prompt for image generation model showing people, activities, foreground, and background. "
-        "3. guiding_questions: 3 questions helping the candidate structure their 60s response. "
-        "4. keywords: 4-6 target vocabulary words or collocations candidates should use. "
-        "Return ONLY a valid JSON object with fields 'title', 'image_prompt', 'guiding_questions', 'keywords'."
+        "1. title: An engaging title for the picture scene. "
+        "2. guiding_questions: 3 questions helping the candidate structure their 60-second speech. "
+        "3. keywords: 5 target vocabulary words or collocations candidates should use that describe this scene. "
+        "Return ONLY a valid JSON object with fields 'title', 'guiding_questions', 'keywords'."
     )
-    user_prompt = f"Topic: '{topic}'. Candidate level: '{level}'. Return JSON."
-
+    
+    user_prompt = (
+        f"Topic: '{topic}'. Candidate level: '{level}'.\n"
+        f"Image Scene Description: '{scene.get('elements')}'.\n"
+        f"People present in image: {'Yes: ' + scene.get('people_details', '') if scene.get('has_people') else 'No people in image'}.\n"
+        "Return JSON."
+    )
+    
     content = call_llm([
         {"role": "system", "content": sys_prompt},
         {"role": "user", "content": user_prompt}
     ], json_mode=True)
-
+    
     data = parse_json_safely(content) or {}
-    title = str(data.get("title", f"Scene in {topic}"))
-    image_prompt = str(data.get("image_prompt", f"A lively, detailed scene of {topic}, daylight, vibrant colors, cinematic"))
-    guiding_questions = data.get("guiding_questions", [
-        "Where is this scene taking place?",
-        "What are the main people or objects doing?",
-        "What atmosphere or mood do you observe?"
-    ])
-    keywords = data.get("keywords", ["atmosphere", "activity", "surrounding", "foreground", "expression"])
-
-    # High-definition authentic scene photo for IELTS / TOEIC description
-    image_url = resolve_scene_photo(
-        topic=topic,
-        title=title,
-        context=image_prompt
-    )
-
+    title = str(data.get("title", "")).strip() or scene.get("title", f"Scene in {topic}")
+    
+    guiding_questions = data.get("guiding_questions")
+    if not isinstance(guiding_questions, list) or len(guiding_questions) < 2:
+        guiding_questions = scene.get("guiding_questions", [
+            "What main elements and setting can you observe in this picture?",
+            "What specific objects, layout, and lighting characterize this scene?",
+            "What mood or impression does this environment convey to an observer?"
+        ])
+        
+    keywords = data.get("keywords")
+    if not isinstance(keywords, list) or len(keywords) < 3:
+        keywords = scene.get("keywords", ["atmosphere", "surrounding", "foreground", "setting", "details"])
+        
     return {
         "title": title,
-        "image_url": image_url,
-        "image_prompt": image_prompt,
+        "image_url": scene.get("url", ""),
+        "image_prompt": scene.get("elements", ""),
         "guiding_questions": guiding_questions,
         "keywords": keywords,
+        "has_people": scene.get("has_people", False),
         "suggested_time_seconds": 60
     }
 
