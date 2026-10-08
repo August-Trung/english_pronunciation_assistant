@@ -324,9 +324,16 @@
                 <v-btn color="secondary" size="small" variant="outlined" class="font-weight-bold text-none" prepend-icon="mdi-database-export-outline" :loading="isExportingSnapshot" @click="downloadBackupSnapshot">
                   Export DB Snapshot
                 </v-btn>
+                <v-btn color="teal" size="small" variant="outlined" class="font-weight-bold text-none" prepend-icon="mdi-database-import-outline" :loading="isRestoringSnapshot" @click="triggerRestoreSnapshotUpload">
+                  Restore Snapshot
+                </v-btn>
+                <v-btn color="error" size="small" variant="tonal" class="font-weight-bold text-none" prepend-icon="mdi-broom" @click="openConfirmCleanProductionModal">
+                  Clean Demo Data
+                </v-btn>
                 <v-btn color="primary" size="small" variant="flat" class="font-weight-bold text-none" prepend-icon="mdi-school" @click="showOnboardModal = true">
                   Onboard School
                 </v-btn>
+                <input ref="snapshotFileInput" type="file" accept=".json" style="display: none;" @change="handleSnapshotFileSelected" />
               </div>
             </div>
 
@@ -1790,6 +1797,78 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
+
+      <!-- Confirm Clean Demo Data for Production Launch Modal (Mandatory Confirmation) -->
+      <v-dialog v-model="showConfirmCleanProductionModal" max-width="500">
+        <v-card class="pa-6 rounded-lg elevation-4">
+          <div class="d-flex align-center ga-3 mb-3">
+            <v-avatar color="error" size="44">
+              <v-icon color="white">mdi-alert-octagon</v-icon>
+            </v-avatar>
+            <div>
+              <div class="text-subtitle-1 font-weight-black text-error">CLEAN DEMO DATA FOR PRODUCTION</div>
+              <div class="text-caption text-grey">Disaster Prevention & Live Readiness</div>
+            </div>
+          </div>
+          <v-alert type="warning" variant="tonal" density="compact" class="mb-4 text-caption font-weight-medium">
+            <strong>Warning:</strong> This action will permanently remove all test classrooms, test assignments, test submissions, practice history, and test students.
+            <div class="mt-1">
+              <strong>Preserved:</strong> Super Admin, School Admins, Teacher accounts, and system configurations will remain 100% intact.
+            </div>
+          </v-alert>
+          <div class="text-caption text-grey-darken-1 mb-4">
+            Before proceeding, an automatic snapshot backup will be created and downloaded to ensure you can restore previous data if needed.
+          </div>
+          <v-card-actions class="px-0 pb-0">
+            <v-spacer />
+            <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showConfirmCleanProductionModal = false">
+              Cancel
+            </v-btn>
+            <v-btn
+              color="error"
+              variant="flat"
+              class="text-none font-weight-bold"
+              :loading="isCleaningProduction"
+              @click="submitCleanProductionReset"
+            >
+              Confirm Clean Production Launch
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Confirm Restore Snapshot Modal (Mandatory Confirmation) -->
+      <v-dialog v-model="showConfirmRestoreModal" max-width="480">
+        <v-card class="pa-6 rounded-lg elevation-4">
+          <div class="d-flex align-center ga-3 mb-3">
+            <v-avatar color="teal" size="44">
+              <v-icon color="white">mdi-database-import</v-icon>
+            </v-avatar>
+            <div>
+              <div class="text-subtitle-1 font-weight-black text-teal-darken-3">CONFIRM SNAPSHOT RESTORE</div>
+              <div class="text-caption text-grey">File: {{ selectedSnapshotFile?.name }}</div>
+            </div>
+          </div>
+          <v-alert type="info" variant="tonal" density="compact" class="mb-4 text-caption font-weight-medium">
+            Current database tables will be synchronized and restored to the exact state saved in this snapshot file.
+          </v-alert>
+          <v-card-actions class="px-0 pb-0">
+            <v-spacer />
+            <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showConfirmRestoreModal = false">
+              Cancel
+            </v-btn>
+            <v-btn
+              color="teal-darken-2"
+              variant="flat"
+              class="text-none font-weight-bold text-white"
+              :loading="isRestoringSnapshot"
+              @click="submitRestoreSnapshot"
+            >
+              Start Database Restore
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </div>
   </v-container>
 </template>
@@ -3138,6 +3217,84 @@ const downloadBackupSnapshot = async () => {
     notify('Failed to export backup snapshot: ' + e.message, 'error')
   } finally {
     isExportingSnapshot.value = false
+  }
+}
+
+const snapshotFileInput = ref(null)
+const selectedSnapshotFile = ref(null)
+const showConfirmRestoreModal = ref(false)
+const isRestoringSnapshot = ref(false)
+const showConfirmCleanProductionModal = ref(false)
+const isCleaningProduction = ref(false)
+
+const triggerRestoreSnapshotUpload = () => {
+  snapshotFileInput.value?.click()
+}
+
+const handleSnapshotFileSelected = (event) => {
+  const file = event.target.files?.[0]
+  if (!file) return
+  selectedSnapshotFile.value = file
+  showConfirmRestoreModal.value = true
+}
+
+const submitRestoreSnapshot = async () => {
+  if (!selectedSnapshotFile.value) return
+  isRestoringSnapshot.value = true
+  try {
+    const formData = new FormData()
+    formData.append('file', selectedSnapshotFile.value)
+    const res = await fetch(`${props.backendUrl}/api/admin/restore-snapshot`, {
+      method: 'POST',
+      headers: {
+        Authorization: getAdminAuthHeaders().Authorization
+      },
+      body: formData
+    })
+    if (res.ok) {
+      showConfirmRestoreModal.value = false
+      selectedSnapshotFile.value = null
+      notify('Database snapshot restored successfully!', 'success', 'mdi-check-decagram')
+      await fetchAllAdminData()
+    } else {
+      const err = await res.json()
+      notify(err.detail || 'Restore failed.', 'error')
+    }
+  } catch (e) {
+    notify('Restore error: ' + e.message, 'error')
+  } finally {
+    isRestoringSnapshot.value = false
+    if (snapshotFileInput.value) snapshotFileInput.value.value = ''
+  }
+}
+
+const openConfirmCleanProductionModal = () => {
+  showConfirmCleanProductionModal.value = true
+}
+
+const submitCleanProductionReset = async () => {
+  isCleaningProduction.value = true
+  try {
+    // 1. Download snapshot backup automatically before cleaning
+    await downloadBackupSnapshot()
+    
+    // 2. Perform production reset
+    const res = await fetch(`${props.backendUrl}/api/admin/clean-production-reset`, {
+      method: 'POST',
+      headers: getAdminAuthHeaders()
+    })
+    if (res.ok) {
+      showConfirmCleanProductionModal.value = false
+      notify('Demo data cleaned! System is in Clean Production State.', 'success', 'mdi-broom')
+      await fetchAllAdminData()
+    } else {
+      const err = await res.json()
+      notify(err.detail || 'Clean production reset failed.', 'error')
+    }
+  } catch (e) {
+    notify('Clean error: ' + e.message, 'error')
+  } finally {
+    isCleaningProduction.value = false
   }
 }
 

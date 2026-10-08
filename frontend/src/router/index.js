@@ -36,7 +36,7 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const isMyHanh = window.location.hostname.includes('myhanh') || window.location.search.includes('mode=myhanh')
   if (isMyHanh) {
-    const allowed = ['/', '/shadowing', '/leaderboard', '/history', '/profile']
+    const allowed = ['/', '/shadowing', '/homework', '/leaderboard', '/history', '/profile', '/teacher']
     if (!allowed.includes(to.path)) {
       return next('/')
     }

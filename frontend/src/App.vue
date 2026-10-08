@@ -84,43 +84,40 @@
                 History Log
               </v-btn>
 
-              <!-- Extended Features (Hidden on myhanh domain) -->
-              <template v-if="!isMyHanhDomain">
-                <!-- Homework Pill for Students -->
-                <v-btn to="/homework" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-clipboard-text-outline" class="font-weight-bold text-none text-body-2">
-                  Homework
-                </v-btn>
+              <!-- Homework Pill for Students (Visible everywhere) -->
+              <v-btn to="/homework" variant="text" rounded="pill" density="comfortable" active-color="primary" prepend-icon="mdi-clipboard-text-outline" class="font-weight-bold text-none text-body-2">
+                Homework
+              </v-btn>
 
-                <!-- Teacher Hub Pill (Visible to Teacher / Admin) -->
-                <v-btn
-                  v-if="['teacher', 'admin', 'super_admin'].includes(userRole)"
-                  to="/teacher"
-                  variant="text"
-                  color="indigo"
-                  rounded="pill"
-                  density="comfortable"
-                  active-color="indigo-darken-3"
-                  prepend-icon="mdi-school"
-                  class="font-weight-bold text-none text-body-2"
-                >
-                  Teacher Hub
-                </v-btn>
+              <!-- Teacher Hub Pill (Visible to Teacher / Admin everywhere) -->
+              <v-btn
+                v-if="['teacher', 'admin', 'super_admin'].includes(userRole)"
+                to="/teacher"
+                variant="text"
+                color="indigo"
+                rounded="pill"
+                density="comfortable"
+                active-color="indigo-darken-3"
+                prepend-icon="mdi-school"
+                class="font-weight-bold text-none text-body-2"
+              >
+                Teacher Hub
+              </v-btn>
 
-                <!-- Admin Console Pill (Visible to Admin / Super Admin) -->
-                <v-btn
-                  v-if="['admin', 'super_admin'].includes(userRole)"
-                  to="/admin"
-                  variant="text"
-                  color="grey-darken-4"
-                  rounded="pill"
-                  density="comfortable"
-                  active-color="black"
-                  prepend-icon="mdi-shield-crown"
-                  class="font-weight-bold text-none text-body-2"
-                >
-                  Admin Console
-                </v-btn>
-              </template>
+              <!-- Admin Console Pill (Visible to Admin / Super Admin ONLY on non-myhanh domain) -->
+              <v-btn
+                v-if="!isMyHanhDomain && ['admin', 'super_admin'].includes(userRole)"
+                to="/admin"
+                variant="text"
+                color="grey-darken-4"
+                rounded="pill"
+                density="comfortable"
+                active-color="black"
+                prepend-icon="mdi-shield-crown"
+                class="font-weight-bold text-none text-body-2"
+              >
+                Admin Console
+              </v-btn>
             </div>
 
             <v-spacer />
@@ -184,7 +181,7 @@
                   </v-list-item>
 
                   <!-- Menu Actions -->
-                  <template v-if="['admin', 'super_admin'].includes(userRole)">
+                  <template v-if="!isMyHanhDomain && ['admin', 'super_admin'].includes(userRole)">
                     <v-list-item class="rounded mb-1 bg-purple-lighten-5" prepend-icon="mdi-shield-crown" color="purple-darken-3" to="/admin">
                       <v-list-item-title class="text-caption font-weight-black text-purple-darken-3">Admin Console</v-list-item-title>
                     </v-list-item>
