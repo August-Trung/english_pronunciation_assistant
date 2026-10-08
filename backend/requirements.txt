@@ -11,3 +11,5 @@ eng-to-ipa
 openai-whisper
 torch
 python-dotenv
+huggingface_hub
+pillow
