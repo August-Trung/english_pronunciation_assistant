@@ -5,6 +5,8 @@ import json
 import logging
 import hashlib
 import random
+import base64
+import html
 import urllib.parse
 from typing import List, Dict, Any, Optional
 from PIL import Image
@@ -36,9 +38,9 @@ DEFAULT_GROQ_KEYS = [
 ]
 
 GROQ_MODELS = [
-    "qwen/qwen3.8-27b",
     "openai/gpt-oss-120b",
-    "openai/gpt-oss-20b"
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
 ]
 
 def get_hf_client() -> Optional[Any]:
@@ -164,6 +166,112 @@ def call_llm(messages: List[Dict[str, str]], json_mode: bool = True) -> str:
 
     return "[]"
 
+def get_theme_palette(topic_str: str) -> Dict[str, str]:
+    t = (topic_str or "").lower()
+    if any(k in t for k in ["science", "lab", "tech", "computer", "research", "digital", "data"]):
+        return {
+            "c1": "#090D16", "c2": "#0F172A", "c3": "#0284C7",
+            "accent": "#38BDF8", "pill_bg": "#0369A1",
+            "icon": "flask"
+        }
+    if any(k in t for k in ["cafe", "coffee", "food", "market", "restaurant", "eat", "daily", "shop"]):
+        return {
+            "c1": "#1C1917", "c2": "#451A03", "c3": "#B45309",
+            "accent": "#FBBF24", "pill_bg": "#78350F",
+            "icon": "cafe"
+        }
+    if any(k in t for k in ["interview", "work", "job", "career", "office", "business", "meeting", "collaborat"]):
+        return {
+            "c1": "#0B0F19", "c2": "#1E1B4B", "c3": "#4338CA",
+            "accent": "#A5B4FC", "pill_bg": "#312E81",
+            "icon": "business"
+        }
+    if any(k in t for k in ["travel", "airport", "nature", "vacation", "trip", "park", "tour"]):
+        return {
+            "c1": "#042F2E", "c2": "#064E3B", "c3": "#059669",
+            "accent": "#6EE7B7", "pill_bg": "#065F46",
+            "icon": "travel"
+        }
+    return {
+        "c1": "#0F172A", "c2": "#1E1B4B", "c3": "#2563EB",
+        "accent": "#93C5FD", "pill_bg": "#1D4ED8",
+        "icon": "book"
+    }
+
+def get_icon_svg(icon_type: str, color: str) -> str:
+    if icon_type == "flask":
+        return f'<path d="M19 3H5v2l5 6v7c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2v-7l5-6V3zm-3 13h-4v-5l-3-3.6V5h10v1.4L16 11v5z" fill="{color}"/>'
+    elif icon_type == "cafe":
+        return f'<path d="M4 19h16v2H4v-2zm16-9h-2V5c0-1.1-.9-2-2-2H6c-1.1 0-2 .9-2 2v8c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-1h2c1.1 0 2-.9 2-2v-2c0-1.1-.9-2-2-2zm-4 3c0 1.1-.9 2-2 2H8c-1.1 0-2-.9-2-2V5h10v8zm2-3h-2V7h2v3z" fill="{color}"/>'
+    elif icon_type == "business":
+        return f'<path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z" fill="{color}"/>'
+    elif icon_type == "travel":
+        return f'<path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" fill="{color}"/>'
+    else:
+        return f'<path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z" fill="{color}"/>'
+
+def generate_educational_svg(title: str, topic: str = "", subtitle: str = "", category: str = "general") -> str:
+    """Generate instant, ultra-high reliability vector illustration card as base64 data URI."""
+    palette = get_theme_palette(f"{topic} {title} {category}")
+    esc_title = html.escape((title or "English Practice")[:45])
+    esc_topic = html.escape((topic or "Visual Study")[:25].upper())
+    esc_sub = html.escape(subtitle[:65] if subtitle else "Observe details, analyze vocabulary, and practice pronunciation")
+    icon_svg = get_icon_svg(palette["icon"], palette["accent"])
+
+    svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="800" height="480" viewBox="0 0 800 480">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="{palette['c1']}"/>
+      <stop offset="50%" stop-color="{palette['c2']}"/>
+      <stop offset="100%" stop-color="{palette['c3']}"/>
+    </linearGradient>
+    <pattern id="dotGrid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.5" fill="#FFFFFF" fill-opacity="0.06"/>
+    </pattern>
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="35" result="blur"/>
+    </filter>
+  </defs>
+
+  <rect width="100%" height="100%" fill="url(#bgGrad)"/>
+  <rect width="100%" height="100%" fill="url(#dotGrid)"/>
+
+  <circle cx="680" cy="90" r="140" fill="{palette['accent']}" opacity="0.18" filter="url(#softGlow)"/>
+  <circle cx="120" cy="400" r="120" fill="{palette['c3']}" opacity="0.25" filter="url(#softGlow)"/>
+
+  <rect x="36" y="36" width="728" height="408" rx="20" fill="#FFFFFF" fill-opacity="0.04" stroke="#FFFFFF" stroke-opacity="0.14" stroke-width="1.5"/>
+
+  <g transform="translate(64, 60)">
+    <rect width="180" height="30" rx="15" fill="{palette['pill_bg']}" fill-opacity="0.5" stroke="{palette['accent']}" stroke-opacity="0.5" stroke-width="1"/>
+    <text x="90" y="20" fill="{palette['accent']}" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="12" font-weight="700" text-anchor="middle" letter-spacing="1.2">{esc_topic}</text>
+  </g>
+
+  <g transform="translate(400, 180)">
+    <circle cx="0" cy="0" r="48" fill="#FFFFFF" fill-opacity="0.08" stroke="{palette['accent']}" stroke-width="2"/>
+    <circle cx="0" cy="0" r="40" fill="{palette['c1']}" fill-opacity="0.8"/>
+    <g transform="translate(-16, -16) scale(1.35)">
+      {icon_svg}
+    </g>
+  </g>
+
+  <text x="400" y="280" fill="#FFFFFF" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="28" font-weight="800" text-anchor="middle">
+    {esc_title}
+  </text>
+  <text x="400" y="318" fill="#CBD5E1" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="16" font-weight="500" text-anchor="middle">
+    {esc_sub}
+  </text>
+
+  <g transform="translate(400, 390)">
+    <rect x="-140" y="-14" width="280" height="28" rx="14" fill="#FFFFFF" fill-opacity="0.06" stroke="#FFFFFF" stroke-opacity="0.1" stroke-width="1"/>
+    <text x="0" y="4" fill="#94A3B8" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="11" font-weight="600" text-anchor="middle" letter-spacing="1">
+      STUDY STUDIO &bull; DUAL-CODING VISUAL
+    </text>
+  </g>
+</svg>"""
+
+    b64 = base64.b64encode(svg.encode('utf-8')).decode('utf-8')
+    return f"data:image/svg+xml;base64,{b64}"
+
 def generate_deck_content(topic: str, level: str = "intermediate", count: int = 5) -> List[Dict[str, Any]]:
     """Generate high quality vocabulary flashcards with IPA, tips, and fast visual illustrations."""
     sys_prompt = (
@@ -209,19 +317,26 @@ def generate_deck_content(topic: str, level: str = "intermediate", count: int = 
     # Attach fast visual illustrations to every card
     for c in cards:
         w = c.get("word", "")
-        safe_prompt = urllib.parse.quote_plus(f"{w} {topic} clear 3D cartoon educational illustration")
-        c["image_url"] = f"https://image.pollinations.ai/prompt/{safe_prompt}?width=640&height=400&nologo=true"
+        c["image_url"] = generate_educational_svg(
+            title=w,
+            topic=topic,
+            subtitle=c.get("ipa", ""),
+            category=topic
+        )
 
     return cards
 
 def generate_vocabulary_image(word: str, context: str = "", output_dir: Optional[str] = None) -> str:
-    """Generate or retrieve instant visual illustration URL."""
-    random_seed = random.randint(1, 999999)
-    safe_prompt = urllib.parse.quote_plus(f"{word} {context} clear 3D colorful education illustration")
-    return f"https://image.pollinations.ai/prompt/{safe_prompt}?width=640&height=400&nologo=true&seed={random_seed}"
+    """Generate instant visual illustration data URI."""
+    return generate_educational_svg(
+        title=word,
+        topic=context or "Vocabulary",
+        subtitle=f"Focus Term: {word}",
+        category=context or "general"
+    )
 
 def generate_picture_scenario(topic: str = "Daily Life", level: str = "intermediate") -> Dict[str, Any]:
-    """Generate a multimodal Describe the Picture challenge scenario with instant image URL."""
+    """Generate a Describe the Picture challenge scenario with instant visual illustration."""
     sys_prompt = (
         "You are an IELTS & TOEIC Speaking Examiner. "
         "Create an engaging 'Describe the Picture' speaking task. "
@@ -249,10 +364,13 @@ def generate_picture_scenario(topic: str = "Daily Life", level: str = "intermedi
     ])
     keywords = data.get("keywords", ["atmosphere", "activity", "surrounding", "foreground", "expression"])
 
-    # Instant high-quality scene image URL
-    safe_img_prompt = urllib.parse.quote_plus(f"{image_prompt} detailed photo realistic scene 4k")
-    random_seed = random.randint(1, 999999)
-    image_url = f"https://image.pollinations.ai/prompt/{safe_img_prompt}?width=768&height=512&nologo=true&seed={random_seed}"
+    # Instant high-reliability scene visual
+    image_url = generate_educational_svg(
+        title=title,
+        topic=topic,
+        subtitle=image_prompt[:70] + ("..." if len(image_prompt) > 70 else ""),
+        category=topic
+    )
 
     return {
         "title": title,

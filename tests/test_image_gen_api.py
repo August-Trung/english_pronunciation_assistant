@@ -20,7 +20,7 @@ def test_generate_image_endpoint():
     data = resp.json()
     assert data["status"] == "success"
     assert "image_url" in data
-    assert data["image_url"].startswith("/uploads/") or data["image_url"].startswith("http") or data["image_url"].endswith(".png")
+    assert data["image_url"].startswith("/uploads/") or data["image_url"].startswith("http") or data["image_url"].startswith("data:image/") or data["image_url"].endswith(".png")
 
     # Verify static file is retrievable if local path
     if data["image_url"].startswith("/uploads/"):

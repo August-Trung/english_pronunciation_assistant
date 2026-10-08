@@ -91,10 +91,11 @@
             <!-- Picture Image Canvas with Hover Zoom -->
             <div class="image-wrapper rounded-lg overflow-hidden border mb-3 position-relative cursor-pointer" @click="showImagePreview = true">
               <v-img
-                :src="getImageUrl(currentScenario.image_url)"
+                :src="currentScenarioImage"
                 height="280"
                 cover
                 class="bg-grey-lighten-4"
+                @error="handleImageError"
               >
                 <template #placeholder>
                   <div class="d-flex align-center justify-center fill-height">
@@ -320,7 +321,7 @@
     <v-dialog v-model="showImagePreview" max-width="800">
       <v-card class="pa-2 bg-black text-right">
         <v-btn icon="mdi-close" variant="text" color="white" size="small" @click="showImagePreview = false" />
-        <v-img :src="getImageUrl(currentScenario?.image_url)" max-height="600" contain />
+        <v-img :src="currentScenarioImage" max-height="600" contain />
       </v-card>
     </v-dialog>
 
@@ -398,12 +399,62 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
   backendUrl: String,
   userId: Number
 })
+
+const imageFailed = ref(false)
+
+const handleImageError = () => {
+  imageFailed.value = true
+}
+
+const makeSvgCard = (title, topic, subtitle) => {
+  const t = (topic || '').toLowerCase()
+  let c1 = '#0F172A', c2 = '#1E1B4B', c3 = '#2563EB', accent = '#93C5FD', pill = '#1D4ED8'
+  if (t.includes('science') || t.includes('lab') || t.includes('tech') || t.includes('computer')) {
+    c1 = '#090D16'; c2 = '#0F172A'; c3 = '#0284C7'; accent = '#38BDF8'; pill = '#0369A1'
+  } else if (t.includes('cafe') || t.includes('coffee') || t.includes('food') || t.includes('market') || t.includes('daily')) {
+    c1 = '#1C1917'; c2 = '#451A03'; c3 = '#B45309'; accent = '#FBBF24'; pill = '#78350F'
+  } else if (t.includes('work') || t.includes('interview') || t.includes('job') || t.includes('office') || t.includes('business')) {
+    c1 = '#0B0F19'; c2 = '#1E1B4B'; c3 = '#4338CA'; accent = '#A5B4FC'; pill = '#312E81'
+  } else if (t.includes('travel') || t.includes('nature') || t.includes('airport')) {
+    c1 = '#042F2E'; c2 = '#064E3B'; c3 = '#059669'; accent = '#6EE7B7'; pill = '#065F46'
+  }
+
+  const safeTitle = (title || 'Speaking Scene').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').slice(0, 45)
+  const safeTopic = (topic || 'Daily Life').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').slice(0, 25).toUpperCase()
+  const safeSub = (subtitle || 'Observe details, setting, characters and actions').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').slice(0, 60)
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="480" viewBox="0 0 800 480">
+    <defs>
+      <linearGradient id="bgG" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="${c1}"/>
+        <stop offset="50%" stop-color="${c2}"/>
+        <stop offset="100%" stop-color="${c3}"/>
+      </linearGradient>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#bgG)"/>
+    <circle cx="700" cy="80" r="140" fill="${accent}" opacity="0.15"/>
+    <circle cx="100" cy="400" r="120" fill="${c3}" opacity="0.2"/>
+    <rect x="36" y="36" width="728" height="408" rx="20" fill="white" fill-opacity="0.04" stroke="white" stroke-opacity="0.12" stroke-width="1.5"/>
+    <g transform="translate(64, 60)">
+      <rect width="170" height="28" rx="14" fill="${pill}" fill-opacity="0.5" stroke="${accent}" stroke-opacity="0.4" stroke-width="1"/>
+      <text x="85" y="19" fill="${accent}" font-family="system-ui, sans-serif" font-size="11" font-weight="700" text-anchor="middle" letter-spacing="1.2">${safeTopic}</text>
+    </g>
+    <circle cx="400" cy="180" r="44" fill="white" fill-opacity="0.08" stroke="${accent}" stroke-width="2"/>
+    <circle cx="400" cy="180" r="36" fill="${c1}" fill-opacity="0.85"/>
+    <path d="M392 166h16v16h-16zM388 186h24v4h-24z" fill="${accent}"/>
+    <text x="400" y="275" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="28" font-weight="800" text-anchor="middle">${safeTitle}</text>
+    <text x="400" y="312" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="16" font-weight="500" text-anchor="middle">${safeSub}</text>
+    <rect x="280" y="380" width="240" height="26" rx="13" fill="white" fill-opacity="0.06" stroke="white" stroke-opacity="0.1" stroke-width="1"/>
+    <text x="400" y="397" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="11" font-weight="600" text-anchor="middle" letter-spacing="1">DESCRIBE PICTURE SCENARIO</text>
+  </svg>`
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
+}
 
 const getImageUrl = (url) => {
   if (!url) return '/logo-augusttrung.png'
@@ -411,6 +462,18 @@ const getImageUrl = (url) => {
   const base = props.backendUrl?.replace(/\/$/, '') || 'https://agrse-fluent-english-backend.hf.space'
   return `${base}${url.startsWith('/') ? '' : '/'}${url}`
 }
+
+const currentScenarioImage = computed(() => {
+  const rawUrl = currentScenario.value?.image_url
+  if (imageFailed.value || !rawUrl || rawUrl.includes('pollinations.ai')) {
+    return makeSvgCard(
+      currentScenario.value?.title || 'Speaking Scenario',
+      currentScenario.value?.topic || 'Daily Life',
+      currentScenario.value?.image_prompt || ''
+    )
+  }
+  return getImageUrl(rawUrl)
+})
 
 const scenarios = ref([])
 const currentScenario = ref(null)
@@ -444,6 +507,7 @@ const evaluationResult = ref(null)
 
 const selectScenario = (s) => {
   currentScenario.value = s
+  imageFailed.value = false
   resetChallenge()
 }
 
@@ -491,6 +555,7 @@ const handleCreateScenario = async () => {
       scenarioTopic.value = ''
       await fetchScenarios()
       currentScenario.value = newScenario
+      imageFailed.value = false
       resetChallenge()
     }
   } catch (err) {

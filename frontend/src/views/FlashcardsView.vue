@@ -159,10 +159,11 @@
               <!-- AI Visual Illustration -->
               <div class="image-container w-100 my-2 rounded-lg overflow-hidden position-relative border" @click.stop>
                 <v-img
-                  :src="getImageUrl(activeCard.image_url)"
+                  :src="activeCardImage"
                   height="200"
                   cover
                   class="bg-grey-lighten-4"
+                  @error="handleCardImageError"
                 >
                   <template #placeholder>
                     <div class="d-flex align-center justify-center fill-height">
@@ -663,12 +664,59 @@ const formatDate = (isoStr) => {
   }
 }
 
+const cardImageFailed = ref(false)
+
+const handleCardImageError = () => {
+  cardImageFailed.value = true
+}
+
+const makeFlashcardSvg = (word, ipa, topic) => {
+  const safeWord = (word || 'Vocabulary').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').slice(0, 30)
+  const safeIpa = (ipa ? `/${ipa}/` : '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').slice(0, 30)
+  const safeTopic = (topic || 'English Vocabulary').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').slice(0, 25).toUpperCase()
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="400" viewBox="0 0 640 400">
+    <defs>
+      <linearGradient id="fcGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#1E1B4B"/>
+        <stop offset="50%" stop-color="#312E81"/>
+        <stop offset="100%" stop-color="#4F46E5"/>
+      </linearGradient>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#fcGrad)"/>
+    <circle cx="560" cy="60" r="120" fill="#A5B4FC" opacity="0.15"/>
+    <circle cx="80" cy="340" r="100" fill="#818CF8" opacity="0.2"/>
+    <rect x="24" y="24" width="592" height="352" rx="16" fill="white" fill-opacity="0.04" stroke="white" stroke-opacity="0.12" stroke-width="1.5"/>
+    <g transform="translate(48, 44)">
+      <rect width="140" height="24" rx="12" fill="#4338CA" fill-opacity="0.6" stroke="#818CF8" stroke-opacity="0.5" stroke-width="1"/>
+      <text x="70" y="16" fill="#C7D2FE" font-family="system-ui, sans-serif" font-size="10" font-weight="700" text-anchor="middle" letter-spacing="1">${safeTopic}</text>
+    </g>
+    <circle cx="320" cy="150" r="40" fill="white" fill-opacity="0.08" stroke="#818CF8" stroke-width="2"/>
+    <circle cx="320" cy="150" r="32" fill="#1E1B4B" fill-opacity="0.9"/>
+    <path d="M312 142h16v16h-16z" fill="#A5B4FC"/>
+    <text x="320" y="235" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="30" font-weight="800" text-anchor="middle">${safeWord}</text>
+    <text x="320" y="270" fill="#93C5FD" font-family="system-ui, sans-serif" font-size="17" font-weight="600" font-style="italic" text-anchor="middle">${safeIpa}</text>
+    <rect x="220" y="320" width="200" height="24" rx="12" fill="white" fill-opacity="0.06" stroke="white" stroke-opacity="0.1" stroke-width="1"/>
+    <text x="320" y="336" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="10" font-weight="600" text-anchor="middle" letter-spacing="1">FLASHCARD STUDY VISUAL</text>
+  </svg>`
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
+}
+
 const getImageUrl = (url) => {
   if (!url) return '/logo-augusttrung.png'
   if (url.startsWith('http') || url.startsWith('data:')) return url
   const base = props.backendUrl?.replace(/\/$/, '') || 'https://agrse-fluent-english-backend.hf.space'
   return `${base}${url.startsWith('/') ? '' : '/'}${url}`
 }
+
+const activeCardImage = computed(() => {
+  if (!activeCard.value) return '/logo-augusttrung.png'
+  const rawUrl = activeCard.value.image_url
+  if (cardImageFailed.value || !rawUrl || rawUrl.includes('pollinations.ai')) {
+    return makeFlashcardSvg(activeCard.value.word, activeCard.value.ipa, selectedDeck.value?.topic)
+  }
+  return getImageUrl(rawUrl)
+})
 
 // Fetch user decks from backend
 const fetchDecks = async () => {
@@ -696,6 +744,7 @@ const startStudyDeck = async (deck) => {
       activeCardIndex.value = 0
       isAiFlipped.value = false
       cardScore.value = null
+      cardImageFailed.value = false
     }
   } catch (e) {
     console.error('Failed to load deck cards:', e)
@@ -706,6 +755,7 @@ const shuffleDeck = () => {
   activeCards.value = [...activeCards.value].sort(() => Math.random() - 0.5)
   activeCardIndex.value = 0
   isAiFlipped.value = false
+  cardImageFailed.value = false
 }
 
 const nextCard = () => {
@@ -713,6 +763,7 @@ const nextCard = () => {
     activeCardIndex.value++
     isAiFlipped.value = false
     cardScore.value = null
+    cardImageFailed.value = false
   }
 }
 
@@ -721,6 +772,7 @@ const prevCard = () => {
     activeCardIndex.value--
     isAiFlipped.value = false
     cardScore.value = null
+    cardImageFailed.value = false
   }
 }
 
@@ -797,6 +849,7 @@ const generateImageForActiveCard = async () => {
     if (res.ok) {
       const data = await res.json()
       activeCard.value.image_url = data.image_url
+      cardImageFailed.value = false
     }
   } catch (err) {
     console.error('Image regeneration failed:', err)
