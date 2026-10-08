@@ -272,6 +272,138 @@ def generate_educational_svg(title: str, topic: str = "", subtitle: str = "", ca
     b64 = base64.b64encode(svg.encode('utf-8')).decode('utf-8')
     return f"data:image/svg+xml;base64,{b64}"
 
+PHOTO_CATALOG = {
+    "science": [
+        "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1518152006812-edab29b069ac?auto=format&fit=crop&w=1000&q=80"
+    ],
+    "cafe": [
+        "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1000&q=80"
+    ],
+    "airport": [
+        "https://images.unsplash.com/photo-1530521954074-e64f6810b32d?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1520437358207-323b43b50729?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1517400508447-f8dd518b86db?auto=format&fit=crop&w=1000&q=80"
+    ],
+    "office": [
+        "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1000&q=80"
+    ],
+    "interview": [
+        "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1000&q=80"
+    ],
+    "market": [
+        "https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1534723452862-4c874018d66d?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=1000&q=80"
+    ],
+    "library": [
+        "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=1000&q=80"
+    ],
+    "hospital": [
+        "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=1000&q=80"
+    ],
+    "city": [
+        "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=1000&q=80"
+    ],
+    "park": [
+        "https://images.unsplash.com/photo-1496347646636-ea47f7d6b37b?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1519331379826-f10be5486c6f?auto=format&fit=crop&w=1000&q=80"
+    ],
+    "classroom": [
+        "https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1000&q=80"
+    ],
+    "restaurant": [
+        "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?auto=format&fit=crop&w=1000&q=80"
+    ],
+    "hotel": [
+        "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1000&q=80"
+    ],
+    "technology": [
+        "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1000&q=80"
+    ],
+    "kitchen": [
+        "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1507048331197-7d4ac70811cf?auto=format&fit=crop&w=1000&q=80"
+    ],
+    "nature": [
+        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000&q=80"
+    ],
+    "fitness": [
+        "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1000&q=80"
+    ],
+    "art": [
+        "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?auto=format&fit=crop&w=1000&q=80",
+        "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1000&q=80"
+    ]
+}
+
+def resolve_scene_photo(topic: str = "", title: str = "", context: str = "") -> str:
+    """Resolve an authentic, high-resolution photography scene for IELTS/TOEIC speaking tasks."""
+    combined = f"{topic} {title} {context}".lower()
+
+    if any(k in combined for k in ["science", "lab", "chemist", "biolog", "physics", "experiment", "research"]):
+        pool = PHOTO_CATALOG["science"]
+    elif any(k in combined for k in ["cafe", "coffee", "latte", "espresso", "barista"]):
+        pool = PHOTO_CATALOG["cafe"]
+    elif any(k in combined for k in ["airport", "flight", "plane", "terminal", "boarding", "departure"]):
+        pool = PHOTO_CATALOG["airport"]
+    elif any(k in combined for k in ["interview", "candidate", "hire", "resume", "cv"]):
+        pool = PHOTO_CATALOG["interview"]
+    elif any(k in combined for k in ["office", "meeting", "business", "colleague", "workplace", "corporat"]):
+        pool = PHOTO_CATALOG["office"]
+    elif any(k in combined for k in ["market", "supermarket", "grocery", "shop", "store", "vendor"]):
+        pool = PHOTO_CATALOG["market"]
+    elif any(k in combined for k in ["library", "book", "study", "reading", "shelf"]):
+        pool = PHOTO_CATALOG["library"]
+    elif any(k in combined for k in ["hospital", "doctor", "nurse", "clinic", "medical", "patient"]):
+        pool = PHOTO_CATALOG["hospital"]
+    elif any(k in combined for k in ["park", "garden", "outdoor", "lawn", "walk"]):
+        pool = PHOTO_CATALOG["park"]
+    elif any(k in combined for k in ["class", "school", "teach", "student", "learn", "lecture"]):
+        pool = PHOTO_CATALOG["classroom"]
+    elif any(k in combined for k in ["restaurant", "dinner", "lunch", "eat", "dining", "meal", "food"]):
+        pool = PHOTO_CATALOG["restaurant"]
+    elif any(k in combined for k in ["hotel", "reception", "resort", "lobby", "check-in"]):
+        pool = PHOTO_CATALOG["hotel"]
+    elif any(k in combined for k in ["tech", "comput", "ai", "software", "program", "code"]):
+        pool = PHOTO_CATALOG["technology"]
+    elif any(k in combined for k in ["kitchen", "cook", "bake", "chef", "recipe"]):
+        pool = PHOTO_CATALOG["kitchen"]
+    elif any(k in combined for k in ["nature", "mountain", "beach", "lake", "forest", "hiking"]):
+        pool = PHOTO_CATALOG["nature"]
+    elif any(k in combined for k in ["fitness", "gym", "sport", "workout", "exercise", "athlet"]):
+        pool = PHOTO_CATALOG["fitness"]
+    elif any(k in combined for k in ["art", "museum", "gallery", "paint", "exhibit"]):
+        pool = PHOTO_CATALOG["art"]
+    elif any(k in combined for k in ["city", "street", "urban", "downtown", "traffic", "build"]):
+        pool = PHOTO_CATALOG["city"]
+    else:
+        pool = PHOTO_CATALOG["cafe"]
+
+    # Stable pseudo-random selection based on hash of topic and title
+    h = int(hashlib.md5(f"{topic}_{title}".encode("utf-8")).hexdigest(), 16)
+    return pool[h % len(pool)]
+
 def generate_deck_content(topic: str, level: str = "intermediate", count: int = 5) -> List[Dict[str, Any]]:
     """Generate high quality vocabulary flashcards with IPA, tips, and fast visual illustrations."""
     sys_prompt = (
@@ -314,29 +446,23 @@ def generate_deck_content(topic: str, level: str = "intermediate", count: int = 
             }
         ]
 
-    # Attach fast visual illustrations to every card
+    # Attach authentic visual photography scenes to every card
     for c in cards:
         w = c.get("word", "")
-        c["image_url"] = generate_educational_svg(
-            title=w,
+        c["image_url"] = resolve_scene_photo(
             topic=topic,
-            subtitle=c.get("ipa", ""),
-            category=topic
+            title=w,
+            context=c.get("meaning", "")
         )
 
     return cards
 
 def generate_vocabulary_image(word: str, context: str = "", output_dir: Optional[str] = None) -> str:
-    """Generate instant visual illustration data URI."""
-    return generate_educational_svg(
-        title=word,
-        topic=context or "Vocabulary",
-        subtitle=f"Focus Term: {word}",
-        category=context or "general"
-    )
+    """Generate or retrieve authentic visual photograph URL."""
+    return resolve_scene_photo(topic=context, title=word)
 
 def generate_picture_scenario(topic: str = "Daily Life", level: str = "intermediate") -> Dict[str, Any]:
-    """Generate a Describe the Picture challenge scenario with instant visual illustration."""
+    """Generate an authentic Describe the Picture challenge scenario with real scene photograph."""
     sys_prompt = (
         "You are an IELTS & TOEIC Speaking Examiner. "
         "Create an engaging 'Describe the Picture' speaking task. "
@@ -364,12 +490,11 @@ def generate_picture_scenario(topic: str = "Daily Life", level: str = "intermedi
     ])
     keywords = data.get("keywords", ["atmosphere", "activity", "surrounding", "foreground", "expression"])
 
-    # Instant high-reliability scene visual
-    image_url = generate_educational_svg(
-        title=title,
+    # High-definition authentic scene photo for IELTS / TOEIC description
+    image_url = resolve_scene_photo(
         topic=topic,
-        subtitle=image_prompt[:70] + ("..." if len(image_prompt) > 70 else ""),
-        category=topic
+        title=title,
+        context=image_prompt
     )
 
     return {

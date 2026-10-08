@@ -21,13 +21,13 @@ try:
     from hf_service import (
         generate_deck_content, generate_vocabulary_image,
         generate_picture_scenario, evaluate_picture_speaking,
-        generate_educational_svg
+        generate_educational_svg, resolve_scene_photo
     )
 except ImportError:
     from app.hf_service import (
         generate_deck_content, generate_vocabulary_image,
         generate_picture_scenario, evaluate_picture_speaking,
-        generate_educational_svg
+        generate_educational_svg, resolve_scene_photo
     )
 from fastapi.responses import StreamingResponse, Response, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -1996,25 +1996,25 @@ def init_db():
         except Exception as e:
             print(f"Password hash enforcement note: {e}")
 
-        # Sanitize any legacy pollinations URLs in picture_scenarios and flashcard_cards
+        # Sanitize any legacy pollinations or SVG placeholder URLs with authentic scene photos
         try:
             conn = sqlite3.connect(DB_PATH, timeout=20.0)
             cursor = conn.cursor()
-            cursor.execute("SELECT id, title, topic, image_prompt FROM picture_scenarios WHERE image_url LIKE '%pollinations%'")
+            cursor.execute("SELECT id, title, topic, image_prompt FROM picture_scenarios WHERE image_url LIKE '%pollinations%' OR image_url LIKE 'data:image/svg%'")
             legacy_scenarios = cursor.fetchall()
             for s_id, s_title, s_topic, s_prompt in legacy_scenarios:
-                svg_url = generate_educational_svg(s_title, s_topic, (s_prompt or "")[:70], s_topic)
-                cursor.execute("UPDATE picture_scenarios SET image_url = ? WHERE id = ?", (svg_url, s_id))
+                photo_url = resolve_scene_photo(s_topic, s_title, s_prompt or "")
+                cursor.execute("UPDATE picture_scenarios SET image_url = ? WHERE id = ?", (photo_url, s_id))
             
-            cursor.execute("SELECT id, word, ipa FROM flashcard_cards WHERE image_url LIKE '%pollinations%'")
+            cursor.execute("SELECT id, word, ipa FROM flashcard_cards WHERE image_url LIKE '%pollinations%' OR image_url LIKE 'data:image/svg%'")
             legacy_cards = cursor.fetchall()
             for c_id, c_word, c_ipa in legacy_cards:
-                svg_url = generate_educational_svg(c_word, "Vocabulary", c_ipa or "", "general")
-                cursor.execute("UPDATE flashcard_cards SET image_url = ? WHERE id = ?", (svg_url, c_id))
+                photo_url = resolve_scene_photo("Vocabulary", c_word, c_ipa or "")
+                cursor.execute("UPDATE flashcard_cards SET image_url = ? WHERE id = ?", (photo_url, c_id))
             conn.commit()
             conn.close()
         except Exception as e:
-            print(f"Legacy pollinations sanitization note: {e}")
+            print(f"Legacy photo sanitization note: {e}")
     except Exception as e:
         print(f"Database init error: {e}")
 

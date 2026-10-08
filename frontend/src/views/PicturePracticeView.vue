@@ -412,48 +412,139 @@ const handleImageError = () => {
   imageFailed.value = true
 }
 
-const makeSvgCard = (title, topic, subtitle) => {
-  const t = (topic || '').toLowerCase()
-  let c1 = '#0F172A', c2 = '#1E1B4B', c3 = '#2563EB', accent = '#93C5FD', pill = '#1D4ED8'
-  if (t.includes('science') || t.includes('lab') || t.includes('tech') || t.includes('computer')) {
-    c1 = '#090D16'; c2 = '#0F172A'; c3 = '#0284C7'; accent = '#38BDF8'; pill = '#0369A1'
-  } else if (t.includes('cafe') || t.includes('coffee') || t.includes('food') || t.includes('market') || t.includes('daily')) {
-    c1 = '#1C1917'; c2 = '#451A03'; c3 = '#B45309'; accent = '#FBBF24'; pill = '#78350F'
-  } else if (t.includes('work') || t.includes('interview') || t.includes('job') || t.includes('office') || t.includes('business')) {
-    c1 = '#0B0F19'; c2 = '#1E1B4B'; c3 = '#4338CA'; accent = '#A5B4FC'; pill = '#312E81'
-  } else if (t.includes('travel') || t.includes('nature') || t.includes('airport')) {
-    c1 = '#042F2E'; c2 = '#064E3B'; c3 = '#059669'; accent = '#6EE7B7'; pill = '#065F46'
+const PHOTO_CATALOG = {
+  science: [
+    'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1518152006812-edab29b069ac?auto=format&fit=crop&w=1000&q=80'
+  ],
+  cafe: [
+    'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1000&q=80'
+  ],
+  airport: [
+    'https://images.unsplash.com/photo-1530521954074-e64f6810b32d?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1520437358207-323b43b50729?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1517400508447-f8dd518b86db?auto=format&fit=crop&w=1000&q=80'
+  ],
+  office: [
+    'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1000&q=80'
+  ],
+  interview: [
+    'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1000&q=80'
+  ],
+  market: [
+    'https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1534723452862-4c874018d66d?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=1000&q=80'
+  ],
+  library: [
+    'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=1000&q=80'
+  ],
+  hospital: [
+    'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=1000&q=80'
+  ],
+  city: [
+    'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=1000&q=80'
+  ],
+  park: [
+    'https://images.unsplash.com/photo-1496347646636-ea47f7d6b37b?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?auto=format&fit=crop&w=1000&q=80'
+  ],
+  classroom: [
+    'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1000&q=80'
+  ],
+  restaurant: [
+    'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?auto=format&fit=crop&w=1000&q=80'
+  ],
+  hotel: [
+    'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1000&q=80'
+  ],
+  technology: [
+    'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1000&q=80'
+  ],
+  kitchen: [
+    'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1507048331197-7d4ac70811cf?auto=format&fit=crop&w=1000&q=80'
+  ],
+  nature: [
+    'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000&q=80'
+  ],
+  fitness: [
+    'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1000&q=80'
+  ],
+  art: [
+    'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1000&q=80'
+  ]
+}
+
+const resolveScenePhoto = (topic, title) => {
+  const combined = `${topic || ''} ${title || ''}`.toLowerCase()
+  let pool = PHOTO_CATALOG.cafe
+  if (/science|lab|chemist|biolog|physics|experiment|research/.test(combined)) {
+    pool = PHOTO_CATALOG.science
+  } else if (/cafe|coffee|latte|espresso|barista/.test(combined)) {
+    pool = PHOTO_CATALOG.cafe
+  } else if (/airport|flight|plane|terminal|boarding|departure/.test(combined)) {
+    pool = PHOTO_CATALOG.airport
+  } else if (/interview|candidate|hire|resume|cv/.test(combined)) {
+    pool = PHOTO_CATALOG.interview
+  } else if (/office|meeting|business|colleague|workplace|corporat/.test(combined)) {
+    pool = PHOTO_CATALOG.office
+  } else if (/market|supermarket|grocery|shop|store|vendor/.test(combined)) {
+    pool = PHOTO_CATALOG.market
+  } else if (/library|book|study|reading|shelf/.test(combined)) {
+    pool = PHOTO_CATALOG.library
+  } else if (/hospital|doctor|nurse|clinic|medical|patient/.test(combined)) {
+    pool = PHOTO_CATALOG.hospital
+  } else if (/park|garden|outdoor|lawn|walk/.test(combined)) {
+    pool = PHOTO_CATALOG.park
+  } else if (/class|school|teach|student|learn|lecture/.test(combined)) {
+    pool = PHOTO_CATALOG.classroom
+  } else if (/restaurant|dinner|lunch|eat|dining|meal|food/.test(combined)) {
+    pool = PHOTO_CATALOG.restaurant
+  } else if (/hotel|reception|resort|lobby|check-in/.test(combined)) {
+    pool = PHOTO_CATALOG.hotel
+  } else if (/tech|comput|ai|software|program|code/.test(combined)) {
+    pool = PHOTO_CATALOG.technology
+  } else if (/kitchen|cook|bake|chef|recipe/.test(combined)) {
+    pool = PHOTO_CATALOG.kitchen
+  } else if (/nature|mountain|beach|lake|forest|hiking/.test(combined)) {
+    pool = PHOTO_CATALOG.nature
+  } else if (/fitness|gym|sport|workout|exercise|athlet/.test(combined)) {
+    pool = PHOTO_CATALOG.fitness
+  } else if (/art|museum|gallery|paint|exhibit/.test(combined)) {
+    pool = PHOTO_CATALOG.art
+  } else if (/city|street|urban|downtown|traffic|build/.test(combined)) {
+    pool = PHOTO_CATALOG.city
   }
-
-  const safeTitle = (title || 'Speaking Scene').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').slice(0, 45)
-  const safeTopic = (topic || 'Daily Life').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').slice(0, 25).toUpperCase()
-  const safeSub = (subtitle || 'Observe details, setting, characters and actions').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').slice(0, 60)
-
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="480" viewBox="0 0 800 480">
-    <defs>
-      <linearGradient id="bgG" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="${c1}"/>
-        <stop offset="50%" stop-color="${c2}"/>
-        <stop offset="100%" stop-color="${c3}"/>
-      </linearGradient>
-    </defs>
-    <rect width="100%" height="100%" fill="url(#bgG)"/>
-    <circle cx="700" cy="80" r="140" fill="${accent}" opacity="0.15"/>
-    <circle cx="100" cy="400" r="120" fill="${c3}" opacity="0.2"/>
-    <rect x="36" y="36" width="728" height="408" rx="20" fill="white" fill-opacity="0.04" stroke="white" stroke-opacity="0.12" stroke-width="1.5"/>
-    <g transform="translate(64, 60)">
-      <rect width="170" height="28" rx="14" fill="${pill}" fill-opacity="0.5" stroke="${accent}" stroke-opacity="0.4" stroke-width="1"/>
-      <text x="85" y="19" fill="${accent}" font-family="system-ui, sans-serif" font-size="11" font-weight="700" text-anchor="middle" letter-spacing="1.2">${safeTopic}</text>
-    </g>
-    <circle cx="400" cy="180" r="44" fill="white" fill-opacity="0.08" stroke="${accent}" stroke-width="2"/>
-    <circle cx="400" cy="180" r="36" fill="${c1}" fill-opacity="0.85"/>
-    <path d="M392 166h16v16h-16zM388 186h24v4h-24z" fill="${accent}"/>
-    <text x="400" y="275" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="28" font-weight="800" text-anchor="middle">${safeTitle}</text>
-    <text x="400" y="312" fill="#CBD5E1" font-family="system-ui, sans-serif" font-size="16" font-weight="500" text-anchor="middle">${safeSub}</text>
-    <rect x="280" y="380" width="240" height="26" rx="13" fill="white" fill-opacity="0.06" stroke="white" stroke-opacity="0.1" stroke-width="1"/>
-    <text x="400" y="397" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="11" font-weight="600" text-anchor="middle" letter-spacing="1">DESCRIBE PICTURE SCENARIO</text>
-  </svg>`
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
+  let hash = 0
+  const str = `${topic}_${title}`
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i)
+    hash |= 0
+  }
+  const idx = Math.abs(hash) % pool.length
+  return pool[idx]
 }
 
 const getImageUrl = (url) => {
@@ -465,12 +556,8 @@ const getImageUrl = (url) => {
 
 const currentScenarioImage = computed(() => {
   const rawUrl = currentScenario.value?.image_url
-  if (imageFailed.value || !rawUrl || rawUrl.includes('pollinations.ai')) {
-    return makeSvgCard(
-      currentScenario.value?.title || 'Speaking Scenario',
-      currentScenario.value?.topic || 'Daily Life',
-      currentScenario.value?.image_prompt || ''
-    )
+  if (imageFailed.value || !rawUrl || rawUrl.includes('pollinations.ai') || rawUrl.startsWith('data:image/svg')) {
+    return resolveScenePhoto(currentScenario.value?.topic || '', currentScenario.value?.title || '')
   }
   return getImageUrl(rawUrl)
 })

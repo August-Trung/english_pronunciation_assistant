@@ -709,11 +709,113 @@ const getImageUrl = (url) => {
   return `${base}${url.startsWith('/') ? '' : '/'}${url}`
 }
 
+const PHOTO_CATALOG = {
+  science: [
+    'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=1000&q=80'
+  ],
+  cafe: [
+    'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1000&q=80'
+  ],
+  airport: [
+    'https://images.unsplash.com/photo-1530521954074-e64f6810b32d?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1520437358207-323b43b50729?auto=format&fit=crop&w=1000&q=80'
+  ],
+  office: [
+    'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1000&q=80'
+  ],
+  interview: [
+    'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1000&q=80'
+  ],
+  market: [
+    'https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1534723452862-4c874018d66d?auto=format&fit=crop&w=1000&q=80'
+  ],
+  library: [
+    'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=1000&q=80'
+  ],
+  hospital: [
+    'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=1000&q=80'
+  ],
+  city: [
+    'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1000&q=80'
+  ],
+  park: [
+    'https://images.unsplash.com/photo-1496347646636-ea47f7d6b37b?auto=format&fit=crop&w=1000&q=80'
+  ],
+  classroom: [
+    'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1000&q=80'
+  ],
+  restaurant: [
+    'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80'
+  ],
+  hotel: [
+    'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1000&q=80'
+  ],
+  technology: [
+    'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1000&q=80'
+  ],
+  kitchen: [
+    'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=1000&q=80'
+  ],
+  nature: [
+    'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1000&q=80'
+  ]
+}
+
+const resolveConceptPhoto = (word, topic) => {
+  const combined = `${word || ''} ${topic || ''}`.toLowerCase()
+  let pool = PHOTO_CATALOG.office
+  if (/science|lab|chemist|biolog|physics|experiment|research/.test(combined)) {
+    pool = PHOTO_CATALOG.science
+  } else if (/cafe|coffee|latte|espresso|tea|drink/.test(combined)) {
+    pool = PHOTO_CATALOG.cafe
+  } else if (/airport|flight|plane|travel|ticket|trip|passport/.test(combined)) {
+    pool = PHOTO_CATALOG.airport
+  } else if (/interview|candidate|hire|job|career|resume/.test(combined)) {
+    pool = PHOTO_CATALOG.interview
+  } else if (/office|meeting|business|colleague|work|team|collaborat/.test(combined)) {
+    pool = PHOTO_CATALOG.office
+  } else if (/market|shop|store|grocery|buy|sell/.test(combined)) {
+    pool = PHOTO_CATALOG.market
+  } else if (/library|book|read|study|learn|dictionary/.test(combined)) {
+    pool = PHOTO_CATALOG.library
+  } else if (/hospital|doctor|nurse|health|medicine|medical/.test(combined)) {
+    pool = PHOTO_CATALOG.hospital
+  } else if (/tech|comput|ai|software|data|digital|internet/.test(combined)) {
+    pool = PHOTO_CATALOG.technology
+  } else if (/cook|food|kitchen|bake|eat|dish/.test(combined)) {
+    pool = PHOTO_CATALOG.kitchen
+  } else if (/nature|mountain|tree|forest|environment|climate/.test(combined)) {
+    pool = PHOTO_CATALOG.nature
+  } else if (/class|school|teach|student|lesson/.test(combined)) {
+    pool = PHOTO_CATALOG.classroom
+  } else if (/city|street|build|urban|traffic/.test(combined)) {
+    pool = PHOTO_CATALOG.city
+  }
+  let hash = 0
+  const str = `${word}_${topic}`
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i)
+    hash |= 0
+  }
+  const idx = Math.abs(hash) % pool.length
+  return pool[idx]
+}
+
 const activeCardImage = computed(() => {
   if (!activeCard.value) return '/logo-augusttrung.png'
   const rawUrl = activeCard.value.image_url
-  if (cardImageFailed.value || !rawUrl || rawUrl.includes('pollinations.ai')) {
-    return makeFlashcardSvg(activeCard.value.word, activeCard.value.ipa, selectedDeck.value?.topic)
+  if (cardImageFailed.value || !rawUrl || rawUrl.includes('pollinations.ai') || rawUrl.startsWith('data:image/svg')) {
+    return resolveConceptPhoto(activeCard.value.word, selectedDeck.value?.topic)
   }
   return getImageUrl(rawUrl)
 })
