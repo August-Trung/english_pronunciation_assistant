@@ -275,17 +275,17 @@ def generate_educational_svg(title: str, topic: str = "", subtitle: str = "", ca
 GROUNDED_PHOTO_CATALOG = {
     "science": [
         {
-            "url": "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1000&q=80",
-            "title": "A University Science Research Laboratory",
-            "elements": "Two researchers in white lab coats, protective goggles, and blue gloves conducting chemical experiments with glass beakers, test tubes with colorful fluids, and electronic laboratory monitors in a modern research lab.",
+            "url": "https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=1000&q=80",
+            "title": "A Scientific Laboratory Experiment in Progress",
+            "elements": "A laboratory researcher wearing blue protective nitrile gloves handling precision chemical sample vials, pipettes, and analytical diagnostic equipment on a sterile lab workstation.",
             "has_people": True,
-            "people_details": "Two scientists in white lab coats collaborating over laboratory glassware and scientific apparatus.",
+            "people_details": "A laboratory scientist in blue gloves carefully preparing chemical or biological samples.",
             "guiding_questions": [
-                "What experiments or tests are the scientists performing with the laboratory glassware?",
-                "What protective gear and specialized equipment can you see in this research environment?",
-                "How does this modern laboratory setup support scientific discovery and innovation?"
+                "What procedures or tests is the laboratory researcher performing with the sample vials?",
+                "What safety equipment and scientific tools can you observe on the workstation?",
+                "Why is strict precision and sterile handling essential in laboratory research?"
             ],
-            "keywords": ["white lab coat", "laboratory glassware", "chemical solution", "protective goggles", "scientific research"]
+            "keywords": ["nitrile gloves", "sample vials", "laboratory research", "sterile workstation", "scientific testing"]
         },
         {
             "url": "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=1000&q=80",
@@ -415,17 +415,32 @@ GROUNDED_PHOTO_CATALOG = {
     ],
     "interview": [
         {
-            "url": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=1000&q=80",
-            "title": "A Professional Job Interview Discussion",
-            "elements": "A candidate and an interviewer in professional business attire seated across a modern desk, engaging in a focused professional conversation with a resume and notepad.",
+            "url": "https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1000&q=80",
+            "title": "A Professional Job Interview and Handshake",
+            "elements": "Two business professionals in formal suits sitting across a wooden conference desk, shaking hands in agreement with paper documents, a pen, and a laptop on the table.",
             "has_people": True,
-            "people_details": "Professional interviewer and job candidate in business attire having an interview conversation.",
+            "people_details": "Two business professionals across a meeting desk shaking hands during an interview agreement.",
             "guiding_questions": [
-                "What are the interviewer and the candidate doing, and how is their interaction structured?",
-                "What professional documents or workspace items are present on the desk?",
-                "What key qualities or communication skills should a candidate demonstrate in this situation?"
+                "What are the two people doing across the desk, and what does their handshake symbolize in an interview?",
+                "What professional documents, notes, or equipment are visible on the meeting desk?",
+                "What impression does this interaction convey about corporate recruitment and professionalism?"
             ],
-            "keywords": ["job interview", "business attire", "candidate evaluation", "professional resume", "verbal communication"]
+            "keywords": ["handshake", "business suits", "conference desk", "job interview", "professional agreement"]
+        }
+    ],
+    "portrait": [
+        {
+            "url": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=1000&q=80",
+            "title": "A Professional Business Portrait",
+            "elements": "A confident businesswoman in a formal grey blazer and dark top standing with a welcoming smile in a bright corporate office. A single-person portrait with no other people in the frame.",
+            "has_people": True,
+            "people_details": "A single professional businesswoman in a grey blazer smiling confidently at the camera.",
+            "guiding_questions": [
+                "How does the woman's professional blazer and posture reflect her corporate role?",
+                "What facial expression and attitude does she present to the viewer?",
+                "Why is professional attire and a confident demeanor important in a corporate career?"
+            ],
+            "keywords": ["grey blazer", "confident posture", "businesswoman", "corporate portrait", "professional demeanor"]
         }
     ],
     "market": [
@@ -621,7 +636,9 @@ def get_grounded_scene(topic: str = "", title: str = "", context: str = "") -> D
         category = "cafe"
     elif any(k in combined for k in ["airport", "flight", "plane", "terminal", "boarding", "departure"]):
         category = "airport"
-    elif any(k in combined for k in ["interview", "candidate", "hire", "resume", "cv"]):
+    elif any(k in combined for k in ["portrait", "businesswoman", "executive", "leader", "blazer", "headshot"]):
+        category = "portrait"
+    elif any(k in combined for k in ["interview", "candidate", "hire", "resume", "cv", "recruitment"]):
         category = "interview"
     elif any(k in combined for k in ["office", "meeting", "business", "colleague", "workplace", "corporat"]):
         category = "office"

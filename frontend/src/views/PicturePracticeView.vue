@@ -461,9 +461,7 @@ const handleImageError = () => {
 const PHOTO_CATALOG = {
   science: [
     'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1518152006812-edab29b069ac?auto=format&fit=crop&w=1000&q=80'
+    'https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=1000&q=80'
   ],
   cafe: [
     'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1000&q=80',
@@ -482,8 +480,10 @@ const PHOTO_CATALOG = {
     'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1000&q=80'
   ],
   interview: [
-    'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=1000&q=80',
     'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1000&q=80'
+  ],
+  portrait: [
+    'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=1000&q=80'
   ],
   market: [
     'https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&w=1000&q=80',
@@ -552,6 +552,8 @@ const resolveScenePhoto = (topic, title) => {
     pool = PHOTO_CATALOG.cafe
   } else if (/airport|flight|plane|terminal|boarding|departure/.test(combined)) {
     pool = PHOTO_CATALOG.airport
+  } else if (/portrait|businesswoman|executive|leader|blazer|headshot/.test(combined)) {
+    pool = PHOTO_CATALOG.portrait
   } else if (/interview|candidate|hire|resume|cv/.test(combined)) {
     pool = PHOTO_CATALOG.interview
   } else if (/office|meeting|business|colleague|workplace|corporat/.test(combined)) {

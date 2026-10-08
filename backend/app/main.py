@@ -2028,6 +2028,9 @@ def init_db():
             for c_id, c_word, c_ipa in legacy_cards:
                 photo_url = resolve_scene_photo("Vocabulary", c_word, c_ipa or "")
                 cursor.execute("UPDATE flashcard_cards SET image_url = ? WHERE id = ?", (photo_url, c_id))
+            # Fix interview mismatch: replace solo woman portrait with authentic 2-person handshake/interview photo
+            cursor.execute("UPDATE picture_scenarios SET image_url = 'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1000&q=80' WHERE (title LIKE '%Interview%' OR topic LIKE '%Interview%') AND image_url LIKE '%photo-1573496359142%'")
+            cursor.execute("UPDATE assignments SET image_url = 'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1000&q=80' WHERE (title LIKE '%Interview%' OR topic_sentence LIKE '%Interview%') AND image_url LIKE '%photo-1573496359142%'")
             conn.commit()
             conn.close()
         except Exception as e:
