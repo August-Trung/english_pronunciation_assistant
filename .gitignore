@@ -6,3 +6,5 @@ venv/
 __pycache__/
 node_modules/
 dist/
+uploads/
+backend/app/uploads/
