@@ -42,6 +42,47 @@
       </div>
     </v-card>
 
+    <!-- Inline Deadline Alerts -->
+    <v-alert
+      v-if="dueSoonAssignments.length > 0"
+      type="warning"
+      variant="tonal"
+      density="comfortable"
+      rounded="lg"
+      class="mb-4 border-warning font-weight-medium"
+      closable
+      icon="mdi-clock-alert-outline"
+    >
+      <div>
+        <div class="text-subtitle-2 font-weight-black">
+          {{ dueSoonAssignments.length }} assignment{{ dueSoonAssignments.length > 1 ? 's' : '' }} due within 24 hours!
+        </div>
+        <div class="text-caption text-grey-darken-3">
+          Please record and submit your exercises before the deadline to ensure your scores are recorded on time.
+        </div>
+      </div>
+    </v-alert>
+
+    <v-alert
+      v-if="overdueAssignments.length > 0"
+      type="error"
+      variant="tonal"
+      density="comfortable"
+      rounded="lg"
+      class="mb-4 border-error font-weight-medium"
+      closable
+      icon="mdi-alert-circle-outline"
+    >
+      <div>
+        <div class="text-subtitle-2 font-weight-black">
+          {{ overdueAssignments.length }} past-due assignment{{ overdueAssignments.length > 1 ? 's' : '' }}
+        </div>
+        <div class="text-caption text-grey-darken-3">
+          These assignments have passed their deadline. Check with your educator if late submissions are accepted.
+        </div>
+      </div>
+    </v-alert>
+
     <!-- 2-Column Responsive Workspace -->
     <v-row class="ma-0 ga-3">
       <!-- Left Column: Filter & Assignments Feed (Cols 12, md 8) -->
@@ -101,12 +142,13 @@
           </div>
 
           <v-chip
-            :color="asg.is_submitted ? 'success' : 'warning'"
-            variant="flat"
+            :color="getDeadlineStatus(asg).color"
+            :variant="getDeadlineStatus(asg).status === 'due_soon' ? 'flat' : 'tonal'"
             size="small"
             class="font-weight-black"
+            :prepend-icon="getDeadlineStatus(asg).icon"
           >
-            {{ asg.is_submitted ? `Submitted (${asg.score?.toFixed(1)}/10)` : 'Pending' }}
+            {{ getDeadlineStatus(asg).label }}
           </v-chip>
         </div>
 
@@ -426,6 +468,50 @@ const filteredAssignments = computed(() => {
 const getAssignmentsCountForClass = (classId) => {
   return assignments.value.filter(a => a.class_id === classId).length
 }
+
+const parseDueDate = (dueStr) => {
+  if (!dueStr) return null
+  const str = String(dueStr).trim()
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    return new Date(`${str}T23:59:59`)
+  }
+  return new Date(str.replace(' ', 'T'))
+}
+
+const getDeadlineStatus = (asg) => {
+  if (asg.is_submitted) {
+    return { status: 'submitted', label: `Submitted (${asg.score != null ? asg.score.toFixed(1) : '10'}/10)`, color: 'success', icon: 'mdi-check-circle' }
+  }
+  if (!asg.due_date) {
+    return { status: 'pending', label: 'Pending', color: 'warning', icon: undefined }
+  }
+  const dueDate = parseDueDate(asg.due_date)
+  if (!dueDate || isNaN(dueDate.getTime())) {
+    return { status: 'pending', label: 'Pending', color: 'warning', icon: undefined }
+  }
+  const now = Date.now()
+  const diffHours = (dueDate.getTime() - now) / (1000 * 60 * 60)
+  
+  if (diffHours < 0) {
+    return { status: 'overdue', label: 'Past Due', color: 'error', icon: 'mdi-alert-circle' }
+  }
+  if (diffHours <= 24) {
+    const totalMinutes = Math.max(1, Math.round((dueDate.getTime() - now) / (1000 * 60)))
+    const hrs = Math.floor(totalMinutes / 60)
+    const mins = totalMinutes % 60
+    const timeText = hrs > 0 ? `${hrs}h left` : `${mins}m left`
+    return { status: 'due_soon', label: `Due Soon (${timeText})`, color: 'warning', icon: 'mdi-clock-fast' }
+  }
+  return { status: 'pending', label: 'Pending', color: 'warning', icon: undefined }
+}
+
+const dueSoonAssignments = computed(() => {
+  return assignments.value.filter(a => getDeadlineStatus(a).status === 'due_soon')
+})
+
+const overdueAssignments = computed(() => {
+  return assignments.value.filter(a => getDeadlineStatus(a).status === 'overdue')
+})
 
 const getActiveStudentId = () => {
   return props.userId || Number(localStorage.getItem('user_id')) || null

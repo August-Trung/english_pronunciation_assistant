@@ -5,6 +5,9 @@ import sqlite3
 import random
 import tempfile
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+
+VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
 from typing import Optional, List, Dict, Any
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Body, Depends, Header
 try:
@@ -1335,8 +1338,7 @@ async def analyze_audio(
                     uid_val = 1
             conn = sqlite3.connect(DB_PATH, timeout=10.0)
             cursor = conn.cursor()
-            # Vietnam Timezone (UTC+7)
-            now_vn = datetime.utcnow() + timedelta(hours=7)
+            now_vn = datetime.now(VN_TZ)
             now_ts = now_vn.strftime("%Y-%m-%d %H:%M:%S")
             now_dt = now_vn.strftime("%Y-%m-%d")
             breakdown_str = json.dumps(breakdown) if breakdown else "{}"
@@ -2250,7 +2252,7 @@ def calculate_user_streak(user_id: int, cursor) -> int:
         if not dates:
             return 0
         
-        now_dt = datetime.now()
+        now_dt = datetime.now(VN_TZ)
         today_str = now_dt.strftime("%Y-%m-%d")
         yesterday_str = (now_dt - timedelta(days=1)).strftime("%Y-%m-%d")
         
@@ -6511,8 +6513,7 @@ def query_student_history(req: HistoryQueryRequest):
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
         
-        # Vietnam Timezone (UTC+7)
-        now_dt = datetime.utcnow() + timedelta(hours=7)
+        now_dt = datetime.now(VN_TZ)
         today_str = now_dt.strftime("%Y-%m-%d")
         
         where_clause = "user_id = ? AND (IsXoa IS NULL OR IsXoa = 0)"

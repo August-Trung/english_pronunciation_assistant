@@ -144,6 +144,9 @@
             class="mb-1"
           >
             <v-list-item-title class="font-weight-bold text-body-2">Homework</v-list-item-title>
+            <template #append v-if="urgentHomeworkCount > 0">
+              <v-badge color="error" :content="urgentHomeworkCount" inline />
+            </template>
             <v-tooltip v-if="mdAndUp && isRail" activator="parent" location="right">Homework</v-tooltip>
           </v-list-item>
 
@@ -276,17 +279,21 @@
 
           <!-- Ultra Clean Right Actions (Streak + Avatar Dropdown Menu) -->
           <div class="d-flex align-center ga-2">
-            <!-- Streak Badge -->
+            <!-- Streak Badge (Subtle UX: Outlined + subtle glow when streak is at risk today) -->
             <v-chip
               v-if="streak > 0"
-              color="warning"
-              variant="flat"
+              :color="hasPracticedToday ? 'warning' : 'amber-darken-3'"
+              :variant="hasPracticedToday ? 'flat' : 'outlined'"
               density="comfortable"
               class="font-weight-black text-caption text-sm-body-2 px-2 px-sm-3"
+              :class="{ 'streak-at-risk': !hasPracticedToday }"
               prepend-icon="mdi-fire"
             >
               <span class="d-none d-sm-inline">{{ streak }}-Day Streak</span>
               <span class="d-inline d-sm-none">{{ streak }}d</span>
+              <v-tooltip activator="parent" location="bottom">
+                {{ hasPracticedToday ? 'Active streak! You practiced today.' : 'Streak at risk! Practice 1 session today to keep your streak!' }}
+              </v-tooltip>
             </v-chip>
             <v-chip
               v-else
@@ -297,7 +304,7 @@
               prepend-icon="mdi-fire"
             >
               <span class="d-none d-sm-inline">0-Day Streak</span>
-              <span class="d-inline d-sm-none">0d</span>
+              <span class="d-inline d-sm-none">{{ streak }}d</span>
               <v-tooltip activator="parent" location="bottom">Practice today to ignite your streak!</v-tooltip>
             </v-chip>
 
@@ -356,6 +363,10 @@
                   <v-list-item-title class="text-caption font-weight-bold">Describe the Picture</v-list-item-title>
                 </v-list-item>
 
+                <v-list-item class="rounded mb-1" prepend-icon="mdi-spellcheck" color="teal-darken-3" @click="showWeakWords = true">
+                  <v-list-item-title class="text-caption font-weight-bold text-teal-darken-4">Weak Words Review</v-list-item-title>
+                </v-list-item>
+
                 <v-list-item class="rounded mb-1" prepend-icon="mdi-trophy-award" color="amber-darken-3" @click="showAchievements = true">
                   <v-list-item-title class="text-caption font-weight-bold text-amber-darken-4">Achievements & Badges</v-list-item-title>
                 </v-list-item>
@@ -411,8 +422,11 @@
             <span class="nav-label">Shadowing</span>
           </router-link>
 
-          <router-link to="/homework" class="nav-item" active-class="nav-item-active">
-            <v-icon size="18">mdi-clipboard-text-outline</v-icon>
+          <router-link to="/homework" class="nav-item position-relative" active-class="nav-item-active">
+            <v-badge v-if="urgentHomeworkCount > 0" color="error" dot location="top end">
+              <v-icon size="18">mdi-clipboard-text-outline</v-icon>
+            </v-badge>
+            <v-icon v-else size="18">mdi-clipboard-text-outline</v-icon>
             <span class="nav-label">Homework</span>
           </router-link>
 
@@ -501,6 +515,60 @@
                 @click="handleLogout"
               >
                 Sign Out
+              </v-btn>
+            </div>
+          </v-card>
+        </v-dialog>
+
+        <!-- Urgent Homework Due Soon Modal (≤ 3 hours, max once per session) -->
+        <v-dialog v-model="showUrgentHomeworkModal" max-width="440" persistent>
+          <v-card border flat class="pa-4 bg-white" rounded="lg">
+            <div class="d-flex align-center ga-3 mb-3">
+              <v-avatar color="amber-lighten-5" size="44" class="text-amber-darken-3 border">
+                <v-icon size="26">mdi-clock-alert-outline</v-icon>
+              </v-avatar>
+              <div>
+                <div class="text-subtitle-1 font-weight-black text-secondary">Homework Due Soon!</div>
+                <div class="text-caption text-grey-darken-1">Approaching deadline reminder</div>
+              </div>
+            </div>
+
+            <div class="bg-amber-lighten-5 pa-3 rounded border border-warning mb-3">
+              <div class="d-flex align-center justify-space-between mb-1">
+                <span class="text-subtitle-2 font-weight-black text-amber-darken-4">
+                  {{ urgentAssignment?.title }}
+                </span>
+                <v-chip color="error" size="x-small" variant="flat" class="font-weight-bold">
+                  {{ urgentAssignment?.timeRemainingText }}
+                </v-chip>
+              </div>
+              <div class="text-caption text-grey-darken-2 d-flex align-center ga-1">
+                <v-icon size="x-small">mdi-google-classroom</v-icon>
+                <span>{{ urgentAssignment?.class_name }}</span>
+              </div>
+            </div>
+
+            <div class="text-caption text-grey-darken-2 mb-4" style="line-height: 1.5;">
+              Submit your pronunciation recording before the deadline to ensure your grade and progress are recorded.
+            </div>
+
+            <div class="d-flex align-center justify-end ga-2">
+              <v-btn
+                variant="outlined"
+                color="grey-darken-1"
+                class="font-weight-bold text-none"
+                @click="dismissUrgentModal"
+              >
+                Remind Me Later
+              </v-btn>
+              <v-btn
+                color="primary"
+                variant="flat"
+                class="font-weight-bold text-none px-4"
+                prepend-icon="mdi-clipboard-arrow-right-outline"
+                @click="goToUrgentHomework"
+              >
+                Do Homework Now
               </v-btn>
             </div>
           </v-card>
@@ -796,6 +864,23 @@ watch(
   }
 )
 
+// Date helper for local browser date YYYY-MM-DD
+const getLocalDateString = (d = new Date()) => {
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+// Check if user has completed at least 1 session today
+const hasPracticedToday = computed(() => {
+  const todayStr = getLocalDateString()
+  return history.value.some(item => {
+    const itemDate = item.date || item.timestamp?.split(' ')[0]
+    return itemDate === todayStr
+  })
+})
+
 // Calculate user learning streak accurately from practice history dates
 const calculateStreakFromHistory = (histList) => {
   if (!histList || histList.length === 0) return 0
@@ -805,10 +890,10 @@ const calculateStreakFromHistory = (histList) => {
   
   if (uniqueDates.length === 0) return 0
   
-  const todayStr = new Date().toISOString().split('T')[0]
+  const todayStr = getLocalDateString()
   const yesterday = new Date()
   yesterday.setDate(yesterday.getDate() - 1)
-  const yesterdayStr = yesterday.toISOString().split('T')[0]
+  const yesterdayStr = getLocalDateString(yesterday)
   
   // If user didn't practice today or yesterday, streak is broken
   if (uniqueDates[0] !== todayStr && uniqueDates[0] !== yesterdayStr) {
@@ -827,6 +912,89 @@ const calculateStreakFromHistory = (histList) => {
     }
   }
   return count
+}
+
+// Student Homework Deadlines & Urgent Alert State
+const studentAssignments = ref([])
+const showUrgentHomeworkModal = ref(false)
+const urgentAssignment = ref(null)
+
+const parseDueDate = (dueStr) => {
+  if (!dueStr) return null
+  const str = String(dueStr).trim()
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    return new Date(`${str}T23:59:59`)
+  }
+  return new Date(str.replace(' ', 'T'))
+}
+
+// Count unsubmitted assignments due in <= 24 hours (or overdue) for badges
+const urgentHomeworkCount = computed(() => {
+  if (userRole.value !== 'student') return 0
+  const now = Date.now()
+  return studentAssignments.value.filter(asg => {
+    if (asg.is_submitted) return false
+    const d = parseDueDate(asg.due_date)
+    if (!d || isNaN(d.getTime())) return false
+    const diffHours = (d.getTime() - now) / (1000 * 60 * 60)
+    return diffHours <= 24
+  }).length
+})
+
+// Check if any unsubmitted homework is due in <= 3 hours (Prompt modal max 1 time per session)
+const checkUrgentHomework = () => {
+  if (userRole.value !== 'student') return
+  const now = Date.now()
+  for (const asg of studentAssignments.value) {
+    if (asg.is_submitted) continue
+    const dueDate = parseDueDate(asg.due_date)
+    if (!dueDate || isNaN(dueDate.getTime())) continue
+    const diffMs = dueDate.getTime() - now
+    const diffHours = diffMs / (1000 * 60 * 60)
+
+    if (diffHours > 0 && diffHours <= 3) {
+      const dismissedKey = `hw_urgent_dismissed_${asg.assignment_id}`
+      if (!sessionStorage.getItem(dismissedKey)) {
+        const totalMinutes = Math.max(1, Math.round(diffMs / (1000 * 60)))
+        const hrs = Math.floor(totalMinutes / 60)
+        const mins = totalMinutes % 60
+        const timeRemainingText = hrs > 0 ? `${hrs}h ${mins}m left` : `${mins}m left`
+
+        urgentAssignment.value = {
+          ...asg,
+          timeRemainingText
+        }
+        showUrgentHomeworkModal.value = true
+        break
+      }
+    }
+  }
+}
+
+const dismissUrgentModal = () => {
+  if (urgentAssignment.value?.assignment_id) {
+    sessionStorage.setItem(`hw_urgent_dismissed_${urgentAssignment.value.assignment_id}`, 'true')
+  }
+  showUrgentHomeworkModal.value = false
+}
+
+const goToUrgentHomework = () => {
+  dismissUrgentModal()
+  router.push('/homework')
+}
+
+const fetchStudentAssignments = async () => {
+  if (!currentUserId.value) return
+  try {
+    const res = await fetch(`${backendUrl.value}/api/assignments/student/${currentUserId.value}`)
+    if (res.ok) {
+      const data = await res.json()
+      studentAssignments.value = data.assignments || []
+      checkUrgentHomework()
+    }
+  } catch (err) {
+    console.error('Fetch student assignments in App error:', err)
+  }
 }
 
 // Auto login device session from Cloud DB
@@ -975,6 +1143,7 @@ const handleLogin = async (userData) => {
 const fetchUserAllData = async () => {
   await fetchUserProfile()
   await fetchUserHistory()
+  await fetchStudentAssignments()
 }
 
 const fetchUserProfile = async () => {
@@ -1168,5 +1337,22 @@ const testConnection = async () => {
   line-height: 1;
   margin-top: 3px;
   letter-spacing: -0.3px;
+}
+
+/* Subtle, non-intrusive glow animation for streak at risk */
+.streak-at-risk {
+  border-width: 1.5px !important;
+  animation: subtle-pulse 2.2s infinite ease-in-out;
+}
+
+@keyframes subtle-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(245, 124, 0, 0.4);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 5px 1.5px rgba(245, 124, 0, 0.3);
+  }
 }
 </style>
