@@ -1124,28 +1124,62 @@
         <!-- Branch 2: Picture Speaking with AI Generator -->
         <div v-else>
           <div class="mb-2">
-            <div class="d-flex align-center justify-space-between mb-1">
-              <span class="text-caption font-weight-bold text-grey">Topic or Speaking Theme:</span>
-              <v-btn
-                color="purple-darken-2"
-                variant="flat"
-                size="x-small"
-                class="text-none font-weight-bold"
-                prepend-icon="mdi-sparkles"
-                :loading="isGeneratingAsgPicture"
-                @click="generateAIPictureScenario"
-              >
-                AI Generate Scene & Questions
-              </v-btn>
+            <div class="d-flex align-center justify-space-between mb-2">
+              <span class="text-caption font-weight-bold text-grey">Creation Method:</span>
+              <v-btn-toggle v-model="teacherPictureMode" mandatory color="purple-darken-2" density="compact" class="border">
+                <v-btn value="ai_gen" size="x-small" class="text-none font-weight-bold" prepend-icon="mdi-sparkles">AI Prompt</v-btn>
+                <v-btn value="upload" size="x-small" class="text-none font-weight-bold" prepend-icon="mdi-upload">Upload Image</v-btn>
+              </v-btn-toggle>
             </div>
-            <v-text-field
-              v-model="newAsgPictureTopic"
-              placeholder="e.g. Hospital Emergency Hallway, Airport Lounge, Tech Office..."
-              variant="outlined"
-              density="comfortable"
-              class="mb-2"
-              prepend-inner-icon="mdi-image-search-outline"
-            />
+
+            <!-- Mode 1: AI Prompt Generator -->
+            <div v-if="teacherPictureMode === 'ai_gen'">
+              <div class="d-flex align-center justify-space-between mb-1">
+                <span class="text-caption font-weight-bold text-grey">Topic or Speaking Theme:</span>
+                <v-btn
+                  color="purple-darken-2"
+                  variant="flat"
+                  size="x-small"
+                  class="text-none font-weight-bold"
+                  prepend-icon="mdi-sparkles"
+                  :loading="isGeneratingAsgPicture"
+                  @click="generateAIPictureScenario"
+                >
+                  Generate Scene & Questions
+                </v-btn>
+              </div>
+              <v-text-field
+                v-model="newAsgPictureTopic"
+                placeholder="e.g. Hospital Emergency Hallway, Airport Lounge, Tech Office..."
+                variant="outlined"
+                density="comfortable"
+                class="mb-2"
+                prepend-inner-icon="mdi-image-search-outline"
+              />
+            </div>
+
+            <!-- Mode 2: Upload Custom Exam Image -->
+            <div v-else class="mb-2">
+              <input
+                ref="teacherFileInputRef"
+                type="file"
+                accept="image/*"
+                class="d-none"
+                @change="handleTeacherUploadImageChange"
+              />
+              <div class="border-dashed rounded pa-3 text-center bg-grey-lighten-5 cursor-pointer mb-2" @click="$refs.teacherFileInputRef?.click()">
+                <v-icon color="purple-darken-2" size="default">mdi-cloud-upload</v-icon>
+                <div class="text-caption font-weight-bold text-grey-darken-3">Click to upload exam or textbook picture</div>
+                <div class="text-caption text-grey" style="font-size: 11px;">Supports JPG, PNG, WEBP</div>
+              </div>
+              <v-text-field
+                v-model="newAsgPictureTopic"
+                placeholder="Optional Topic / Exam Context (e.g. Cambridge PET Exam Picture)"
+                variant="outlined"
+                density="compact"
+                class="mb-2"
+              />
+            </div>
           </div>
 
           <!-- Quick Topic Idea Chips for Teachers -->
@@ -1823,6 +1857,58 @@ const teacherTopicIdeas = [
   'A Bustling Urban Coffee Shop',
   'Modern Collaborative Office'
 ]
+
+const teacherPictureMode = ref('ai_gen')
+const teacherFileInputRef = ref(null)
+
+const handleTeacherUploadImageChange = async (e) => {
+  const file = e.target.files?.[0]
+  if (!file) return
+  isGeneratingAsgPicture.value = true
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    const uploadRes = await fetch(`${props.backendUrl}/api/picture-practice/upload-image`, {
+      method: 'POST',
+      body: formData
+    })
+    if (!uploadRes.ok) throw new Error('Failed to upload image')
+    const uploadData = await uploadRes.json()
+    newAsgImageUrl.value = uploadData.image_url
+    
+    // Call scenario creation with mode=upload
+    const topic = newAsgPictureTopic.value.trim() || file.name.replace(/\.[^/.]+$/, '')
+    const scRes = await fetch(`${props.backendUrl}/api/picture-practice/create-scenario`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        topic: topic,
+        level: 'intermediate',
+        mode: 'upload',
+        image_url: uploadData.image_url,
+        user_id: props.userId || 1
+      })
+    })
+    if (scRes.ok) {
+      const data = await scRes.json()
+      if (!newAsgTitle.value.trim() || newAsgTitle.value.startsWith('Speaking Practice:')) {
+        newAsgTitle.value = data.title || `Describe the Picture: ${topic}`
+      }
+      if (Array.isArray(data.guiding_questions)) {
+        newAsgGuidingQuestionsText.value = data.guiding_questions.join('\n')
+      }
+      if (Array.isArray(data.keywords)) {
+        newAsgTargetKeywordsText.value = data.keywords.join(', ')
+      }
+      notify('Exam picture uploaded & visual questions formulated!', 'success')
+    }
+  } catch (err) {
+    console.error('Error uploading teacher picture:', err)
+    notify('Failed to upload exam picture: ' + err.message, 'error')
+  } finally {
+    isGeneratingAsgPicture.value = false
+  }
+}
 
 const selectTeacherTopicIdea = (theme) => {
   newAsgPictureTopic.value = theme
