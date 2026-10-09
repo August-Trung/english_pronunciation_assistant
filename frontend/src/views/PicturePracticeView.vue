@@ -105,11 +105,20 @@
                 height="300"
                 cover
                 class="bg-grey-lighten-4"
-                @error="handleImageError"
               >
                 <template #placeholder>
-                  <div class="d-flex align-center justify-center fill-height bg-grey-lighten-3">
+                  <div class="d-flex flex-column align-center justify-center fill-height bg-grey-lighten-3 ga-2">
                     <v-progress-circular indeterminate color="primary" size="36" />
+                    <span class="text-caption text-grey font-weight-medium">Loading AI Picture...</span>
+                  </div>
+                </template>
+                <template #error>
+                  <div class="d-flex flex-column align-center justify-center fill-height bg-grey-lighten-3 pa-4 text-center ga-1">
+                    <v-icon color="grey-darken-1" size="36">mdi-image-broken-variant</v-icon>
+                    <div class="text-caption font-weight-bold text-grey-darken-3">Image failed to load</div>
+                    <v-btn size="x-small" color="primary" variant="outlined" prepend-icon="mdi-refresh" @click.stop="reloadImage">
+                      Retry
+                    </v-btn>
                   </div>
                 </template>
               </v-img>
@@ -571,10 +580,9 @@ const props = defineProps({
   userId: Number
 })
 
-const imageFailed = ref(false)
-
-const handleImageError = () => {
-  imageFailed.value = true
+const imageReloadKey = ref(0)
+const reloadImage = () => {
+  imageReloadKey.value++
 }
 
 const getImageUrl = (url) => {
@@ -586,10 +594,13 @@ const getImageUrl = (url) => {
 
 const currentScenarioImage = computed(() => {
   const rawUrl = currentScenario.value?.image_url
-  if (imageFailed.value || !rawUrl) {
-    return currentScenario.value?.fallback_image_url || 'https://images.unsplash.com/photo-1534567153574-2b12153a87f0?auto=format&fit=crop&w=1000&q=80'
+  if (!rawUrl) return '/logo-augusttrung.png'
+  const url = getImageUrl(rawUrl)
+  if (imageReloadKey.value > 0) {
+    const sep = url.includes('?') ? '&' : '?'
+    return `${url}${sep}_r=${imageReloadKey.value}`
   }
-  return getImageUrl(rawUrl)
+  return url
 })
 
 // Scenarios state
@@ -692,7 +703,7 @@ const isPlayingSample = ref(false)
 
 const selectScenario = (s) => {
   currentScenario.value = s
-  imageFailed.value = false
+  imageReloadKey.value = 0
   resetChallenge()
 }
 
@@ -770,7 +781,7 @@ const handleCreateScenario = async () => {
       clearUploadedFile()
       await fetchScenarios()
       currentScenario.value = newScenario
-      imageFailed.value = false
+      imageReloadKey.value = 0
       resetChallenge()
     }
   } catch (err) {

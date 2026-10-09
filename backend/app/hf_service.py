@@ -1117,19 +1117,23 @@ def generate_picture_scenario(
             "suggested_time_seconds": 60
         }
 
-    # Mode 2: Search Authentic Photography
+    # Mode 2: Search Authentic Photography (Dynamic Real-Life Scene Generation)
     if mode == "search":
-        scene = get_grounded_scene(topic=clean_topic, title="", context="")
+        photo_prompt = f"Authentic realistic documentary photograph of {clean_topic}, real life scene, natural daylight, candid capture, 35mm camera, rich detail"
+        seed = random.randint(10000, 999999)
+        clean_search_prompt = re.sub(r'[^a-zA-Z0-9\s,.-]', '', photo_prompt)
+        image_url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(clean_search_prompt)}?width=1024&height=680&nologo=true&seed={seed}&model=flux"
+        
         sys_prompt = (
-            "You are an IELTS & TOEIC Speaking Examiner. "
-            "Create an engaging 'Describe the Picture' speaking task strictly grounded in the provided real scene photo. "
-            f"Image Elements: {scene.get('elements', '')}. "
-            "Provide: "
-            "1. title: Engaging title. "
-            "2. guiding_questions: Exactly 4 questions (Q1 Overview, Q2 People/Actions, Q3 Details/Surroundings, Q4 Impressions). "
-            "3. keywords: 5 target vocabulary words/collocations for this scene. "
-            "4. sample_response: Band 8+ model speech (70-90 words). "
-            "Return ONLY JSON with 'title', 'guiding_questions', 'keywords', 'sample_response'."
+            "You are an expert IELTS and TOEIC Speaking Examiner. "
+            f"The candidate wants to practice describing an authentic real-world scene on the topic: '{clean_topic}'. "
+            "Formulate an authentic speaking challenge strictly grounded in this real-life scene: "
+            "1. 'title': Engaging descriptive title for this photo scene. "
+            "2. 'visual_description': Vivid 2-sentence description of the photograph scene. "
+            "3. 'guiding_questions': Array of 4 structured questions (Q1: General setting/weather, Q2: People/subjects & activities, Q3: Specific objects & background details, Q4: Overall mood & impression). "
+            "4. 'keywords': Array of 5 target vocabulary words/collocations typical of this scene. "
+            "5. 'sample_response': Band 8+ model speech (70-90 words). "
+            "Return ONLY a valid JSON object with 'title', 'visual_description', 'guiding_questions', 'keywords', 'sample_response'."
         )
         content = call_llm([
             {"role": "system", "content": sys_prompt},
@@ -1137,31 +1141,31 @@ def generate_picture_scenario(
         ], json_mode=True)
         data = parse_json_safely(content) or {}
         
-        title = str(data.get("title", "")).strip() or scene.get("title", f"Scene in {clean_topic}")
-        guiding_questions = data.get("guiding_questions") or scene.get("guiding_questions")
+        title = str(data.get("title", "")).strip() or f"Scene: {clean_topic}"
+        guiding_questions = data.get("guiding_questions")
         if not isinstance(guiding_questions, list) or len(guiding_questions) < 3:
             guiding_questions = [
-                "What is the general location and setting shown in this picture?",
-                "What people or subjects are visible and what are they doing?",
-                "What prominent objects or background features stand out to you?",
-                "What overall mood or impression does this scene convey?"
+                f"What is the general location and setting shown in this picture?",
+                f"What people or subjects are visible and what are they doing?",
+                f"What prominent objects or background features stand out to you?",
+                f"What overall mood or impression does this scene convey?"
             ]
-        keywords = data.get("keywords") or scene.get("keywords")
+        keywords = data.get("keywords")
         if not isinstance(keywords, list) or len(keywords) < 3:
             keywords = ["setting", "foreground", "background", "interaction", "atmosphere"]
             
         sample_response = str(data.get("sample_response", "")).strip() or (
             f"This photograph presents a realistic view of {title}. "
-            f"{scene.get('elements', '')} "
-            "In summary, it offers a vivid depiction of daily life."
+            f"{str(data.get('visual_description', ''))} "
+            "Overall, it provides a vivid depiction of daily life."
         )
         
         return {
+            "topic": clean_topic,
             "title": title,
-            "image_url": scene.get("url", ""),
-            "fallback_image_url": scene.get("url", ""),
-            "image_prompt": scene.get("elements", ""),
-            "visual_description": scene.get("elements", ""),
+            "image_url": image_url,
+            "image_prompt": photo_prompt,
+            "visual_description": str(data.get("visual_description", "")),
             "guiding_questions": guiding_questions,
             "keywords": keywords,
             "sample_response": sample_response,
@@ -1201,14 +1205,10 @@ def generate_picture_scenario(
     
     # Build dynamic AI image URL
     seed = random.randint(10000, 999999)
-    # Clean prompt for URL
     clean_ai_prompt = re.sub(r'[^a-zA-Z0-9\s,.-]', '', image_gen_prompt)
     if not clean_ai_prompt.strip():
         clean_ai_prompt = clean_topic
     image_url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(clean_ai_prompt)}?width=1024&height=680&nologo=true&seed={seed}"
-    
-    # Fallback high-res real photo URL
-    fallback_image_url = resolve_scene_photo(topic=search_keywords or clean_topic, title=title)
     
     guiding_questions = data.get("guiding_questions")
     if not isinstance(guiding_questions, list) or len(guiding_questions) < 3:
@@ -1233,7 +1233,6 @@ def generate_picture_scenario(
         "topic": clean_topic,
         "title": title,
         "image_url": image_url,
-        "fallback_image_url": fallback_image_url,
         "image_prompt": image_gen_prompt,
         "visual_description": visual_description,
         "guiding_questions": guiding_questions,
