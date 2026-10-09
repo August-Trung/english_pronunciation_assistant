@@ -9,10 +9,10 @@
           </v-avatar>
           <div>
             <div class="text-subtitle-1 text-sm-h6 font-weight-black tracking-tight leading-tight">
-              DESCRIBE THE PICTURE
+              DESCRIBE THE PICTURE STUDIO
             </div>
             <div class="text-caption text-blue-lighten-4">
-              Practice speaking fluently by describing pictures with instant feedback
+              IELTS Speaking Part 2 & TOEIC Questions 3-4 Multimodal Practice with Instant AI Grounding
             </div>
           </div>
         </div>
@@ -24,9 +24,9 @@
             size="small"
             class="text-blue-darken-3 font-weight-black text-none"
             prepend-icon="mdi-plus-circle"
-            @click="showCreateModal = true"
+            @click="openCreateModal"
           >
-            New AI Scenario
+            New Scenario
           </v-btn>
         </div>
       </div>
@@ -34,7 +34,10 @@
 
     <!-- Recent Scenarios Quick Switcher -->
     <div v-if="scenarios.length > 0" class="mb-4">
-      <div class="text-caption font-weight-bold text-grey-darken-2 mb-1">Recent Practice Scenarios:</div>
+      <div class="d-flex align-center justify-space-between mb-1">
+        <span class="text-caption font-weight-bold text-grey-darken-2">Recent Practice Scenarios:</span>
+        <span class="text-caption text-grey">{{ scenarios.length }} scenarios saved</span>
+      </div>
       <div class="d-flex flex-wrap ga-2 align-center">
         <v-chip
           v-for="s in scenarios"
@@ -64,10 +67,10 @@
       </v-avatar>
       <div class="text-subtitle-1 font-weight-black text-grey-darken-4 mb-1">No Speaking Scenarios Available</div>
       <div class="text-caption text-grey mb-4 max-width-500 mx-auto">
-        Create an AI scenario to practice describing scenes under IELTS Speaking Part 2 and TOEIC format.
+        Create an AI scenario with custom prompt, search real photos, or upload your own image to practice describing scenes.
       </div>
-      <v-btn color="primary" variant="flat" class="text-none font-weight-bold" prepend-icon="mdi-sparkles" @click="showCreateModal = true">
-        Generate AI Scenario
+      <v-btn color="primary" variant="flat" class="text-none font-weight-bold" prepend-icon="mdi-sparkles" @click="openCreateModal">
+        Create Scenario
       </v-btn>
     </div>
 
@@ -92,40 +95,61 @@
             <div class="image-wrapper rounded-lg overflow-hidden border mb-3 position-relative cursor-pointer" @click="showImagePreview = true">
               <v-img
                 :src="currentScenarioImage"
-                height="280"
+                height="300"
                 cover
                 class="bg-grey-lighten-4"
                 @error="handleImageError"
               >
                 <template #placeholder>
-                  <div class="d-flex align-center justify-center fill-height">
+                  <div class="d-flex align-center justify-center fill-height bg-grey-lighten-3">
                     <v-progress-circular indeterminate color="primary" size="36" />
                   </div>
                 </template>
               </v-img>
               <div class="image-zoom-overlay d-flex align-center justify-center">
                 <v-icon color="white" size="large">mdi-magnify-plus-outline</v-icon>
+                <span class="text-caption text-white font-weight-bold ml-1">Click to Zoom</span>
               </div>
             </div>
 
-            <!-- Guiding Questions -->
+            <!-- 4-Step Pedagogical Guiding Questions Accordion -->
             <div class="bg-blue-lighten-5 pa-3 rounded-lg border border-blue mb-3">
-              <div class="text-caption font-weight-black text-blue-darken-3 mb-1">
-                <v-icon size="x-small" class="mr-1">mdi-help-circle-outline</v-icon>
-                GUIDING QUESTIONS (STRUCTURE YOUR TALK):
+              <div class="d-flex align-center justify-space-between mb-2">
+                <div class="text-caption font-weight-black text-blue-darken-3 d-flex align-center ga-1">
+                  <v-icon size="x-small" color="blue-darken-3">mdi-compass-outline</v-icon>
+                  <span>4-STEP SPEAKING FRAMEWORK:</span>
+                </div>
+                <span class="text-caption text-blue-darken-2 font-weight-medium">Overview → People → Details → Impressions</span>
               </div>
-              <ul class="text-caption text-grey-darken-3 pl-4 mb-0">
-                <li v-for="(q, idx) in (currentScenario.guiding_questions || [])" :key="idx" class="mb-1">
-                  {{ q }}
-                </li>
-              </ul>
+
+              <div class="d-flex flex-column ga-2">
+                <div
+                  v-for="(q, idx) in formattedQuestions"
+                  :key="idx"
+                  class="bg-white pa-2 rounded border border-blue-lighten-3"
+                >
+                  <div class="d-flex align-center ga-2 mb-1">
+                    <v-chip size="x-small" color="primary" variant="flat" class="font-weight-black">
+                      Step {{ idx + 1 }}: {{ q.step }}
+                    </v-chip>
+                  </div>
+                  <div class="text-caption text-grey-darken-3 font-weight-bold">
+                    {{ q.text }}
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- Target Keywords Checklist -->
             <div>
-              <div class="text-caption font-weight-black text-grey-darken-3 mb-1">
-                <v-icon size="x-small" class="mr-1">mdi-format-list-checks</v-icon>
-                TARGET KEYWORDS (TRY TO INCLUDE):
+              <div class="d-flex align-center justify-space-between mb-1">
+                <div class="text-caption font-weight-black text-grey-darken-3 d-flex align-center ga-1">
+                  <v-icon size="x-small" color="primary">mdi-format-list-checks</v-icon>
+                  <span>TARGET KEYWORDS (TRY TO INCLUDE):</span>
+                </div>
+                <span v-if="evaluationResult" class="text-caption font-weight-bold text-success">
+                  {{ matchedKeywordsCount }} / {{ (currentScenario.keywords || []).length }} used
+                </span>
               </div>
               <div class="d-flex flex-wrap ga-1">
                 <v-chip
@@ -150,146 +174,181 @@
       <!-- Right Column: Speaking Studio & Assessment Report -->
       <v-col cols="12" md="6">
         <v-card border flat class="pa-4 rounded-lg bg-white h-100 d-flex flex-column justify-space-between">
-          <!-- State 1: Idle / Ready to Record -->
-          <div v-if="!isRecording && !isEvaluating && !evaluationResult" class="text-center py-8">
-            <v-avatar color="blue-lighten-5" size="80" class="mb-4">
-              <v-icon size="48" color="primary">mdi-microphone</v-icon>
-            </v-avatar>
-            <div class="text-h6 font-weight-black text-grey-darken-4 mb-1">60-Second Speaking Challenge</div>
-            <div class="text-caption text-grey mb-6 max-width-400 mx-auto">
-              Observe the picture carefully. Tap the button below to start your recording. Describe the setting, characters, and actions naturally.
-            </div>
-
-            <v-btn
-              color="primary"
-              size="large"
-              variant="flat"
-              class="text-none font-weight-black px-6"
-              prepend-icon="mdi-record-rec"
-              @click="startRecording"
-            >
-              Start Recording Now
-            </v-btn>
-          </div>
-
-          <!-- State 2: Active Recording Live -->
-          <div v-else-if="isRecording" class="text-center py-6">
-            <div class="d-flex align-center justify-center ga-2 mb-4">
-              <span class="recording-pulse"></span>
-              <span class="text-caption font-weight-black text-error text-uppercase tracking-wider">RECORDING LIVE</span>
-            </div>
-
-            <div class="text-h2 font-weight-black text-grey-darken-4 mb-2 font-mono">
-              00:{{ remainingSeconds < 10 ? '0' + remainingSeconds : remainingSeconds }}
-            </div>
-            <div class="text-caption text-grey mb-6">Speak clearly and aim to use the target keywords on the left</div>
-
-            <!-- Waveform Animation Placeholder -->
-            <div class="waveform-box d-flex align-center justify-center ga-1 mb-6">
-              <span v-for="n in 12" :key="n" class="waveform-bar"></span>
-            </div>
-
-            <v-btn
-              color="error"
-              size="large"
-              variant="flat"
-              class="text-none font-weight-black px-6"
-              prepend-icon="mdi-stop"
-              @click="stopRecording"
-            >
-              Finish & Evaluate Speech
-            </v-btn>
-          </div>
-
-          <!-- State 3: Processing & Evaluating -->
-          <div v-else-if="isEvaluating" class="text-center py-12">
-            <v-progress-circular indeterminate color="primary" size="56" width="5" class="mb-4" />
-            <div class="text-subtitle-1 font-weight-black text-grey-darken-4 mb-1">Evaluating Your Response...</div>
-            <div class="text-caption text-grey max-width-350 mx-auto">
-              Analyzing your speech and evaluating your fluency, grammar, and vocabulary...
-            </div>
-          </div>
-
-          <!-- State 4: Comprehensive AI Evaluation Card -->
-          <div v-else-if="evaluationResult" class="d-flex flex-column justify-space-between fill-height">
-            <div>
-              <div class="d-flex align-center justify-space-between border-b pb-2 mb-3">
-                <div class="d-flex align-center ga-2">
-                  <v-avatar color="indigo-lighten-5" size="36">
-                    <v-icon color="indigo">mdi-star-circle</v-icon>
-                  </v-avatar>
-                  <div>
-                    <div class="text-subtitle-2 font-weight-black text-grey-darken-4">SPEAKING ASSESSMENT REPORT</div>
-                    <div class="text-caption text-grey">Performance Breakdown</div>
-                  </div>
-                </div>
-
-                <div class="text-right">
-                  <span class="text-h5 font-weight-black text-primary">{{ evaluationResult.score }}</span>
-                  <span class="text-caption text-grey">/100</span>
-                </div>
+          <!-- State 1: Active Recording Studio / Ready to Speak -->
+          <div v-if="!evaluationResult && !isEvaluating">
+            <div class="d-flex align-center justify-space-between mb-3 border-b pb-2">
+              <div class="d-flex align-center ga-2">
+                <v-icon color="primary" size="small">mdi-microphone</v-icon>
+                <span class="text-subtitle-2 font-weight-black text-grey-darken-4">Speaking Studio</span>
               </div>
 
-              <!-- Metric Badges Row -->
-              <v-row dense class="mb-3">
-                <v-col cols="4">
-                  <v-card border flat class="pa-2 text-center rounded bg-grey-lighten-4">
-                    <div class="text-caption text-grey-darken-1">Fluency</div>
-                    <div class="text-subtitle-2 font-weight-black text-indigo-darken-3">{{ evaluationResult.fluency_score || 0 }}%</div>
-                  </v-card>
-                </v-col>
-                <v-col cols="4">
-                  <v-card border flat class="pa-2 text-center rounded bg-grey-lighten-4">
-                    <div class="text-caption text-grey-darken-1">Vocabulary</div>
-                    <div class="text-subtitle-2 font-weight-black text-green-darken-3">{{ evaluationResult.vocabulary_score || 0 }}%</div>
-                  </v-card>
-                </v-col>
-                <v-col cols="4">
-                  <v-card border flat class="pa-2 text-center rounded bg-grey-lighten-4">
-                    <div class="text-caption text-grey-darken-1">Grammar</div>
-                    <div class="text-subtitle-2 font-weight-black text-deep-purple-darken-3">{{ evaluationResult.grammar_score || 0 }}%</div>
-                  </v-card>
-                </v-col>
-              </v-row>
+              <!-- Exam Mode Toggle -->
+              <v-switch
+                v-model="isExamMode"
+                color="warning"
+                density="compact"
+                hide-details
+                label="Exam Mode (45s TOEIC)"
+                class="font-weight-bold text-caption"
+              />
+            </div>
 
-              <!-- Spoken Transcription -->
-              <div class="mb-3">
-                <div class="text-caption font-weight-black text-grey-darken-2 mb-1">YOUR SPEECH TRANSCRIPTION:</div>
-                <div class="text-body-2 text-grey-darken-4 bg-grey-lighten-5 pa-2 rounded border font-italic">
-                  "{{ candidateTranscription || 'No speech captured.' }}"
-                </div>
+            <!-- Stopwatch Digital Display & Pacing Indicator -->
+            <div class="text-center py-6 bg-grey-lighten-5 rounded-lg border mb-4">
+              <div class="text-h3 font-weight-black font-mono tracking-tight mb-2" :class="timerColorClass">
+                {{ formatTime(displaySeconds) }}
               </div>
 
-              <!-- AI Tutor Feedback in Vietnamese -->
-              <div class="mb-3">
-                <div class="text-caption font-weight-black text-indigo-darken-3 mb-1">AI EXAMINER FEEDBACK (TIẾNG VIỆT):</div>
-                <div class="text-caption text-grey-darken-4 bg-indigo-lighten-5 pa-3 rounded border border-indigo">
-                  {{ evaluationResult.feedback }}
-                </div>
-              </div>
+              <!-- Pacing Advice Pill -->
+              <v-chip
+                size="small"
+                :color="pacingBadge.color"
+                variant="flat"
+                class="font-weight-bold"
+              >
+                <v-icon start size="x-small">{{ pacingBadge.icon }}</v-icon>
+                {{ pacingBadge.label }}
+              </v-chip>
 
-              <!-- Native Sample Response -->
-              <div class="mb-3" v-if="evaluationResult.sample_response">
-                <div class="d-flex align-center justify-space-between mb-1">
-                  <div class="text-caption font-weight-black text-teal-darken-3">EXEMPLARY NATIVE RESPONSE:</div>
+              <!-- Recording Visualizer Waveform -->
+              <div v-if="isRecording" class="waveform-box d-flex align-center justify-center ga-1 mt-4">
+                <span class="waveform-bar" v-for="n in 8" :key="n" />
+              </div>
+            </div>
+
+            <!-- Microphone Controls -->
+            <div class="d-flex flex-column align-center ga-3">
+              <div class="d-flex align-center ga-3 w-100 justify-center">
+                <v-btn
+                  v-if="!isRecording"
+                  color="primary"
+                  variant="flat"
+                  size="large"
+                  class="font-weight-black text-none px-8"
+                  prepend-icon="mdi-microphone"
+                  @click="startRecording"
+                >
+                  Start Speaking
+                </v-btn>
+
+                <template v-else>
                   <v-btn
-                    size="x-small"
-                    variant="text"
-                    color="teal-darken-3"
-                    prepend-icon="mdi-volume-high"
-                    @click="playSampleAudio(evaluationResult.sample_response)"
+                    color="error"
+                    variant="flat"
+                    size="large"
+                    class="font-weight-black text-none px-6"
+                    prepend-icon="mdi-stop-circle"
+                    @click="stopRecording"
                   >
-                    Listen
+                    Finish & Submit
                   </v-btn>
+                  <v-btn
+                    variant="outlined"
+                    color="grey-darken-2"
+                    size="large"
+                    class="font-weight-bold text-none"
+                    @click="cancelRecording"
+                  >
+                    Cancel
+                  </v-btn>
+                </template>
+              </div>
+
+              <div class="text-caption text-grey text-center max-width-400">
+                Tip: Follow the 4-step framework on the left. Describe overall scene first, then actions, specific objects, and your impression.
+              </div>
+            </div>
+          </div>
+
+          <!-- State 2: Evaluating Loader -->
+          <div v-else-if="isEvaluating" class="text-center py-12">
+            <v-progress-circular indeterminate color="primary" size="48" width="4" class="mb-3" />
+            <div class="text-subtitle-2 font-weight-black text-grey-darken-3">
+              AI Examiner Analyzing Your Speech...
+            </div>
+            <div class="text-caption text-grey mt-1">
+              Transcribing audio via Whisper & scoring vocabulary, fluency, and picture details
+            </div>
+          </div>
+
+          <!-- State 3: Detailed Assessment Report -->
+          <div v-else class="evaluation-report">
+            <div class="d-flex align-center justify-space-between mb-3 border-b pb-2">
+              <div class="d-flex align-center ga-2">
+                <v-icon color="success" size="small">mdi-certificate</v-icon>
+                <span class="text-subtitle-2 font-weight-black text-grey-darken-4">Evaluation Report</span>
+              </div>
+              <v-chip color="primary" variant="flat" size="small" class="font-weight-black">
+                Score: {{ evaluationResult.score }} / 100
+              </v-chip>
+            </div>
+
+            <!-- Score Cards -->
+            <v-row dense class="mb-3">
+              <v-col cols="4">
+                <div class="bg-blue-lighten-5 pa-2 rounded text-center border">
+                  <div class="text-caption text-grey font-weight-bold">Fluency</div>
+                  <div class="text-subtitle-1 font-weight-black text-primary">{{ evaluationResult.fluency_score || 70 }}</div>
                 </div>
-                <div class="text-caption text-grey-darken-3 bg-teal-lighten-5 pa-2 rounded border border-teal font-italic">
-                  "{{ evaluationResult.sample_response }}"
+              </v-col>
+              <v-col cols="4">
+                <div class="bg-indigo-lighten-5 pa-2 rounded text-center border">
+                  <div class="text-caption text-grey font-weight-bold">Vocabulary</div>
+                  <div class="text-subtitle-1 font-weight-black text-indigo">{{ evaluationResult.vocabulary_score || 75 }}</div>
                 </div>
+              </v-col>
+              <v-col cols="4">
+                <div class="bg-purple-lighten-5 pa-2 rounded text-center border">
+                  <div class="text-caption text-grey font-weight-bold">Grammar</div>
+                  <div class="text-subtitle-1 font-weight-black text-purple">{{ evaluationResult.grammar_score || 70 }}</div>
+                </div>
+              </v-col>
+            </v-row>
+
+            <!-- Transcription -->
+            <div class="bg-grey-lighten-4 pa-3 rounded-lg border mb-3">
+              <div class="text-caption font-weight-black text-grey-darken-2 mb-1">YOUR SPEECH TRANSCRIPTION:</div>
+              <div class="text-body-2 text-grey-darken-4 font-italic" style="line-height: 1.5;">
+                "{{ candidateTranscription }}"
               </div>
             </div>
 
-            <!-- Retry / Continue Actions -->
-            <div class="d-flex align-center justify-space-between pt-3 border-t ga-2">
+            <!-- AI Examiner Feedback -->
+            <div class="bg-amber-lighten-5 pa-3 rounded-lg border border-amber mb-3">
+              <div class="text-caption font-weight-black text-amber-darken-4 mb-1 d-flex align-center ga-1">
+                <v-icon size="x-small" color="amber-darken-4">mdi-comment-text-outline</v-icon>
+                <span>AI EXAMINER FEEDBACK:</span>
+              </div>
+              <div class="text-caption text-grey-darken-3" style="line-height: 1.5; white-space: pre-line;">
+                {{ evaluationResult.feedback }}
+              </div>
+            </div>
+
+            <!-- Band 8+ Model Answer for Shadowing -->
+            <div v-if="currentScenario.sample_response || evaluationResult.sample_response" class="bg-teal-lighten-5 pa-3 rounded-lg border border-teal mb-4">
+              <div class="d-flex align-center justify-space-between mb-1">
+                <div class="text-caption font-weight-black text-teal-darken-4 d-flex align-center ga-1">
+                  <v-icon size="x-small" color="teal-darken-4">mdi-star-circle</v-icon>
+                  <span>BAND 8+ MODEL ANSWER (LISTEN & SHADOW):</span>
+                </div>
+                <v-btn
+                  size="x-small"
+                  variant="flat"
+                  color="teal-darken-3"
+                  class="font-weight-bold text-none"
+                  :prepend-icon="isPlayingSample ? 'mdi-stop' : 'mdi-volume-high'"
+                  @click="toggleSampleAudio(currentScenario.sample_response || evaluationResult.sample_response)"
+                >
+                  {{ isPlayingSample ? 'Stop' : 'Listen' }}
+                </v-btn>
+              </div>
+              <div class="text-caption text-grey-darken-4" style="line-height: 1.5;">
+                {{ currentScenario.sample_response || evaluationResult.sample_response }}
+              </div>
+            </div>
+
+            <!-- Bottom Actions -->
+            <div class="d-flex align-center ga-2">
               <v-btn
                 variant="outlined"
                 color="primary"
@@ -306,10 +365,10 @@
                 color="primary"
                 size="small"
                 class="text-none flex-grow-1 font-weight-bold"
-                prepend-icon="mdi-arrow-right"
-                @click="showCreateModal = true"
+                prepend-icon="mdi-plus-circle"
+                @click="openCreateModal"
               >
-                Next Challenge
+                New Scenario
               </v-btn>
             </div>
           </div>
@@ -318,120 +377,174 @@
     </v-row>
 
     <!-- Dialog: Image Fullscreen Zoom -->
-    <v-dialog v-model="showImagePreview" max-width="800">
-      <v-card class="pa-2 bg-black text-right">
+    <v-dialog v-model="showImagePreview" max-width="850">
+      <v-card class="pa-2 bg-black text-right" rounded="lg">
         <v-btn icon="mdi-close" variant="text" color="white" size="small" @click="showImagePreview = false" />
-        <v-img :src="currentScenarioImage" max-height="600" contain />
+        <v-img :src="currentScenarioImage" max-height="650" contain />
       </v-card>
     </v-dialog>
 
-    <!-- Dialog: Create New AI Scenario Modal -->
-    <v-dialog v-model="showCreateModal" max-width="540">
+    <!-- Dialog: Multi-mode Create New Scenario Modal -->
+    <v-dialog v-model="showCreateModal" max-width="580">
       <v-card border rounded="lg" class="pa-4 bg-white">
         <div class="d-flex align-center justify-space-between mb-3 border-b pb-2">
           <div class="d-flex align-center ga-2">
             <v-avatar color="primary-lighten-5" size="36">
               <v-icon color="primary">mdi-sparkles</v-icon>
             </v-avatar>
-            <div class="text-subtitle-1 font-weight-black text-grey-darken-4">Create New Speaking Scenario</div>
+            <div>
+              <div class="text-subtitle-1 font-weight-black text-grey-darken-4">New Speaking Scenario</div>
+              <div class="text-caption text-grey">Create with AI prompt, search photos, or upload an image</div>
+            </div>
           </div>
           <v-btn icon="mdi-close" variant="text" size="small" @click="showCreateModal = false" />
         </div>
 
-        <div class="text-caption text-grey-darken-1 mb-3">
-          Create an engaging picture scene with guiding questions and key vocabulary to practice your speaking skills.
-        </div>
+        <!-- 3 Modes Tabs -->
+        <v-tabs v-model="creationMode" color="primary" density="comfortable" class="mb-3 border-b">
+          <v-tab value="ai_gen" class="text-none font-weight-bold text-caption">
+            <v-icon start size="small">mdi-auto-fix</v-icon>
+            AI Prompt
+          </v-tab>
+          <v-tab value="search" class="text-none font-weight-bold text-caption">
+            <v-icon start size="small">mdi-image-search</v-icon>
+            Photo Search
+          </v-tab>
+          <v-tab value="upload" class="text-none font-weight-bold text-caption">
+            <v-icon start size="small">mdi-upload</v-icon>
+            Upload Photo
+          </v-tab>
+        </v-tabs>
 
-        <v-text-field
-          v-model="scenarioTopic"
-          label="Custom Topic or Speaking Scenario"
-          placeholder="e.g. Modern Airport Terminal, Hospital Emergency Hallway, High-Tech Lab..."
-          variant="outlined"
-          density="comfortable"
-          class="mb-2"
-          prepend-inner-icon="mdi-image-search-outline"
-          clearable
-        />
+        <v-window v-model="creationMode">
+          <!-- Tab 1: AI Prompt Generator -->
+          <v-window-item value="ai_gen">
+            <v-textarea
+              v-model="scenarioTopic"
+              label="Describe What Picture You Want (Prompt):"
+              placeholder="e.g. A family having a picnic in the park with a golden retriever and red checkered blanket..."
+              variant="outlined"
+              rows="3"
+              density="comfortable"
+              class="mb-2"
+              prepend-inner-icon="mdi-pencil-outline"
+              clearable
+            />
 
-        <!-- Category & AI Spark Topics -->
-        <div class="mb-3">
-          <div class="d-flex align-center justify-space-between mb-1">
-            <span class="text-caption font-weight-black text-secondary d-flex align-center ga-1">
-              <v-icon size="x-small" color="secondary">mdi-sparkles</v-icon>
-              <span>AI TOPIC SPARK (IELTS & TOEIC THEMES)</span>
-            </span>
-            <v-btn
-              variant="text"
-              size="x-small"
-              color="primary"
-              class="text-none font-weight-bold"
-              :loading="isLoadingTopics"
-              prepend-icon="mdi-refresh"
-              @click="fetchSuggestedTopics"
-            >
-              Refresh Ideas
-            </v-btn>
-          </div>
-
-          <div class="d-flex flex-wrap ga-1 mb-2">
-            <v-chip
-              v-for="cat in topicCategories"
-              :key="cat"
-              :color="selectedCategory === cat ? 'primary' : 'grey-lighten-3'"
-              :variant="selectedCategory === cat ? 'flat' : 'tonal'"
-              size="x-small"
-              class="font-weight-bold cursor-pointer"
-              @click="selectCategory(cat)"
-            >
-              {{ cat }}
-            </v-chip>
-          </div>
-
-          <!-- Suggested Topics Grid -->
-          <div class="d-flex flex-column ga-1 overflow-y-auto" style="max-height: 180px;">
-            <div
-              v-for="item in filteredSuggestedTopics"
-              :key="item.id"
-              class="pa-2 border rounded cursor-pointer d-flex align-center justify-space-between transition-all"
-              :class="scenarioTopic === item.title ? 'bg-blue-lighten-5 border-blue' : 'bg-grey-lighten-5'"
-              @click="selectTopicItem(item)"
-            >
-              <div class="d-flex align-center ga-2 text-truncate mr-2">
-                <v-icon size="small" :color="scenarioTopic === item.title ? 'primary' : 'grey-darken-1'">
-                  {{ item.icon || 'mdi-image-outline' }}
-                </v-icon>
-                <div class="text-truncate">
-                  <div class="text-caption font-weight-black text-grey-darken-4 text-truncate">
-                    {{ item.title }}
-                  </div>
-                  <div class="text-caption text-grey text-truncate" style="font-size: 11px;">
-                    {{ item.description }}
-                  </div>
-                </div>
+            <!-- Prompt Sparks / Quick Idea Chips -->
+            <div class="mb-3">
+              <div class="text-caption font-weight-bold text-grey-darken-2 mb-1 d-flex align-center ga-1">
+                <v-icon size="x-small" color="primary">mdi-lightbulb-on-outline</v-icon>
+                <span>Quick Prompt Sparks:</span>
               </div>
-              <v-chip size="x-small" color="indigo" variant="tonal" class="font-weight-bold flex-shrink-0">
-                {{ item.category }}
+              <div class="d-flex flex-wrap ga-1">
+                <v-chip
+                  v-for="spark in promptSparks"
+                  :key="spark"
+                  size="x-small"
+                  variant="outlined"
+                  color="primary"
+                  class="font-weight-medium cursor-pointer"
+                  @click="scenarioTopic = spark"
+                >
+                  {{ spark }}
+                </v-chip>
+              </div>
+            </div>
+          </v-window-item>
+
+          <!-- Tab 2: Real Photo Search -->
+          <v-window-item value="search">
+            <v-text-field
+              v-model="searchKeyword"
+              label="Photo Subject / Search Topic:"
+              placeholder="e.g. Airport Terminal, Hospital Consultation, Modern Classroom, Cafe..."
+              variant="outlined"
+              density="comfortable"
+              class="mb-2"
+              prepend-inner-icon="mdi-magnify"
+              clearable
+            />
+
+            <div class="d-flex flex-wrap ga-1 mb-3">
+              <v-chip
+                v-for="cat in quickSearchCategories"
+                :key="cat"
+                size="x-small"
+                variant="tonal"
+                color="indigo"
+                class="font-weight-bold cursor-pointer"
+                @click="searchKeyword = cat"
+              >
+                {{ cat }}
               </v-chip>
             </div>
-          </div>
-        </div>
+          </v-window-item>
 
+          <!-- Tab 3: Custom Upload -->
+          <v-window-item value="upload">
+            <div class="mb-3 border-dashed rounded-lg pa-4 text-center bg-grey-lighten-5">
+              <input
+                ref="fileInputRef"
+                type="file"
+                accept="image/*"
+                class="d-none"
+                @change="handleFileUploadChange"
+              />
+
+              <div v-if="!uploadedPreviewUrl" class="cursor-pointer" @click="$refs.fileInputRef?.click()">
+                <v-avatar color="primary-lighten-5" size="48" class="mb-2">
+                  <v-icon color="primary" size="default">mdi-cloud-upload</v-icon>
+                </v-avatar>
+                <div class="text-subtitle-2 font-weight-bold text-grey-darken-3">Click to select photo</div>
+                <div class="text-caption text-grey">Support JPG, PNG, WEBP (textbook questions, exam photos)</div>
+              </div>
+
+              <div v-else class="position-relative">
+                <v-img :src="uploadedPreviewUrl" height="180" cover class="rounded border mb-2" />
+                <v-btn
+                  size="x-small"
+                  variant="tonal"
+                  color="error"
+                  prepend-icon="mdi-close"
+                  class="text-none font-weight-bold"
+                  @click="clearUploadedFile"
+                >
+                  Remove & Choose Another
+                </v-btn>
+              </div>
+            </div>
+
+            <v-text-field
+              v-model="uploadTitleHint"
+              label="Optional Topic / Title Hint:"
+              placeholder="e.g. Cambridge PET Exam Picture 3..."
+              variant="outlined"
+              density="comfortable"
+              class="mb-2"
+            />
+          </v-window-item>
+        </v-window>
+
+        <!-- Common Level Selector -->
         <v-select
           v-model="scenarioLevel"
           :items="['Beginner', 'Intermediate', 'Advanced']"
           label="Target Speaking Level"
           variant="outlined"
           density="comfortable"
-          class="mb-2"
+          class="mb-3"
         />
 
         <v-card-actions class="px-0 pb-0 pt-2 border-t">
           <v-spacer />
-          <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showCreateModal = false">Cancel</v-btn>
+          <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showCreateModal = false">
+            Cancel
+          </v-btn>
           <v-btn
             color="primary"
             variant="flat"
-            class="text-none font-weight-bold"
+            class="text-none font-weight-bold px-4"
             prepend-icon="mdi-auto-fix"
             :loading="isGeneratingScenario"
             @click="handleCreateScenario"
@@ -458,189 +571,6 @@ const handleImageError = () => {
   imageFailed.value = true
 }
 
-const PHOTO_CATALOG = {
-  science: [
-    'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=1000&q=80'
-  ],
-  cafe: [
-    'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1000&q=80'
-  ],
-  airport: [
-    'https://images.unsplash.com/photo-1530521954074-e64f6810b32d?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1520437358207-323b43b50729?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1517400508447-f8dd518b86db?auto=format&fit=crop&w=1000&q=80'
-  ],
-  office: [
-    'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1000&q=80'
-  ],
-  interview: [
-    'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1000&q=80'
-  ],
-  portrait: [
-    'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=1000&q=80'
-  ],
-  market: [
-    'https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1534723452862-4c874018d66d?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=1000&q=80'
-  ],
-  library: [
-    'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=1000&q=80'
-  ],
-  hospital: [
-    'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=1000&q=80'
-  ],
-  city: [
-    'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=1000&q=80'
-  ],
-  park: [
-    'https://images.unsplash.com/photo-1496347646636-ea47f7d6b37b?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?auto=format&fit=crop&w=1000&q=80'
-  ],
-  classroom: [
-    'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1000&q=80'
-  ],
-  restaurant: [
-    'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?auto=format&fit=crop&w=1000&q=80'
-  ],
-  hotel: [
-    'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1000&q=80'
-  ],
-  technology: [
-    'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1000&q=80'
-  ],
-  kitchen: [
-    'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1507048331197-7d4ac70811cf?auto=format&fit=crop&w=1000&q=80'
-  ],
-  nature: [
-    'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000&q=80'
-  ],
-  fitness: [
-    'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1000&q=80'
-  ],
-  art: [
-    'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1000&q=80'
-  ],
-  zoo: [
-    'https://images.unsplash.com/photo-1543372742-e7d0b9947a2b?auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1000&q=80'
-  ],
-  beach: [
-    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000&q=80'
-  ],
-  sports: [
-    'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1000&q=80'
-  ],
-  traffic: [
-    'https://images.unsplash.com/photo-1506521781263-d8422e82f27a?auto=format&fit=crop&w=1000&q=80'
-  ],
-  camping: [
-    'https://images.unsplash.com/photo-1510312305653-8ed496efae75?auto=format&fit=crop&w=1000&q=80'
-  ],
-  family: [
-    'https://images.unsplash.com/photo-1543353071-10c8ba85a904?auto=format&fit=crop&w=1000&q=80'
-  ],
-  shopping: [
-    'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1000&q=80'
-  ],
-  music: [
-    'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=1000&q=80'
-  ],
-  farm: [
-    'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=1000&q=80'
-  ]
-}
-
-const resolveScenePhoto = (topic, title) => {
-  const combined = `${topic || ''} ${title || ''}`.toLowerCase()
-  let pool = PHOTO_CATALOG.nature
-  if (/zoo|animal|safari|wildlife|giraffe|elephant|zebra|lion|tiger|bear|sở thú|thảo cầm viên|động vật/.test(combined)) {
-    pool = PHOTO_CATALOG.zoo
-  } else if (/beach|sea|ocean|coast|shore|island|sand|summer|biển|bãi biển/.test(combined)) {
-    pool = PHOTO_CATALOG.beach
-  } else if (/sport|football|soccer|basketball|tennis|stadium|athlete|thể thao|bóng đá/.test(combined)) {
-    pool = PHOTO_CATALOG.sports
-  } else if (/traffic|commute|subway|transit|road congestion|giao thông|kẹt xe|xe buýt/.test(combined)) {
-    pool = PHOTO_CATALOG.traffic
-  } else if (/camp|camping|tent|campfire|hiking|picnic|cắm trại|dã ngoại/.test(combined)) {
-    pool = PHOTO_CATALOG.camping
-  } else if (/family|parents|children|dining table|living room|gia đình|bữa cơm/.test(combined)) {
-    pool = PHOTO_CATALOG.family
-  } else if (/shopping|mall|boutique|fashion|retail|clothing rack|mua sắm/.test(combined)) {
-    pool = PHOTO_CATALOG.shopping
-  } else if (/concert|festival|musical|singing|music stage|âm nhạc|hòa nhạc/.test(combined)) {
-    pool = PHOTO_CATALOG.music
-  } else if (/farm|farmer|agriculture|cattle|pasture|rural|countryside|nông trại/.test(combined)) {
-    pool = PHOTO_CATALOG.farm
-  } else if (/science|chemist|biolog|physics|experiment|research lab|thí nghiệm/.test(combined)) {
-    pool = PHOTO_CATALOG.science
-  } else if (/cafe|coffee|latte|espresso|barista|quán cafe|cà phê/.test(combined)) {
-    pool = PHOTO_CATALOG.cafe
-  } else if (/airport|flight|airplane|terminal|boarding|departure|sân bay/.test(combined)) {
-    pool = PHOTO_CATALOG.airport
-  } else if (/portrait|businesswoman|executive|blazer|headshot|chân dung/.test(combined)) {
-    pool = PHOTO_CATALOG.portrait
-  } else if (/interview|candidate|hire|resume|cv|recruitment|phỏng vấn/.test(combined)) {
-    pool = PHOTO_CATALOG.interview
-  } else if (/meeting|coworking|colleague|workplace|corporat|văn phòng/.test(combined)) {
-    pool = PHOTO_CATALOG.office
-  } else if (/supermarket|grocery|market vendor|chợ|siêu thị/.test(combined)) {
-    pool = PHOTO_CATALOG.market
-  } else if (/library|hardcover book|reading hall|bookshelf|thư viện/.test(combined)) {
-    pool = PHOTO_CATALOG.library
-  } else if (/hospital|doctor|nurse|clinic|medical|patient|bệnh viện/.test(combined)) {
-    pool = PHOTO_CATALOG.hospital
-  } else if (/park pathway|garden lawn|botanical|công viên|vườn/.test(combined)) {
-    pool = PHOTO_CATALOG.park
-  } else if (/classroom|school|teach|student|lecture|lớp học|trường học/.test(combined)) {
-    pool = PHOTO_CATALOG.classroom
-  } else if (/restaurant|dining room|fine dining|meal course|nhà hàng/.test(combined)) {
-    pool = PHOTO_CATALOG.restaurant
-  } else if (/hotel resort|resort pool|hotel lobby|check-in|khách sạn/.test(combined)) {
-    pool = PHOTO_CATALOG.hotel
-  } else if (/technology|computer|software|coding|developer|artificial intelligence|công nghệ/.test(combined)) {
-    pool = PHOTO_CATALOG.technology
-  } else if (/kitchen|cooking|baking|chef|recipe|nhà bếp|nấu ăn/.test(combined)) {
-    pool = PHOTO_CATALOG.kitchen
-  } else if (/mountain|hiking trail|wilderness|thiên nhiên|núi rừng/.test(combined)) {
-    pool = PHOTO_CATALOG.nature
-  } else if (/fitness|gym|workout|weight training|tập gym/.test(combined)) {
-    pool = PHOTO_CATALOG.fitness
-  } else if (/artwork|art gallery|fine art|museum hall|triển lãm|bảo tàng/.test(combined)) {
-    pool = PHOTO_CATALOG.art
-  } else if (/city skyline|downtown skyscrapers|urban street|thành phố/.test(combined)) {
-    pool = PHOTO_CATALOG.city
-  }
-  let hash = 0
-  const str = `${topic}_${title}`
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash << 5) - hash + str.charCodeAt(i)
-    hash |= 0
-  }
-  const idx = Math.abs(hash) % pool.length
-  return pool[idx]
-}
-
 const getImageUrl = (url) => {
   if (!url) return '/logo-augusttrung.png'
   if (url.startsWith('http') || url.startsWith('data:')) return url
@@ -650,170 +580,131 @@ const getImageUrl = (url) => {
 
 const currentScenarioImage = computed(() => {
   const rawUrl = currentScenario.value?.image_url
-  if (imageFailed.value || !rawUrl || rawUrl.includes('pollinations.ai') || rawUrl.startsWith('data:image/svg')) {
-    return resolveScenePhoto(currentScenario.value?.topic || '', currentScenario.value?.title || '')
+  if (imageFailed.value || !rawUrl) {
+    return currentScenario.value?.fallback_image_url || 'https://images.unsplash.com/photo-1510312305653-8ed496efae75?auto=format&fit=crop&w=1000&q=80'
   }
   return getImageUrl(rawUrl)
 })
 
+// Scenarios state
 const scenarios = ref([])
 const currentScenario = ref(null)
 const isLoadingInitial = ref(false)
 
+// Create Scenario Modal State
 const showCreateModal = ref(false)
+const creationMode = ref('ai_gen')
+const scenarioTopic = ref('')
+const searchKeyword = ref('')
+const uploadTitleHint = ref('')
+const scenarioLevel = ref('Intermediate')
 const isGeneratingScenario = ref(false)
 const showImagePreview = ref(false)
-const scenarioTopic = ref('')
-const scenarioLevel = ref('Intermediate')
 
-const topicCategories = ['All', 'Workplace & Career', 'Healthcare & Services', 'Daily Life & Leisure', 'Travel & Transportation', 'Education & Science', 'Technology & Computing', 'Sports & Wellness', 'Arts & Culture']
-const selectedCategory = ref('All')
-const aiSuggestedTopics = ref([
-  {
-    id: 'zoo-wildlife',
-    title: 'A Visit to the Zoo Wildlife Habitat',
-    category: 'Daily Life & Leisure',
-    level: 'Beginner',
-    description: 'Observe tall giraffes, savanna enclosures, animal behaviors, and visitor interactions.',
-    icon: 'mdi-paw'
-  },
-  {
-    id: 'hospital-hallway',
-    title: 'A Quiet Hospital Reception and Emergency Hallway',
-    category: 'Healthcare & Services',
-    level: 'Intermediate',
-    description: 'Analyze medical facility architecture, emergency intake counters, and clinical atmosphere.',
-    icon: 'mdi-hospital-building'
-  },
-  {
-    id: 'medical-consult',
-    title: 'A Medical Consultation in a Clinic Room',
-    category: 'Healthcare & Services',
-    level: 'Intermediate',
-    description: 'Describe caring doctor-patient communication, clinical instruments, and healthcare dialogue.',
-    icon: 'mdi-doctor'
-  },
-  {
-    id: 'science-lab',
-    title: 'A University Science Research Laboratory',
-    category: 'Education & Science',
-    level: 'Advanced',
-    description: 'Explain experimental procedures, laboratory equipment, protective gear, and scientific inquiry.',
-    icon: 'mdi-flask'
-  },
-  {
-    id: 'job-interview',
-    title: 'A Professional Job Interview Discussion',
-    category: 'Workplace & Career',
-    level: 'Intermediate',
-    description: 'Describe candidate and interviewer interactions, corporate setting, and professional attire.',
-    icon: 'mdi-account-tie'
-  },
-  {
-    id: 'open-office',
-    title: 'A Collaborative Team Meeting in an Open-Plan Office',
-    category: 'Workplace & Career',
-    level: 'Intermediate',
-    description: 'Discuss project collaboration, modern open-plan workplace design, and team dynamics.',
-    icon: 'mdi-briefcase-account'
-  },
-  {
-    id: 'airport-terminal',
-    title: 'A Modern International Airport Terminal',
-    category: 'Travel & Transportation',
-    level: 'Intermediate',
-    description: 'Observe travelers with luggage, boarding gate procedures, and expansive glass architecture.',
-    icon: 'mdi-airplane'
-  },
-  {
-    id: 'urban-cafe',
-    title: 'A Bustling Urban Coffee Shop',
-    category: 'Daily Life & Leisure',
-    level: 'Beginner',
-    description: 'Describe cafe patrons, barista activities, cozy interior lighting, and social routines.',
-    icon: 'mdi-coffee'
-  },
-  {
-    id: 'farmers-market',
-    title: 'A Vibrant Outdoor Farmers Market',
-    category: 'Daily Life & Leisure',
-    level: 'Beginner',
-    description: 'Detail colorful fresh produce displays, vendor-customer transactions, and market atmosphere.',
-    icon: 'mdi-storefront'
-  },
-  {
-    id: 'university-library',
-    title: 'A Grand University Library Study Hall',
-    category: 'Education & Science',
-    level: 'Intermediate',
-    description: 'Focus on quiet academic study spaces, towering bookshelves, and focused learning habits.',
-    icon: 'mdi-bookshelf'
-  },
-  {
-    id: 'coding-workspace',
-    title: 'A Software Developer Workspace with Code on Screen',
-    category: 'Technology & Computing',
-    level: 'Advanced',
-    description: 'Discuss tech workstation setup, digital programming tasks, and focused workplace productivity.',
-    icon: 'mdi-laptop'
-  }
-])
-const isLoadingTopics = ref(false)
+// Custom file upload state
+const selectedFile = ref(null)
+const uploadedPreviewUrl = ref('')
+const fileInputRef = ref(null)
 
-const selectCategory = (cat) => {
-  selectedCategory.value = cat
+const promptSparks = [
+  'A family having a picnic with a golden retriever',
+  'Two students conducting a science experiment in chemistry lab',
+  'Busy international airport departure hall with passengers',
+  'A doctor consulting an elderly patient in modern clinic',
+  'Two coworkers having an interview in a sunlit meeting room',
+  'A vibrant outdoor street food market in evening with lanterns'
+]
+
+const quickSearchCategories = [
+  'Airport Terminal', 'University Library', 'Job Interview', 'City Street',
+  'Modern Classroom', 'Hospital Clinic', 'Coffee Shop', 'Farmers Market'
+]
+
+const openCreateModal = () => {
+  showCreateModal.value = true
 }
 
-const selectTopicItem = (item) => {
-  scenarioTopic.value = item.title
-  if (item.level) {
-    if (item.level.toLowerCase().includes('upper') || item.level.toLowerCase().includes('advanced')) {
-      scenarioLevel.value = 'Advanced'
-    } else if (item.level.toLowerCase().includes('pre') || item.level.toLowerCase().includes('beginner')) {
-      scenarioLevel.value = 'Beginner'
-    } else {
-      scenarioLevel.value = 'Intermediate'
-    }
-  }
+const handleFileUploadChange = (event) => {
+  const file = event.target.files?.[0]
+  if (!file) return
+  selectedFile.value = file
+  uploadedPreviewUrl.value = URL.createObjectURL(file)
 }
 
-const filteredSuggestedTopics = computed(() => {
-  if (selectedCategory.value === 'All') return aiSuggestedTopics.value
-  return aiSuggestedTopics.value.filter(t => t.category === selectedCategory.value)
+const clearUploadedFile = () => {
+  selectedFile.value = null
+  if (uploadedPreviewUrl.value) {
+    URL.revokeObjectURL(uploadedPreviewUrl.value)
+    uploadedPreviewUrl.value = ''
+  }
+  if (fileInputRef.value) fileInputRef.value.value = ''
+}
+
+// 4-Step Framework Question Formatter
+const formattedQuestions = computed(() => {
+  const questions = currentScenario.value?.guiding_questions || []
+  const stepLabels = [
+    'Overview (Setting & Weather)',
+    'People & Actions (Who & Activities)',
+    'Details & Setting (Objects & Surroundings)',
+    'Impressions (Feelings & Atmosphere)'
+  ]
+  return questions.map((q, idx) => ({
+    step: stepLabels[idx] || `Step ${idx + 1}`,
+    text: q
+  }))
 })
 
-const fetchSuggestedTopics = async () => {
-  isLoadingTopics.value = true
-  try {
-    const res = await fetch(`${props.backendUrl}/api/picture-practice/suggest-topics`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ category: selectedCategory.value === 'All' ? 'all' : selectedCategory.value, count: 12 })
-    })
-    if (res.ok) {
-      const data = await res.json()
-      if (data.topics && data.topics.length > 0) {
-        aiSuggestedTopics.value = data.topics
-      }
-    }
-  } catch (err) {
-    console.warn('Failed to fetch suggested topics:', err)
-  } finally {
-    isLoadingTopics.value = false
-  }
-}
-
-// Recording state
+// Recording & Stopwatch State
 const isRecording = ref(false)
-const remainingSeconds = ref(60)
+const isExamMode = ref(false)
+const elapsedSeconds = ref(0)
+const remainingExamSeconds = ref(45)
 let timerInterval = null
 let mediaRecorder = null
 let recordedAudioChunks = []
 
-// Evaluation state
+const displaySeconds = computed(() => {
+  return isExamMode.value ? remainingExamSeconds.value : elapsedSeconds.value
+})
+
+const timerColorClass = computed(() => {
+  if (isExamMode.value) {
+    return remainingExamSeconds.value <= 10 ? 'text-error' : 'text-primary'
+  }
+  if (elapsedSeconds.value < 30) return 'text-amber-darken-3'
+  if (elapsedSeconds.value <= 65) return 'text-success'
+  return 'text-primary'
+})
+
+const pacingBadge = computed(() => {
+  if (isExamMode.value) {
+    return {
+      label: remainingExamSeconds.value > 0 ? `Exam: ${remainingExamSeconds.value}s left` : 'Time is up!',
+      color: remainingExamSeconds.value <= 10 ? 'error' : 'warning',
+      icon: 'mdi-timer-sand'
+    }
+  }
+  if (elapsedSeconds.value < 30) {
+    return { label: 'Brief (< 30s) • Aim for 45s-60s for full score', color: 'amber-darken-2', icon: 'mdi-clock-outline' }
+  }
+  if (elapsedSeconds.value <= 65) {
+    return { label: 'Ideal Speaking Length (45s - 60s)', color: 'success', icon: 'mdi-check-circle' }
+  }
+  return { label: 'Extended Talk (> 65s)', color: 'primary', icon: 'mdi-timer-outline' }
+})
+
+const formatTime = (secs) => {
+  const m = Math.floor(secs / 60)
+  const s = secs % 60
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+}
+
+// Evaluation State
 const isEvaluating = ref(false)
 const candidateTranscription = ref('')
 const evaluationResult = ref(null)
+const isPlayingSample = ref(false)
 
 const selectScenario = (s) => {
   currentScenario.value = s
@@ -825,6 +716,11 @@ const isKeywordSpoken = (keyword) => {
   if (!candidateTranscription.value || !keyword) return false
   return candidateTranscription.value.toLowerCase().includes(keyword.toLowerCase())
 }
+
+const matchedKeywordsCount = computed(() => {
+  const kws = currentScenario.value?.keywords || []
+  return kws.filter(kw => isKeywordSpoken(kw)).length
+})
 
 const fetchScenarios = async () => {
   isLoadingInitial.value = true
@@ -845,16 +741,39 @@ const fetchScenarios = async () => {
 }
 
 const handleCreateScenario = async () => {
-  const topic = scenarioTopic.value.trim() || 'Daily Life Scene'
   isGeneratingScenario.value = true
+  let finalTopic = ''
+  let finalImageUrl = ''
+  const mode = creationMode.value
 
   try {
+    if (mode === 'upload' && selectedFile.value) {
+      // 1. Upload file first
+      const formData = new FormData()
+      formData.append('file', selectedFile.value)
+      const uploadRes = await fetch(`${props.backendUrl}/api/picture-practice/upload-image`, {
+        method: 'POST',
+        body: formData
+      })
+      if (!uploadRes.ok) throw new Error('File upload failed')
+      const uploadData = await uploadRes.json()
+      finalImageUrl = uploadData.image_url
+      finalTopic = uploadTitleHint.value.trim() || selectedFile.value.name.replace(/\.[^/.]+$/, '')
+    } else if (mode === 'search') {
+      finalTopic = searchKeyword.value.trim() || 'Daily Life'
+    } else {
+      finalTopic = scenarioTopic.value.trim() || 'A vibrant outdoor scene in the city'
+    }
+
+    // 2. Call create scenario endpoint
     const res = await fetch(`${props.backendUrl}/api/picture-practice/create-scenario`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        topic: topic,
+        topic: finalTopic,
         level: scenarioLevel.value.toLowerCase(),
+        mode: mode,
+        image_url: finalImageUrl,
         user_id: props.userId || 1
       })
     })
@@ -863,6 +782,8 @@ const handleCreateScenario = async () => {
       const newScenario = await res.json()
       showCreateModal.value = false
       scenarioTopic.value = ''
+      searchKeyword.value = ''
+      clearUploadedFile()
       await fetchScenarios()
       currentScenario.value = newScenario
       imageFailed.value = false
@@ -870,6 +791,7 @@ const handleCreateScenario = async () => {
     }
   } catch (err) {
     console.error('Scenario creation failed:', err)
+    alert('Failed to generate scenario. Please try again.')
   } finally {
     isGeneratingScenario.value = false
   }
@@ -890,13 +812,17 @@ const startRecording = async () => {
 
     mediaRecorder.start()
     isRecording.value = true
-    remainingSeconds.value = 60
+    elapsedSeconds.value = 0
+    remainingExamSeconds.value = 45
 
     timerInterval = setInterval(() => {
-      if (remainingSeconds.value > 1) {
-        remainingSeconds.value--
-      } else {
-        stopRecording()
+      elapsedSeconds.value++
+      if (isExamMode.value) {
+        if (remainingExamSeconds.value > 1) {
+          remainingExamSeconds.value--
+        } else {
+          stopRecording()
+        }
       }
     }, 1000)
   } catch (err) {
@@ -912,6 +838,19 @@ const stopRecording = () => {
   if (isRecording.value) {
     isRecording.value = false
     mediaRecorder?.stop()
+  }
+}
+
+const cancelRecording = () => {
+  if (timerInterval) {
+    clearInterval(timerInterval)
+    timerInterval = null
+  }
+  if (isRecording.value) {
+    isRecording.value = false
+    mediaRecorder?.stop()
+    recordedAudioChunks = []
+    resetChallenge()
   }
 }
 
@@ -960,30 +899,46 @@ const evaluateSpeakingSubmission = async () => {
   }
 }
 
-const playSampleAudio = (text) => {
+const toggleSampleAudio = (text) => {
   if (!text) return
+  if (isPlayingSample.value) {
+    window.speechSynthesis?.cancel()
+    isPlayingSample.value = false
+    return
+  }
   window.speechSynthesis?.cancel()
   const utterance = new SpeechSynthesisUtterance(text)
   utterance.lang = 'en-US'
+  utterance.rate = 0.95
+  utterance.onend = () => {
+    isPlayingSample.value = false
+  }
+  utterance.onerror = () => {
+    isPlayingSample.value = false
+  }
+  isPlayingSample.value = true
   window.speechSynthesis?.speak(utterance)
 }
 
 const resetChallenge = () => {
   if (timerInterval) clearInterval(timerInterval)
+  window.speechSynthesis?.cancel()
+  isPlayingSample.value = false
   isRecording.value = false
   isEvaluating.value = false
   evaluationResult.value = null
   candidateTranscription.value = ''
-  remainingSeconds.value = 60
+  elapsedSeconds.value = 0
+  remainingExamSeconds.value = 45
 }
 
 onMounted(() => {
   fetchScenarios()
-  fetchSuggestedTopics()
 })
 
 onUnmounted(() => {
   if (timerInterval) clearInterval(timerInterval)
+  window.speechSynthesis?.cancel()
 })
 </script>
 
@@ -998,9 +953,6 @@ onUnmounted(() => {
 .max-width-400 {
   max-width: 400px;
 }
-.max-width-350 {
-  max-width: 350px;
-}
 
 .image-wrapper {
   position: relative;
@@ -1011,7 +963,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.35);
   opacity: 0;
   transition: opacity 0.2s ease;
 }
@@ -1019,34 +971,19 @@ onUnmounted(() => {
   opacity: 1;
 }
 
-.recording-pulse {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background-color: #EF4444;
-  animation: pulse 1.2s infinite;
-}
-
-@keyframes pulse {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-  70% { transform: scale(1.15); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-}
-
 .waveform-box {
-  height: 40px;
+  height: 36px;
 }
 .waveform-bar {
   width: 4px;
   height: 24px;
-  background-color: #3B82F6;
+  background-color: #0284C7;
   border-radius: 2px;
   animation: wave 1s infinite ease-in-out;
 }
-.waveform-bar:nth-child(2n) { animation-delay: 0.2s; height: 32px; }
+.waveform-bar:nth-child(2n) { animation-delay: 0.2s; height: 30px; }
 .waveform-bar:nth-child(3n) { animation-delay: 0.4s; height: 16px; }
-.waveform-bar:nth-child(4n) { animation-delay: 0.1s; height: 36px; }
+.waveform-bar:nth-child(4n) { animation-delay: 0.1s; height: 34px; }
 
 @keyframes wave {
   0%, 100% { transform: scaleY(0.4); }
