@@ -1,0 +1,46 @@
+{
+  "import_res": "Restore error: table history has no column named audio_url",
+  "users": [
+    [
+      5,
+      "superadmin@fluent.edu.vn",
+      "Super Admin",
+      null,
+      null,
+      "2026-07-30 17:42:52",
+      0,
+      "super_admin",
+      "1",
+      "PA-8888",
+      "superadmin123"
+    ],
+    [
+      6,
+      "admin@fluent.edu.vn",
+      "School Admin",
+      null,
+      null,
+      "2026-07-30 18:41:50",
+      0,
+      "admin",
+      "1",
+      null,
+      "admin123"
+    ],
+    [
+      7,
+      "teacher@fluent.edu.vn",
+      "Educator Lead",
+      null,
+      null,
+      "2026-07-30 18:41:50",
+      0,
+      "teacher",
+      "1",
+      null,
+      "teacher123"
+    ]
+  ],
+  "history": [],
+  "db_path": "/app/app/app_data.db"
+}

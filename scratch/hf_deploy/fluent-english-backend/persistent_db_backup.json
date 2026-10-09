@@ -1,0 +1,21 @@
+{
+  "users": [
+    {
+      "id": 5,
+      "email": "superadmin@fluent.edu.vn",
+      "name": "Super Admin (Owner)",
+      "avatar": null,
+      "google_id": null,
+      "created_at": "2026-07-30 17:42:52",
+      "IsXoa": 0,
+      "role": "super_admin",
+      "tenant_id": null,
+      "parent_code": "PA-8888",
+      "password_hash": "superadmin123"
+    }
+  ],
+  "history": [],
+  "user_settings": [],
+  "weak_words": [],
+  "achievements": []
+}
