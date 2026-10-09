@@ -1079,6 +1079,51 @@ def generate_vocabulary_image(word: str, context: str = "", output_dir: Optional
     """Generate or retrieve authentic visual photograph URL."""
     return resolve_scene_photo(topic=context, title=word)
 
+def generate_flux_image_hf(prompt: str, seed: Optional[int] = None) -> Optional[str]:
+    """Generate high-fidelity photorealistic image via HuggingFace FLUX.1-schnell space.
+    Produces authentic 35mm photography with realistic human faces, eyes, and skin.
+    """
+    if seed is None:
+        seed = random.randint(1000, 999999)
+        
+    clean_p = re.sub(r'[^a-zA-Z0-9\s,.-]', '', prompt).strip()
+    if not any(k in clean_p.lower() for k in ["photograph", "candid", "natural lighting", "shot"]):
+        clean_p = f"A candid 35mm photograph of {clean_p}, natural lighting, sharp focus, authentic documentary photography, Kodak Portra colors"
+        
+    url = "https://black-forest-labs-flux-1-schnell.hf.space/gradio_api/call/infer"
+    payload = {
+        "data": [
+            clean_p,
+            seed,
+            True,
+            1024,
+            680,
+            4
+        ]
+    }
+    
+    try:
+        r = requests.post(url, json=payload, timeout=12)
+        if r.status_code == 200:
+            event_id = r.json().get("event_id")
+            if event_id:
+                res_url = f"https://black-forest-labs-flux-1-schnell.hf.space/gradio_api/call/infer/{event_id}"
+                r_res = requests.get(res_url, timeout=30)
+                if r_res.status_code == 200:
+                    for line in r_res.text.strip().split("\n"):
+                        if line.startswith("data:"):
+                            raw_json = line[5:].strip()
+                            data = json.loads(raw_json)
+                            if isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict):
+                                img_url = data[0].get("url")
+                                if img_url:
+                                    logger.info(f"FLUX image successfully generated via HF Space: {img_url}")
+                                    return img_url
+    except Exception as e:
+        logger.warning(f"HuggingFace FLUX generation notice: {e}")
+        
+    return None
+
 def generate_picture_scenario(
     topic: str = "Daily Life",
     level: str = "intermediate",
@@ -1147,10 +1192,14 @@ def generate_picture_scenario(
 
     # Mode 2: Search Authentic Photography (Dynamic Real-Life Scene Generation)
     if mode == "search":
-        photo_prompt = f"Authentic realistic documentary photograph of {clean_topic}, real life scene, natural daylight, candid capture, 35mm camera, rich detail"
+        photo_prompt = f"Authentic realistic 35mm documentary photograph of {clean_topic}, real life scene, natural daylight, candid capture, sharp focus on subjects, Kodak Portra colors"
         seed = random.randint(10000, 999999)
         clean_search_prompt = re.sub(r'[^a-zA-Z0-9\s,.-]', '', photo_prompt)
-        image_url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(clean_search_prompt)}?width=1024&height=680&nologo=true&seed={seed}&model=flux"
+        
+        # Primary: HuggingFace FLUX.1-schnell photorealism
+        image_url = generate_flux_image_hf(clean_search_prompt, seed=seed)
+        if not image_url:
+            image_url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(clean_search_prompt)}?width=1024&height=680&nologo=true&seed={seed}&model=flux"
         
         sys_prompt = (
             "You are an expert IELTS and TOEIC Speaking Examiner. "
@@ -1205,11 +1254,13 @@ def generate_picture_scenario(
         "You are an expert IELTS and TOEIC Speaking Examiner and prompt engineer. "
         "The user wants to practice describing a picture based on their requested topic or prompt (which may be in English or Vietnamese). "
         "First, understand their intent and create a vivid, realistic photographic scene. "
-        "Then, construct an IELTS/TOEIC Speaking task strictly grounded in this visual scene. "
+        "PHOTOGRAPHY RULES FOR IMAGE PROMPT: "
+        "- For scenes with people/families: Frame as an authentic medium-shot candid photograph (natural daylight, genuine facial expressions, sharp focus, 35mm lens, Kodak Portra colors). Avoid crowded distant shots that cause distorted faces. "
+        "- For places/objects: Frame with natural depth of field, warm ambient lighting, high texture detail. "
         "Return a valid JSON object with: "
         "1. 'title': Engaging English title for this picture scene. "
         "2. 'visual_description': A vivid 2-sentence description of the physical image scene (photorealistic, natural lighting, detailing subjects, actions, and environment). "
-        "3. 'image_gen_prompt': A high-quality English prompt optimized for AI image generation (e.g. 'A photorealistic shot of ..., 8k resolution, natural lighting, highly detailed'). "
+        "3. 'image_gen_prompt': A high-quality English photography prompt optimized for FLUX.1-schnell (e.g. 'A candid 35mm photograph of ..., natural daylight, Kodak Portra colors, sharp focus on facial expressions, authentic human interactions'). "
         "4. 'search_keywords': 2-3 essential keywords for image search fallback (e.g. 'picnic park family'). "
         "5. 'guiding_questions': Array of exactly 4 structured questions (Q1 Overview: setting/weather, Q2 People & Actions: subjects/interactions, Q3 Details & Surroundings: objects/foreground/background, Q4 Impressions: atmosphere/mood). "
         "6. 'keywords': Array of 5 target vocabulary words/collocations physically present in this image. "
@@ -1225,15 +1276,19 @@ def generate_picture_scenario(
     
     title = str(data.get("title", "")).strip() or f"Picture Speaking: {clean_topic}"
     visual_description = str(data.get("visual_description", "")).strip() or f"A realistic scene depicting {clean_topic}."
-    image_gen_prompt = str(data.get("image_gen_prompt", "")).strip() or f"A realistic photograph of {clean_topic}, natural lighting, high quality"
+    image_gen_prompt = str(data.get("image_gen_prompt", "")).strip() or f"A candid 35mm photograph of {clean_topic}, natural lighting, sharp focus on subjects, Kodak Portra colors"
     search_keywords = str(data.get("search_keywords", clean_topic)).strip()
     
-    # Build dynamic AI image URL
+    # Build dynamic AI image URL via HuggingFace FLUX.1-schnell
     seed = random.randint(10000, 999999)
     clean_ai_prompt = re.sub(r'[^a-zA-Z0-9\s,.-]', '', image_gen_prompt)
     if not clean_ai_prompt.strip():
         clean_ai_prompt = clean_topic
-    image_url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(clean_ai_prompt)}?width=1024&height=680&nologo=true&seed={seed}"
+        
+    # Primary: HuggingFace FLUX.1-schnell
+    image_url = generate_flux_image_hf(clean_ai_prompt, seed=seed)
+    if not image_url:
+        image_url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(clean_ai_prompt)}?width=1024&height=680&nologo=true&seed={seed}&model=flux"
     
     guiding_questions = data.get("guiding_questions")
     if not isinstance(guiding_questions, list) or len(guiding_questions) < 3:
