@@ -1051,66 +1051,195 @@ def generate_vocabulary_image(word: str, context: str = "", output_dir: Optional
     """Generate or retrieve authentic visual photograph URL."""
     return resolve_scene_photo(topic=context, title=word)
 
-def generate_picture_scenario(topic: str = "Daily Life", level: str = "intermediate") -> Dict[str, Any]:
-    """Generate an authentic Describe the Picture challenge scenario with real scene photograph and strictly grounded questions."""
-    # 1. Resolve authentic grounded photograph and physical visual metadata first
-    scene = get_grounded_scene(topic=topic, title="", context="")
+def generate_picture_scenario(
+    topic: str = "Daily Life",
+    level: str = "intermediate",
+    mode: str = "ai_gen",
+    custom_image_url: str = ""
+) -> Dict[str, Any]:
+    """Generate an authentic Describe the Picture challenge scenario with dynamic AI image generation or photo search and 4-step framework questions."""
+    clean_topic = str(topic or "Daily Life").strip()
     
-    # 2. Instruct LLM to formulate questions and vocabulary strictly based on the real image elements
-    instruction = (
-        "DO NOT ask about people or their actions because there are NO people in this picture! "
-        "Instead, formulate questions about the physical environment, layout, objects, signs, lighting, and purpose of the space."
-        if not scene.get("has_people") else
-        "Formulate questions about the people, their interactions, expressions, clothing, and activities in this setting."
-    )
-    
+    # Mode 1: Custom Image Upload
+    if mode == "upload" and custom_image_url:
+        image_url = custom_image_url
+        sys_prompt = (
+            "You are an expert IELTS and TOEIC Speaking Examiner. "
+            f"The candidate is practicing with an uploaded picture on the topic: '{clean_topic}'. "
+            "Formulate: "
+            "1. title: Engaging title for this scene. "
+            "2. visual_description: 2-sentence description of the scene. "
+            "3. guiding_questions: Exactly 4 questions adhering to standard English speaking test structure: "
+            "   Q1 (Overview: general location/setting/weather), "
+            "   Q2 (People & Actions: subjects/interactions/clothing), "
+            "   Q3 (Details & Surroundings: objects/foreground/background), "
+            "   Q4 (Impressions: emotional tone/atmosphere). "
+            "4. keywords: Array of 5 target vocabulary words/collocations for this scene. "
+            "5. sample_response: Natural Band 8+ model speech (70-90 words) describing the scene. "
+            "Return ONLY a valid JSON object with 'title', 'visual_description', 'guiding_questions', 'keywords', 'sample_response'."
+        )
+        content = call_llm([
+            {"role": "system", "content": sys_prompt},
+            {"role": "user", "content": f"Topic: {clean_topic}. Level: {level}. Return JSON."}
+        ], json_mode=True)
+        data = parse_json_safely(content) or {}
+        
+        title = str(data.get("title", "")).strip() or f"Describing {clean_topic}"
+        guiding_questions = data.get("guiding_questions")
+        if not isinstance(guiding_questions, list) or len(guiding_questions) < 3:
+            guiding_questions = [
+                "Where does this scene take place and what is the overall atmosphere?",
+                "Who is in the picture and what specific actions are they performing?",
+                "What prominent objects, colors, or background details can you see?",
+                "What feelings or impressions does this photograph convey to you?"
+            ]
+        keywords = data.get("keywords")
+        if not isinstance(keywords, list) or len(keywords) < 3:
+            keywords = ["foreground", "background", "setting", "activity", "atmosphere"]
+            
+        sample_response = str(data.get("sample_response", "")).strip() or (
+            f"In this picture, we can observe a scene related to {clean_topic}. "
+            "In the foreground, the main subjects are actively engaged in their tasks. "
+            "The background shows a well-organized setting with clear details. "
+            "Overall, the photograph conveys a positive and dynamic atmosphere."
+        )
+        
+        return {
+            "title": title,
+            "image_url": image_url,
+            "fallback_image_url": resolve_scene_photo(clean_topic, title),
+            "image_prompt": data.get("visual_description", clean_topic),
+            "visual_description": data.get("visual_description", clean_topic),
+            "guiding_questions": guiding_questions,
+            "keywords": keywords,
+            "sample_response": sample_response,
+            "mode": "upload",
+            "suggested_time_seconds": 60
+        }
+
+    # Mode 2: Search Authentic Photography
+    if mode == "search":
+        scene = get_grounded_scene(topic=clean_topic, title="", context="")
+        sys_prompt = (
+            "You are an IELTS & TOEIC Speaking Examiner. "
+            "Create an engaging 'Describe the Picture' speaking task strictly grounded in the provided real scene photo. "
+            f"Image Elements: {scene.get('elements', '')}. "
+            "Provide: "
+            "1. title: Engaging title. "
+            "2. guiding_questions: Exactly 4 questions (Q1 Overview, Q2 People/Actions, Q3 Details/Surroundings, Q4 Impressions). "
+            "3. keywords: 5 target vocabulary words/collocations for this scene. "
+            "4. sample_response: Band 8+ model speech (70-90 words). "
+            "Return ONLY JSON with 'title', 'guiding_questions', 'keywords', 'sample_response'."
+        )
+        content = call_llm([
+            {"role": "system", "content": sys_prompt},
+            {"role": "user", "content": f"Topic: '{clean_topic}'. Level: '{level}'. Return JSON."}
+        ], json_mode=True)
+        data = parse_json_safely(content) or {}
+        
+        title = str(data.get("title", "")).strip() or scene.get("title", f"Scene in {clean_topic}")
+        guiding_questions = data.get("guiding_questions") or scene.get("guiding_questions")
+        if not isinstance(guiding_questions, list) or len(guiding_questions) < 3:
+            guiding_questions = [
+                "What is the general location and setting shown in this picture?",
+                "What people or subjects are visible and what are they doing?",
+                "What prominent objects or background features stand out to you?",
+                "What overall mood or impression does this scene convey?"
+            ]
+        keywords = data.get("keywords") or scene.get("keywords")
+        if not isinstance(keywords, list) or len(keywords) < 3:
+            keywords = ["setting", "foreground", "background", "interaction", "atmosphere"]
+            
+        sample_response = str(data.get("sample_response", "")).strip() or (
+            f"This photograph presents a realistic view of {title}. "
+            f"{scene.get('elements', '')} "
+            "In summary, it offers a vivid depiction of daily life."
+        )
+        
+        return {
+            "title": title,
+            "image_url": scene.get("url", ""),
+            "fallback_image_url": scene.get("url", ""),
+            "image_prompt": scene.get("elements", ""),
+            "visual_description": scene.get("elements", ""),
+            "guiding_questions": guiding_questions,
+            "keywords": keywords,
+            "sample_response": sample_response,
+            "mode": "search",
+            "suggested_time_seconds": 60
+        }
+
+    # Mode 3 (Default): Dynamic AI Image Generation with Prompt Grounding
     sys_prompt = (
-        "You are an IELTS & TOEIC Speaking Examiner. "
-        "Create an engaging 'Describe the Picture' speaking task strictly grounded in the provided image. "
-        "You are given the EXACT visual elements present in the photograph. "
-        "CRITICAL RULE: Guiding questions and keywords MUST reference only what is physically observable in this image! "
-        f"{instruction} "
-        "Provide: "
-        "1. title: An engaging title for the picture scene. "
-        "2. guiding_questions: 3 questions helping the candidate structure their 60-second speech. "
-        "3. keywords: 5 target vocabulary words or collocations candidates should use that describe this scene. "
-        "Return ONLY a valid JSON object with fields 'title', 'guiding_questions', 'keywords'."
+        "You are an expert IELTS and TOEIC Speaking Examiner and prompt engineer. "
+        "The user wants to practice describing a picture based on their requested topic or prompt (which may be in English or Vietnamese). "
+        "First, understand their intent and create a vivid, realistic photographic scene. "
+        "Then, construct an IELTS/TOEIC Speaking task strictly grounded in this visual scene. "
+        "Return a valid JSON object with: "
+        "1. 'title': Engaging English title for this picture scene. "
+        "2. 'visual_description': A vivid 2-sentence description of the physical image scene (photorealistic, natural lighting, detailing subjects, actions, and environment). "
+        "3. 'image_gen_prompt': A high-quality English prompt optimized for AI image generation (e.g. 'A photorealistic shot of ..., 8k resolution, natural lighting, highly detailed'). "
+        "4. 'search_keywords': 2-3 essential keywords for image search fallback (e.g. 'picnic park family'). "
+        "5. 'guiding_questions': Array of exactly 4 structured questions (Q1 Overview: setting/weather, Q2 People & Actions: subjects/interactions, Q3 Details & Surroundings: objects/foreground/background, Q4 Impressions: atmosphere/mood). "
+        "6. 'keywords': Array of 5 target vocabulary words/collocations physically present in this image. "
+        "7. 'sample_response': A natural Band 8+ model response (70-90 words) describing the scene. "
+        "Return ONLY JSON."
     )
-    
-    user_prompt = (
-        f"Topic: '{topic}'. Candidate level: '{level}'.\n"
-        f"Image Scene Description: '{scene.get('elements')}'.\n"
-        f"People present in image: {'Yes: ' + scene.get('people_details', '') if scene.get('has_people') else 'No people in image'}.\n"
-        "Return JSON."
-    )
-    
+    user_prompt = f"User Topic / Prompt: '{clean_topic}'. Level: '{level}'. Return JSON."
+
     content = call_llm([
         {"role": "system", "content": sys_prompt},
         {"role": "user", "content": user_prompt}
     ], json_mode=True)
     
     data = parse_json_safely(content) or {}
-    title = str(data.get("title", "")).strip() or scene.get("title", f"Scene in {topic}")
+    
+    title = str(data.get("title", "")).strip() or f"Picture Speaking: {clean_topic}"
+    visual_description = str(data.get("visual_description", "")).strip() or f"A realistic scene depicting {clean_topic}."
+    image_gen_prompt = str(data.get("image_gen_prompt", "")).strip() or f"A realistic photograph of {clean_topic}, natural lighting, high quality"
+    search_keywords = str(data.get("search_keywords", clean_topic)).strip()
+    
+    # Build dynamic AI image URL
+    seed = random.randint(10000, 999999)
+    # Clean prompt for URL
+    clean_ai_prompt = re.sub(r'[^a-zA-Z0-9\s,.-]', '', image_gen_prompt)
+    if not clean_ai_prompt.strip():
+        clean_ai_prompt = clean_topic
+    image_url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(clean_ai_prompt)}?width=1024&height=680&nologo=true&seed={seed}"
+    
+    # Fallback high-res real photo URL
+    fallback_image_url = resolve_scene_photo(topic=search_keywords or clean_topic, title=title)
     
     guiding_questions = data.get("guiding_questions")
-    if not isinstance(guiding_questions, list) or len(guiding_questions) < 2:
-        guiding_questions = scene.get("guiding_questions", [
-            "What main elements and setting can you observe in this picture?",
-            "What specific objects, layout, and lighting characterize this scene?",
-            "What mood or impression does this environment convey to an observer?"
-        ])
+    if not isinstance(guiding_questions, list) or len(guiding_questions) < 3:
+        guiding_questions = [
+            f"Where does this scene take place and what is the overall atmosphere?",
+            f"What subjects or people are featured and what specific activities are they doing?",
+            f"What objects, colors, or background details stand out in this picture?",
+            f"What feelings or impressions does this moment convey to the viewer?"
+        ]
         
     keywords = data.get("keywords")
     if not isinstance(keywords, list) or len(keywords) < 3:
-        keywords = scene.get("keywords", ["atmosphere", "surrounding", "foreground", "setting", "details"])
+        keywords = ["setting", "foreground", "background", "interaction", "atmosphere"]
         
+    sample_response = str(data.get("sample_response", "")).strip() or (
+        f"In this picture, we can see a vibrant scene illustrating {title}. "
+        f"{visual_description} "
+        "Overall, the image presents a clear, engaging moment with distinctive details."
+    )
+    
     return {
         "title": title,
-        "image_url": scene.get("url", ""),
-        "image_prompt": scene.get("elements", ""),
+        "image_url": image_url,
+        "fallback_image_url": fallback_image_url,
+        "image_prompt": image_gen_prompt,
+        "visual_description": visual_description,
         "guiding_questions": guiding_questions,
         "keywords": keywords,
-        "has_people": scene.get("has_people", False),
+        "sample_response": sample_response,
+        "mode": "ai_gen",
+        "level": level,
         "suggested_time_seconds": 60
     }
 

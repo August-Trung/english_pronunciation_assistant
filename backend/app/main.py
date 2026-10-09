@@ -1,6 +1,8 @@
 import os
 import re
 import json
+import time
+import shutil
 import sqlite3
 import random
 import tempfile
@@ -1832,6 +1834,10 @@ def init_db():
                 cursor.execute(f"ALTER TABLE {t} ADD COLUMN IsXoa INTEGER DEFAULT 0")
             except Exception:
                 pass
+        try:
+            cursor.execute("ALTER TABLE picture_scenarios ADD COLUMN sample_response TEXT")
+        except Exception:
+            pass
                 
         user_cols = [
             ("role", "TEXT DEFAULT 'student'"),
@@ -6708,6 +6714,8 @@ class CreatePictureScenarioRequest(BaseModel):
     user_id: Optional[int] = 1
     topic: Optional[str] = "Daily Life"
     level: Optional[str] = "intermediate"
+    mode: Optional[str] = "ai_gen"
+    image_url: Optional[str] = ""
 
 class EvaluatePictureRequest(BaseModel):
     scenario_id: int
@@ -6868,26 +6876,52 @@ def api_suggest_picture_topics(req: SuggestTopicsRequest):
     topics = suggest_picture_topics(category=req.category or "all", level=req.level or "intermediate", count=req.count or 6)
     return {"status": "success", "topics": topics}
 
+@app.post("/api/picture-practice/upload-image")
+async def api_upload_picture_image(file: UploadFile = File(...)):
+    """Upload custom image for picture practice and return static URL."""
+    try:
+        picture_uploads_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "uploads", "picture_practice"))
+        os.makedirs(picture_uploads_dir, exist_ok=True)
+        ext = os.path.splitext(file.filename or "image.jpg")[1] or ".jpg"
+        filename = f"pic_{int(time.time())}_{random.randint(1000, 9999)}{ext}"
+        target_path = os.path.join(picture_uploads_dir, filename)
+        with open(target_path, "wb") as f:
+            shutil.copyfileobj(file.file, f)
+        return {
+            "status": "success",
+            "image_url": f"/uploads/picture_practice/{filename}",
+            "filename": filename
+        }
+    except Exception as e:
+        logger.error(f"Error uploading picture image: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/picture-practice/create-scenario")
 def api_create_picture_scenario(req: CreatePictureScenarioRequest):
     """Create a Describe the Picture practice challenge with scene image and prompt."""
-    scenario = generate_picture_scenario(topic=req.topic or "Daily Life", level=req.level or "intermediate")
+    scenario = generate_picture_scenario(
+        topic=req.topic or "Daily Life",
+        level=req.level or "intermediate",
+        mode=req.mode or "ai_gen",
+        custom_image_url=req.image_url or ""
+    )
     conn = get_multimodal_db_conn()
     cursor = conn.cursor()
     try:
         cursor.execute(
             """INSERT INTO picture_scenarios 
-            (user_id, topic, title, image_url, image_prompt, prompt_guide, keywords_json, guiding_questions_json) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (user_id, topic, title, image_url, image_prompt, prompt_guide, keywords_json, guiding_questions_json, sample_response) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 req.user_id or 1,
                 req.topic or "Daily Life",
                 scenario.get("title", "Picture Speaking Scenario"),
                 scenario.get("image_url", ""),
                 scenario.get("image_prompt", ""),
-                scenario.get("title", ""),
+                scenario.get("visual_description", "") or scenario.get("title", ""),
                 json.dumps(scenario.get("keywords", [])),
-                json.dumps(scenario.get("guiding_questions", []))
+                json.dumps(scenario.get("guiding_questions", [])),
+                scenario.get("sample_response", "")
             )
         )
         scenario_id = cursor.lastrowid
@@ -6904,7 +6938,7 @@ def api_list_picture_scenarios(user_id: int = 1):
     cursor = conn.cursor()
     try:
         cursor.execute(
-            "SELECT id, topic, title, image_url, keywords_json, guiding_questions_json, created_at FROM picture_scenarios WHERE user_id = ? AND IsXoa = 0 ORDER BY id DESC LIMIT 20",
+            "SELECT id, topic, title, image_url, keywords_json, guiding_questions_json, image_prompt, sample_response, created_at FROM picture_scenarios WHERE user_id = ? AND IsXoa = 0 ORDER BY id DESC LIMIT 20",
             (user_id,)
         )
         rows = cursor.fetchall()
@@ -6917,7 +6951,9 @@ def api_list_picture_scenarios(user_id: int = 1):
                 "image_url": r[3],
                 "keywords": json.loads(r[4]) if r[4] else [],
                 "guiding_questions": json.loads(r[5]) if r[5] else [],
-                "created_at": r[6]
+                "image_prompt": r[6] if len(r) > 6 and r[6] else "",
+                "sample_response": r[7] if len(r) > 7 and r[7] else "",
+                "created_at": r[8] if len(r) > 8 and r[8] else ""
             })
         return {"status": "success", "scenarios": scenarios}
     finally:
