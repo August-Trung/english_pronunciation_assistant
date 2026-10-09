@@ -183,14 +183,23 @@
               </div>
 
               <!-- Exam Mode Toggle -->
-              <v-switch
-                v-model="isExamMode"
-                color="warning"
-                density="compact"
-                hide-details
-                label="Exam Mode (45s TOEIC)"
-                class="font-weight-bold text-caption"
-              />
+              <div class="d-flex align-center ga-1">
+                <v-switch
+                  v-model="isExamMode"
+                  color="warning"
+                  density="compact"
+                  hide-details
+                  label="Exam Mode (45s TOEIC)"
+                  class="font-weight-bold text-caption"
+                />
+                <v-tooltip location="top" text="Simulate TOEIC Speaking Q3-4: Strict 45s countdown with automatic cutoff at 0s. Turn OFF for relaxed untimed practice.">
+                  <template #activator="{ props: tooltipProps }">
+                    <v-icon v-bind="tooltipProps" size="small" color="grey-darken-1" class="cursor-pointer">
+                      mdi-help-circle-outline
+                    </v-icon>
+                  </template>
+                </v-tooltip>
+              </div>
             </div>
 
             <!-- Stopwatch Digital Display & Pacing Indicator -->
@@ -418,16 +427,19 @@
 
         <v-window v-model="creationMode">
           <!-- Tab 1: AI Prompt Generator -->
-          <v-window-item value="ai_gen">
+          <v-window-item value="ai_gen" class="pt-2">
+            <label class="text-caption font-weight-bold text-grey-darken-2 d-block mb-1">
+              Describe What Picture You Want (Prompt):
+            </label>
             <v-textarea
               v-model="scenarioTopic"
-              label="Describe What Picture You Want (Prompt):"
               placeholder="e.g. A family having a picnic in the park with a golden retriever and red checkered blanket..."
               variant="outlined"
               rows="3"
               density="comfortable"
               class="mb-2"
               prepend-inner-icon="mdi-pencil-outline"
+              hide-details="auto"
               clearable
             />
 
@@ -454,15 +466,18 @@
           </v-window-item>
 
           <!-- Tab 2: Real Photo Search -->
-          <v-window-item value="search">
+          <v-window-item value="search" class="pt-2">
+            <label class="text-caption font-weight-bold text-grey-darken-2 d-block mb-1">
+              Photo Subject / Search Topic:
+            </label>
             <v-text-field
               v-model="searchKeyword"
-              label="Photo Subject / Search Topic:"
               placeholder="e.g. Airport Terminal, Hospital Consultation, Modern Classroom, Cafe..."
               variant="outlined"
               density="comfortable"
               class="mb-2"
               prepend-inner-icon="mdi-magnify"
+              hide-details="auto"
               clearable
             />
 
@@ -482,7 +497,7 @@
           </v-window-item>
 
           <!-- Tab 3: Custom Upload -->
-          <v-window-item value="upload">
+          <v-window-item value="upload" class="pt-2">
             <div class="mb-3 border-dashed rounded-lg pa-4 text-center bg-grey-lighten-5">
               <input
                 ref="fileInputRef"
@@ -515,24 +530,31 @@
               </div>
             </div>
 
+            <label class="text-caption font-weight-bold text-grey-darken-2 d-block mb-1">
+              Optional Topic / Title Hint:
+            </label>
             <v-text-field
               v-model="uploadTitleHint"
-              label="Optional Topic / Title Hint:"
               placeholder="e.g. Cambridge PET Exam Picture 3..."
               variant="outlined"
               density="comfortable"
+              prepend-inner-icon="mdi-tag-outline"
+              hide-details="auto"
               class="mb-2"
             />
           </v-window-item>
         </v-window>
 
         <!-- Common Level Selector -->
+        <label class="text-caption font-weight-bold text-grey-darken-2 d-block mb-1">
+          Target Speaking Level:
+        </label>
         <v-select
           v-model="scenarioLevel"
           :items="['Beginner', 'Intermediate', 'Advanced']"
-          label="Target Speaking Level"
           variant="outlined"
           density="comfortable"
+          hide-details="auto"
           class="mb-3"
         />
 
@@ -669,6 +691,7 @@ const displaySeconds = computed(() => {
 })
 
 const timerColorClass = computed(() => {
+  if (!isRecording.value) return 'text-grey-darken-3'
   if (isExamMode.value) {
     return remainingExamSeconds.value <= 10 ? 'text-error' : 'text-primary'
   }
@@ -679,10 +702,24 @@ const timerColorClass = computed(() => {
 
 const pacingBadge = computed(() => {
   if (isExamMode.value) {
+    if (!isRecording.value) {
+      return {
+        label: 'Exam Mode Active • 45s Real TOEIC Countdown',
+        color: 'warning',
+        icon: 'mdi-timer-sand'
+      }
+    }
     return {
       label: remainingExamSeconds.value > 0 ? `Exam: ${remainingExamSeconds.value}s left` : 'Time is up!',
       color: remainingExamSeconds.value <= 10 ? 'error' : 'warning',
       icon: 'mdi-timer-sand'
+    }
+  }
+  if (!isRecording.value && elapsedSeconds.value === 0) {
+    return {
+      label: 'Practice Mode • Untimed Stopwatch (Aim 45s - 60s)',
+      color: 'indigo',
+      icon: 'mdi-timer-play-outline'
     }
   }
   if (elapsedSeconds.value < 30) {
