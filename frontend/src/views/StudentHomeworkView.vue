@@ -156,9 +156,9 @@
         <div v-if="asg.assignment_type === 'picture'" class="mb-3">
           <div class="d-flex ga-3 flex-column flex-md-row mb-2">
             <!-- Scene Image -->
-            <div v-if="asg.image_url" class="rounded overflow-hidden border flex-shrink-0" style="max-width: 320px;">
+            <div v-if="asg.image_url" class="rounded overflow-hidden border flex-shrink-0 cursor-pointer" style="max-width: 320px;" @click="previewImage(asg.image_url)">
               <v-img
-                :src="asg.image_url"
+                :src="getImageUrl(asg.image_url)"
                 height="200"
                 cover
                 class="bg-grey-lighten-4"
@@ -409,6 +409,14 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Dialog: Homework Picture Zoom -->
+    <v-dialog v-model="showImageModal" max-width="850">
+      <v-card class="pa-2 bg-black text-right" rounded="lg">
+        <v-btn icon="mdi-close" variant="text" color="white" size="small" @click="showImageModal = false" />
+        <v-img :src="getImageUrl(previewImageUrl)" max-height="650" contain />
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -419,6 +427,21 @@ const props = defineProps({
   backendUrl: String,
   userId: Number
 })
+
+const getImageUrl = (url) => {
+  if (!url) return '/logo-augusttrung.png'
+  if (url.startsWith('http') || url.startsWith('data:')) return url
+  const base = props.backendUrl?.replace(/\/$/, '') || 'https://agrse-fluent-english-backend.hf.space'
+  return `${base}${url.startsWith('/') ? '' : '/'}${url}`
+}
+
+const showImageModal = ref(false)
+const previewImageUrl = ref('')
+const previewImage = (url) => {
+  if (!url) return
+  previewImageUrl.value = url
+  showImageModal.value = true
+}
 
 const toast = ref({ show: false, text: '', color: 'success', icon: 'mdi-check-circle' })
 const notify = (text, color = 'success', icon = 'mdi-check-circle') => {
