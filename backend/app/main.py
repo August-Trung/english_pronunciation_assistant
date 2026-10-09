@@ -3323,8 +3323,13 @@ def create_assignment(
 class UpdateAssignmentRequest(BaseModel):
     title: str
     topic_sentence: str
-    target_ipa: str = ""
-    due_date: str = ""
+    target_ipa: Optional[str] = ""
+    due_date: Optional[str] = ""
+    assignment_type: Optional[str] = None
+    image_url: Optional[str] = None
+    guiding_questions: Optional[List[str]] = None
+    target_keywords: Optional[List[str]] = None
+    time_limit_seconds: Optional[int] = None
 
 @app.post("/api/assignments/{assignment_id}/update")
 def update_assignment(
@@ -3336,11 +3341,34 @@ def update_assignment(
         asg_info = verify_assignment_access(assignment_id, current_user, require_write=True)
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
-        cursor.execute("""
-            UPDATE assignments
-            SET title = ?, topic_sentence = ?, target_ipa = ?, due_date = ?
-            WHERE id = ?
-        """, (req.title.strip(), req.topic_sentence.strip(), req.target_ipa.strip(), req.due_date.strip(), assignment_id))
+        
+        updates = ["title = ?", "topic_sentence = ?", "target_ipa = ?", "due_date = ?"]
+        params = [
+            req.title.strip(),
+            req.topic_sentence.strip(),
+            (req.target_ipa or "").strip(),
+            (req.due_date or "").strip()
+        ]
+        
+        if req.assignment_type is not None:
+            updates.append("assignment_type = ?")
+            params.append(req.assignment_type)
+        if req.image_url is not None:
+            updates.append("image_url = ?")
+            params.append(req.image_url)
+        if req.guiding_questions is not None:
+            updates.append("guiding_questions = ?")
+            params.append(json.dumps(req.guiding_questions))
+        if req.target_keywords is not None:
+            updates.append("target_keywords = ?")
+            params.append(json.dumps(req.target_keywords))
+        if req.time_limit_seconds is not None:
+            updates.append("time_limit_seconds = ?")
+            params.append(req.time_limit_seconds)
+            
+        params.append(assignment_id)
+        sql = f"UPDATE assignments SET {', '.join(updates)} WHERE id = ?"
+        cursor.execute(sql, tuple(params))
         record_audit_log(cursor, current_user.get("id"), "UPDATE", "assignment", str(assignment_id), asg_info.get("tenant_id"), f"Updated assignment {req.title}")
         conn.commit()
         conn.close()

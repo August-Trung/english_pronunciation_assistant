@@ -980,11 +980,14 @@
     </v-dialog>
 
     <!-- Modal: Edit Assignment -->
-    <v-dialog v-model="showEditAssignmentModal" max-width="500">
-      <v-card border rounded="lg" class="pa-4">
+    <v-dialog v-model="showEditAssignmentModal" :max-width="editingAsg?.assignment_type === 'picture' ? 680 : 500">
+      <v-card border rounded="lg" class="pa-4 bg-white">
         <div class="text-subtitle-1 font-weight-black text-primary mb-3 d-flex align-center ga-2">
           <v-icon color="primary">mdi-pencil</v-icon>
           <span>Edit Homework Assignment</span>
+          <v-chip v-if="editingAsg?.assignment_type === 'picture'" size="x-small" color="purple" variant="tonal" class="ml-auto font-weight-bold">
+            Describe Picture
+          </v-chip>
         </div>
 
         <v-text-field
@@ -996,7 +999,9 @@
           prepend-inner-icon="mdi-format-title"
         />
 
+        <!-- If Sentence Assignment -->
         <v-textarea
+          v-if="editingAsg?.assignment_type !== 'picture'"
           v-model="editAsgSentence"
           label="Model Reading Sentence:"
           variant="outlined"
@@ -1005,6 +1010,102 @@
           class="mb-2"
           prepend-inner-icon="mdi-subtitles"
         />
+
+        <!-- If Picture Speaking Assignment -->
+        <div v-else class="mb-3">
+          <v-text-field
+            v-model="editAsgSentence"
+            label="Speaking Topic / Task Prompt:"
+            variant="outlined"
+            density="comfortable"
+            class="mb-2"
+            prepend-inner-icon="mdi-image-filter-frames"
+          />
+
+          <!-- Picture & Settings Preview -->
+          <div class="d-flex ga-3 align-center mb-3 pa-2 bg-grey-lighten-5 rounded border">
+            <v-img
+              v-if="editAsgImageUrl"
+              :src="editAsgImageUrl"
+              height="90"
+              width="140"
+              cover
+              class="rounded border bg-white flex-shrink-0"
+            />
+            <div class="flex-grow-1">
+              <v-text-field
+                v-model="editAsgImageUrl"
+                label="Image URL:"
+                variant="outlined"
+                density="compact"
+                hide-details
+                class="mb-2 bg-white text-caption"
+              />
+              <div class="d-flex align-center ga-2">
+                <span class="text-caption font-weight-bold text-grey">Time limit:</span>
+                <v-chip-group v-model="editAsgTimeLimit" mandatory color="purple-darken-2">
+                  <v-chip :value="45" size="x-small" filter>45s</v-chip>
+                  <v-chip :value="60" size="x-small" filter>60s</v-chip>
+                  <v-chip :value="90" size="x-small" filter>90s</v-chip>
+                </v-chip-group>
+              </div>
+            </div>
+          </div>
+
+          <!-- Guiding Questions Editor -->
+          <div class="mb-3">
+            <div class="d-flex align-center justify-space-between mb-2">
+              <span class="text-caption font-weight-bold text-purple-darken-3 d-flex align-center ga-1">
+                <v-icon size="small" color="purple-darken-3">mdi-help-box-multiple</v-icon>
+                <span>Guiding Questions (Students will answer these):</span>
+              </span>
+              <v-btn
+                size="x-small"
+                variant="tonal"
+                color="purple-darken-2"
+                prepend-icon="mdi-plus"
+                class="text-none font-weight-bold"
+                @click="addEditAsgQuestion"
+              >
+                Add Question
+              </v-btn>
+            </div>
+
+            <div v-for="(q, idx) in editAsgGuidingQuestionsList" :key="idx" class="d-flex align-center ga-2 mb-2">
+              <v-chip size="small" color="purple-darken-2" variant="flat" class="font-weight-bold flex-shrink-0" style="min-width: 42px; justify-content: center;">
+                Q{{ idx + 1 }}
+              </v-chip>
+              <v-text-field
+                v-model="editAsgGuidingQuestionsList[idx]"
+                placeholder="Enter guiding question for students..."
+                variant="outlined"
+                density="compact"
+                hide-details
+                class="flex-grow-1 bg-white text-body-2"
+              />
+              <v-btn
+                icon="mdi-trash-can-outline"
+                size="x-small"
+                color="error"
+                variant="text"
+                title="Delete Question"
+                :disabled="editAsgGuidingQuestionsList.length <= 1"
+                @click="removeEditAsgQuestion(idx)"
+              />
+            </div>
+          </div>
+
+          <!-- Target Keywords -->
+          <v-text-field
+            v-model="editAsgTargetKeywordsText"
+            label="Target Keywords (comma-separated):"
+            variant="outlined"
+            density="compact"
+            hide-details
+            class="bg-white text-caption"
+            prepend-inner-icon="mdi-tag-multiple-outline"
+          />
+        </div>
 
         <v-text-field
           v-model="editAsgDueDate"
@@ -1069,7 +1170,7 @@
     </v-dialog>
 
     <!-- Modal: 1-Click Assignment Creation with AI Picture Speaking & Sentence -->
-    <v-dialog v-model="showCreateAssignmentModal" max-width="600">
+    <v-dialog v-model="showCreateAssignmentModal" :max-width="newAsgType === 'picture' ? 680 : 560">
       <v-card border rounded="lg" class="pa-4 bg-white">
         <div class="d-flex align-center justify-space-between mb-3 border-b pb-2">
           <div class="d-flex align-center ga-2">
@@ -1200,46 +1301,155 @@
             </div>
           </div>
 
-          <!-- Scenario Preview Card if picture generated -->
+          <!-- Scenario Preview & Guiding Questions Editor -->
           <div v-if="newAsgImageUrl" class="pa-3 border rounded-lg bg-grey-lighten-5 mb-3">
             <div class="d-flex align-center justify-space-between mb-2">
               <span class="text-caption font-weight-black text-purple-darken-3 d-flex align-center ga-1">
                 <v-icon size="x-small" color="purple-darken-3">mdi-check-circle</v-icon>
-                <span>GENERATED SCENARIO PREVIEW</span>
+                <span>GENERATED SCENARIO & QUESTION EDITOR</span>
               </span>
-              <v-chip size="x-small" color="purple" variant="tonal" class="font-weight-bold">
-                60s Time Limit
-              </v-chip>
-            </div>
-
-            <div class="d-flex ga-3 flex-column flex-sm-row mb-2">
-              <v-img
-                :src="newAsgImageUrl"
-                height="120"
-                width="180"
-                cover
-                class="rounded border bg-white flex-shrink-0"
-              />
-              <div class="flex-grow-1">
-                <v-textarea
-                  v-model="newAsgGuidingQuestionsText"
-                  label="Guiding Questions (1 per line):"
-                  rows="3"
-                  variant="outlined"
-                  density="compact"
-                  class="mb-1 text-caption"
-                  hide-details
-                />
+              <div class="d-flex align-center ga-1">
+                <span class="text-caption font-weight-bold text-grey-darken-1 mr-1">Time Limit:</span>
+                <v-chip-group v-model="newAsgTimeLimit" mandatory color="purple-darken-2" class="py-0">
+                  <v-chip :value="45" size="x-small" filter>45s</v-chip>
+                  <v-chip :value="60" size="x-small" filter>60s</v-chip>
+                  <v-chip :value="90" size="x-small" filter>90s</v-chip>
+                </v-chip-group>
               </div>
             </div>
 
+            <!-- Helpful Guidance Banner for Lecturer -->
+            <div class="d-flex align-center ga-2 pa-2 mb-3 rounded bg-purple-lighten-5 border border-purple-lighten-4">
+              <v-icon color="purple-darken-2" size="small">mdi-lightbulb-on-outline</v-icon>
+              <div class="text-caption text-purple-darken-4 font-weight-medium" style="line-height: 1.3;">
+                Review and customize the AI-generated questions below before assigning. You can edit wording, remove questions, or add custom ones.
+              </div>
+            </div>
+
+            <div class="d-flex ga-3 flex-column flex-sm-row mb-3">
+              <div class="flex-shrink-0 text-center">
+                <v-img
+                  :src="newAsgImageUrl"
+                  height="120"
+                  width="180"
+                  cover
+                  class="rounded border bg-white mx-auto"
+                />
+                <v-btn
+                  size="x-small"
+                  variant="text"
+                  color="purple-darken-2"
+                  prepend-icon="mdi-refresh"
+                  class="text-none mt-1"
+                  :loading="isGeneratingAsgPicture"
+                  @click="generateAIPictureScenario"
+                >
+                  Regenerate
+                </v-btn>
+              </div>
+
+              <!-- Question Mode & Editor -->
+              <div class="flex-grow-1">
+                <div class="d-flex align-center justify-space-between mb-2">
+                  <span class="text-caption font-weight-bold text-grey-darken-3">
+                    Guiding Questions ({{ newAsgGuidingQuestionsList.length }}):
+                  </span>
+                  <div class="d-flex align-center ga-1">
+                    <v-btn
+                      size="x-small"
+                      :variant="newAsgQuestionsMode === 'list' ? 'flat' : 'text'"
+                      :color="newAsgQuestionsMode === 'list' ? 'purple-darken-2' : 'grey'"
+                      class="text-none font-weight-bold"
+                      @click="newAsgQuestionsMode = 'list'"
+                    >
+                      Question List
+                    </v-btn>
+                    <v-btn
+                      size="x-small"
+                      :variant="newAsgQuestionsMode === 'bulk' ? 'flat' : 'text'"
+                      :color="newAsgQuestionsMode === 'bulk' ? 'purple-darken-2' : 'grey'"
+                      class="text-none font-weight-bold"
+                      @click="syncNewAsgQuestionsToText(); newAsgQuestionsMode = 'bulk'"
+                    >
+                      Bulk Text
+                    </v-btn>
+                  </div>
+                </div>
+
+                <!-- Mode A: Interactive List with Individual Inputs -->
+                <div v-if="newAsgQuestionsMode === 'list'">
+                  <div
+                    v-for="(q, idx) in newAsgGuidingQuestionsList"
+                    :key="idx"
+                    class="d-flex align-center ga-1 mb-2"
+                  >
+                    <v-chip
+                      size="small"
+                      color="purple-darken-2"
+                      variant="flat"
+                      class="font-weight-bold flex-shrink-0"
+                      style="min-width: 38px; justify-content: center;"
+                    >
+                      Q{{ idx + 1 }}
+                    </v-chip>
+                    <v-text-field
+                      v-model="newAsgGuidingQuestionsList[idx]"
+                      placeholder="Enter question for students..."
+                      variant="outlined"
+                      density="compact"
+                      hide-details
+                      class="flex-grow-1 bg-white text-caption"
+                      @input="syncNewAsgQuestionsToText"
+                    />
+                    <v-btn
+                      icon="mdi-trash-can-outline"
+                      size="x-small"
+                      color="error"
+                      variant="text"
+                      title="Delete Question"
+                      :disabled="newAsgGuidingQuestionsList.length <= 1"
+                      @click="removeNewAsgQuestion(idx)"
+                    />
+                  </div>
+
+                  <v-btn
+                    size="x-small"
+                    variant="tonal"
+                    color="purple-darken-2"
+                    prepend-icon="mdi-plus"
+                    class="text-none font-weight-bold mt-1"
+                    @click="addNewAsgQuestion"
+                  >
+                    Add Question
+                  </v-btn>
+                </div>
+
+                <!-- Mode B: Bulk Text (1 per line) -->
+                <div v-else>
+                  <v-textarea
+                    v-model="newAsgGuidingQuestionsText"
+                    label="Questions (1 per line):"
+                    rows="4"
+                    variant="outlined"
+                    density="compact"
+                    class="mb-1 text-caption bg-white"
+                    hide-details
+                    @input="syncNewAsgQuestionsFromText"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Target Keywords -->
             <v-text-field
               v-model="newAsgTargetKeywordsText"
-              label="Target Keywords (comma-separated):"
+              label="Target Keywords / Collocations (comma-separated):"
+              placeholder="e.g. airport terminal, flight departure, travelers, boarding gate"
               variant="outlined"
               density="compact"
               hide-details
               class="bg-white text-caption"
+              prepend-inner-icon="mdi-tag-multiple-outline"
             />
           </div>
         </div>
@@ -1844,10 +2054,33 @@ const newAsgSentence = ref('')
 const newAsgPictureTopic = ref('')
 const newAsgImageUrl = ref('')
 const newAsgGuidingQuestionsText = ref('')
+const newAsgGuidingQuestionsList = ref([])
+const newAsgTimeLimit = ref(60)
+const newAsgQuestionsMode = ref('list')
 const newAsgTargetKeywordsText = ref('')
 const isGeneratingAsgPicture = ref(false)
 const newAsgDueDate = ref('')
 const isCreatingAsg = ref(false)
+
+const syncNewAsgQuestionsFromText = () => {
+  newAsgGuidingQuestionsList.value = newAsgGuidingQuestionsText.value
+    ? newAsgGuidingQuestionsText.value.split('\n').map(q => q.trim()).filter(Boolean)
+    : []
+}
+
+const syncNewAsgQuestionsToText = () => {
+  newAsgGuidingQuestionsText.value = newAsgGuidingQuestionsList.value.join('\n')
+}
+
+const addNewAsgQuestion = () => {
+  newAsgGuidingQuestionsList.value.push('')
+  syncNewAsgQuestionsToText()
+}
+
+const removeNewAsgQuestion = (index) => {
+  newAsgGuidingQuestionsList.value.splice(index, 1)
+  syncNewAsgQuestionsToText()
+}
 
 const teacherTopicIdeas = [
   'Hospital Emergency Hallway',
@@ -1895,6 +2128,7 @@ const handleTeacherUploadImageChange = async (e) => {
         newAsgTitle.value = data.title || `Describe the Picture: ${topic}`
       }
       if (Array.isArray(data.guiding_questions)) {
+        newAsgGuidingQuestionsList.value = [...data.guiding_questions]
         newAsgGuidingQuestionsText.value = data.guiding_questions.join('\n')
       }
       if (Array.isArray(data.keywords)) {
@@ -1937,6 +2171,7 @@ const generateAIPictureScenario = async () => {
         newAsgTitle.value = data.title || `Describe the Picture: ${topic}`
       }
       if (Array.isArray(data.guiding_questions)) {
+        newAsgGuidingQuestionsList.value = [...data.guiding_questions]
         newAsgGuidingQuestionsText.value = data.guiding_questions.join('\n')
       }
       if (Array.isArray(data.keywords)) {
@@ -2081,31 +2316,65 @@ const submitRemoveStudent = async () => {
   }
 }
 
+const editAsgImageUrl = ref('')
+const editAsgGuidingQuestionsList = ref([])
+const editAsgTargetKeywordsText = ref('')
+const editAsgTimeLimit = ref(60)
+
+const addEditAsgQuestion = () => {
+  editAsgGuidingQuestionsList.value.push('')
+}
+
+const removeEditAsgQuestion = (index) => {
+  editAsgGuidingQuestionsList.value.splice(index, 1)
+}
+
 const openEditAssignmentModal = (asg) => {
   editingAsg.value = asg
-  editAsgTitle.value = asg.title
-  editAsgSentence.value = asg.topic_sentence
+  editAsgTitle.value = asg.title || ''
+  editAsgSentence.value = asg.topic_sentence || ''
   editAsgDueDate.value = asg.due_date || ''
+  editAsgImageUrl.value = asg.image_url || ''
+  editAsgTimeLimit.value = asg.time_limit_seconds || 60
+  
+  const gq = Array.isArray(asg.guiding_questions) ? asg.guiding_questions : []
+  editAsgGuidingQuestionsList.value = gq.length > 0 ? [...gq] : ['What is the primary subject in this scene?']
+  
+  const tk = Array.isArray(asg.target_keywords) ? asg.target_keywords : []
+  editAsgTargetKeywordsText.value = tk.join(', ')
+  
   showEditAssignmentModal.value = true
 }
 
 const submitEditAssignment = async () => {
   if (!editingAsg.value || !editAsgTitle.value.trim()) return
+  const isPicture = editingAsg.value.assignment_type === 'picture'
   isUpdatingAsg.value = true
   try {
+    const payload = {
+      title: editAsgTitle.value.trim(),
+      topic_sentence: editAsgSentence.value.trim(),
+      due_date: editAsgDueDate.value.trim()
+    }
+    if (isPicture) {
+      payload.assignment_type = 'picture'
+      payload.image_url = editAsgImageUrl.value.trim()
+      payload.guiding_questions = editAsgGuidingQuestionsList.value.map(q => q.trim()).filter(Boolean)
+      payload.target_keywords = editAsgTargetKeywordsText.value.split(',').map(k => k.trim()).filter(Boolean)
+      payload.time_limit_seconds = Number(editAsgTimeLimit.value) || 60
+    }
     const res = await fetch(`${props.backendUrl}/api/assignments/${editingAsg.value.id}/update`, {
       method: 'POST',
       headers: getTeacherAuthHeaders(),
-      body: JSON.stringify({
-        title: editAsgTitle.value.trim(),
-        topic_sentence: editAsgSentence.value.trim(),
-        due_date: editAsgDueDate.value.trim()
-      })
+      body: JSON.stringify(payload)
     })
     if (res.ok) {
       showEditAssignmentModal.value = false
       notify('Assignment updated successfully!', 'success')
       await selectClass(selectedClassId.value)
+    } else {
+      const errData = await res.json().catch(() => ({}))
+      notify('Failed to update assignment: ' + (errData.detail || 'Unknown error'), 'error', 'mdi-alert-circle')
     }
   } catch (err) {
     notify('Failed to update assignment: ' + err.message, 'error', 'mdi-alert-circle')
@@ -2454,9 +2723,9 @@ const submitCreateAssignment = async () => {
   }
   isCreatingAsg.value = true
   try {
-    const gQuestions = newAsgGuidingQuestionsText.value
-      ? newAsgGuidingQuestionsText.value.split('\n').map(q => q.trim()).filter(Boolean)
-      : []
+    const gQuestions = newAsgGuidingQuestionsList.value.length > 0
+      ? newAsgGuidingQuestionsList.value.map(q => q.trim()).filter(Boolean)
+      : (newAsgGuidingQuestionsText.value ? newAsgGuidingQuestionsText.value.split('\n').map(q => q.trim()).filter(Boolean) : [])
     const tKeywords = newAsgTargetKeywordsText.value
       ? newAsgTargetKeywordsText.value.split(',').map(k => k.trim()).filter(Boolean)
       : []
@@ -2474,7 +2743,7 @@ const submitCreateAssignment = async () => {
         image_url: newAsgImageUrl.value.trim(),
         guiding_questions: gQuestions,
         target_keywords: tKeywords,
-        time_limit_seconds: 60
+        time_limit_seconds: isPicture ? (Number(newAsgTimeLimit.value) || 60) : 60
       })
     })
     if (res.ok) {
@@ -2483,6 +2752,7 @@ const submitCreateAssignment = async () => {
       newAsgPictureTopic.value = ''
       newAsgImageUrl.value = ''
       newAsgGuidingQuestionsText.value = ''
+      newAsgGuidingQuestionsList.value = []
       newAsgTargetKeywordsText.value = ''
       newAsgDueDate.value = ''
       showCreateAssignmentModal.value = false
