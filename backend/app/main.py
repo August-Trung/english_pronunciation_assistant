@@ -6927,6 +6927,7 @@ def api_create_picture_scenario(req: CreatePictureScenarioRequest):
         scenario_id = cursor.lastrowid
         conn.commit()
         scenario["scenario_id"] = scenario_id
+        scenario["topic"] = req.topic or scenario.get("topic", "Daily Life")
         return {"status": "success", **scenario}
     finally:
         conn.close()

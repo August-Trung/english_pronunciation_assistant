@@ -1230,6 +1230,7 @@ def generate_picture_scenario(
     )
     
     return {
+        "topic": clean_topic,
         "title": title,
         "image_url": image_url,
         "fallback_image_url": fallback_image_url,
