@@ -82,13 +82,20 @@
           <div>
             <div class="d-flex align-center justify-space-between mb-2">
               <v-chip size="x-small" color="primary" variant="tonal" class="font-weight-black text-uppercase">
-                {{ currentScenario.topic || 'Daily Life' }}
+                {{ currentScenario.topic || 'General Practice' }}
               </v-chip>
-              <span class="text-caption text-grey">Scenario #{{ currentScenario.scenario_id }}</span>
+              <span class="text-caption text-grey font-weight-medium">Scenario #{{ currentScenario.scenario_id || currentScenario.id || 1 }}</span>
             </div>
 
-            <div class="text-h6 font-weight-black text-grey-darken-4 mb-2">
+            <div class="text-h6 font-weight-black text-grey-darken-4 mb-1">
               {{ currentScenario.title }}
+            </div>
+
+            <!-- Clearly Display User's Input Prompt / Topic -->
+            <div v-if="currentScenario.topic" class="d-flex align-center ga-1 mb-3 text-caption text-grey-darken-2 bg-grey-lighten-4 px-2 py-1 rounded border">
+              <v-icon size="x-small" color="primary">mdi-message-text-outline</v-icon>
+              <span class="text-grey font-weight-medium">Your Prompt / Topic:</span>
+              <strong class="text-grey-darken-4 font-weight-bold">"{{ currentScenario.topic }}"</strong>
             </div>
 
             <!-- Picture Image Canvas with Hover Zoom -->
@@ -580,7 +587,7 @@ const getImageUrl = (url) => {
 const currentScenarioImage = computed(() => {
   const rawUrl = currentScenario.value?.image_url
   if (imageFailed.value || !rawUrl) {
-    return currentScenario.value?.fallback_image_url || 'https://images.unsplash.com/photo-1510312305653-8ed496efae75?auto=format&fit=crop&w=1000&q=80'
+    return currentScenario.value?.fallback_image_url || 'https://images.unsplash.com/photo-1534567153574-2b12153a87f0?auto=format&fit=crop&w=1000&q=80'
   }
   return getImageUrl(rawUrl)
 })

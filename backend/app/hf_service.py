@@ -625,7 +625,7 @@ GROUNDED_PHOTO_CATALOG = {
     ],
     "zoo": [
         {
-            "url": "https://images.unsplash.com/photo-1543372742-e7d0b9947a2b?auto=format&fit=crop&w=1000&q=80",
+            "url": "https://images.unsplash.com/photo-1534567153574-2b12153a87f0?auto=format&fit=crop&w=1000&q=80",
             "title": "A Visit to the Zoo Wildlife Habitat",
             "elements": "Two tall giraffes standing gracefully in an outdoor savanna enclosure surrounded by leafy acacia trees, a protective wooden fence, and zoo visitors observing the animals under bright daylight.",
             "has_people": True,
