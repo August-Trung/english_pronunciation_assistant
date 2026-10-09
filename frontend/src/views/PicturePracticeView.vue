@@ -112,6 +112,25 @@
               </div>
             </div>
 
+            <!-- Guiding Questions Section (Dynamic) -->
+            <div v-if="currentScenario?.guiding_questions?.length" class="mb-3">
+              <div class="text-caption font-weight-black text-grey-darken-3 mb-2 d-flex align-center ga-1">
+                <v-icon size="x-small" color="primary">mdi-help-circle-outline</v-icon>
+                <span>GUIDING QUESTIONS:</span>
+              </div>
+              <div class="d-flex flex-column ga-2">
+                <div
+                  v-for="(q, idx) in currentScenario.guiding_questions"
+                  :key="idx"
+                  class="bg-grey-lighten-5 pa-3 rounded-lg border text-caption text-grey-darken-3 d-flex align-start ga-2"
+                >
+                  <v-chip size="x-small" color="primary" variant="flat" class="font-weight-black flex-shrink-0 mt-0">
+                    Q{{ idx + 1 }}
+                  </v-chip>
+                  <span class="font-weight-medium line-height-normal">{{ q }}</span>
+                </div>
+              </div>
+            </div>
 
             <!-- Target Keywords Checklist -->
             <div>
