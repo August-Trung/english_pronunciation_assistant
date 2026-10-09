@@ -166,6 +166,34 @@ def call_llm(messages: List[Dict[str, str]], json_mode: bool = True) -> str:
 
     return "[]"
 
+def call_llm_json_with_retry(
+    messages: List[Dict[str, str]],
+    required_keys: Optional[List[str]] = None,
+    max_retries: int = 2
+) -> Dict[str, Any]:
+    """Call LLM with a strictly bounded retry count (max_retries=2) to guarantee complete JSON extraction."""
+    if required_keys is None:
+        required_keys = ["title", "guiding_questions", "keywords"]
+    
+    last_valid_data = {}
+    for attempt in range(max_retries):
+        try:
+            content = call_llm(messages, json_mode=True)
+            data = parse_json_safely(content)
+            if isinstance(data, dict):
+                last_valid_data = data
+                has_questions = isinstance(data.get("guiding_questions"), list) and len(data.get("guiding_questions")) >= 3
+                has_keywords = isinstance(data.get("keywords"), list) and len(data.get("keywords")) >= 3
+                has_title = bool(str(data.get("title", "")).strip())
+                
+                if has_questions and has_keywords and has_title:
+                    return data
+                logger.warning(f"LLM JSON missing required fields on attempt {attempt + 1}/{max_retries}. Retrying...")
+        except Exception as e:
+            logger.warning(f"call_llm attempt {attempt + 1}/{max_retries} error: {e}")
+            
+    return last_valid_data
+
 def get_theme_palette(topic_str: str) -> Dict[str, str]:
     t = (topic_str or "").lower()
     if any(k in t for k in ["science", "lab", "tech", "computer", "research", "digital", "data"]):
@@ -1078,33 +1106,33 @@ def generate_picture_scenario(
             "5. sample_response: Natural Band 8+ model speech (70-90 words) describing the scene. "
             "Return ONLY a valid JSON object with 'title', 'visual_description', 'guiding_questions', 'keywords', 'sample_response'."
         )
-        content = call_llm([
+        data = call_llm_json_with_retry([
             {"role": "system", "content": sys_prompt},
             {"role": "user", "content": f"Topic: {clean_topic}. Level: {level}. Return JSON."}
-        ], json_mode=True)
-        data = parse_json_safely(content) or {}
+        ], required_keys=["title", "guiding_questions", "keywords"], max_retries=2)
         
         title = str(data.get("title", "")).strip() or f"Describing {clean_topic}"
         guiding_questions = data.get("guiding_questions")
         if not isinstance(guiding_questions, list) or len(guiding_questions) < 3:
             guiding_questions = [
-                "Where does this scene take place and what is the overall atmosphere?",
-                "Who is in the picture and what specific actions are they performing?",
-                "What prominent objects, colors, or background details can you see?",
-                "What feelings or impressions does this photograph convey to you?"
+                f"What details in this scene highlight the theme of {clean_topic}?",
+                f"Who or what are the primary subjects related to {clean_topic}, and what specific activities are they doing?",
+                f"What key objects, colors, and background elements specifically characterize this {clean_topic} scene?",
+                f"What atmosphere, emotions, or message about {clean_topic} does this picture convey to the viewer?"
             ]
         keywords = data.get("keywords")
         if not isinstance(keywords, list) or len(keywords) < 3:
-            keywords = ["foreground", "background", "setting", "activity", "atmosphere"]
+            keywords = [clean_topic.lower(), f"{clean_topic.lower()} setting", "foreground details", "background", "atmosphere"]
             
         sample_response = str(data.get("sample_response", "")).strip() or (
-            f"In this picture, we can observe a scene related to {clean_topic}. "
-            "In the foreground, the main subjects are actively engaged in their tasks. "
-            "The background shows a well-organized setting with clear details. "
-            "Overall, the photograph conveys a positive and dynamic atmosphere."
+            f"In this picture, we can observe an engaging scene related to {clean_topic}. "
+            "In the foreground, the main subjects are actively involved in the setting. "
+            "The surrounding environment shows clear visual context with distinctive details. "
+            f"Overall, the photograph provides a vivid portrayal of {clean_topic}."
         )
         
         return {
+            "topic": clean_topic,
             "title": title,
             "image_url": image_url,
             "fallback_image_url": resolve_scene_photo(clean_topic, title),
@@ -1135,29 +1163,28 @@ def generate_picture_scenario(
             "5. 'sample_response': Band 8+ model speech (70-90 words). "
             "Return ONLY a valid JSON object with 'title', 'visual_description', 'guiding_questions', 'keywords', 'sample_response'."
         )
-        content = call_llm([
+        data = call_llm_json_with_retry([
             {"role": "system", "content": sys_prompt},
             {"role": "user", "content": f"Topic: '{clean_topic}'. Level: '{level}'. Return JSON."}
-        ], json_mode=True)
-        data = parse_json_safely(content) or {}
+        ], required_keys=["title", "guiding_questions", "keywords"], max_retries=2)
         
         title = str(data.get("title", "")).strip() or f"Scene: {clean_topic}"
         guiding_questions = data.get("guiding_questions")
         if not isinstance(guiding_questions, list) or len(guiding_questions) < 3:
             guiding_questions = [
-                f"What is the general location and setting shown in this picture?",
-                f"What people or subjects are visible and what are they doing?",
-                f"What prominent objects or background features stand out to you?",
-                f"What overall mood or impression does this scene convey?"
+                f"Where does this {clean_topic} scene take place and what is the overall atmosphere?",
+                f"What people or subjects are engaged in {clean_topic} activities in this picture?",
+                f"What specific objects, equipment, or surroundings characterize this {clean_topic} setting?",
+                f"What feelings or overall impression of {clean_topic} does this moment communicate?"
             ]
         keywords = data.get("keywords")
         if not isinstance(keywords, list) or len(keywords) < 3:
-            keywords = ["setting", "foreground", "background", "interaction", "atmosphere"]
+            keywords = [clean_topic.lower(), f"{clean_topic.lower()} environment", "key subjects", "action details", "overall mood"]
             
         sample_response = str(data.get("sample_response", "")).strip() or (
             f"This photograph presents a realistic view of {title}. "
-            f"{str(data.get('visual_description', ''))} "
-            "Overall, it provides a vivid depiction of daily life."
+            f"{str(data.get('visual_description', f'The picture captures an authentic moment focused on {clean_topic}.'))} "
+            f"Overall, it provides a vivid depiction of {clean_topic} in real life."
         )
         
         return {
@@ -1191,12 +1218,10 @@ def generate_picture_scenario(
     )
     user_prompt = f"User Topic / Prompt: '{clean_topic}'. Level: '{level}'. Return JSON."
 
-    content = call_llm([
+    data = call_llm_json_with_retry([
         {"role": "system", "content": sys_prompt},
         {"role": "user", "content": user_prompt}
-    ], json_mode=True)
-    
-    data = parse_json_safely(content) or {}
+    ], required_keys=["title", "guiding_questions", "keywords", "image_gen_prompt"], max_retries=2)
     
     title = str(data.get("title", "")).strip() or f"Picture Speaking: {clean_topic}"
     visual_description = str(data.get("visual_description", "")).strip() or f"A realistic scene depicting {clean_topic}."
@@ -1213,20 +1238,20 @@ def generate_picture_scenario(
     guiding_questions = data.get("guiding_questions")
     if not isinstance(guiding_questions, list) or len(guiding_questions) < 3:
         guiding_questions = [
-            f"Where does this scene take place and what is the overall atmosphere?",
-            f"What subjects or people are featured and what specific activities are they doing?",
-            f"What objects, colors, or background details stand out in this picture?",
-            f"What feelings or impressions does this moment convey to the viewer?"
+            f"Where does this {clean_topic} scene take place and what visual setting is portrayed?",
+            f"What subjects or individuals are involved in {clean_topic}, and what are their actions?",
+            f"What distinctive objects, colors, and background features stand out in this {clean_topic} picture?",
+            f"What overall impressions and feelings regarding {clean_topic} does this picture evoke?"
         ]
         
     keywords = data.get("keywords")
     if not isinstance(keywords, list) or len(keywords) < 3:
-        keywords = ["setting", "foreground", "background", "interaction", "atmosphere"]
+        keywords = [clean_topic.lower(), f"{clean_topic.lower()} visual", "main subjects", "surroundings", "overall atmosphere"]
         
     sample_response = str(data.get("sample_response", "")).strip() or (
         f"In this picture, we can see a vibrant scene illustrating {title}. "
         f"{visual_description} "
-        "Overall, the image presents a clear, engaging moment with distinctive details."
+        f"Overall, the image presents a clear, engaging portrayal of {clean_topic} with distinctive details."
     )
     
     return {
