@@ -181,31 +181,16 @@
                 <v-icon color="primary" size="small">mdi-microphone</v-icon>
                 <span class="text-subtitle-2 font-weight-black text-grey-darken-4">Speaking Studio</span>
               </div>
-
-              <!-- Exam Mode Toggle -->
-              <div class="d-flex align-center ga-1">
-                <v-switch
-                  v-model="isExamMode"
-                  color="warning"
-                  density="compact"
-                  hide-details
-                  label="Exam Mode (45s TOEIC)"
-                  class="font-weight-bold text-caption"
-                />
-                <v-tooltip location="top" text="Simulate TOEIC Speaking Q3-4: Strict 45s countdown with automatic cutoff at 0s. Turn OFF for relaxed untimed practice.">
-                  <template #activator="{ props: tooltipProps }">
-                    <v-icon v-bind="tooltipProps" size="small" color="grey-darken-1" class="cursor-pointer">
-                      mdi-help-circle-outline
-                    </v-icon>
-                  </template>
-                </v-tooltip>
-              </div>
+              <v-chip size="x-small" color="primary" variant="tonal" class="font-weight-bold">
+                <v-icon start size="x-small">mdi-timer-outline</v-icon>
+                Pacing: 45s – 60s
+              </v-chip>
             </div>
 
             <!-- Stopwatch Digital Display & Pacing Indicator -->
             <div class="text-center py-6 bg-grey-lighten-5 rounded-lg border mb-4">
               <div class="text-h3 font-weight-black font-mono tracking-tight mb-2" :class="timerColorClass">
-                {{ formatTime(displaySeconds) }}
+                {{ formatTime(elapsedSeconds) }}
               </div>
 
               <!-- Pacing Advice Pill -->
@@ -679,54 +664,31 @@ const formattedQuestions = computed(() => {
 
 // Recording & Stopwatch State
 const isRecording = ref(false)
-const isExamMode = ref(false)
 const elapsedSeconds = ref(0)
-const remainingExamSeconds = ref(45)
 let timerInterval = null
 let mediaRecorder = null
 let recordedAudioChunks = []
 
-const displaySeconds = computed(() => {
-  return isExamMode.value ? remainingExamSeconds.value : elapsedSeconds.value
-})
-
 const timerColorClass = computed(() => {
   if (!isRecording.value) return 'text-grey-darken-3'
-  if (isExamMode.value) {
-    return remainingExamSeconds.value <= 10 ? 'text-error' : 'text-primary'
-  }
   if (elapsedSeconds.value < 30) return 'text-amber-darken-3'
   if (elapsedSeconds.value <= 65) return 'text-success'
   return 'text-primary'
 })
 
 const pacingBadge = computed(() => {
-  if (isExamMode.value) {
-    if (!isRecording.value) {
-      return {
-        label: 'Exam Mode Active • 45s Real TOEIC Countdown',
-        color: 'warning',
-        icon: 'mdi-timer-sand'
-      }
-    }
-    return {
-      label: remainingExamSeconds.value > 0 ? `Exam: ${remainingExamSeconds.value}s left` : 'Time is up!',
-      color: remainingExamSeconds.value <= 10 ? 'error' : 'warning',
-      icon: 'mdi-timer-sand'
-    }
-  }
   if (!isRecording.value && elapsedSeconds.value === 0) {
     return {
-      label: 'Practice Mode • Untimed Stopwatch (Aim 45s - 60s)',
+      label: 'Ready to Record • Aim for 45s – 60s for full score',
       color: 'indigo',
       icon: 'mdi-timer-play-outline'
     }
   }
   if (elapsedSeconds.value < 30) {
-    return { label: 'Brief (< 30s) • Aim for 45s-60s for full score', color: 'amber-darken-2', icon: 'mdi-clock-outline' }
+    return { label: 'Brief (< 30s) • Aim for 45s – 60s for full score', color: 'amber-darken-2', icon: 'mdi-clock-outline' }
   }
   if (elapsedSeconds.value <= 65) {
-    return { label: 'Ideal Speaking Length (45s - 60s)', color: 'success', icon: 'mdi-check-circle' }
+    return { label: 'Ideal Speaking Length (45s – 60s)', color: 'success', icon: 'mdi-check-circle' }
   }
   return { label: 'Extended Talk (> 65s)', color: 'primary', icon: 'mdi-timer-outline' }
 })
@@ -850,17 +812,9 @@ const startRecording = async () => {
     mediaRecorder.start()
     isRecording.value = true
     elapsedSeconds.value = 0
-    remainingExamSeconds.value = 45
 
     timerInterval = setInterval(() => {
       elapsedSeconds.value++
-      if (isExamMode.value) {
-        if (remainingExamSeconds.value > 1) {
-          remainingExamSeconds.value--
-        } else {
-          stopRecording()
-        }
-      }
     }, 1000)
   } catch (err) {
     alert('Microphone access is required to practice speaking.')
@@ -966,7 +920,6 @@ const resetChallenge = () => {
   evaluationResult.value = null
   candidateTranscription.value = ''
   elapsedSeconds.value = 0
-  remainingExamSeconds.value = 45
 }
 
 onMounted(() => {
