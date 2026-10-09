@@ -112,33 +112,6 @@
               </div>
             </div>
 
-            <!-- 4-Step Pedagogical Guiding Questions Accordion -->
-            <div class="bg-blue-lighten-5 pa-3 rounded-lg border border-blue mb-3">
-              <div class="d-flex align-center justify-space-between mb-2">
-                <div class="text-caption font-weight-black text-blue-darken-3 d-flex align-center ga-1">
-                  <v-icon size="x-small" color="blue-darken-3">mdi-compass-outline</v-icon>
-                  <span>4-STEP SPEAKING FRAMEWORK:</span>
-                </div>
-                <span class="text-caption text-blue-darken-2 font-weight-medium">Overview → People → Details → Impressions</span>
-              </div>
-
-              <div class="d-flex flex-column ga-2">
-                <div
-                  v-for="(q, idx) in formattedQuestions"
-                  :key="idx"
-                  class="bg-white pa-2 rounded border border-blue-lighten-3"
-                >
-                  <div class="d-flex align-center ga-2 mb-1">
-                    <v-chip size="x-small" color="primary" variant="flat" class="font-weight-black">
-                      Step {{ idx + 1 }}: {{ q.step }}
-                    </v-chip>
-                  </div>
-                  <div class="text-caption text-grey-darken-3 font-weight-bold">
-                    {{ q.text }}
-                  </div>
-                </div>
-              </div>
-            </div>
 
             <!-- Target Keywords Checklist -->
             <div>
@@ -249,7 +222,7 @@
               </div>
 
               <div class="text-caption text-grey text-center max-width-400">
-                Tip: Follow the 4-step framework on the left. Describe overall scene first, then actions, specific objects, and your impression.
+                Tip: Describe the setting, actions, key objects, and your overall impression of the picture.
               </div>
             </div>
           </div>
@@ -647,20 +620,6 @@ const clearUploadedFile = () => {
   if (fileInputRef.value) fileInputRef.value.value = ''
 }
 
-// 4-Step Framework Question Formatter
-const formattedQuestions = computed(() => {
-  const questions = currentScenario.value?.guiding_questions || []
-  const stepLabels = [
-    'Overview (Setting & Weather)',
-    'People & Actions (Who & Activities)',
-    'Details & Setting (Objects & Surroundings)',
-    'Impressions (Feelings & Atmosphere)'
-  ]
-  return questions.map((q, idx) => ({
-    step: stepLabels[idx] || `Step ${idx + 1}`,
-    text: q
-  }))
-})
 
 // Recording & Stopwatch State
 const isRecording = ref(false)
