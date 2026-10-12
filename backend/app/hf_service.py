@@ -1080,15 +1080,15 @@ def generate_vocabulary_image(word: str, context: str = "", output_dir: Optional
     return resolve_scene_photo(topic=context, title=word)
 
 def generate_flux_image_hf(prompt: str, seed: Optional[int] = None) -> Optional[str]:
-    """Generate high-fidelity photorealistic image via HuggingFace FLUX.1-schnell space.
-    Produces authentic 35mm photography with realistic human faces, eyes, and skin.
+    """Generate charming, vibrant 3D animation style image via HuggingFace FLUX.1-schnell space.
+    Produces friendly Pixar/Disney inspired 3D characters and scenes with rich colors and zero creepy distortions.
     """
     if seed is None:
         seed = random.randint(1000, 999999)
         
     clean_p = re.sub(r'[^a-zA-Z0-9\s,.-]', '', prompt).strip()
-    if not any(k in clean_p.lower() for k in ["photograph", "candid", "natural lighting", "shot"]):
-        clean_p = f"A candid 35mm photograph of {clean_p}, natural lighting, sharp focus, authentic documentary photography, Kodak Portra colors"
+    if not any(k in clean_p.lower() for k in ["pixar", "disney", "animation", "3d render", "cartoon", "illustration"]):
+        clean_p = f"Charming and colorful {clean_p}, cute 3D animation style, Pixar Disney inspired 3D digital art, cheerful expressive characters, vibrant warm colors, clear sunny lighting, high quality 3D render"
         
     url = "https://black-forest-labs-flux-1-schnell.hf.space/gradio_api/call/infer"
     payload = {
@@ -1117,7 +1117,7 @@ def generate_flux_image_hf(prompt: str, seed: Optional[int] = None) -> Optional[
                             if isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict):
                                 img_url = data[0].get("url")
                                 if img_url:
-                                    logger.info(f"FLUX image successfully generated via HF Space: {img_url}")
+                                    logger.info(f"FLUX 3D image successfully generated via HF Space: {img_url}")
                                     return img_url
     except Exception as e:
         logger.warning(f"HuggingFace FLUX generation notice: {e}")
@@ -1137,7 +1137,7 @@ def generate_picture_scenario(
     if mode == "upload" and custom_image_url:
         image_url = custom_image_url
         sys_prompt = (
-            "You are an expert IELTS and TOEIC Speaking Examiner. "
+            "You are an expert English Speaking Examiner for K-12 students. "
             f"The candidate is practicing with an uploaded picture on the topic: '{clean_topic}'. "
             "Formulate: "
             "1. title: Engaging title for this scene. "
@@ -1148,7 +1148,7 @@ def generate_picture_scenario(
             "   Q3 (Details & Surroundings: objects/foreground/background), "
             "   Q4 (Impressions: emotional tone/atmosphere). "
             "4. keywords: Array of 5 target vocabulary words/collocations for this scene. "
-            "5. sample_response: Natural Band 8+ model speech (70-90 words) describing the scene. "
+            "5. sample_response: Natural Band 7-8 model speech (70-90 words) describing the scene. "
             "Return ONLY a valid JSON object with 'title', 'visual_description', 'guiding_questions', 'keywords', 'sample_response'."
         )
         data = call_llm_json_with_retry([
@@ -1173,7 +1173,7 @@ def generate_picture_scenario(
             f"In this picture, we can observe an engaging scene related to {clean_topic}. "
             "In the foreground, the main subjects are actively involved in the setting. "
             "The surrounding environment shows clear visual context with distinctive details. "
-            f"Overall, the photograph provides a vivid portrayal of {clean_topic}."
+            f"Overall, the picture provides a vivid portrayal of {clean_topic}."
         )
         
         return {
@@ -1190,26 +1190,26 @@ def generate_picture_scenario(
             "suggested_time_seconds": 60
         }
 
-    # Mode 2: Search Authentic Photography (Dynamic Real-Life Scene Generation)
+    # Mode 2: Search Authentic Photography / Vibrant 3D Visuals
     if mode == "search":
-        photo_prompt = f"Authentic realistic 35mm documentary photograph of {clean_topic}, real life scene, natural daylight, candid capture, sharp focus on subjects, Kodak Portra colors"
+        photo_prompt = f"Charming and vibrant {clean_topic}, cute 3D animation style, Pixar Disney inspired 3D render, cheerful expressive characters, colorful environment, warm sunny lighting, high quality 3D digital art"
         seed = random.randint(10000, 999999)
         clean_search_prompt = re.sub(r'[^a-zA-Z0-9\s,.-]', '', photo_prompt)
         
-        # Primary: HuggingFace FLUX.1-schnell photorealism
+        # Primary: HuggingFace FLUX.1-schnell 3D Pixar
         image_url = generate_flux_image_hf(clean_search_prompt, seed=seed)
         if not image_url:
             image_url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(clean_search_prompt)}?width=1024&height=680&nologo=true&seed={seed}&model=flux"
         
         sys_prompt = (
-            "You are an expert IELTS and TOEIC Speaking Examiner. "
-            f"The candidate wants to practice describing an authentic real-world scene on the topic: '{clean_topic}'. "
-            "Formulate an authentic speaking challenge strictly grounded in this real-life scene: "
-            "1. 'title': Engaging descriptive title for this photo scene. "
-            "2. 'visual_description': Vivid 2-sentence description of the photograph scene. "
+            "You are an expert English Speaking Examiner for primary, secondary, and high school students. "
+            f"The candidate wants to practice describing a cheerful scene on the topic: '{clean_topic}'. "
+            "Formulate an authentic speaking challenge strictly grounded in this scene: "
+            "1. 'title': Engaging descriptive title for this 3D animated scene. "
+            "2. 'visual_description': Vivid 2-sentence description of the 3D animated scene. "
             "3. 'guiding_questions': Array of 4 structured questions (Q1: General setting/weather, Q2: People/subjects & activities, Q3: Specific objects & background details, Q4: Overall mood & impression). "
             "4. 'keywords': Array of 5 target vocabulary words/collocations typical of this scene. "
-            "5. 'sample_response': Band 8+ model speech (70-90 words). "
+            "5. 'sample_response': Band 7-8 model speech (70-90 words). "
             "Return ONLY a valid JSON object with 'title', 'visual_description', 'guiding_questions', 'keywords', 'sample_response'."
         )
         data = call_llm_json_with_retry([
@@ -1231,8 +1231,8 @@ def generate_picture_scenario(
             keywords = [clean_topic.lower(), f"{clean_topic.lower()} environment", "key subjects", "action details", "overall mood"]
             
         sample_response = str(data.get("sample_response", "")).strip() or (
-            f"This photograph presents a realistic view of {title}. "
-            f"{str(data.get('visual_description', f'The picture captures an authentic moment focused on {clean_topic}.'))} "
+            f"This picture presents a delightful view of {title}. "
+            f"{str(data.get('visual_description', f'The picture captures an engaging moment focused on {clean_topic}.'))} "
             f"Overall, it provides a vivid depiction of {clean_topic} in real life."
         )
         
@@ -1249,22 +1249,24 @@ def generate_picture_scenario(
             "suggested_time_seconds": 60
         }
 
-    # Mode 3 (Default): Dynamic AI Image Generation with Prompt Grounding
+    # Mode 3 (Default): Dynamic AI 3D Animation Image Generation with Prompt Grounding (K-12 Friendly)
     sys_prompt = (
-        "You are an expert IELTS and TOEIC Speaking Examiner and prompt engineer. "
+        "You are an expert English Speaking Examiner and visual prompt designer for K-12 students (Primary, Secondary, and High School learners). "
         "The user wants to practice describing a picture based on their requested topic or prompt (which may be in English or Vietnamese). "
-        "First, understand their intent and create a vivid, realistic photographic scene. "
-        "PHOTOGRAPHY RULES FOR IMAGE PROMPT: "
-        "- For scenes with people/families: Frame as an authentic medium-shot candid photograph (natural daylight, genuine facial expressions, sharp focus, 35mm lens, Kodak Portra colors). Avoid crowded distant shots that cause distorted faces. "
-        "- For places/objects: Frame with natural depth of field, warm ambient lighting, high texture detail. "
+        "First, understand their intent and create a vivid, cheerful 3D animation scene tailored for English speaking practice. "
+        "VISUAL STYLE RULES FOR IMAGE PROMPT (K-12 FRIENDLY 3D ANIMATION): "
+        "- Style: Cute 3D animation style, Pixar and Disney inspired 3D digital art, cheerful and friendly characters with expressive big eyes and happy smiles. "
+        "- Composition: Well-defined characters standing or interacting clearly (no complex body overlaps or awkward carrying postures), colorful and distinct clothing (e.g. red hoodie, blue shirt, yellow cap). "
+        "- Environment: Bright sunny daytime lighting, rich vibrant colors, cute animals or distinct objects in foreground and background that are easy and fun for students to describe. "
+        "- Anatomy safety: Smooth 3D cartoon textures, clean proportions, avoiding realistic human flaws or uncanny distortions. "
         "Return a valid JSON object with: "
-        "1. 'title': Engaging English title for this picture scene. "
-        "2. 'visual_description': A vivid 2-sentence description of the physical image scene (photorealistic, natural lighting, detailing subjects, actions, and environment). "
-        "3. 'image_gen_prompt': A high-quality English photography prompt optimized for FLUX.1-schnell (e.g. 'A candid 35mm photograph of ..., natural daylight, Kodak Portra colors, sharp focus on facial expressions, authentic human interactions'). "
-        "4. 'search_keywords': 2-3 essential keywords for image search fallback (e.g. 'picnic park family'). "
-        "5. 'guiding_questions': Array of exactly 4 structured questions (Q1 Overview: setting/weather, Q2 People & Actions: subjects/interactions, Q3 Details & Surroundings: objects/foreground/background, Q4 Impressions: atmosphere/mood). "
-        "6. 'keywords': Array of 5 target vocabulary words/collocations physically present in this image. "
-        "7. 'sample_response': A natural Band 8+ model response (70-90 words) describing the scene. "
+        "1. 'title': Engaging English title for this scene. "
+        "2. 'visual_description': A vivid 2-sentence description of the 3D animated scene (detailing characters, clothing colors, actions, and colorful surroundings). "
+        "3. 'image_gen_prompt': A high-quality English 3D animation prompt optimized for FLUX.1-schnell (e.g. 'A charming scene of ..., cute 3D animation style, Pixar Disney inspired render, cheerful expressive characters, vibrant warm colors, clear sunny lighting, high quality 3D digital art'). "
+        "4. 'search_keywords': 2-3 essential keywords for image search fallback (e.g. 'zoo family animals 3d'). "
+        "5. 'guiding_questions': Array of exactly 4 structured questions suitable for students (Q1 Overview: setting/weather, Q2 Characters & Actions: who they are, what they are wearing and doing, Q3 Details & Surroundings: distinct objects/colors/animals in foreground & background, Q4 Impressions & Mood: cheerful atmosphere/emotions). "
+        "6. 'keywords': Array of 5 target vocabulary words/collocations clearly visible in this scene (e.g. colors, clothing, objects, animals). "
+        "7. 'sample_response': A natural Band 7-8 model response (70-90 words) describing the scene using clear, descriptive English suitable for learners. "
         "Return ONLY JSON."
     )
     user_prompt = f"User Topic / Prompt: '{clean_topic}'. Level: '{level}'. Return JSON."
@@ -1275,17 +1277,17 @@ def generate_picture_scenario(
     ], required_keys=["title", "guiding_questions", "keywords", "image_gen_prompt"], max_retries=2)
     
     title = str(data.get("title", "")).strip() or f"Picture Speaking: {clean_topic}"
-    visual_description = str(data.get("visual_description", "")).strip() or f"A realistic scene depicting {clean_topic}."
-    image_gen_prompt = str(data.get("image_gen_prompt", "")).strip() or f"A candid 35mm photograph of {clean_topic}, natural lighting, sharp focus on subjects, Kodak Portra colors"
+    visual_description = str(data.get("visual_description", "")).strip() or f"A delightful 3D animated scene depicting {clean_topic}."
+    image_gen_prompt = str(data.get("image_gen_prompt", "")).strip() or f"A charming scene of {clean_topic}, cute 3D animation style, Pixar Disney inspired render, cheerful expressive characters, vibrant colors, warm sunny lighting, high quality 3D digital art"
     search_keywords = str(data.get("search_keywords", clean_topic)).strip()
     
-    # Build dynamic AI image URL via HuggingFace FLUX.1-schnell
+    # Build dynamic AI image URL via HuggingFace FLUX.1-schnell 3D Pixar
     seed = random.randint(10000, 999999)
     clean_ai_prompt = re.sub(r'[^a-zA-Z0-9\s,.-]', '', image_gen_prompt)
     if not clean_ai_prompt.strip():
-        clean_ai_prompt = clean_topic
+        clean_ai_prompt = f"A charming scene of {clean_topic}, cute 3D animation style, Pixar Disney inspired render, cheerful characters, vibrant colors, high quality 3D digital art"
         
-    # Primary: HuggingFace FLUX.1-schnell
+    # Primary: HuggingFace FLUX.1-schnell 3D Pixar
     image_url = generate_flux_image_hf(clean_ai_prompt, seed=seed)
     if not image_url:
         image_url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(clean_ai_prompt)}?width=1024&height=680&nologo=true&seed={seed}&model=flux"
@@ -1293,18 +1295,18 @@ def generate_picture_scenario(
     guiding_questions = data.get("guiding_questions")
     if not isinstance(guiding_questions, list) or len(guiding_questions) < 3:
         guiding_questions = [
-            f"Where does this {clean_topic} scene take place and what visual setting is portrayed?",
-            f"What subjects or individuals are involved in {clean_topic}, and what are their actions?",
-            f"What distinctive objects, colors, and background features stand out in this {clean_topic} picture?",
-            f"What overall impressions and feelings regarding {clean_topic} does this picture evoke?"
+            f"Where does this {clean_topic} scene take place and what is the weather like?",
+            f"Who are the characters in the picture, what are they wearing and what are they doing?",
+            f"What colorful objects, details, or animals can you see in the foreground and background?",
+            f"What feelings or overall impression does this cheerful picture give you?"
         ]
         
     keywords = data.get("keywords")
     if not isinstance(keywords, list) or len(keywords) < 3:
-        keywords = [clean_topic.lower(), f"{clean_topic.lower()} visual", "main subjects", "surroundings", "overall atmosphere"]
+        keywords = [clean_topic.lower(), f"{clean_topic.lower()} setting", "cheerful characters", "colorful details", "happy atmosphere"]
         
     sample_response = str(data.get("sample_response", "")).strip() or (
-        f"In this picture, we can see a vibrant scene illustrating {title}. "
+        f"This picture presents a delightful 3D animated scene illustrating {title}. "
         f"{visual_description} "
         f"Overall, the image presents a clear, engaging portrayal of {clean_topic} with distinctive details."
     )

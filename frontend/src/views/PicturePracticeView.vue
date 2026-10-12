@@ -128,6 +128,26 @@
               </div>
             </div>
 
+            <!-- 3D Pixar Animation Style Badge & Redraw Action -->
+            <div class="d-flex align-center justify-space-between mb-3 px-1">
+              <v-chip size="x-small" color="purple-darken-1" variant="tonal" class="font-weight-bold">
+                <v-icon start size="x-small">mdi-palette-swatch-outline</v-icon>
+                3D Pixar Animation Style
+              </v-chip>
+              <v-btn
+                v-if="currentScenario?.mode !== 'upload'"
+                size="x-small"
+                variant="text"
+                color="primary"
+                prepend-icon="mdi-dice-multiple-outline"
+                class="text-none font-weight-bold"
+                :loading="isRedrawing"
+                @click="redrawScenarioVisual"
+              >
+                Redraw Visual
+              </v-btn>
+            </div>
+
             <!-- Guiding Questions Section (Dynamic) -->
             <div v-if="currentScenario?.guiding_questions?.length" class="mb-3">
               <div class="text-caption font-weight-black text-grey-darken-3 mb-2 d-flex align-center ga-1">
@@ -421,12 +441,18 @@
         <v-window v-model="creationMode">
           <!-- Tab 1: AI Prompt Generator -->
           <v-window-item value="ai_gen" class="pt-2">
-            <label class="text-caption font-weight-bold text-grey-darken-2 d-block mb-1">
-              Describe What Picture You Want (Prompt):
-            </label>
+            <div class="d-flex align-center justify-space-between mb-1">
+              <label class="text-caption font-weight-bold text-grey-darken-2">
+                Describe What Picture You Want (Prompt):
+              </label>
+              <v-chip size="x-small" color="purple-darken-1" variant="tonal" class="font-weight-bold">
+                <v-icon start size="x-small">mdi-palette-swatch-outline</v-icon>
+                3D Pixar Style
+              </v-chip>
+            </div>
             <v-textarea
               v-model="scenarioTopic"
-              placeholder="e.g. A family having a picnic in the park with a golden retriever and red checkered blanket..."
+              placeholder="e.g. A family having a picnic in the park with a cute puppy and colorful balloons..."
               variant="outlined"
               rows="3"
               density="comfortable"
@@ -624,12 +650,12 @@ const uploadedPreviewUrl = ref('')
 const fileInputRef = ref(null)
 
 const promptSparks = [
-  'A family having a picnic with a golden retriever',
-  'Two students conducting a science experiment in chemistry lab',
-  'Busy international airport departure hall with passengers',
-  'A doctor consulting an elderly patient in modern clinic',
-  'Two coworkers having an interview in a sunlit meeting room',
-  'A vibrant outdoor street food market in evening with lanterns'
+  'A happy family visiting a colorful zoo with friendly giraffes',
+  'Two students doing a magical science experiment in a bright classroom',
+  'A cheerful picnic in the park with a cute puppy and colorful balloons',
+  'Students playing soccer on a sunny school playground',
+  'An imaginative space station with friendly astronauts and planets',
+  'A bustling evening night market with delicious street food and glowing lanterns'
 ]
 
 const quickSearchCategories = [
@@ -789,6 +815,33 @@ const handleCreateScenario = async () => {
     alert('Failed to generate scenario. Please try again.')
   } finally {
     isGeneratingScenario.value = false
+  }
+}
+
+const isRedrawing = ref(false)
+const redrawScenarioVisual = async () => {
+  if (!currentScenario.value?.scenario_id || isRedrawing.value) return
+  isRedrawing.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/picture-practice/redraw-image`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        scenario_id: currentScenario.value.scenario_id,
+        user_id: props.userId || 1
+      })
+    })
+    if (res.ok) {
+      const data = await res.json()
+      if (data.image_url) {
+        currentScenario.value.image_url = data.image_url
+        imageReloadKey.value++
+      }
+    }
+  } catch (err) {
+    console.error('Failed to redraw visual:', err)
+  } finally {
+    isRedrawing.value = false
   }
 }
 

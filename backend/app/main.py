@@ -27,14 +27,14 @@ try:
         generate_deck_content, generate_vocabulary_image,
         generate_picture_scenario, evaluate_picture_speaking,
         generate_educational_svg, resolve_scene_photo,
-        suggest_picture_topics
+        suggest_picture_topics, generate_flux_image_hf
     )
 except ImportError:
     from app.hf_service import (
         generate_deck_content, generate_vocabulary_image,
         generate_picture_scenario, evaluate_picture_speaking,
         generate_educational_svg, resolve_scene_photo,
-        suggest_picture_topics
+        suggest_picture_topics, generate_flux_image_hf
     )
 from fastapi.responses import StreamingResponse, Response, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -6750,6 +6750,10 @@ class EvaluatePictureRequest(BaseModel):
     transcription: str
     user_id: Optional[int] = 1
 
+class RedrawPictureRequest(BaseModel):
+    scenario_id: int
+    user_id: Optional[int] = 1
+
 def get_multimodal_db_conn():
     return sqlite3.connect(DB_PATH, timeout=20.0)
 
@@ -6985,6 +6989,31 @@ def api_list_picture_scenarios(user_id: int = 1):
                 "created_at": r[8] if len(r) > 8 and r[8] else ""
             })
         return {"status": "success", "scenarios": scenarios}
+    finally:
+        conn.close()
+
+@app.post("/api/picture-practice/redraw-image")
+def api_redraw_picture_image(req: RedrawPictureRequest):
+    """Regenerate visual for an existing scenario with a new seed in 3D Pixar style."""
+    conn = get_multimodal_db_conn()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT topic, image_prompt, title FROM picture_scenarios WHERE id = ?", (req.scenario_id,))
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Scenario not found")
+        topic, image_prompt, title = row[0], row[1], row[2]
+        
+        prompt = image_prompt or f"A charming scene of {topic}, cute 3D animation style, Pixar Disney inspired render, cheerful expressive characters, vibrant warm colors, high quality 3D digital art"
+        new_seed = random.randint(10000, 999999)
+        new_image_url = generate_flux_image_hf(prompt, seed=new_seed)
+        if not new_image_url:
+            clean_p = re.sub(r'[^a-zA-Z0-9\s,.-]', '', prompt)
+            new_image_url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(clean_p)}?width=1024&height=680&nologo=true&seed={new_seed}&model=flux"
+            
+        cursor.execute("UPDATE picture_scenarios SET image_url = ? WHERE id = ?", (new_image_url, req.scenario_id))
+        conn.commit()
+        return {"status": "success", "scenario_id": req.scenario_id, "image_url": new_image_url}
     finally:
         conn.close()
 
