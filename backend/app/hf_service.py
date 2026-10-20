@@ -18,6 +18,11 @@ except ImportError:
 
 import requests
 
+try:
+    from app.picture_storage import persist_picture_url
+except ImportError:
+    from .picture_storage import persist_picture_url
+
 logger = logging.getLogger("hf_service")
 logger.setLevel(logging.INFO)
 
@@ -1135,7 +1140,7 @@ def generate_picture_scenario(
     
     # Mode 1: Custom Image Upload
     if mode == "upload" and custom_image_url:
-        image_url = custom_image_url
+        image_url = persist_picture_url(custom_image_url)
         sys_prompt = (
             "You are an expert English Speaking Examiner for K-12 students. "
             f"The candidate is practicing with an uploaded picture on the topic: '{clean_topic}'. "
@@ -1180,7 +1185,7 @@ def generate_picture_scenario(
             "topic": clean_topic,
             "title": title,
             "image_url": image_url,
-            "fallback_image_url": resolve_scene_photo(clean_topic, title),
+            "fallback_image_url": image_url,
             "image_prompt": data.get("visual_description", clean_topic),
             "visual_description": data.get("visual_description", clean_topic),
             "guiding_questions": guiding_questions,
@@ -1199,7 +1204,8 @@ def generate_picture_scenario(
         # Primary: HuggingFace FLUX.1-schnell 3D Pixar
         image_url = generate_flux_image_hf(clean_search_prompt, seed=seed)
         if not image_url:
-            image_url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(clean_search_prompt)}?width=1024&height=680&nologo=true&seed={seed}&model=flux"
+            raise RuntimeError("FLUX image generation is unavailable or its quota has been reached. Please try again later or upload an image.")
+        image_url = persist_picture_url(image_url)
         
         sys_prompt = (
             "You are an expert English Speaking Examiner for primary, secondary, and high school students. "
@@ -1290,7 +1296,8 @@ def generate_picture_scenario(
     # Primary: HuggingFace FLUX.1-schnell 3D Pixar
     image_url = generate_flux_image_hf(clean_ai_prompt, seed=seed)
     if not image_url:
-        image_url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(clean_ai_prompt)}?width=1024&height=680&nologo=true&seed={seed}&model=flux"
+        raise RuntimeError("FLUX image generation is unavailable or its quota has been reached. Please try again later or upload an image.")
+    image_url = persist_picture_url(image_url)
     
     guiding_questions = data.get("guiding_questions")
     if not isinstance(guiding_questions, list) or len(guiding_questions) < 3:

@@ -59,7 +59,8 @@ class HomeworkRegressions(unittest.TestCase):
                 INSERT INTO users VALUES (5, 'Learner', 'review@example.test', '', 0);''')
         self.g.update(CreateAssignmentRequest=SimpleNamespace,
             verify_class_access=Mock(return_value={'id': 1, 'teacher_id': 2, 'tenant_id': None, 'name': 'Grade 4', 'grade_level': 'Elementary (Grades 1 - 5)', 'join_code': 'CLS-TEST', 'is_archived': False}),
-            record_audit_log=Mock(), calculate_user_streak=Mock(return_value=0))
+            record_audit_log=Mock(), calculate_user_streak=Mock(return_value=0),
+            persist_picture_url=Mock(side_effect=lambda url: url), PictureStorageError=RuntimeError)
         names = {'submission_evaluation', 'get_student_assignments', 'submit_assignment', 'create_assignment', 'get_class_gradebook', 'get_leaderboard'}
         tree = ast.parse(Path('backend/app/main.py').read_text(encoding='utf-8'))
         nodes = []
@@ -94,6 +95,15 @@ class HomeworkRegressions(unittest.TestCase):
         self.assertEqual(student['image_url'], req.image_url)
         self.assertEqual(student['guiding_questions'], req.guiding_questions)
         self.assertEqual(student['time_limit_seconds'], 0)
+
+    def test_image_storage_failure_does_not_create_assignment(self):
+        self.g['persist_picture_url'].side_effect = RuntimeError('Image storage unavailable')
+        req = SimpleNamespace(class_id=1, teacher_id=2, title='Picnic', topic_sentence='Describe the picnic', target_ipa='', due_date='', assignment_type='picture', image_url='temporary-url', guiding_questions=[], target_keywords=[], time_limit_seconds=0)
+        with self.assertRaises(HTTPException) as error:
+            self.g['create_assignment'](req, {'id': 2, 'role': 'teacher'})
+        self.assertEqual(error.exception.status_code, 503)
+        with self.database() as conn:
+            self.assertEqual(conn.execute('SELECT COUNT(*) FROM assignments').fetchone()[0], 1)
 
     def test_leaderboard_ranks_average_then_practice_count(self):
         with self.database() as conn:

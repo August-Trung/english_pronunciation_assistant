@@ -38,6 +38,7 @@ except ImportError:
     )
 from fastapi.responses import StreamingResponse, Response, FileResponse
 from fastapi.staticfiles import StaticFiles
+from .picture_storage import persist_picture_url, store_picture_bytes, PictureStorageError
 from fastapi.middleware.cors import CORSMiddleware
 from pydub import AudioSegment
 try:
@@ -2021,24 +2022,15 @@ def init_db():
         except Exception as e:
             print(f"Password hash enforcement note: {e}")
 
-        # Sanitize any legacy pollinations or SVG placeholder URLs with authentic scene photos
+        # Preserve scenario and assignment images; only migrate legacy flashcard placeholders.
         try:
             conn = sqlite3.connect(DB_PATH, timeout=20.0)
             cursor = conn.cursor()
-            cursor.execute("SELECT id, title, topic, image_prompt FROM picture_scenarios WHERE image_url LIKE '%pollinations%' OR image_url LIKE 'data:image/svg%'")
-            legacy_scenarios = cursor.fetchall()
-            for s_id, s_title, s_topic, s_prompt in legacy_scenarios:
-                photo_url = resolve_scene_photo(s_topic, s_title, s_prompt or "")
-                cursor.execute("UPDATE picture_scenarios SET image_url = ? WHERE id = ?", (photo_url, s_id))
-            
             cursor.execute("SELECT id, word, ipa FROM flashcard_cards WHERE image_url LIKE '%pollinations%' OR image_url LIKE 'data:image/svg%'")
             legacy_cards = cursor.fetchall()
             for c_id, c_word, c_ipa in legacy_cards:
                 photo_url = resolve_scene_photo("Vocabulary", c_word, c_ipa or "")
                 cursor.execute("UPDATE flashcard_cards SET image_url = ? WHERE id = ?", (photo_url, c_id))
-            # Fix interview mismatch: replace solo woman portrait with authentic 2-person handshake/interview photo
-            cursor.execute("UPDATE picture_scenarios SET image_url = 'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1000&q=80' WHERE (title LIKE '%Interview%' OR topic LIKE '%Interview%') AND image_url LIKE '%photo-1573496359142%'")
-            cursor.execute("UPDATE assignments SET image_url = 'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1000&q=80' WHERE (title LIKE '%Interview%' OR topic_sentence LIKE '%Interview%') AND image_url LIKE '%photo-1573496359142%'")
             conn.commit()
             conn.close()
         except Exception as e:
@@ -3298,6 +3290,10 @@ def create_assignment(
         teacher_id = current_user.get("id") if current_user.get("role") == "teacher" else (req.teacher_id or cls_info["teacher_id"])
         tenant_id = cls_info.get("tenant_id")
         
+        try:
+            stored_image = persist_picture_url(req.image_url or '') if req.assignment_type == 'picture' else ''
+        except PictureStorageError as exc:
+            raise HTTPException(status_code=503, detail=str(exc))
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
         questions_json = json.dumps(req.guiding_questions or [])
@@ -3307,7 +3303,7 @@ def create_assignment(
             """INSERT INTO assignments 
             (class_id, teacher_id, tenant_id, title, topic_sentence, target_ipa, due_date, status, assignment_type, image_url, guiding_questions, target_keywords, time_limit_seconds) 
             VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?)""",
-            (req.class_id, teacher_id, tenant_id, req.title.strip(), req.topic_sentence.strip(), req.target_ipa.strip(), req.due_date.strip(), asg_type, req.image_url or "", questions_json, keywords_json, 0)
+            (req.class_id, teacher_id, tenant_id, req.title.strip(), req.topic_sentence.strip(), req.target_ipa.strip(), req.due_date.strip(), asg_type, stored_image, questions_json, keywords_json, 0)
         )
         conn.commit()
         assignment_id = cursor.lastrowid
@@ -3340,6 +3336,10 @@ def update_assignment(
 ):
     try:
         asg_info = verify_assignment_access(assignment_id, current_user, require_write=True)
+        try:
+            stored_image = persist_picture_url(req.image_url) if req.image_url else req.image_url
+        except PictureStorageError as exc:
+            raise HTTPException(status_code=503, detail=str(exc))
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
         
@@ -3356,7 +3356,7 @@ def update_assignment(
             params.append(req.assignment_type)
         if req.image_url is not None:
             updates.append("image_url = ?")
-            params.append(req.image_url)
+            params.append(stored_image)
         if req.guiding_questions is not None:
             updates.append("guiding_questions = ?")
             params.append(json.dumps(req.guiding_questions))
@@ -6930,35 +6930,30 @@ def api_suggest_picture_topics(req: SuggestTopicsRequest):
     topics = suggest_picture_topics(category=req.category or "all", level=req.level or "intermediate", count=req.count or 6)
     return {"status": "success", "topics": topics}
 
+MAX_PICTURE_UPLOAD_BYTES = 10 * 1024 * 1024
+
 @app.post("/api/picture-practice/upload-image")
 async def api_upload_picture_image(file: UploadFile = File(...)):
     """Upload custom image for picture practice and return static URL."""
     try:
-        picture_uploads_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "uploads", "picture_practice"))
-        os.makedirs(picture_uploads_dir, exist_ok=True)
-        ext = os.path.splitext(file.filename or "image.jpg")[1] or ".jpg"
-        filename = f"pic_{int(time.time())}_{random.randint(1000, 9999)}{ext}"
-        target_path = os.path.join(picture_uploads_dir, filename)
-        with open(target_path, "wb") as f:
-            shutil.copyfileobj(file.file, f)
-        return {
-            "status": "success",
-            "image_url": f"/uploads/picture_practice/{filename}",
-            "filename": filename
-        }
-    except Exception as e:
-        logger.error(f"Error uploading picture image: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        content = await file.read(MAX_PICTURE_UPLOAD_BYTES + 1)
+        image_url = store_picture_bytes(content)
+        return {"status": "success", "image_url": image_url}
+    except PictureStorageError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
 
 @app.post("/api/picture-practice/create-scenario")
 def api_create_picture_scenario(req: CreatePictureScenarioRequest):
     """Create a Describe the Picture practice challenge with scene image and prompt."""
-    scenario = generate_picture_scenario(
-        topic=req.topic or "Daily Life",
-        level=req.level or "intermediate",
-        mode=req.mode or "ai_gen",
-        custom_image_url=req.image_url or ""
-    )
+    try:
+        scenario = generate_picture_scenario(
+            topic=req.topic or "Daily Life",
+            level=req.level or "intermediate",
+            mode=req.mode or "ai_gen",
+            custom_image_url=req.image_url or ""
+        )
+    except (PictureStorageError, RuntimeError) as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
     conn = get_multimodal_db_conn()
     cursor = conn.cursor()
     try:
@@ -7030,8 +7025,11 @@ def api_redraw_picture_image(req: RedrawPictureRequest):
         new_seed = random.randint(10000, 999999)
         new_image_url = generate_flux_image_hf(prompt, seed=new_seed)
         if not new_image_url:
-            clean_p = re.sub(r'[^a-zA-Z0-9\s,.-]', '', prompt)
-            new_image_url = f"https://image.pollinations.ai/prompt/{urllib.parse.quote(clean_p)}?width=1024&height=680&nologo=true&seed={new_seed}&model=flux"
+            raise HTTPException(status_code=503, detail="FLUX is unavailable or its quota has been reached. Your previous image has been kept.")
+        try:
+            new_image_url = persist_picture_url(new_image_url)
+        except PictureStorageError as exc:
+            raise HTTPException(status_code=503, detail=str(exc))
             
         cursor.execute("UPDATE picture_scenarios SET image_url = ? WHERE id = ?", (new_image_url, req.scenario_id))
         conn.commit()

@@ -1465,7 +1465,7 @@
         <v-card-actions class="px-0 pb-0 border-t pt-2">
           <v-spacer />
           <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showCreateAssignmentModal = false">Cancel</v-btn>
-          <v-btn color="secondary" variant="flat" class="text-none font-weight-bold" :loading="isCreatingAsg" @click="submitCreateAssignment">
+          <v-btn color="secondary" variant="flat" class="text-none font-weight-bold" :loading="isCreatingAsg" :disabled="isGeneratingAsgPicture || (newAsgType === 'picture' && !newAsgImageUrl)" @click="submitCreateAssignment">
             Assign Homework
           </v-btn>
         </v-card-actions>
@@ -2185,7 +2185,8 @@ const generateAIPictureScenario = async () => {
       }
       notify('AI picture scenario generated with authentic visual questions!', 'success')
     } else {
-      notify('Failed to generate picture scenario.', 'error')
+      const error = await res.json().catch(() => ({}))
+      notify(error.detail || 'Failed to generate picture scenario. Your previous image has been kept.', 'error')
     }
   } catch (err) {
     console.error('Error generating picture scenario:', err)
@@ -2716,8 +2717,8 @@ const submitCreateAssignment = async () => {
     notify('Please enter the model reading sentence.', 'warning')
     return
   }
-  if (isPicture && !newAsgImageUrl.value && !newAsgPictureTopic.value.trim()) {
-    notify('Please enter a topic or generate an AI picture scenario first.', 'warning')
+  if (isPicture && !newAsgImageUrl.value) {
+    notify('Please generate or upload an image before assigning picture homework.', 'warning')
     return
   }
   const tid = getActiveTeacherId()

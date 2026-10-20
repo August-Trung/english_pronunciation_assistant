@@ -809,6 +809,9 @@ const handleCreateScenario = async () => {
       currentScenario.value = newScenario
       imageReloadKey.value = 0
       resetChallenge()
+    } else {
+      const error = await res.json().catch(() => ({}))
+      alert(error.detail || 'Image creation failed. Your previous image has been kept.')
     }
   } catch (err) {
     console.error('Scenario creation failed:', err)
@@ -837,6 +840,9 @@ const redrawScenarioVisual = async () => {
         currentScenario.value.image_url = data.image_url
         imageReloadKey.value++
       }
+    } else {
+      const error = await res.json().catch(() => ({}))
+      alert(error.detail || 'Image generation failed. Your previous image has been kept.')
     }
   } catch (err) {
     console.error('Failed to redraw visual:', err)
