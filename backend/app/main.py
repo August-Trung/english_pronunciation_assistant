@@ -127,7 +127,7 @@ def ensure_supabase_bucket():
     except Exception as e:
         print(f"Supabase bucket setup note: {e}")
 
-def upload_audio_to_supabase(file_bytes: bytes, filename: str) -> str:
+def upload_audio_to_supabase(file_bytes: bytes, filename: str, content_type: str = "audio/webm") -> str:
     """Upload compressed student audio file to Supabase Storage and return public URL"""
     ensure_supabase_bucket()
     if not SUPABASE_URL or not SUPABASE_SECRET_KEY:
@@ -136,7 +136,7 @@ def upload_audio_to_supabase(file_bytes: bytes, filename: str) -> str:
     headers = {
         "Authorization": f"Bearer {SUPABASE_SECRET_KEY}",
         "apiKey": SUPABASE_SECRET_KEY,
-        "Content-Type": "audio/webm",
+        "Content-Type": content_type,
         "x-upsert": "true"
     }
     try:
@@ -3249,12 +3249,13 @@ def get_class_gradebook(
                 "image_url": r[8] or "",
                 "guiding_questions": g_q,
                 "target_keywords": t_k,
-                "time_limit_seconds": r[11] or 60
+                "time_limit_seconds": 0
             })
         submissions = [{
             "id": r[0], "assignment_id": r[1], "student_id": r[2], "student_name": r[3],
             "audio_url": r[4], "transcribed_text": r[5], "score": r[6], "ipa_json": r[7],
-            "teacher_feedback": r[8], "score_override": r[9], "submitted_at": r[10]
+            "teacher_feedback": r[8], "score_override": r[9], "submitted_at": r[10],
+            "evaluation": submission_evaluation(r[7])
         } for r in sub_rows]
         
         return {
@@ -3285,7 +3286,7 @@ class CreateAssignmentRequest(BaseModel):
     image_url: Optional[str] = ""
     guiding_questions: Optional[List[str]] = None
     target_keywords: Optional[List[str]] = None
-    time_limit_seconds: Optional[int] = 60
+    time_limit_seconds: Optional[int] = 0
 
 @app.post("/api/assignments/create")
 def create_assignment(
@@ -3306,7 +3307,7 @@ def create_assignment(
             """INSERT INTO assignments 
             (class_id, teacher_id, tenant_id, title, topic_sentence, target_ipa, due_date, status, assignment_type, image_url, guiding_questions, target_keywords, time_limit_seconds) 
             VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?)""",
-            (req.class_id, teacher_id, tenant_id, req.title.strip(), req.topic_sentence.strip(), req.target_ipa.strip(), req.due_date.strip(), asg_type, req.image_url or "", questions_json, keywords_json, req.time_limit_seconds or 60)
+            (req.class_id, teacher_id, tenant_id, req.title.strip(), req.topic_sentence.strip(), req.target_ipa.strip(), req.due_date.strip(), asg_type, req.image_url or "", questions_json, keywords_json, 0)
         )
         conn.commit()
         assignment_id = cursor.lastrowid
@@ -3963,13 +3964,17 @@ def get_student_assignments(student_id: int):
         cursor = conn.cursor()
         cursor.execute("""
             SELECT a.id, a.class_id, c.name as class_name, c.join_code, a.title, a.topic_sentence, a.target_ipa, a.due_date,
-                   s.id as submission_id, s.score, s.audio_url, s.teacher_feedback,
-                   COALESCE(a.assignment_type, 'sentence'), COALESCE(a.image_url, ''), a.guiding_questions, a.target_keywords, COALESCE(a.time_limit_seconds, 60)
+                   s.id as submission_id, COALESCE(s.score_override, s.score), s.audio_url, s.teacher_feedback,
+                   COALESCE(a.assignment_type, 'sentence'), COALESCE(a.image_url, ''), a.guiding_questions, a.target_keywords, COALESCE(a.time_limit_seconds, 0), s.ipa_json, s.transcribed_text, s.score, s.score_override, c.grade_level
             FROM class_enrollments e
             JOIN classrooms c ON e.class_id = c.id
             JOIN assignments a ON a.class_id = c.id
-            LEFT JOIN submissions s ON s.assignment_id = a.id AND s.student_id = ?
-            WHERE e.student_id = ? AND (a.IsXoa IS NULL OR a.IsXoa = 0)
+            LEFT JOIN submissions s ON s.id = (
+                SELECT MAX(latest.id) FROM submissions latest
+                WHERE latest.assignment_id = a.id AND latest.student_id = ? AND COALESCE(latest.IsXoa, 0) = 0
+            )
+            WHERE e.student_id = ? AND COALESCE(e.IsXoa, 0) = 0 AND COALESCE(c.IsXoa, 0) = 0
+              AND COALESCE(a.IsXoa, 0) = 0
             ORDER BY a.id DESC
         """, (student_id, student_id))
         rows = cursor.fetchall()
@@ -4003,11 +4008,23 @@ def get_student_assignments(student_id: int):
                 "image_url": r[13] or "",
                 "guiding_questions": g_q,
                 "target_keywords": t_k,
-                "time_limit_seconds": r[16] or 60
+                "time_limit_seconds": 0,
+                "evaluation": submission_evaluation(r[17]),
+                "transcribed_text": r[18] or "",
+                "ai_score": r[19], "score_override": r[20], "grade_level": r[21]
             })
         return {"assignments": assignments}
     except Exception as e:
         return {"assignments": [], "error": str(e)}
+
+def submission_evaluation(raw):
+    """Read persisted assessment without inventing details for older submissions."""
+    try:
+        data = json.loads(raw) if isinstance(raw, str) else raw
+        return data if isinstance(data, dict) else {}
+    except (ValueError, TypeError):
+        return {}
+
 
 @app.post("/api/assignments/submit")
 async def submit_assignment(
@@ -4016,85 +4033,90 @@ async def submit_assignment(
     student_name: str = Form("Learner"),
     audio: UploadFile = File(...)
 ):
+    conn = None
+    wav_path = None
     try:
-        audio_bytes = await audio.read()
-        filename = f"sub_{assignment_id}_std_{student_id}_{int(datetime.now().timestamp())}.webm"
-        
-        # Upload compressed audio to Supabase Storage
-        supabase_url = upload_audio_to_supabase(audio_bytes, filename)
-        
-        # Save temp file for Whisper transcription & analysis
-        temp_audio_path = os.path.join(tempfile.gettempdir(), filename)
-        with open(temp_audio_path, "wb") as f:
-            f.write(audio_bytes)
-            
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
-        cursor.execute("SELECT topic_sentence, COALESCE(assignment_type, 'sentence'), title, guiding_questions, target_keywords FROM assignments WHERE id = ?", (assignment_id,))
-        asg_row = cursor.fetchone()
-        target_sentence = asg_row[0] if asg_row else "Practice English pronunciation"
-        asg_type = asg_row[1] if asg_row else "sentence"
-        asg_title = asg_row[2] if asg_row else ""
-        try:
-            g_questions = json.loads(asg_row[3]) if (asg_row and asg_row[3]) else []
-        except Exception:
-            g_questions = []
-        try:
-            t_keywords = json.loads(asg_row[4]) if (asg_row and asg_row[4]) else []
-        except Exception:
-            t_keywords = []
-
-        # Transcribe & analyze audio
-        transcription, whisper_conf = transcribe_audio(temp_audio_path)
-        if not transcription:
-            transcription = target_sentence
-            
-        feedback_str = None
-        if asg_type == "picture":
-            eval_res = evaluate_picture_speaking(
-                transcription=transcription,
-                topic=asg_title or target_sentence,
-                keywords=t_keywords,
-                guiding_questions=g_questions
-            )
-            score_val = round((eval_res.get("overall_score", 70) / 10.0), 1)
-            feedback_str = eval_res.get("feedback", "")
-            if eval_res.get("sample_response"):
-                feedback_str += f"\n\n[Gợi ý câu trả lời mẫu]: {eval_res.get('sample_response')}"
-            ipa_data = json.dumps({"confidence": whisper_conf, "picture_eval": eval_res})
+        cursor.execute("""SELECT a.topic_sentence, COALESCE(a.assignment_type, 'sentence'),
+                          a.title, a.guiding_questions, a.target_keywords
+                          FROM assignments a JOIN class_enrollments e ON e.class_id = a.class_id
+                          JOIN classrooms c ON c.id = a.class_id
+                          WHERE a.id = ? AND e.student_id = ?
+                            AND COALESCE(a.IsXoa, 0) = 0 AND COALESCE(e.IsXoa, 0) = 0
+                            AND COALESCE(c.IsXoa, 0) = 0""", (assignment_id, student_id))
+        asg = cursor.fetchone()
+        if not asg:
+            raise HTTPException(status_code=404, detail="Assignment not found in your enrolled classrooms.")
+        # Do not keep a database connection open during transcription or remote evaluation.
+        conn.close()
+        conn = None
+        audio_bytes = await audio.read()
+        if not audio_bytes:
+            raise HTTPException(status_code=400, detail="The recording is empty.")
+        await audio.seek(0)
+        wav_path, duration = convert_audio_to_wav(audio)
+        if not wav_path or duration <= 0:
+            raise HTTPException(status_code=400, detail="Could not process the recording. Please try again.")
+        transcription, confidence = transcribe_audio(wav_path)
+        if not transcription or not transcription.strip():
+            raise HTTPException(status_code=422, detail="No speech recognized. Please record again.")
+        score, feedback, breakdown = analyze_speech(transcription, confidence, duration)
+        reading = None
+        picture = None
+        ai_analysis = None
+        if asg[1] == "picture":
+            picture = evaluate_picture_speaking(
+                transcription=transcription, topic=asg[2] or asg[0],
+                keywords=json.loads(asg[4] or '[]'), guiding_questions=json.loads(asg[3] or '[]'))
+            picture_score = picture.get("overall_score", picture.get("score"))
+            if picture_score is None:
+                raise HTTPException(status_code=502, detail="Picture evaluation did not return a score.")
+            score = round(max(0, min(100, float(picture_score))) / 10, 1)
+            feedback = picture.get("feedback", "")
         else:
-            word_count = len(transcription.split())
-            wps, speech_cat = calculate_speech_rate(word_count, 10.0)
-            is_fluent, confidence_level = detect_fluent_speaker(transcription, word_count, wps)
-            pron_score, pron_level, quality_score, warnings = check_pronunciation(transcription, whisper_conf, word_count, is_fluent)
-            score_val = pron_score * 5.0 # Scale to 10
-            ipa_data = json.dumps({"confidence": whisper_conf})
-        
-        audio_size_bytes = len(audio_bytes)
-        cursor.execute("""
-            INSERT INTO submissions (assignment_id, student_id, student_name, audio_url, audio_size_bytes, transcribed_text, score, ipa_json, teacher_feedback)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (assignment_id, student_id, student_name, supabase_url or "", audio_size_bytes, transcription, score_val, ipa_data, feedback_str))
+            reading = evaluate_reading_accuracy(transcription, asg[0])
+            score = round(max(1.0, min(10.0, reading.get("accuracy", 0) / 10)), 1)
+            ai_analysis = analyze_topic_response_with_ai(asg[0], transcription)
+        ipa = evaluate_ipa_phonetics(asg[0] if reading else transcription, transcription, wav_path=wav_path)
+        evaluation = {
+            "version": 1, "score": score, "transcribed_text": transcription,
+            "feedback": feedback, "breakdown": breakdown, "reading_result": reading,
+            "picture_eval": picture, "ai_analysis": ai_analysis, "ipa_analysis": ipa,
+            "confidence": confidence, "duration_seconds": round(duration, 2),
+            "score_method": "reading_accuracy" if reading else "picture_rubric"
+        }
+        # Always retain a playable copy, even when cloud storage is unavailable.
+        import uuid
+        filename = f"sub_{assignment_id}_{student_id}_{uuid.uuid4().hex}"
+        with open(wav_path, "rb") as source, open(os.path.join(RECORDINGS_DIR, filename + '.wav'), "wb") as saved:
+            saved.write(source.read())
+        audio_url = upload_audio_to_supabase(audio_bytes, filename + os.path.splitext(audio.filename or '.webm')[1],
+                                             content_type=audio.content_type or 'audio/webm')
+        audio_url = audio_url or f"/uploads/recordings/{filename}.wav"
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute("""INSERT INTO submissions
+            (assignment_id, student_id, student_name, audio_url, audio_size_bytes, transcribed_text, score, ipa_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (assignment_id, student_id, student_name, audio_url, len(audio_bytes), transcription, score,
+             json.dumps(evaluation, ensure_ascii=False)))
         conn.commit()
         sub_id = cursor.lastrowid
         conn.close()
-        
-        try:
-            if os.path.exists(temp_audio_path):
-                os.remove(temp_audio_path)
-        except Exception:
-            pass
-            
+        conn = None
         export_db_to_json()
-        return {
-            "status": "success",
-            "submission_id": sub_id,
-            "score": score_val,
-            "audio_url": supabase_url,
-            "transcribed_text": transcription
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return {"status": "success", "submission_id": sub_id, "score": score,
+                "audio_url": audio_url, "transcribed_text": transcription, "evaluation": evaluation}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+    finally:
+        if conn:
+            conn.close()
+        if wav_path and os.path.exists(wav_path):
+            os.remove(wav_path)
 
 class TeacherFeedbackRequest(BaseModel):
     submission_id: int

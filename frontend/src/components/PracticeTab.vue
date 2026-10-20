@@ -934,7 +934,9 @@
 
 <script setup>
 import { ref, computed, watch, onUnmounted, onMounted } from 'vue'
-import { GRADE_LEVELS, SPEAKING_TOPICS, READING_LIBRARY } from '../constants/topics.js'
+import { GRADE_LEVELS as ALL_GRADE_LEVELS, SPEAKING_TOPICS, READING_LIBRARY } from '../constants/topics.js'
+import { isMyHanhSite } from '@/utils/siteProfile.js'
+const GRADE_LEVELS = ALL_GRADE_LEVELS.filter(grade => !isMyHanhSite() || grade.id === 'primary')
 
 // State Modal Khẩu Hình 2D/3D
 const showArticulationModal = ref(false)

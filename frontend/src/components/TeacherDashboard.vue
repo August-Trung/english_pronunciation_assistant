@@ -464,7 +464,10 @@
                   class="pa-3 bg-grey-lighten-5 rounded-lg"
                 >
                   <div class="d-flex align-center justify-space-between flex-wrap ga-2">
-                    <div>
+                    <div class="flex-grow-1">
+                      <v-img v-if="asg.assignment_type === 'picture' && asg.image_url" :src="getMediaUrl(asg.image_url)"
+                        width="280" height="180" contain class="rounded border mb-3 cursor-pointer"
+                        @click="assignmentPreviewUrl = asg.image_url" />
                       <div class="d-flex align-center ga-2 flex-wrap">
                         <span class="text-subtitle-2 font-weight-black text-primary">{{ asg.title }}</span>
                         <v-chip
@@ -801,7 +804,7 @@
 
         <v-select
           v-model="newClassGrade"
-          :items="['Elementary (Grades 1 - 5)', 'Middle School (Grades 6 - 9)', 'High School & IELTS (Grades 10 - 12)']"
+          :items="classGradeOptions"
           label="Grade Level Category:"
           variant="outlined"
           density="comfortable"
@@ -921,7 +924,7 @@
 
         <v-select
           v-model="editClassGrade"
-          :items="['Elementary (Grades 1 - 5)', 'Middle School (Grades 6 - 9)', 'High School & IELTS (Grades 10 - 12)']"
+          :items="classGradeOptions"
           label="Grade Level Category:"
           variant="outlined"
           density="comfortable"
@@ -980,7 +983,7 @@
     </v-dialog>
 
     <!-- Modal: Edit Assignment -->
-    <v-dialog v-model="showEditAssignmentModal" :max-width="editingAsg?.assignment_type === 'picture' ? 680 : 500">
+    <v-dialog v-model="showEditAssignmentModal" :max-width="editingAsg?.assignment_type === 'picture' ? 1100 : 760">
       <v-card border rounded="lg" class="pa-4 bg-white">
         <div class="text-subtitle-1 font-weight-black text-primary mb-3 d-flex align-center ga-2">
           <v-icon color="primary">mdi-pencil</v-icon>
@@ -1026,7 +1029,7 @@
           <div class="d-flex ga-3 align-center mb-3 pa-2 bg-grey-lighten-5 rounded border">
             <v-img
               v-if="editAsgImageUrl"
-              :src="editAsgImageUrl"
+              :src="getMediaUrl(editAsgImageUrl)"
               height="90"
               width="140"
               cover
@@ -1041,14 +1044,7 @@
                 hide-details
                 class="mb-2 bg-white text-caption"
               />
-              <div class="d-flex align-center ga-2">
-                <span class="text-caption font-weight-bold text-grey">Time limit:</span>
-                <v-chip-group v-model="editAsgTimeLimit" mandatory color="purple-darken-2">
-                  <v-chip :value="45" size="x-small" filter>45s</v-chip>
-                  <v-chip :value="60" size="x-small" filter>60s</v-chip>
-                  <v-chip :value="90" size="x-small" filter>90s</v-chip>
-                </v-chip-group>
-              </div>
+              <p class="text-caption text-grey">Students stop the recording when they have finished.</p>
             </div>
           </div>
 
@@ -1109,6 +1105,7 @@
 
         <v-text-field
           v-model="editAsgDueDate"
+          type="date"
           label="Due Date (Optional):"
           placeholder="Example: 2026-08-05"
           variant="outlined"
@@ -1169,8 +1166,14 @@
       </v-card>
     </v-dialog>
 
+    <v-dialog :model-value="Boolean(assignmentPreviewUrl)" max-width="1100" @update:model-value="assignmentPreviewUrl = ''">
+      <v-card class="pa-3">
+        <v-btn icon="mdi-close" variant="text" class="align-self-end" @click="assignmentPreviewUrl = ''" />
+        <v-img :src="getMediaUrl(assignmentPreviewUrl)" max-height="80vh" contain />
+      </v-card>
+    </v-dialog>
     <!-- Modal: 1-Click Assignment Creation with AI Picture Speaking & Sentence -->
-    <v-dialog v-model="showCreateAssignmentModal" :max-width="newAsgType === 'picture' ? 680 : 560">
+    <v-dialog v-model="showCreateAssignmentModal" :max-width="newAsgType === 'picture' ? 1100 : 760">
       <v-card border rounded="lg" class="pa-4 bg-white">
         <div class="d-flex align-center justify-space-between mb-3 border-b pb-2">
           <div class="d-flex align-center ga-2">
@@ -1192,7 +1195,7 @@
               Sentence Reading
             </v-btn>
             <v-btn value="picture" class="flex-grow-1 text-none font-weight-bold" prepend-icon="mdi-image-filter-frames">
-              Describe Picture (IELTS/TOEIC)
+              {{ isMyHanh ? 'Describe Picture' : 'Describe Picture (IELTS/TOEIC)' }}
             </v-btn>
           </v-btn-toggle>
         </div>
@@ -1201,7 +1204,7 @@
         <v-text-field
           v-model="newAsgTitle"
           label="Assignment Title:"
-          :placeholder="newAsgType === 'picture' ? 'e.g. IELTS Speaking Part 2 - Modern Airport' : 'e.g. Unit 3 - Practice Daily Routine Sentence'"
+          :placeholder="newAsgType === 'picture' ? (isMyHanh ? 'e.g. A Morning at School' : 'e.g. IELTS Speaking Part 2 - Modern Airport') : 'e.g. Unit 3 - Practice Daily Routine Sentence'"
           variant="outlined"
           density="comfortable"
           class="mb-2"
@@ -1213,7 +1216,7 @@
           <v-textarea
             v-model="newAsgSentence"
             label="Model Reading Sentence:"
-            placeholder="Example: Learning a new language opens up a world of opportunities."
+            :placeholder="isMyHanh ? 'Example: I like cats and dogs.' : 'Example: Learning a new language opens up a world of opportunities.'"
             variant="outlined"
             density="comfortable"
             rows="3"
@@ -1251,7 +1254,7 @@
               </div>
               <v-text-field
                 v-model="newAsgPictureTopic"
-                placeholder="e.g. Hospital Emergency Hallway, Airport Lounge, Tech Office..."
+                :placeholder="isMyHanh ? 'e.g. My Classroom, Family Picnic, Playground' : 'e.g. Hospital Emergency Hallway, Airport Lounge, Tech Office'"
                 variant="outlined"
                 density="comfortable"
                 class="mb-2"
@@ -1275,7 +1278,7 @@
               </div>
               <v-text-field
                 v-model="newAsgPictureTopic"
-                placeholder="Optional Topic / Exam Context (e.g. Cambridge PET Exam Picture)"
+                :placeholder="isMyHanh ? 'Optional Topic (e.g. My Classroom)' : 'Optional Topic / Exam Context (e.g. Cambridge PET Exam Picture)'"
                 variant="outlined"
                 density="compact"
                 class="mb-2"
@@ -1308,14 +1311,7 @@
                 <v-icon size="x-small" color="purple-darken-3">mdi-check-circle</v-icon>
                 <span>GENERATED SCENARIO & QUESTION EDITOR</span>
               </span>
-              <div class="d-flex align-center ga-1">
-                <span class="text-caption font-weight-bold text-grey-darken-1 mr-1">Time Limit:</span>
-                <v-chip-group v-model="newAsgTimeLimit" mandatory color="purple-darken-2" class="py-0">
-                  <v-chip :value="45" size="x-small" filter>45s</v-chip>
-                  <v-chip :value="60" size="x-small" filter>60s</v-chip>
-                  <v-chip :value="90" size="x-small" filter>90s</v-chip>
-                </v-chip-group>
-              </div>
+              <span class="text-caption text-grey">Student-controlled recording</span>
             </div>
 
             <!-- Helpful Guidance Banner for Lecturer -->
@@ -1329,9 +1325,10 @@
             <div class="d-flex ga-3 flex-column flex-sm-row mb-3">
               <div class="flex-shrink-0 text-center">
                 <v-img
-                  :src="newAsgImageUrl"
-                  height="120"
-                  width="180"
+                  :src="getMediaUrl(newAsgImageUrl)"
+                  height="240"
+                  width="360"
+                  style="max-width: 100%;"
                   cover
                   class="rounded border bg-white mx-auto"
                 />
@@ -1444,7 +1441,7 @@
             <v-text-field
               v-model="newAsgTargetKeywordsText"
               label="Target Keywords / Collocations (comma-separated):"
-              placeholder="e.g. airport terminal, flight departure, travelers, boarding gate"
+              :placeholder="isMyHanh ? 'e.g. cat, dog, tree, school' : 'e.g. airport terminal, flight departure, travelers, boarding gate'"
               variant="outlined"
               density="compact"
               hide-details
@@ -1456,6 +1453,7 @@
 
         <v-text-field
           v-model="newAsgDueDate"
+          type="date"
           label="Due Date (Optional):"
           placeholder="Example: 2026-10-30"
           variant="outlined"
@@ -1475,7 +1473,7 @@
     </v-dialog>
 
     <!-- Modal: Review Student Audio Submissions from Supabase -->
-    <v-dialog v-model="showSubmissionsModal" max-width="650">
+    <v-dialog v-model="showSubmissionsModal" max-width="1000">
       <v-card v-if="selectedStudent" border rounded="lg" class="pa-4">
         <div class="d-flex align-center justify-space-between mb-3 border-b pb-2">
           <div class="d-flex align-center ga-2">
@@ -1512,12 +1510,13 @@
             <!-- Supabase Audio Stream Player -->
             <div v-if="sub.audio_url" class="bg-white pa-2 rounded border d-flex align-center ga-2 mb-2">
               <v-icon color="primary">mdi-volume-high</v-icon>
-              <audio controls :src="sub.audio_url" class="w-100" style="height: 32px;" />
+              <audio controls :src="getMediaUrl(sub.audio_url)" class="w-100" style="height: 32px;" />
             </div>
             <div v-else class="text-caption text-warning font-weight-bold mb-2">
-              <v-icon size="x-small">mdi-alert</v-icon> Audio file processing on Supabase
+              <v-icon size="x-small">mdi-alert</v-icon> The audio file was not retained for this earlier submission.
             </div>
 
+            <SubmissionEvaluation :evaluation="sub.evaluation || {}" :transcript="sub.transcribed_text || ''" />
             <!-- Teacher Feedback Input -->
             <div class="d-flex align-center ga-2">
               <v-text-field
@@ -1808,6 +1807,9 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import SubmissionEvaluation from './SubmissionEvaluation.vue'
+import { isMyHanhSite, isElementaryGrade, ELEMENTARY_GRADE, mediaUrl } from '@/utils/siteProfile.js'
+import { GRADE_LEVELS } from '@/constants/topics.js'
 
 const props = defineProps({
   backendUrl: String,
@@ -1916,7 +1918,12 @@ const handleTeacherSignIn = async () => {
   }
 }
 
-const classes = ref([])
+const allClasses = ref([])
+const isMyHanh = isMyHanhSite()
+const classGradeOptions = GRADE_LEVELS.filter(g => !isMyHanh || g.id === 'primary').map(g => g.name)
+const classes = computed(() => allClasses.value.filter(c => !isMyHanh || isElementaryGrade(c.grade_level)))
+const getMediaUrl = (url) => mediaUrl(url, props.backendUrl)
+const assignmentPreviewUrl = ref('')
 const selectedClassId = ref(null)
 const activeTab = ref('gradebook')
 const gradebook = ref({ classroom: null, students: [], assignments: [], submissions: [] })
@@ -2055,7 +2062,6 @@ const newAsgPictureTopic = ref('')
 const newAsgImageUrl = ref('')
 const newAsgGuidingQuestionsText = ref('')
 const newAsgGuidingQuestionsList = ref([])
-const newAsgTimeLimit = ref(60)
 const newAsgQuestionsMode = ref('list')
 const newAsgTargetKeywordsText = ref('')
 const isGeneratingAsgPicture = ref(false)
@@ -2082,7 +2088,7 @@ const removeNewAsgQuestion = (index) => {
   syncNewAsgQuestionsToText()
 }
 
-const teacherTopicIdeas = [
+const teacherTopicIdeas = isMyHanh ? ['My Classroom', 'Family Breakfast', 'At the Playground', 'A Visit to the Zoo', 'My Pets', 'A School Picnic'] : [
   'Hospital Emergency Hallway',
   'A University Science Research Lab',
   'Airport Departure Terminal',
@@ -2116,7 +2122,7 @@ const handleTeacherUploadImageChange = async (e) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         topic: topic,
-        level: 'intermediate',
+        level: isMyHanh ? 'beginner' : 'intermediate',
         mode: 'upload',
         image_url: uploadData.image_url,
         user_id: props.userId || 1
@@ -2160,7 +2166,7 @@ const generateAIPictureScenario = async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         topic: topic,
-        level: 'intermediate',
+        level: isMyHanh ? 'beginner' : 'intermediate',
         user_id: props.userId || 1
       })
     })
@@ -2241,7 +2247,7 @@ const isDeletingAsg = ref(false)
 const openEditClassModal = () => {
   if (!selectedClass.value) return
   editClassName.value = selectedClass.value.name
-  editClassGrade.value = selectedClass.value.grade_level
+  editClassGrade.value = isMyHanh ? ELEMENTARY_GRADE : selectedClass.value.grade_level
   showEditClassModal.value = true
 }
 
@@ -2319,7 +2325,6 @@ const submitRemoveStudent = async () => {
 const editAsgImageUrl = ref('')
 const editAsgGuidingQuestionsList = ref([])
 const editAsgTargetKeywordsText = ref('')
-const editAsgTimeLimit = ref(60)
 
 const addEditAsgQuestion = () => {
   editAsgGuidingQuestionsList.value.push('')
@@ -2335,7 +2340,6 @@ const openEditAssignmentModal = (asg) => {
   editAsgSentence.value = asg.topic_sentence || ''
   editAsgDueDate.value = asg.due_date || ''
   editAsgImageUrl.value = asg.image_url || ''
-  editAsgTimeLimit.value = asg.time_limit_seconds || 60
   
   const gq = Array.isArray(asg.guiding_questions) ? asg.guiding_questions : []
   editAsgGuidingQuestionsList.value = gq.length > 0 ? [...gq] : ['What is the primary subject in this scene?']
@@ -2361,7 +2365,7 @@ const submitEditAssignment = async () => {
       payload.image_url = editAsgImageUrl.value.trim()
       payload.guiding_questions = editAsgGuidingQuestionsList.value.map(q => q.trim()).filter(Boolean)
       payload.target_keywords = editAsgTargetKeywordsText.value.split(',').map(k => k.trim()).filter(Boolean)
-      payload.time_limit_seconds = Number(editAsgTimeLimit.value) || 60
+      payload.time_limit_seconds = 0
     }
     const res = await fetch(`${props.backendUrl}/api/assignments/${editingAsg.value.id}/update`, {
       method: 'POST',
@@ -2433,7 +2437,7 @@ const fetchClasses = async () => {
     }
     if (res.ok) {
       const data = await res.json()
-      classes.value = data.classes || []
+      allClasses.value = data.classes || []
       teacherQuota.value = data.quota || null
       if (classes.value.length && !selectedClassId.value) {
         selectClass(classes.value[0].id)
@@ -2743,7 +2747,7 @@ const submitCreateAssignment = async () => {
         image_url: newAsgImageUrl.value.trim(),
         guiding_questions: gQuestions,
         target_keywords: tKeywords,
-        time_limit_seconds: isPicture ? (Number(newAsgTimeLimit.value) || 60) : 60
+        time_limit_seconds: 0
       })
     })
     if (res.ok) {

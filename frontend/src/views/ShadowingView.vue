@@ -25,8 +25,8 @@
             class="bg-teal-darken-3"
           >
             <v-btn value="easy" size="x-small" class="font-weight-bold">Easy</v-btn>
-            <v-btn value="medium" size="x-small" class="font-weight-bold">Medium</v-btn>
-            <v-btn value="hard" size="x-small" class="font-weight-bold">Hard</v-btn>
+            <v-btn v-if="!isMyHanh" value="medium" size="x-small" class="font-weight-bold">Medium</v-btn>
+            <v-btn v-if="!isMyHanh" value="hard" size="x-small" class="font-weight-bold">Hard</v-btn>
           </v-btn-toggle>
         </div>
       </div>
@@ -604,6 +604,8 @@
 </template>
 
 <script setup>
+import { isMyHanhSite } from '@/utils/siteProfile.js'
+const isMyHanh = isMyHanhSite()
 import { ref, computed, watch } from 'vue'
 
 const props = defineProps({

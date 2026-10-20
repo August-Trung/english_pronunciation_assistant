@@ -40,11 +40,12 @@
     </div>
 
     <div v-else>
+      <p class="text-caption my-3">Ranked by average score, then practice count. Classroom scores include educator adjustments.</p>
       <!-- Always Show Top 3 Podium Winners (Top 2 | Top 1 | Top 3) -->
       <v-row class="ma-0 mb-4 align-end justify-center ga-1 ga-sm-3">
         <!-- Top 2 (Silver) -->
         <v-col cols="4" sm="3" class="pa-1">
-          <v-card border flat class="pa-2 pa-sm-3 text-center elevation-1 rounded-lg" :class="top2.isEmpty ? 'bg-grey-lighten-4 opacity-70 border-dashed' : 'bg-white'">
+      <v-card border flat class="pa-2 pa-sm-3 text-center elevation-1 rounded-lg" :class="top2.isEmpty ? 'bg-grey-lighten-4 opacity-70 border-dashed' : 'bg-white'">
             <div class="d-flex align-center justify-center mb-1">
               <v-chip label size="x-small" color="grey-darken-2" variant="tonal" class="px-2">
                 <v-icon size="x-small" class="mr-1">mdi-medal-outline</v-icon> Top 2
@@ -64,7 +65,7 @@
               {{ top2.badge_title }}
             </v-chip>
             <div class="text-caption font-weight-black" :class="top2.isEmpty ? 'text-grey' : 'text-primary'">
-              {{ top2.isEmpty ? '--/10' : `${(top2.best_score ?? top2.avg_score ?? 0).toFixed(1).replace('.', ',')}/10` }}
+              {{ top2.isEmpty ? '--/10' : `${(top2.avg_score ?? top2.best_score ?? 0).toFixed(1).replace('.', ',')}/10` }}
             </div>
             <div class="text-caption text-grey font-weight-bold" style="font-size: 10px;">
               <v-icon size="x-small" color="deep-orange">mdi-fire</v-icon> {{ top2.streak_count ?? top2.streak ?? 0 }}d
@@ -94,7 +95,7 @@
               {{ top1.badge_title }}
             </v-chip>
             <div class="text-subtitle-2 font-weight-black text-amber-darken-4">
-              {{ top1.isEmpty ? '--/10' : `${(top1.best_score ?? top1.avg_score ?? 0).toFixed(1).replace('.', ',')}/10` }}
+              {{ top1.isEmpty ? '--/10' : `${(top1.avg_score ?? top1.best_score ?? 0).toFixed(1).replace('.', ',')}/10` }}
             </div>
             <div class="text-caption text-grey-darken-2 font-weight-bold" style="font-size: 11px;">
               <v-icon size="x-small" color="deep-orange">mdi-fire</v-icon> {{ top1.streak_count ?? top1.streak ?? 0 }}d streak
@@ -124,7 +125,7 @@
               {{ top3.badge_title }}
             </v-chip>
             <div class="text-caption font-weight-black" :class="top3.isEmpty ? 'text-grey' : 'text-primary'">
-              {{ top3.isEmpty ? '--/10' : `${(top3.best_score ?? top3.avg_score ?? 0).toFixed(1).replace('.', ',')}/10` }}
+              {{ top3.isEmpty ? '--/10' : `${(top3.avg_score ?? top3.best_score ?? 0).toFixed(1).replace('.', ',')}/10` }}
             </div>
             <div class="text-caption text-grey font-weight-bold" style="font-size: 10px;">
               <v-icon size="x-small" color="deep-orange">mdi-fire</v-icon> {{ top3.streak_count ?? top3.streak ?? 0 }}d
@@ -140,7 +141,7 @@
             <tr class="bg-grey-lighten-4">
               <th class="text-center font-weight-black text-caption text-secondary" style="width: 50px;">RANK</th>
               <th class="font-weight-black text-caption text-secondary">LEARNER</th>
-              <th class="text-center font-weight-black text-caption text-secondary">BEST SCORE</th>
+              <th class="text-center font-weight-black text-caption text-secondary">AVERAGE SCORE</th>
               <th class="text-center font-weight-black text-caption text-secondary">STREAK</th>
               <th class="text-center font-weight-black text-caption text-secondary">PRACTICES</th>
             </tr>
@@ -173,7 +174,7 @@
                 </div>
               </td>
               <td class="text-center font-weight-black text-primary">
-                {{ (item.best_score ?? item.avg_score ?? 0).toFixed(1).replace('.', ',') }}/10
+                {{ (item.avg_score ?? item.best_score ?? 0).toFixed(1).replace('.', ',') }}/10
               </td>
               <td class="text-center text-caption font-weight-bold">
                 <v-chip size="x-small" color="deep-orange" variant="tonal" class="font-weight-black">

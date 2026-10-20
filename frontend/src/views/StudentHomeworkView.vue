@@ -30,6 +30,8 @@
           </div>
         </div>
 
+        <div class="d-flex flex-wrap ga-2">
+        <v-btn color="white" variant="outlined" prepend-icon="mdi-refresh" :loading="isRefreshing" class="text-none" @click="refreshHomework">Refresh All Assignments</v-btn>
         <v-btn
           color="white"
           variant="flat"
@@ -39,6 +41,7 @@
         >
           Enter Class Join Code
         </v-btn>
+        </div>
       </div>
     </v-card>
 
@@ -135,7 +138,7 @@
                 class="font-weight-bold"
                 :prepend-icon="asg.assignment_type === 'picture' ? 'mdi-image-filter-frames' : 'mdi-waveform'"
               >
-                {{ asg.assignment_type === 'picture' ? 'Describe Picture (60s)' : 'Sentence Reading' }}
+                {{ asg.assignment_type === 'picture' ? 'Describe Picture' : 'Sentence Reading' }}
               </v-chip>
             </div>
             <div class="text-caption text-grey">Due Date: {{ asg.due_date || 'No Deadline' }}</div>
@@ -156,11 +159,11 @@
         <div v-if="asg.assignment_type === 'picture'" class="mb-3">
           <div class="d-flex ga-3 flex-column flex-md-row mb-2">
             <!-- Scene Image -->
-            <div v-if="asg.image_url" class="rounded overflow-hidden border flex-shrink-0 cursor-pointer" style="max-width: 320px;" @click="previewImage(asg.image_url)">
+            <div v-if="asg.image_url" class="rounded overflow-hidden border flex-shrink-0 cursor-pointer" style="width: 320px; max-width: 100%;" @click="previewImage(asg.image_url)">
               <v-img
                 :src="getImageUrl(asg.image_url)"
-                height="200"
-                cover
+                height="240"
+                contain
                 class="bg-grey-lighten-4"
               />
             </div>
@@ -207,6 +210,11 @@
           <div class="text-body-1 font-weight-black text-secondary">"{{ asg.topic_sentence }}"</div>
         </div>
 
+        <div v-if="drafts[asg.assignment_id]" class="mb-3 pa-3 border rounded">
+          <div class="text-subtitle-2 mb-2">Review Your Recording</div>
+          <audio controls :src="drafts[asg.assignment_id].url" class="w-100" />
+          <v-btn class="mt-2 text-none" color="success" :loading="submittingId === asg.assignment_id" :disabled="isSubmitting || isStartingRecording || currentRecordingAsgId !== null" @click="uploadSubmission(asg)">Submit Recording</v-btn>
+        </div>
         <!-- Submission Controls or Result -->
         <div v-if="!asg.is_submitted" class="d-flex align-center flex-wrap ga-2">
           <v-btn
@@ -214,12 +222,13 @@
             variant="flat"
             class="font-weight-black text-none"
             :prepend-icon="currentRecordingAsgId === asg.assignment_id ? 'mdi-stop' : 'mdi-microphone'"
-            @click="toggleRecording(asg)"
+            :disabled="isStartingRecording || isSubmitting || (currentRecordingAsgId !== null && currentRecordingAsgId !== asg.assignment_id)"
+            @click="requestRecording(asg)"
           >
-            {{ currentRecordingAsgId === asg.assignment_id ? 'Stop & Submit Voice Recording' : (asg.assignment_type === 'picture' ? 'Start 60s Speaking Recording' : 'Start Voice Recording') }}
+            {{ currentRecordingAsgId === asg.assignment_id ? 'Stop Recording' : (drafts[asg.assignment_id] ? 'Record Again' : 'Start Voice Recording') }}
           </v-btn>
           <span v-if="currentRecordingAsgId === asg.assignment_id" class="text-caption text-error font-weight-bold">
-            🔴 Recording in progress ({{ remainingSeconds }}s remaining)...
+            Recording: {{ elapsedSeconds }} seconds. Select Stop Recording when finished.
           </span>
         </div>
 
@@ -229,8 +238,11 @@
             <v-chip size="x-small" color="success" variant="flat" class="font-weight-bold">Score: {{ asg.score?.toFixed(1) }}/10</v-chip>
           </div>
           <div v-if="asg.audio_url" class="d-flex align-center ga-2 mb-2">
-            <audio controls :src="asg.audio_url" class="w-100" style="height: 32px;" />
+            <audio controls :src="getImageUrl(asg.audio_url)" class="w-100" style="height: 32px;" />
           </div>
+          <p v-else class="text-caption text-grey">The audio file was not retained for this earlier submission.</p>
+          <SubmissionEvaluation :evaluation="asg.evaluation || {}" :transcript="asg.transcribed_text || ''" />
+          <p v-if="asg.score_override != null" class="text-caption">Educator-adjusted score: {{ asg.score_override }}/10. Original AI score: {{ asg.ai_score }}/10.</p>
           <div v-if="asg.teacher_feedback" class="text-caption text-grey-darken-3 bg-white pa-2 rounded border" style="white-space: pre-line;">
             <div class="font-weight-bold text-indigo mb-1">Assessment & Feedback:</div>
             {{ asg.teacher_feedback }}
@@ -410,6 +422,16 @@
       </v-card>
     </v-dialog>
 
+    <v-dialog :model-value="Boolean(replaceRecordingTarget)" max-width="480" @update:model-value="replaceRecordingTarget = null">
+      <v-card class="pa-4">
+        <v-card-title>Replace Your Recording?</v-card-title>
+        <v-card-text>Recording again will replace the current draft after you stop. The current draft remains available if recording cannot start.</v-card-text>
+        <v-card-actions>
+          <v-btn @click="replaceRecordingTarget = null">Cancel</v-btn>
+          <v-btn color="primary" @click="confirmRecordAgain">Record Again</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <!-- Dialog: Homework Picture Zoom -->
     <v-dialog v-model="showImageModal" max-width="850">
       <v-card class="pa-2 bg-black text-right" rounded="lg">
@@ -421,19 +443,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import SubmissionEvaluation from '@/components/SubmissionEvaluation.vue'
+import { isMyHanhSite, isElementaryGrade, mediaUrl } from '@/utils/siteProfile.js'
 
 const props = defineProps({
   backendUrl: String,
   userId: Number
 })
 
-const getImageUrl = (url) => {
-  if (!url) return '/logo-augusttrung.png'
-  if (url.startsWith('http') || url.startsWith('data:')) return url
-  const base = props.backendUrl?.replace(/\/$/, '') || 'https://agrse-fluent-english-backend.hf.space'
-  return `${base}${url.startsWith('/') ? '' : '/'}${url}`
-}
+const getImageUrl = (url) => mediaUrl(url, props.backendUrl)
 
 const showImageModal = ref(false)
 const previewImageUrl = ref('')
@@ -460,10 +479,20 @@ const leaveInput = ref('')
 const isLeaving = ref(false)
 
 const currentRecordingAsgId = ref(null)
-const remainingSeconds = ref(60)
+const isStartingRecording = ref(false)
+let disposed = false
+const elapsedSeconds = ref(0)
+const drafts = ref({})
+const submittingId = ref(null)
+const isSubmitting = computed(() => submittingId.value !== null)
+const isRefreshing = ref(false)
+const refreshHomework = async () => {
+  isRefreshing.value = true
+  try { await Promise.all([fetchEnrolledClasses(), fetchStudentAssignments()]) }
+  finally { isRefreshing.value = false }
+}
 let timerInterval = null
 let mediaRecorder = null
-let audioChunks = []
 
 const enrolledClasses = computed(() => {
   if (classesList.value?.length) {
@@ -503,7 +532,7 @@ const parseDueDate = (dueStr) => {
 
 const getDeadlineStatus = (asg) => {
   if (asg.is_submitted) {
-    return { status: 'submitted', label: `Submitted (${asg.score != null ? asg.score.toFixed(1) : '10'}/10)`, color: 'success', icon: 'mdi-check-circle' }
+    return { status: 'submitted', label: asg.score != null ? `Submitted (${asg.score.toFixed(1)}/10)` : 'Submitted (Assessment unavailable)', color: 'success', icon: 'mdi-check-circle' }
   }
   if (!asg.due_date) {
     return { status: 'pending', label: 'Pending', color: 'warning', icon: undefined }
@@ -547,7 +576,7 @@ const fetchEnrolledClasses = async () => {
     const res = await fetch(`${props.backendUrl}/api/classes/student/${uid}`)
     if (res.ok) {
       const data = await res.json()
-      classesList.value = data.classes || []
+      classesList.value = (data.classes || []).filter(c => !isMyHanhSite() || isElementaryGrade(c.grade_level))
     }
   } catch (e) {
     console.error('Fetch student classes error:', e)
@@ -561,9 +590,11 @@ const fetchStudentAssignments = async () => {
     const res = await fetch(`${props.backendUrl}/api/assignments/student/${uid}`)
     if (res.ok) {
       const data = await res.json()
-      assignments.value = data.assignments || []
+      assignments.value = (data.assignments || []).filter(a => !isMyHanhSite() || isElementaryGrade(a.grade_level))
     }
+    else throw new Error('Unable to refresh assignments.')
   } catch (e) {
+    notify(e.message, 'error')
     console.error('Fetch student assignments error:', e)
   }
 }
@@ -661,68 +692,85 @@ const handleUrlJoinCode = async () => {
   }
 }
 
+const replaceRecordingTarget = ref(null)
+const requestRecording = (asg) => {
+  if (drafts.value[asg.assignment_id] && currentRecordingAsgId.value !== asg.assignment_id) {
+    replaceRecordingTarget.value = asg
+  } else toggleRecording(asg)
+}
+const confirmRecordAgain = () => {
+  const asg = replaceRecordingTarget.value
+  replaceRecordingTarget.value = null
+  if (asg) toggleRecording(asg)
+}
 const toggleRecording = async (asg) => {
-  if (currentRecordingAsgId.value !== asg.assignment_id) {
-    if (currentRecordingAsgId.value && mediaRecorder) {
-      mediaRecorder.stop()
-    }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      mediaRecorder = new MediaRecorder(stream)
-      audioChunks = []
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) audioChunks.push(e.data)
-      }
-      mediaRecorder.onstop = () => {
-        stream.getTracks().forEach(t => t.stop())
-        if (timerInterval) clearInterval(timerInterval)
-        uploadSubmission(asg)
-      }
-      mediaRecorder.start()
-      currentRecordingAsgId.value = asg.assignment_id
-      remainingSeconds.value = asg.time_limit_seconds || 60
-
-      timerInterval = setInterval(() => {
-        if (remainingSeconds.value > 1) {
-          remainingSeconds.value--
-        } else {
-          toggleRecording(asg)
-        }
-      }, 1000)
-    } catch (e) {
-      notify('Microphone access denied: ' + e.message, 'error', 'mdi-microphone-off')
-    }
-  } else {
-    if (timerInterval) clearInterval(timerInterval)
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-      mediaRecorder.stop()
-    }
-    currentRecordingAsgId.value = null
+  if (currentRecordingAsgId.value === asg.assignment_id) {
+    if (mediaRecorder?.state === 'recording') mediaRecorder.stop()
+    return
   }
+  if (currentRecordingAsgId.value !== null || isSubmitting.value || isStartingRecording.value) return
+  isStartingRecording.value = true
+  let stream
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    if (disposed) { stream.getTracks().forEach(track => track.stop()); return }
+    const recorder = new MediaRecorder(stream)
+    const chunks = []
+    mediaRecorder = recorder
+    recorder.ondataavailable = (event) => { if (event.data.size) chunks.push(event.data) }
+    recorder.onstop = () => {
+      stream.getTracks().forEach(track => track.stop())
+      clearInterval(timerInterval)
+      currentRecordingAsgId.value = null
+      const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' })
+      if (drafts.value[asg.assignment_id]) URL.revokeObjectURL(drafts.value[asg.assignment_id].url)
+      drafts.value[asg.assignment_id] = { blob, url: URL.createObjectURL(blob) }
+    }
+    recorder.start()
+    currentRecordingAsgId.value = asg.assignment_id
+    const started = Date.now()
+    elapsedSeconds.value = 0
+    timerInterval = setInterval(() => { elapsedSeconds.value = Math.floor((Date.now() - started) / 1000) }, 1000)
+  } catch (error) {
+    stream?.getTracks().forEach(track => track.stop())
+    notify('Could not start recording: ' + error.message, 'error', 'mdi-microphone-off')
+  } finally { isStartingRecording.value = false }
 }
 
 const uploadSubmission = async (asg) => {
   const uid = getActiveStudentId()
-  const blob = new Blob(audioChunks, { type: 'audio/webm' })
+  const draft = drafts.value[asg.assignment_id]
+  if (!uid || !draft || isSubmitting.value) return
+  submittingId.value = asg.assignment_id
   const formData = new FormData()
   formData.append('assignment_id', asg.assignment_id)
-  formData.append('student_id', uid || 1)
-  formData.append('student_name', 'Student')
-  formData.append('audio', blob, 'submission.webm')
-
+  formData.append('student_id', uid)
+  formData.append('student_name', localStorage.getItem('user_name') || 'Learner')
+  const extension = draft.blob.type.includes('mp4') ? 'mp4' : draft.blob.type.includes('ogg') ? 'ogg' : 'webm'
+  formData.append('audio', draft.blob, `submission.${extension}`)
   try {
-    const res = await fetch(`${props.backendUrl}/api/assignments/submit`, {
-      method: 'POST',
-      body: formData
-    })
-    if (res.ok) {
-      notify('Submission successful! AI speech score recorded.', 'success', 'mdi-check-circle')
-      await fetchStudentAssignments()
-    }
-  } catch (e) {
-    notify('Submission error: ' + e.message, 'error', 'mdi-alert-circle')
-  }
+    const res = await fetch(`${props.backendUrl}/api/assignments/submit`, { method: 'POST', body: formData })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.detail || 'Submission failed. Your recording is available to retry.')
+    notify('Submission successful. Your recording and AI assessment have been saved.', 'success')
+    URL.revokeObjectURL(draft.url)
+    delete drafts.value[asg.assignment_id]
+    await fetchStudentAssignments()
+  } catch (error) {
+    notify('Submission error: ' + error.message, 'error', 'mdi-alert-circle')
+  } finally { submittingId.value = null }
 }
+
+onBeforeUnmount(() => {
+  disposed = true
+  clearInterval(timerInterval)
+  if (mediaRecorder) {
+    mediaRecorder.onstop = null
+    if (mediaRecorder.state !== 'inactive') mediaRecorder.stop()
+    mediaRecorder.stream.getTracks().forEach(track => track.stop())
+  }
+  Object.values(drafts.value).forEach(draft => URL.revokeObjectURL(draft.url))
+})
 
 onMounted(async () => {
   await fetchEnrolledClasses()
