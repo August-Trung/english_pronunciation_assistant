@@ -37,6 +37,21 @@ def store_picture_ftp(payload, filename):
     public_base = os.getenv('PICTURE_PUBLIC_BASE_URL', '').strip().rstrip('/')
     if not all((host, user, password, directory, public_base)) or urlsplit(public_base).scheme != 'https':
         raise PictureStorageError('Permanent image storage is not configured. Please contact the administrator.')
+
+    # Try direct HTTPS upload receiver on 123host (bypasses cloud container outbound port 21 firewalls)
+    try:
+        endpoint = f'{public_base}/store_image.php?filename={filename}'
+        res = requests.post(
+            endpoint,
+            data=payload,
+            headers={'Authorization': f'Bearer {password}', 'Content-Type': 'image/webp'},
+            timeout=15
+        )
+        if res.status_code == 200 and res.json().get('status') == 'success':
+            return f'{public_base}/{filename}'
+    except Exception:
+        pass
+
     try:
         with ftplib.FTP_TLS(timeout=30, context=ssl.create_default_context()) as ftp:
             ftp.connect(host, int(os.getenv('PICTURE_FTP_PORT', '21')))
@@ -55,7 +70,7 @@ def store_picture_ftp(payload, filename):
                 ftp.storbinary('STOR ' + pending, io.BytesIO(payload))
                 ftp.rename(pending, filename)
     except (OSError, ftplib.Error, ValueError) as exc:
-        raise PictureStorageError('Permanent image storage is temporarily unavailable. Please try again.') from exc
+        raise PictureStorageError(f'Permanent image storage is temporarily unavailable: {exc}. Please try again.') from exc
     return f'{public_base}/{filename}'
 
 
