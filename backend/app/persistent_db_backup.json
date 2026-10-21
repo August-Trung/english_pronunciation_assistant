@@ -6493,6 +6493,26 @@
       "tenant_id": null,
       "details": "Admin authenticated successfully",
       "created_at": "2026-10-21 03:41:46"
+    },
+    {
+      "id": 353,
+      "user_id": 5,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "5",
+      "tenant_id": null,
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-21 03:50:48"
+    },
+    {
+      "id": 354,
+      "user_id": 5,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "5",
+      "tenant_id": null,
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-21 04:29:48"
     }
   ],
   "system_configs": []
