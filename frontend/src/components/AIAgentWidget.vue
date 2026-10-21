@@ -227,6 +227,11 @@ const messages = ref([
   }
 ])
 
+watch(() => [props.userId, props.userRole], () => {
+  messages.value = [{ sender: 'agent', text: 'Tài khoản hoặc vai trò đã thay đổi. Mình sẽ bắt đầu cuộc trò chuyện mới để tránh nhầm dữ liệu.' }]
+  inputMsg.value = ''
+})
+
 watch(messages, () => {
   scrollToBottom()
 }, { deep: true })

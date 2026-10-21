@@ -41,7 +41,7 @@ class AssistantTests(unittest.TestCase):
         self.assertNotIn('Lan', text); self.assertNotIn('Other School', text)
 
     def test_unknown_requested_class_never_uses_latest_class(self):
-        text = self.ask('Xem bảng điểm lớp 10A1', True)['reply']
+        text = self.ask('Xem bảng điểm lớp học 10A1', True)['reply']
         self.assertIn('không tìm thấy', text)
         self.assertNotIn('Lan', text)
 

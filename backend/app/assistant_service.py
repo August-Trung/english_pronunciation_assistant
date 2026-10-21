@@ -27,9 +27,9 @@ def handle_assistant(message, user, db_path):
             # Even administrators only report classes they teach here; no global data fallback.
             classes = conn.execute('SELECT id, name FROM classrooms WHERE teacher_id=? AND COALESCE(IsXoa,0)=0 ORDER BY name', (uid,)).fetchall()
             matching = [c for c in classes if normalize(c['name']) in text or normalize(c['name']).removeprefix('lop hoc ').removeprefix('lop ') in text]
-            explicit = re.search(r'\b(?:lop|class)\s+([0-9]+[a-z][a-z0-9]*)', text)
+            explicit = re.search(r'\b(?:lop|class)\s+(?:hoc\s+)?([0-9]+[a-z][a-z0-9]*)', text)
             if explicit:
-                matching = [c for c in classes if explicit.group(1) in normalize(c['name'])]
+                matching = [c for c in classes if re.search(r'\b' + re.escape(explicit.group(1)) + r'\b', normalize(c['name']))]
                 if not matching:
                     return reply('Mình không tìm thấy lớp ' + explicit.group(1).upper() + ' trong các lớp Thầy/Cô phụ trách. Vui lòng kiểm tra tên lớp.')
             if not classes:
