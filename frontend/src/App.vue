@@ -880,6 +880,11 @@ onMounted(async () => {
     }
   }
 
+  const pendingInvite = localStorage.getItem('pending_join_code')
+  if (isLoggedIn.value && isMyHanhDomain.value && userRole.value === 'student' && pendingInvite && route.path !== '/join') {
+    await router.replace({path:'/join', query:{join_code:pendingInvite}})
+  }
+
   if (!isLoggedIn.value && isMyHanhDomain.value && route.path === '/' && route.query.signin !== '1') {
     await router.replace('/join')
   }
@@ -1112,6 +1117,11 @@ const handleLogin = async (userData) => {
 
       isLoggedIn.value = true
       await fetchUserAllData()
+      const pendingInvite = localStorage.getItem('pending_join_code')
+      if (isMyHanhDomain.value && userRole.value === 'student' && pendingInvite && route.path !== '/join') {
+        await router.replace({path:'/join', query:{join_code:pendingInvite}})
+        return
+      }
       if (route.path === '/') {
         if (['admin', 'super_admin'].includes(userData.role)) {
           router.push('/admin')
@@ -1161,6 +1171,11 @@ const handleLogin = async (userData) => {
         isLoggedIn.value = true
         
         await fetchUserAllData()
+      const pendingInvite = localStorage.getItem('pending_join_code')
+      if (isMyHanhDomain.value && userRole.value === 'student' && pendingInvite && route.path !== '/join') {
+        await router.replace({path:'/join', query:{join_code:pendingInvite}})
+        return
+      }
         if (route.path === '/') {
           if (['admin', 'super_admin'].includes(effectiveRole)) {
             router.push('/admin')

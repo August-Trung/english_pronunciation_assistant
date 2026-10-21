@@ -28,7 +28,7 @@ identity may remain for a safe retry; it does not count as an enrolled seat.
 The frontend must be deployed with app/main.py and app/learner_access.py together.
 Preserve live data/media before restart and never publish raw account backups.
 
-Validation: 10 focused tests cover first join, repeat requests, resume, same-name
+Validation: 11 focused tests cover first join, repeat requests, resume, same-name
 separation, invalid/archived/non-elementary links, recovery key validation, deleted
 profiles, quotas, email-only login rejection and enrollment ownership.
 Local browser fixture verified legacy link redirect, no-email enrollment, entering

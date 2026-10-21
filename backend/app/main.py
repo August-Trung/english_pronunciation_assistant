@@ -2977,6 +2977,8 @@ def join_learner_invite(req: LearnerInviteRequest):
     from .learner_access import invite_preview, learner_identity
     invite_preview(DB_PATH, req.join_code)
     user = learner_identity(DB_PATH, req.student_key, req.name, hash_password, verify_password, create=True)
+    preflight_token = create_access_token(user['id'], user['email'], 'student', user['tenant_id'])
+    get_current_user_from_db(DB_PATH, preflight_token)
     # Reuse existing enrollment, seat and license checks; repeated requests reuse identity.
     enrollment = join_class(JoinClassRequest(student_id=user['id'], join_code=req.join_code), current_user=user)
     user['token'] = create_access_token(user['id'], user['email'], 'student', user['tenant_id'])

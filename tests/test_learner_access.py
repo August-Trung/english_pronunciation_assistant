@@ -102,3 +102,8 @@ class LearnerAccessTests(unittest.TestCase):
         req=self.namespace['JoinClassRequest'](student_id=123,join_code='CLS-TEST')
         with self.assertRaises(HTTPException) as error:self.namespace['join_class'](req,{'id':999,'role':'student'})
         self.assertEqual(error.exception.status_code,403)
+
+    def test_suspended_profile_is_rejected_before_enrollment(self):
+        self.namespace['get_current_user_from_db'].side_effect=HTTPException(403,'Suspended')
+        with self.assertRaises(HTTPException):self.join()
+        with closing(sqlite3.connect(self.db)) as c:self.assertEqual(c.execute('SELECT COUNT(*) FROM class_enrollments').fetchone()[0],0)
