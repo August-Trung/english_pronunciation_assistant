@@ -35,12 +35,7 @@ os.makedirs(PICTURE_PRACTICE_DIR, exist_ok=True)
 
 # API Keys
 HF_TOKEN = os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_TOKEN") or ""
-DEFAULT_GROQ_KEYS = [
-    "REMOVED_GROQ_API_KEY_1",
-    "REMOVED_GROQ_API_KEY_2",
-    "REMOVED_GROQ_API_KEY_3",
-    "REMOVED_GROQ_API_KEY_4",
-]
+DEFAULT_GROQ_KEYS = [k.strip() for k in os.getenv("GROQ_API_KEYS", "").split(",") if k.strip()]
 
 GROQ_MODELS = [
     "openai/gpt-oss-120b",

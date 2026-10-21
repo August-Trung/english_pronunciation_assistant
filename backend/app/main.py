@@ -76,12 +76,7 @@ except Exception:
 model = None
 MODEL_SIZE = os.getenv("WHISPER_MODEL_SIZE", "base")
 
-DEFAULT_GROQ_KEYS = [
-    "REMOVED_GROQ_API_KEY_1",
-    "REMOVED_GROQ_API_KEY_2",
-    "REMOVED_GROQ_API_KEY_3",
-    "REMOVED_GROQ_API_KEY_4",
-]
+DEFAULT_GROQ_KEYS = []
 
 def get_groq_api_keys():
     """Extract all unique non-empty Groq API keys dynamically from environment variables, with fallback keys."""
