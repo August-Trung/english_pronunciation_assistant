@@ -1,4 +1,4 @@
-"""Persist submitted PCM recordings on durable HTTPS storage before database success."""
+"""Persist compressed submission recordings on durable HTTPS storage before database success."""
 import hashlib
 import io
 import os
@@ -7,6 +7,7 @@ import wave
 from urllib.parse import urlsplit
 
 import requests
+from pydub import AudioSegment
 
 MAX_AUDIO_BYTES = 64 * 1024 * 1024
 
@@ -32,11 +33,22 @@ def store_submission_audio(content):
     if (not token or any(p.scheme != 'https' or not p.hostname or p.username or p.password or p.query or p.fragment for p in parts)
             or parts[0].netloc != parts[1].netloc):
         raise AudioStorageError('Permanent recording storage is not configured. Please contact the administrator.')
-    filename = secrets.token_hex(32) + '.wav'
+    # Speech assessment has already used the original WAV. Only the archive is lossy.
+    try:
+        recording = AudioSegment.from_file(io.BytesIO(content), format='wav').set_channels(1)
+        encoded = io.BytesIO()
+        recording.export(encoded, format='mp3', bitrate='64k', codec='libmp3lame',
+                         parameters=['-map_metadata', '-1'])
+        content = encoded.getvalue()
+        if not content or len(content) > MAX_AUDIO_BYTES:
+            raise ValueError('Invalid compressed recording')
+    except Exception as exc:
+        raise AudioStorageError('Could not prepare your recording for permanent storage. Please try again.') from exc
+    filename = secrets.token_hex(32) + '.mp3'
     url = base + '/' + filename
     try:
         response = requests.post(endpoint, params={'filename': filename}, data=content,
-                                 headers={'Authorization': 'Bearer ' + token, 'Content-Type': 'audio/wav'},
+                                 headers={'Authorization': 'Bearer ' + token, 'Content-Type': 'audio/mpeg'},
                                  timeout=60, allow_redirects=False)
         if response.status_code != 200 or response.json().get('status') != 'success':
             raise AudioStorageError(error)
