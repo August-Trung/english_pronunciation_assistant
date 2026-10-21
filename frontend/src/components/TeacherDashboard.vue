@@ -491,7 +491,7 @@
                           {{ asg.target_ipa }}
                         </v-chip>
                       </div>
-                      <div class="text-caption font-weight-bold text-grey-darken-3 font-italic mt-0.5">
+                      <div class="text-caption font-weight-bold text-grey-darken-3 font-italic mt-0.5" style="white-space: pre-wrap;">
                         "{{ asg.topic_sentence }}"
                       </div>
                       <div class="text-caption text-grey mt-1">
@@ -1498,7 +1498,7 @@
           >
             <div class="d-flex align-center justify-space-between flex-wrap ga-2 mb-2">
               <span class="text-subtitle-2 font-weight-black text-indigo">{{ getAssignmentTitle(sub.assignment_id) }}</span>
-              <v-chip color="success" size="small" variant="flat" class="font-weight-black">
+              <v-chip @click="selectedAssessment = sub" aria-label="View AI assessment details" color="success" size="small" variant="flat" class="font-weight-black">
                 Score: {{ (sub.score_override ?? sub.score).toFixed(1) }}/10
               </v-chip>
             </div>
@@ -1802,10 +1802,13 @@
     </v-dialog>
     </div>
   </v-container>
+  <AssessmentDialog :submission="selectedAssessment" :audio-url="selectedAssessment ? getMediaUrl(selectedAssessment.audio_url) : ''" @close="selectedAssessment = null" />
 </template>
 
 <script setup>
+import AssessmentDialog from './AssessmentDialog.vue'
 import { ref, computed, watch, onMounted } from 'vue'
+const selectedAssessment = ref(null)
 import { useRouter } from 'vue-router'
 import SubmissionEvaluation from './SubmissionEvaluation.vue'
 import { isMyHanhSite, isElementaryGrade, ELEMENTARY_GRADE, mediaUrl } from '@/utils/siteProfile.js'

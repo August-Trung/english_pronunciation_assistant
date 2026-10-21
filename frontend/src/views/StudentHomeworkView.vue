@@ -145,6 +145,7 @@
           </div>
 
           <v-chip
+            @click="asg.is_submitted && (selectedAssessment = asg)"
             :color="getDeadlineStatus(asg).color"
             :variant="getDeadlineStatus(asg).status === 'due_soon' ? 'flat' : 'tonal'"
             size="small"
@@ -207,7 +208,7 @@
         <!-- Format Branch 2: Standard Sentence Reading -->
         <div v-else class="pa-3 bg-purple-lighten-5 rounded border border-purple mb-3">
           <div class="text-caption font-weight-bold text-purple-darken-3 mb-1">Assigned Model Reading Sentence:</div>
-          <div class="text-body-1 font-weight-black text-secondary">"{{ asg.topic_sentence }}"</div>
+          <div class="text-body-1 font-weight-black text-secondary" style="white-space: pre-wrap;">"{{ asg.topic_sentence }}"</div>
         </div>
 
         <div v-if="drafts[asg.assignment_id]" class="mb-3 pa-3 border rounded">
@@ -235,7 +236,7 @@
         <div v-else class="bg-grey-lighten-5 pa-3 rounded border">
           <div class="d-flex align-center justify-space-between mb-1">
             <span class="text-caption font-weight-bold text-grey-darken-3">Submitted Audio:</span>
-            <v-chip size="x-small" color="success" variant="flat" class="font-weight-bold">Score: {{ asg.score?.toFixed(1) }}/10</v-chip>
+            <v-chip @click="selectedAssessment = asg" aria-label="View AI assessment details" size="x-small" color="success" variant="flat" class="font-weight-bold">Score: {{ asg.score?.toFixed(1) }}/10</v-chip>
           </div>
           <div v-if="asg.audio_url" class="d-flex align-center ga-2 mb-2">
             <audio controls :src="getImageUrl(asg.audio_url)" class="w-100" style="height: 32px;" />
@@ -440,10 +441,13 @@
       </v-card>
     </v-dialog>
   </v-container>
+  <AssessmentDialog :submission="selectedAssessment" :audio-url="selectedAssessment ? getImageUrl(selectedAssessment.audio_url) : ''" @close="selectedAssessment = null" />
 </template>
 
 <script setup>
+import AssessmentDialog from '@/components/AssessmentDialog.vue'
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+const selectedAssessment = ref(null)
 import SubmissionEvaluation from '@/components/SubmissionEvaluation.vue'
 import { isMyHanhSite, isElementaryGrade, mediaUrl } from '@/utils/siteProfile.js'
 

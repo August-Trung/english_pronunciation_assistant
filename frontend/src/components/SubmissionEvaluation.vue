@@ -1,5 +1,5 @@
 <template>
-  <v-expansion-panels variant="accordion" class="my-2">
+  <v-expansion-panels :model-value="initiallyExpanded ? 0 : undefined" variant="accordion" class="my-2">
     <v-expansion-panel title="View AI Assessment Details">
       <v-expansion-panel-text>
         <div v-if="transcript" class="mb-3">
@@ -67,6 +67,7 @@
 
 <script setup>
 defineProps({
+  initiallyExpanded: { type: Boolean, default: false },
   evaluation: { type: Object, default: () => ({}) },
   transcript: { type: String, default: '' }
 })
