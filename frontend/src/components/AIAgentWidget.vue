@@ -56,9 +56,9 @@
             variant="tonal"
             class="font-weight-bold cursor-pointer flex-shrink-0"
             prepend-icon="mdi-plus-box"
-            @click="sendQuickPrompt('Tạo bài tập chủ đề Môi trường cho lớp 10A1')"
+            @click="sendQuickPrompt('Tôi muốn tạo bài tập cho lớp của tôi')"
           >
-            Tạo bài tập
+            Create Assignment
           </v-chip>
           <v-chip
             size="x-small"
@@ -66,9 +66,9 @@
             variant="tonal"
             class="font-weight-bold cursor-pointer flex-shrink-0"
             prepend-icon="mdi-chart-bar"
-            @click="sendQuickPrompt('Xem danh sách học sinh yếu và bảng điểm lớp 10A1')"
+            @click="sendQuickPrompt('Xem bảng điểm lớp của tôi')"
           >
-            Sổ điểm lớp
+            Class Gradebook
           </v-chip>
         </template>
         <template v-else>
@@ -80,7 +80,7 @@
             prepend-icon="mdi-account-voice"
             @click="sendQuickPrompt('Tôi muốn luyện tập phát âm âm /θ/ trong tiếng Anh')"
           >
-            Luyện âm /θ/
+            Practice /θ/
           </v-chip>
           <v-chip
             size="x-small"
@@ -90,7 +90,7 @@
             prepend-icon="mdi-flash"
             @click="sendQuickPrompt('Tự động tạo bài tập luyện các từ mình hay đọc sai')"
           >
-            Tự luyện từ yếu
+            Practice Weak Words
           </v-chip>
           <v-chip
             size="x-small"
@@ -100,7 +100,7 @@
             prepend-icon="mdi-clock-alert-outline"
             @click="sendQuickPrompt('Kiểm tra bài tập lớp học cần nộp')"
           >
-            Bài tập cần nộp
+            Pending Homework
           </v-chip>
           <v-chip
             size="x-small"
@@ -141,6 +141,7 @@
               />
             </div>
             <div class="markdown-content" v-html="formatMarkdown(msg.text)"></div>
+            <v-btn v-if="actionTargets[msg.action]" size="small" color="primary" variant="tonal" class="mt-2 text-none" @click="openAction(msg.action)">{{ actionTargets[msg.action][1] }}</v-btn>
           </div>
         </div>
 
@@ -175,7 +176,14 @@
 </template>
 
 <script setup>
-import { ref, nextTick, watch, onMounted } from 'vue'
+import { ref, nextTick, watch } from 'vue'
+import { useRouter } from 'vue-router'
+const router = useRouter()
+const actionTargets = { open_teacher: ['/teacher', 'Open Teacher Hub'], open_homework: ['/homework', 'Open Homework'], open_speaking: ['/', 'Open Speaking'] }
+const openAction = (action) => {
+  const target = actionTargets[action]
+  if (target) { router.push(target[0]); isOpen.value = false }
+}
 
 const props = defineProps({
   backendUrl: {
@@ -198,6 +206,7 @@ const inputMsg = ref('')
 const formatMarkdown = (text) => {
   if (!text) return ''
   return text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     .replace(/\n/g, '<br>')
@@ -214,7 +223,7 @@ const scrollToBottom = () => {
 const messages = ref([
   {
     sender: 'agent',
-    text: '👋 **Chào bạn! Mình là FLUENT AI ASSISTANT.**\n\nMình có thể hỗ trợ bạn *Tự động tạo bài tập luyện từ yếu*, *Kiểm tra bài tập cần nộp*, hoặc *Thống kê sổ điểm*!'
+    text: '👋 **Chào bạn! Mình là FLUENT AI ASSISTANT.**\n\nMình có thể giải thích cách phát âm, tra bài chưa nộp và xem điểm theo tài khoản đăng nhập. Với giáo viên, mình hỗ trợ tìm lớp và mở luồng soạn bài; bài chỉ được giao khi Thầy/Cô kiểm tra và bấm Assign Homework.'
   }
 ])
 
@@ -231,6 +240,14 @@ const sendMessage = async () => {
   const text = inputMsg.value.trim()
   if (!text || isLoading.value) return
 
+  const token = ['teacher', 'admin', 'super_admin'].includes(props.userRole)
+    ? (localStorage.getItem('teacher_auth_token') || localStorage.getItem('admin_auth_token') || localStorage.getItem('token'))
+    : localStorage.getItem('token')
+  if (!token) {
+    messages.value.push({ sender: 'agent', text: 'Bạn cần đăng nhập để dùng trợ lý và tra dữ liệu đúng tài khoản.' })
+    return
+  }
+  const history = messages.value.slice(-8).map(m => ({ role: m.sender === 'user' ? 'user' : 'assistant', content: m.text }))
   messages.value.push({ sender: 'user', text })
   inputMsg.value = ''
   isLoading.value = true
@@ -239,26 +256,24 @@ const sendMessage = async () => {
   try {
     const res = await fetch(`${props.backendUrl}/api/agent/chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({
         user_id: props.userId || 1,
         role: props.userRole || 'student',
         message: text,
-        conversation_history: messages.value.slice(-6).map(m => ({
-          role: m.sender === 'user' ? 'user' : 'assistant',
-          content: m.text
-        }))
+        conversation_history: history
       })
     })
 
     if (res.ok) {
       const data = await res.json()
-      messages.value.push({ sender: 'agent', text: data.reply || 'AI Agent response received.' })
+      messages.value.push({ sender: 'agent', text: data.reply || 'Chưa nhận được câu trả lời. Vui lòng thử lại.', action: data.action })
     } else {
-      messages.value.push({ sender: 'agent', text: '⚠️ AI Copilot error processing message.' })
+      const error = await res.json().catch(() => ({}))
+      messages.value.push({ sender: 'agent', text: res.status === 401 ? 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.' : (error.detail || 'Không thể xử lý yêu cầu lúc này. Vui lòng thử lại.') })
     }
   } catch (e) {
-    messages.value.push({ sender: 'agent', text: '⚠️ Connection error to AI Agent service.' })
+    messages.value.push({ sender: 'agent', text: 'Không kết nối được với trợ lý. Tin nhắn chưa được xử lý; vui lòng thử lại.' })
   } finally {
     isLoading.value = false
     scrollToBottom()

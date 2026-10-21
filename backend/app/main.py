@@ -6198,353 +6198,44 @@ class AgentChatRequest(BaseModel):
     conversation_history: list = []
 
 @app.post("/api/agent/chat")
-def agent_chat(req: AgentChatRequest):
+def agent_chat(req: AgentChatRequest, current_user: dict = Depends(get_current_authenticated_user)):
+    from .assistant_service import handle_assistant
     user_msg = req.message.strip()
-    role = req.role.lower()
-    uid = req.user_id
-
-    if not user_msg:
-        raise HTTPException(status_code=400, detail="Message cannot be empty.")
-
-    # Helper DB Tool Executions
-    def execute_create_assignment(topic="General"):
+    if not user_msg or len(user_msg) > 4000:
+        raise HTTPException(status_code=400, detail="Please enter a message of 1–4000 characters.")
+    # Identity and role come exclusively from the authenticated account.
+    try:
+        result = handle_assistant(user_msg, current_user, DB_PATH)
+    except sqlite3.Error:
+        raise HTTPException(status_code=503, detail="Không thể đọc dữ liệu lúc này. Vui lòng thử lại.")
+    if result is not None:
+        return result
+    import urllib.request
+    history = [h for h in req.conversation_history[-8:] if isinstance(h, dict)
+               and h.get('role') in ('user', 'assistant') and isinstance(h.get('content'), str)]
+    messages = [{"role": "system", "content":
+        "Bạn là FLUENT AI ASSISTANT, trợ lý học tiếng Anh. Trả lời tiếng Việt có dấu, "
+        "trừ khi người dùng yêu cầu tiếng Anh hoặc đang đóng vai. Trả lời đúng câu hỏi. "
+        "Không có công cụ ghi dữ liệu trong lượt này: tuyệt đối không nói đã tạo/giao/xóa bài, "
+        "đã lưu hay biết điểm, tên lớp hoặc lịch sử nếu không được cung cấp. "
+        "Khi cần thao tác hoặc dữ liệu tài khoản, hướng dẫn đến Teacher Hub/Homework. "
+        "Không thể nghe/phân tích phát âm từ tin nhắn chữ; yêu cầu ghi âm trong Speaking. "
+        "Nếu thiếu ngữ cảnh, hỏi ngắn gọn. Không bịa thông tin."}]
+    messages += [{"role": h['role'], "content": h['content'][:4000]} for h in history]
+    messages.append({"role": "user", "content": user_msg})
+    for key in get_groq_api_keys():
         try:
-            conn = sqlite3.connect(DB_PATH, timeout=20.0)
-            cursor = conn.cursor()
-            cursor.execute("SELECT id, name FROM classrooms WHERE teacher_id = ? AND (IsXoa IS NULL OR IsXoa = 0) ORDER BY id DESC LIMIT 1", (uid,))
-            cls_row = cursor.fetchone()
-            class_id = cls_row[0] if cls_row else 1
-            class_name = cls_row[1] if cls_row else "English Class"
-
-            topic_title = f"Unit: {topic.title()}" if topic and topic.lower() != "general" else "AI Speaking Practice Assignment"
-            sentence = "Artificial intelligence is revolutionizing modern education."
-            if "environment" in topic.lower() or "môi trường" in topic.lower():
-                topic_title = "Unit: Environmental Conservation"
-                sentence = "Protecting natural habitats is essential for maintaining global biodiversity."
-            elif "family" in topic.lower() or "gia đình" in topic.lower():
-                topic_title = "Unit: My Family & Life"
-                sentence = "I live with my loving family in a peaceful town."
-
-            due_date = "2026-08-15"
-            cursor.execute(
-                "INSERT INTO assignments (class_id, teacher_id, title, topic_sentence, target_ipa, due_date) VALUES (?, ?, ?, ?, ?, ?)",
-                (class_id, uid, topic_title, sentence, "/ˌɑː.tɪˈfɪʃ.əl ɪnˈtel.ɪ.dʒəns/", due_date)
-            )
-            conn.commit()
-            asg_id = cursor.lastrowid
-            conn.close()
-            export_db_to_json()
-
-            reply = f"Đã khởi tạo thành công bài tập mới cho lớp **{class_name}**!\n\n- **Tiêu đề**: {topic_title}\n- **Câu đọc mẫu**: \"{sentence}\"\n- **Hạn nộp**: {due_date}"
-            return {"status": "success", "reply": reply, "action": "assignment_created", "data": {"assignment_id": asg_id, "title": topic_title, "class_id": class_id, "class_name": class_name}}
-        except Exception as e:
-            return {"status": "success", "reply": f"Lỗi tạo bài tập tự động: {str(e)}", "action": None, "data": None}
-
-    def execute_remedial_practice(target_sound=None, topic=None):
-        try:
-            # If user specified target sound (e.g. /θ/, /ð/, /ʃ/, /r/) or topic
-            if target_sound:
-                clean_sound = target_sound.replace("/", "").strip()
-                if clean_sound in ["θ", "th"]:
-                    sentence = "Arthur thought about thirty-three healthy things on Thursday."
-                    top_words = ["thought", "thirty-three", "healthy", "Thursday"]
-                    reply = f"Đã tạo phiên luyện tập chuyên biệt cho âm **/{clean_sound}/**:\n\n**Câu mẫu tự luyện**: \"{sentence}\""
-                elif clean_sound in ["ð", "voiced th"]:
-                    sentence = "My father and mother live together with their brother in that house."
-                    top_words = ["father", "mother", "together", "their"]
-                    reply = f"Đã tạo phiên luyện tập chuyên biệt cho âm **/{clean_sound}/**:\n\n**Câu mẫu tự luyện**: \"{sentence}\""
-                elif clean_sound in ["ʃ", "sh"]:
-                    sentence = "She sells sea shells by the seashore."
-                    top_words = ["She", "shells", "seashore"]
-                    reply = f"Đã tạo phiên luyện tập chuyên biệt cho âm **/{clean_sound}/**:\n\n**Câu mẫu tự luyện**: \"{sentence}\""
-                else:
-                    sentence = f"I am practicing the sound /{clean_sound}/ with confidence and clarity."
-                    top_words = ["practicing", "confidence", "clarity"]
-                    reply = f"Đã tạo phiên luyện tập cho âm **/{clean_sound}/**:\n\n**Câu mẫu tự luyện**: \"{sentence}\""
-                return {"status": "success", "reply": reply, "action": "remedial_generated", "data": {"topic_sentence": sentence, "focus_words": top_words}}
-
-            if topic:
-                if "restaurant" in topic.lower() or "nhà hàng" in topic.lower() or "ăn" in topic.lower():
-                    sentence = "I would like to reserve a window table for two people at seven o'clock."
-                    top_words = ["reserve", "window", "table", "o'clock"]
-                    reply = f"Đã tạo phiên luyện tập chủ đề **Nhà hàng & Gọi món**:\n\n**Câu mẫu tự luyện**: \"{sentence}\""
-                elif "travel" in topic.lower() or "du lịch" in topic.lower() or "khách sạn" in topic.lower():
-                    sentence = "Could you please help me check in for my flight to London?"
-                    top_words = ["please", "check in", "flight", "London"]
-                    reply = f"Đã tạo phiên luyện tập chủ đề **Du lịch & Sân bay**:\n\n**Câu mẫu tự luyện**: \"{sentence}\""
-                else:
-                    sentence = f"Artificial intelligence is revolutionizing the {topic} industry."
-                    top_words = ["revolutionizing", topic, "industry"]
-                    reply = f"Đã tạo phiên luyện tập chủ đề **{topic.title()}**:\n\n**Câu mẫu tự luyện**: \"{sentence}\""
-                return {"status": "success", "reply": reply, "action": "remedial_generated", "data": {"topic_sentence": sentence, "focus_words": top_words}}
-
-            # Fallback to DB weak words query
-            conn = sqlite3.connect(DB_PATH, timeout=20.0)
-            cursor = conn.cursor()
-            cursor.execute("SELECT word, ipa, error_count FROM weak_words WHERE (IsXoa IS NULL OR IsXoa = 0) ORDER BY error_count DESC LIMIT 5")
-            rows = cursor.fetchall()
-            conn.close()
-
-            if rows:
-                top_words = [r[0] for r in rows]
-                words_str = ", ".join(top_words)
-                sentence = f"I am practicing to pronounce {' and '.join(top_words[:3])} accurately."
-                reply = f"Đã tạo phiên tự luyện cá nhân hóa tập trung vào các từ bạn hay đọc sai nhất: **{words_str}**!\n\n**Câu mẫu tự luyện**: \"{sentence}\""
-                data = {"topic_sentence": sentence, "focus_words": top_words}
-            else:
-                sentence = "Protecting natural habitats is essential for global biodiversity."
-                reply = f"Bạn chưa có lịch sử đọc sai từ nào trong tuần này! Đây là câu đọc mẫu thực hành dành cho bạn hôm nay:\n\n**Câu mẫu tự luyện**: \"{sentence}\""
-                data = {"topic_sentence": sentence, "focus_words": ["biodiversity", "essential"]}
-            return {"status": "success", "reply": reply, "action": "remedial_generated", "data": data}
-        except Exception as e:
-            return {"status": "success", "reply": f"Lỗi khởi tạo bài tự luyện: {str(e)}", "action": None, "data": None}
-
-    def execute_class_analytics():
-        try:
-            conn = sqlite3.connect(DB_PATH, timeout=20.0)
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT u.id, u.name, u.email, COUNT(s.id) as sub_cnt, AVG(COALESCE(s.score_override, s.score)) as avg_score
-                FROM users u
-                LEFT JOIN submissions s ON u.id = s.student_id AND (s.IsXoa IS NULL OR s.IsXoa = 0)
-                WHERE u.role = 'student' AND (u.IsXoa IS NULL OR u.IsXoa = 0)
-                GROUP BY u.id
-                ORDER BY avg_score ASC LIMIT 5
-            """)
-            rows = cursor.fetchall()
-            conn.close()
-
-            student_summary = []
-            for r in rows:
-                score_str = f"{r[4]:.1f}/10" if r[4] is not None else "Chưa có bài"
-                student_summary.append(f"- **{r[1]}** ({r[2]}): {score_str} ({r[3]} bài nộp)")
-
-            reply = "📊 **Thống kê Bảng điểm & Học lực Lớp học**\n\n" + "\n".join(student_summary)
-            return {"status": "success", "reply": reply, "action": "stats_queried", "data": {"students": [{"name": r[1], "email": r[2], "avg_score": r[4]} for r in rows]}}
-        except Exception as e:
-            return {"status": "success", "reply": f"Lỗi truy vấn thống kê: {str(e)}", "action": None, "data": None}
-
-    def execute_check_homework():
-        try:
-            conn = sqlite3.connect(DB_PATH, timeout=20.0)
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT a.id, a.title, c.name, a.due_date
-                FROM assignments a
-                JOIN classrooms c ON a.class_id = c.id
-                JOIN class_enrollments e ON c.id = e.class_id
-                WHERE e.student_id = ? AND (a.IsXoa IS NULL OR a.IsXoa = 0)
-                ORDER BY a.id DESC LIMIT 3
-            """, (uid,))
-            rows = cursor.fetchall()
-            conn.close()
-
-            if rows:
-                asg_list = [f"- **{r[1]}** (Lớp: {r[2]}) - Hạn: {r[3] or 'Không có'}" for r in rows]
-                reply = "⏰ **Danh sách Bài tập Lớp học của bạn**\n\n" + "\n".join(asg_list)
-            else:
-                reply = "🎉 Bạn không có bài tập lớp học nào chưa hoàn thành!"
-            return {"status": "success", "reply": reply, "action": "homework_checked", "data": {}}
-        except Exception as e:
-            return {"status": "success", "reply": f"Lỗi kiểm tra bài tập: {str(e)}", "action": None, "data": None}
-
-    def execute_roleplay():
-        reply = "🏨 **Hotel Receptionist Roleplay**\n\n*\"Good day and welcome to Grand Hotel! How may I assist you with your check-in or room reservation today?\"*"
-        return {"status": "success", "reply": reply, "action": "roleplay_started", "data": {}}
-
-    # Define Available Tool Schemas
-    all_tools = [
-        {
-            "type": "function",
-            "function": {
-                "name": "create_assignment",
-                "description": "Teacher/Admin tool to create a new class assignment with topic and practice sentence.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "topic": {"type": "string", "description": "Assignment topic title, e.g., Environment, Family, Technology"}
-                    }
-                }
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "query_class_analytics",
-                "description": "Teacher/Admin tool to query class roster gradebook and low-performing student analytics.",
-                "parameters": {"type": "object", "properties": {}}
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "generate_remedial_practice",
-                "description": "Student tool to generate a practice set targeting specific IPA sound (e.g. /θ/, /ð/), topic, or mispronounced weak words.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "target_sound": {"type": "string", "description": "Target IPA sound to practice, e.g. /θ/, /ð/, /ʃ/"},
-                        "topic": {"type": "string", "description": "Practice topic, e.g. Restaurant, Travel, General"}
-                    }
-                }
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "check_homework",
-                "description": "Student tool to check pending class homework assignments and due dates.",
-                "parameters": {"type": "object", "properties": {}}
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "start_voice_roleplay",
-                "description": "User tool to start interactive English speaking roleplay scenario.",
-                "parameters": {"type": "object", "properties": {}}
-            }
-        }
-    ]
-
-    # Role-Based Tool Scope Filtering
-    if role in ["teacher", "admin", "super_admin"]:
-        active_tools = all_tools
-    else:
-        active_tools = [t for t in all_tools if t["function"]["name"] in ["generate_remedial_practice", "check_homework", "start_voice_roleplay"]]
-
-    # Execute via Groq LLM Native Function Calling (Multi-Key Pool Rotational Engine)
-    groq_pool = get_groq_api_keys()
-
-    if groq_pool:
-        import urllib.request
-        sys_prompt = (
-            f"You are Fluent AI Assistant, a warm academic English and Pronunciation tutor. User role: {role}.\n"
-            "DEFAULT LANGUAGE: You MUST respond in warm, helpful, encouraging VIETNAMESE by default.\n"
-            "ONLY use English when the user explicitly asks to chat in English or is participating in a Voice Roleplay.\n\n"
-            "GENTLE PIVOT GUARDRAIL:\n"
-            "If the user asks an out-of-scope question (e.g., cooking, programming, finance, politics), acknowledge politely in 1 short sentence, and gently pivot by offering a relevant English sentence on that topic to practice pronouncing!\n"
-            "Example for cooking Pho: 'Mình là Trợ lý Luyện phát âm Tiếng Anh FLUENT! Về món Phở, bạn có muốn cùng mình luyện đọc câu giới thiệu món Phở bằng Tiếng Anh không: \"Pho is a traditional Vietnamese noodle soup served with savory beef broth.\"' \n\n"
-            "PRONUNCIATION TIPS:\n"
-            "If the user asks for pronunciation tips (e.g., how to pronounce /θ/ or /ð/), provide a clear, encouraging 4-step pedagogical explanation directly in Vietnamese.\n\n"
-            "PRACTICE REQUESTS:\n"
-            "If the user asks to practice a specific sound (e.g., /θ/, /ð/, /ʃ/), topic, or weak words, call the generate_remedial_practice function with target_sound or topic parameters.\n\n"
-            "Keep responses concise, supportive, and formatted in clean markdown without extra bot headers."
-        )
-
-        messages = [{"role": "system", "content": sys_prompt}]
-        for h in req.conversation_history[-4:]:
-            messages.append(h)
-        messages.append({"role": "user", "content": user_msg})
-
-        payload_dict = {
-            "model": "llama-3.3-70b-versatile",
-            "messages": messages,
-            "tools": active_tools,
-            "tool_choice": "auto",
-            "temperature": 0.3,
-            "max_tokens": 500
-        }
-        payload = json.dumps(payload_dict).encode('utf-8')
-
-        # Rotate through Key Pool until success
-        for current_key in groq_pool:
-            try:
-                req_obj = urllib.request.Request(
-                    "https://api.groq.com/openai/v1/chat/completions",
-                    data=payload,
-                    headers={
-                        "Authorization": f"Bearer {current_key}",
-                        "Content-Type": "application/json",
-                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-                    }
-                )
-
-                with urllib.request.urlopen(req_obj, timeout=8.0) as resp:
-                    resp_data = json.loads(resp.read().decode('utf-8'))
-                    choice = resp_data["choices"][0]["message"]
-
-                    # Check if Native LLM invoked a tool call
-                    tool_calls = choice.get("tool_calls")
-                    if tool_calls and len(tool_calls) > 0:
-                        fn_name = tool_calls[0]["function"]["name"]
-                        args = {}
-                        try:
-                            args = json.loads(tool_calls[0]["function"].get("arguments", "{}"))
-                        except Exception:
-                            args = {}
-
-                        if fn_name == "create_assignment":
-                            return execute_create_assignment(args.get("topic", "General"))
-                        elif fn_name == "generate_remedial_practice":
-                            return execute_remedial_practice(target_sound=args.get("target_sound"), topic=args.get("topic"))
-                        elif fn_name == "query_class_analytics":
-                            return execute_class_analytics()
-                        elif fn_name == "check_homework":
-                            return execute_check_homework()
-                        elif fn_name == "start_voice_roleplay":
-                            return execute_roleplay()
-
-                    # Otherwise return conversational LLM response
-                    reply = choice.get("content", "")
-                    if reply:
-                        return {"status": "success", "reply": reply, "action": None, "data": None}
-            except Exception as groq_err:
-                print(f"Groq Multi-Key Pool notice (Key ...{current_key[-6:]}): {groq_err}")
-                if "429" in str(groq_err):
-                    time.sleep(0.5)
-                continue
-
-    # Fallback Semantic Heuristic Intent Matching & Educational Knowledge Base (if LLM is offline or 403/429)
-    msg_lower = user_msg.lower()
-
-    # Educational Query: Pronunciation Tips (/θ/, /ð/, /ʃ/, /ʒ/, /r/, /l/, etc.)
-    if "mẹo" in msg_lower or "cách đọc" in msg_lower or "cách phát âm" in msg_lower or "thế nào" in msg_lower or "/θ/" in msg_lower or "/ð/" in msg_lower or "/ʃ/" in msg_lower or "âm th" in msg_lower or "âm sh" in msg_lower:
-        if "/θ/" in msg_lower or "âm th" in msg_lower or "th" in msg_lower:
-            reply = (
-                "🗣️ **FLUENT AI ASSISTANT: Mẹo phát âm chuẩn âm `/θ/` (Unvoiced TH)**\n\n"
-                "1. **Vị trí lưỡi & răng**: Đặt nhẹ đầu lưỡi ở giữa hai hàm răng cửa (chạm nhẹ vào hàm răng trên).\n"
-                "2. **Thổi hơi**: Thổi nhẹ luồng khí ra ngoài qua khe giữa lưỡi và răng cửa (dây thanh quản không rung).\n"
-                "3. **Từ mẫu thực hành**: *think* `/θɪŋk/`, *thanks* `/θæŋks/`, *three* `/θriː/`, *birthday* `/ˈbɜːθ.deɪ/`.\n"
-                "4. **Lỗi cần tránh**: Không đọc chệch thành âm `/t/` (như đọc *think* thành *tink*) hay âm `/s/`!"
-            )
-            return {"status": "success", "reply": reply, "action": None, "data": None}
-        elif "/ð/" in msg_lower:
-            reply = (
-                "🗣️ **FLUENT AI ASSISTANT: Mẹo phát âm chuẩn âm `/ð/` (Voiced TH)**\n\n"
-                "1. **Vị trí lưỡi**: Đặt đầu lưỡi ở giữa hai răng cửa tương tự như âm `/θ/`.\n"
-                "2. **Tạo tiếng rung**: Thổi luồng hơi đồng thời làm rung dây thanh quản trong cổ họng.\n"
-                "3. **Từ mẫu thực hành**: *this* `/ðɪs/`, *that* `/ðæt/`, *father* `/ˈfɑː.ðər/`, *mother* `/ˈmʌð.ər/`."
-            )
-            return {"status": "success", "reply": reply, "action": None, "data": None}
-        else:
-            reply = (
-                "🗣️ **FLUENT AI ASSISTANT: Mẹo luyện phát âm Tiếng Anh chuẩn Academic**\n\n"
-                "1. **Khẩu hình miệng (Mouth Shape)**: Mở rộng cơ miệng và đặt lưỡi đúng vị trí IPA.\n"
-                "2. **Nhấn trọng âm (Word Stress)**: Nhấn rõ trọng âm của từ (ví dụ: *'PRESENT* vs *pre'SENT*).\n"
-                "3. **Luyện bật âm đuôi (Ending Sounds)**: Chú ý phát âm rõ các phụ âm cuối như `/s/`, `/z/`, `/t/`, `/d/`."
-            )
-            return {"status": "success", "reply": reply, "action": None, "data": None}
-
-    if "từ yếu" in msg_lower or "luyện từ" in msg_lower or "tự luyện" in msg_lower or "đọc sai" in msg_lower or "phát âm sai" in msg_lower or "remedial" in msg_lower or "weak" in msg_lower or "smart practice" in msg_lower or "từ mình hay" in msg_lower or (role == "student" and ("tạo" in msg_lower or "luyện" in msg_lower)):
-        target = "/θ/" if "/θ/" in msg_lower or "âm th" in msg_lower else None
-        return execute_remedial_practice(target_sound=target)
-    elif ("tạo" in msg_lower or "giao" in msg_lower or "create" in msg_lower) and ("bài tập" in msg_lower or "assignment" in msg_lower) and role in ["teacher", "admin", "super_admin"]:
-        return execute_create_assignment()
-    elif ("thống kê" in msg_lower or "điểm" in msg_lower or "bảng điểm" in msg_lower or "học sinh" in msg_lower or "trường" in msg_lower or "stats" in msg_lower or "analytics" in msg_lower or "gradebook" in msg_lower) and role in ["teacher", "admin", "super_admin"]:
-        return execute_class_analytics()
-    elif "bài" in msg_lower or "bài tập" in msg_lower or "hạn nộp" in msg_lower or "chưa làm" in msg_lower or "homework" in msg_lower or "assignment" in msg_lower or "pending" in msg_lower or "upcoming" in msg_lower:
-        return execute_check_homework()
-    elif "roleplay" in msg_lower or "hotel" in msg_lower or "receptionist" in msg_lower or "đóng vai" in msg_lower or "giao tiếp" in msg_lower or "lễ tân" in msg_lower:
-        return execute_roleplay()
-
-    # Fallback Default Response
-    if role in ["teacher", "admin", "super_admin"]:
-        reply = f"👋 **Chào Thầy/Cô! Tôi là FLUENT AI ASSISTANT.**\n\nTôi có thể hỗ trợ Thầy/Cô:\n- 🤖 *'Tạo bài tập chủ đề Môi trường cho lớp 10A1'* \n- 📊 *'Thống kê danh sách học sinh điểm phát âm dưới 6'* \n- ⚠️ *'Cho xem các từ phát âm sai nhiều nhất của lớp'*"
-    else:
-        reply = f"👋 **Chào bạn! Mình là FLUENT AI ASSISTANT - Trợ lý Luyện phát âm 24/7.**\n\nMình có thể hỗ trợ bạn:\n- 🎯 *'Tự động tạo bài tập luyện các từ mình hay đọc sai'*\n- ⏰ *'Kiểm tra danh sách bài tập lớp học sắp hết hạn'*\n- 🗣️ *'Đóng vai khách du lịch giao tiếp tiếng Anh với mình'*"
-
-    return {"status": "success", "reply": reply, "action": None, "data": None}
+            request = urllib.request.Request('https://api.groq.com/openai/v1/chat/completions',
+                data=json.dumps({'model':'llama-3.3-70b-versatile', 'messages':messages,
+                                 'temperature':0.2, 'max_tokens':650}).encode(),
+                headers={'Authorization':'Bearer '+key, 'Content-Type':'application/json'})
+            with urllib.request.urlopen(request, timeout=15) as response:
+                answer = json.load(response)['choices'][0]['message'].get('content')
+            if answer:
+                return {'status':'success', 'reply':answer, 'action':None, 'data':None}
+        except Exception:
+            continue
+    return {'status':'unavailable', 'reply':'Dịch vụ hội thoại AI hiện không phản hồi. Bạn vẫn có thể xem bài tập và bảng điểm, hoặc luyện đọc trong Speaking. Vui lòng thử lại câu hỏi sau.', 'action':None, 'data':None}
 
 try:
     import gradio as gr
