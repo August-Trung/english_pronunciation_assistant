@@ -39,6 +39,7 @@ except ImportError:
 from fastapi.responses import StreamingResponse, Response, FileResponse
 from fastapi.staticfiles import StaticFiles
 from .picture_storage import persist_picture_url, store_picture_bytes, PictureStorageError
+from .audio_storage import store_submission_audio, AudioStorageError, MAX_AUDIO_BYTES
 from fastapi.middleware.cors import CORSMiddleware
 from pydub import AudioSegment
 try:
@@ -4046,7 +4047,9 @@ async def submit_assignment(
         # Do not keep a database connection open during transcription or remote evaluation.
         conn.close()
         conn = None
-        audio_bytes = await audio.read()
+        audio_bytes = await audio.read(MAX_AUDIO_BYTES + 1)
+        if len(audio_bytes) > MAX_AUDIO_BYTES:
+            raise HTTPException(status_code=413, detail="The recording exceeds 64 MB. Please record a shorter attempt.")
         if not audio_bytes:
             raise HTTPException(status_code=400, detail="The recording is empty.")
         await audio.seek(0)
@@ -4081,14 +4084,12 @@ async def submit_assignment(
             "confidence": confidence, "duration_seconds": round(duration, 2),
             "score_method": "reading_accuracy" if reading else "picture_rubric"
         }
-        # Always retain a playable copy, even when cloud storage is unavailable.
-        import uuid
-        filename = f"sub_{assignment_id}_{student_id}_{uuid.uuid4().hex}"
-        with open(wav_path, "rb") as source, open(os.path.join(RECORDINGS_DIR, filename + '.wav'), "wb") as saved:
-            saved.write(source.read())
-        audio_url = upload_audio_to_supabase(audio_bytes, filename + os.path.splitext(audio.filename or '.webm')[1],
-                                             content_type=audio.content_type or 'audio/webm')
-        audio_url = audio_url or f"/uploads/recordings/{filename}.wav"
+        # A durable, verified recording is required before creating a submission.
+        try:
+            with open(wav_path, "rb") as source:
+                audio_url = store_submission_audio(source.read(MAX_AUDIO_BYTES + 1))
+        except AudioStorageError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()
         cursor.execute("""INSERT INTO submissions

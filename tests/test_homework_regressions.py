@@ -49,7 +49,7 @@ class HomeworkRegressions(unittest.TestCase):
             analyze_topic_response_with_ai=Mock(return_value={'comments': {'advice': 'Practice'}}),
             evaluate_ipa_phonetics=Mock(return_value={'words_ipa': []}),
             evaluate_picture_speaking=Mock(return_value={'score': 86, 'feedback': 'Picture feedback'}),
-            upload_audio_to_supabase=Mock(return_value=None), export_db_to_json=Mock())
+            store_submission_audio=Mock(return_value="https://storage.example.test/recording.wav"), AudioStorageError=RuntimeError, MAX_AUDIO_BYTES=64*1024*1024, export_db_to_json=Mock())
         with self.database() as conn:
             for column in ['teacher_id INTEGER', 'tenant_id TEXT', 'status TEXT DEFAULT \'active\'', 'created_at TEXT']:
                 conn.execute('ALTER TABLE assignments ADD COLUMN ' + column)
@@ -114,16 +114,25 @@ class HomeworkRegressions(unittest.TestCase):
         self.assertEqual(rows[1]['avg_score'], 8)
         self.assertEqual(rows[1]['best_score'], 10)
 
-    def test_cloud_failure_keeps_playable_audio_and_complete_assessment(self):
+    def test_durable_audio_and_complete_assessment_are_saved(self):
         result = self.submit()
-        self.assertTrue(result['audio_url'].startswith('/uploads/recordings/'))
-        self.assertTrue((Path(self.tmp.name) / Path(result['audio_url']).name).exists())
+        self.assertEqual(result['audio_url'], 'https://storage.example.test/recording.wav')
         self.assertEqual(result['evaluation']['duration_seconds'], 125)
         self.assertEqual(result['score'], 10)
         restored = self.g['get_student_assignments'](5)['assignments'][0]
         self.assertEqual(restored['evaluation'], result['evaluation'])
         self.assertEqual(restored['audio_url'], result['audio_url'])
         self.assertEqual(restored['image_url'], '/uploads/cat.png')
+        self.assertFalse(self.wav.exists())
+
+    def test_audio_storage_failure_does_not_create_submission(self):
+        self.g['store_submission_audio'].side_effect = RuntimeError('Storage unavailable')
+        with self.assertRaises(HTTPException) as error:
+            self.submit()
+        self.assertEqual(error.exception.status_code, 503)
+        with self.database() as conn:
+            self.assertEqual(conn.execute('SELECT COUNT(*) FROM submissions').fetchone()[0], 0)
+        self.g['export_db_to_json'].assert_not_called()
         self.assertFalse(self.wav.exists())
 
     def test_picture_uses_actual_evaluator_score(self):
