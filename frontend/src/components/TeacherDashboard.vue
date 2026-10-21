@@ -430,7 +430,7 @@
                           :disabled="!getStudentSubmissions(std.id).length"
                           @click="openStudentSubmissionsModal(std)"
                         >
-                          Review Audio
+                          View Submissions
                         </v-btn>
                         <v-btn
                           size="x-small"
@@ -500,7 +500,8 @@
                     </div>
 
                     <div class="d-flex align-center flex-wrap ga-1">
-                      <v-chip color="teal" size="small" variant="flat" class="font-weight-bold mr-1">
+                      <v-btn color="primary" variant="flat" size="small" prepend-icon="mdi-clipboard-text-search" @click="openAssignmentReview(asg)">Review Submissions</v-btn>
+                      <v-chip @click="openAssignmentReview(asg)" color="teal" size="small" variant="flat" class="font-weight-bold mr-1">
                         Submissions: {{ getAssignmentSubmissionsCount(asg.id) }}/{{ gradebook.students?.length || 0 }}
                       </v-chip>
                       <v-btn
@@ -1803,6 +1804,47 @@
     </div>
   </v-container>
   <AssessmentDialog :submission="selectedAssessment" :audio-url="selectedAssessment ? getMediaUrl(selectedAssessment.audio_url) : ''" @close="selectedAssessment = null" />
+  <v-dialog v-model="showAssignmentReview" max-width="1100" scrollable>
+    <v-card v-if="reviewAssignment">
+      <v-card-title class="d-flex align-center justify-space-between">
+        <div><div class="text-caption">Assignment Submissions</div>{{ reviewAssignment.title }}</div>
+        <v-btn icon="mdi-close" variant="text" aria-label="Close submissions" @click="showAssignmentReview = false" />
+      </v-card-title>
+      <v-card-text>
+        <p class="mb-3">{{ assignmentReviewRows.filter(r => r.submission).length }} / {{ gradebook.students.length }} students submitted. Latest submission shown for each student.</p>
+        <div class="d-flex ga-3 flex-wrap mb-3">
+          <v-text-field v-model="reviewSearch" label="Search student name or email" prepend-inner-icon="mdi-magnify" hide-details density="compact" />
+          <v-select v-model="reviewStatus" :items="['All Students', 'Submitted', 'Not Submitted']" label="Submission Status" hide-details density="compact" style="max-width: 220px" />
+          <v-btn variant="tonal" prepend-icon="mdi-refresh" @click="selectClass(selectedClassId)">Refresh</v-btn>
+        </div>
+        <v-card v-for="row in filteredAssignmentReviewRows" :key="row.student.id" variant="outlined" class="pa-3 mb-3">
+          <div class="d-flex align-center justify-space-between flex-wrap ga-2 mb-2">
+            <div><strong>{{ row.student.name }}</strong><div class="text-caption">{{ row.student.email }}</div></div>
+            <v-chip :color="row.submission ? 'success' : 'warning'">{{ row.submission ? 'Submitted' : 'Not Submitted' }}</v-chip>
+          </div>
+          <template v-if="row.submission">
+            <p class="text-caption mb-2">{{ row.submission.submitted_at || row.submission.created_at || '' }} · {{ row.attempts }} submission(s)</p>
+            <audio v-if="row.submission.audio_url" controls preload="none" :src="getMediaUrl(row.submission.audio_url)" class="w-100 mb-2" />
+            <v-alert v-else type="warning" variant="tonal" density="compact" class="mb-2">The recording is unavailable for this submission.</v-alert>
+            <v-btn color="primary" variant="tonal" prepend-icon="mdi-text-box-search-outline" class="mb-3" @click="selectedAssessment = row.submission">Score: {{ row.submission.score_override ?? row.submission.score ?? 'Unavailable' }}/10 · View Assessment</v-btn>
+            <v-expansion-panels v-if="row.attempts > 1" class="mb-3">
+              <v-expansion-panel title="All Submission Attempts">
+                <v-expansion-panel-text>
+                  <v-btn v-for="attempt in row.history" :key="attempt.id" variant="text" class="ma-1" @click="selectedAssessment = attempt">{{ attempt.submitted_at || ('Submission #' + attempt.id) }} · {{ attempt.score_override ?? attempt.score ?? 'Unavailable' }}/10</v-btn>
+                </v-expansion-panel-text>
+              </v-expansion-panel>
+            </v-expansion-panels>
+            <div class="d-flex ga-2 align-center">
+              <v-textarea v-model="feedbackInputs[row.submission.id]" label="Educator Feedback" rows="2" auto-grow hide-details />
+              <v-btn color="primary" @click="saveFeedback(row.submission.id)">Save Feedback</v-btn>
+            </div>
+          </template>
+          <p v-else class="text-body-2 text-grey-darken-1">No recording or assessment has been submitted for this assignment.</p>
+        </v-card>
+        <p v-if="!filteredAssignmentReviewRows.length" class="text-center pa-4">No students match these filters.</p>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script setup>
@@ -2789,7 +2831,28 @@ const getStudentAvgScore = (studentId) => {
 }
 
 const getAssignmentSubmissionsCount = (asgId) => {
-  return (gradebook.value.submissions || []).filter(s => s.assignment_id === asgId).length
+  return new Set((gradebook.value.submissions || []).filter(s => s.assignment_id === asgId).map(s => s.student_id)).size
+}
+
+const showAssignmentReview = ref(false)
+const reviewAssignment = ref(null)
+const reviewSearch = ref('')
+const reviewStatus = ref('All Students')
+const assignmentReviewRows = computed(() => (gradebook.value.students || []).map(student => {
+  const attempts = (gradebook.value.submissions || []).filter(s => s.assignment_id === reviewAssignment.value?.id && s.student_id === student.id).sort((a, b) => b.id - a.id)
+  return { student, submission: attempts[0] || null, attempts: attempts.length, history: attempts }
+}))
+const filteredAssignmentReviewRows = computed(() => assignmentReviewRows.value.filter(row => {
+  const query = reviewSearch.value.trim().toLowerCase()
+  return `${row.student.name} ${row.student.email}`.toLowerCase().includes(query)
+    && (reviewStatus.value === 'All Students' || Boolean(row.submission) === (reviewStatus.value === 'Submitted'))
+}))
+const openAssignmentReview = (assignment) => {
+  reviewAssignment.value = assignment
+  reviewSearch.value = ''
+  reviewStatus.value = 'All Students'
+  for (const sub of gradebook.value.submissions || []) feedbackInputs.value[sub.id] = sub.teacher_feedback || ''
+  showAssignmentReview.value = true
 }
 
 const getAssignmentTitle = (asgId) => {
