@@ -6223,18 +6223,20 @@ def agent_chat(req: AgentChatRequest, current_user: dict = Depends(get_current_a
         "Nếu thiếu ngữ cảnh, hỏi ngắn gọn. Không bịa thông tin."}]
     messages += [{"role": h['role'], "content": h['content'][:4000]} for h in history]
     messages.append({"role": "user", "content": user_msg})
+    groq_models = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'qwen/qwen3.8-27b']
     for key in get_groq_api_keys():
-        try:
-            request = urllib.request.Request('https://api.groq.com/openai/v1/chat/completions',
-                data=json.dumps({'model':'llama-3.3-70b-versatile', 'messages':messages,
-                                 'temperature':0.2, 'max_tokens':650}).encode(),
-                headers={'Authorization':'Bearer '+key, 'Content-Type':'application/json'})
-            with urllib.request.urlopen(request, timeout=15) as response:
-                answer = json.load(response)['choices'][0]['message'].get('content')
-            if answer:
-                return {'status':'success', 'reply':answer, 'action':None, 'data':None}
-        except Exception:
-            continue
+        for model_name in groq_models:
+            try:
+                request = urllib.request.Request('https://api.groq.com/openai/v1/chat/completions',
+                    data=json.dumps({'model': model_name, 'messages': messages,
+                                     'temperature': 0.2, 'max_tokens': 650}).encode(),
+                    headers={'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json', 'User-Agent': 'FluentEnglishAssistant/1.0'})
+                with urllib.request.urlopen(request, timeout=12) as response:
+                    answer = json.load(response)['choices'][0]['message'].get('content')
+                if answer:
+                    return {'status': 'success', 'reply': answer, 'action': None, 'data': None}
+            except Exception:
+                continue
     return {'status':'unavailable', 'reply':'Dịch vụ hội thoại AI hiện không phản hồi. Bạn vẫn có thể xem bài tập và bảng điểm, hoặc luyện đọc trong Speaking. Vui lòng thử lại câu hỏi sau.', 'action':None, 'data':None}
 
 try:
