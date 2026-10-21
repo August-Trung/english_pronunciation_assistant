@@ -12,6 +12,8 @@
       <div class="text-caption text-grey mt-1">Please wait a moment...</div>
     </div>
 
+    <ClassJoinView v-else-if="route.path === '/join'" :backend-url="backendUrl" :user-id="currentUserId" :user-name="userName" :user-role="userRole" @login="handleLogin" />
+
     <!-- Standalone Portal Routes (/teacher, /admin, /parent): Render router-view directly! -->
     <template v-else-if="isStandalonePortalRoute">
       <v-app-bar color="white" flat border class="px-4 px-md-8 px-lg-12">
@@ -313,6 +315,9 @@
               <template #activator="{ props: menuProps }">
                 <v-avatar
                   v-bind="menuProps"
+                  role="button"
+                  tabindex="0"
+                  aria-label="Open Account Menu"
                   size="36"
                   color="primary-lighten-4"
                   class="border cursor-pointer elevation-1"
@@ -377,6 +382,9 @@
 
                 <v-divider class="my-1" />
 
+                <v-list-item v-if="userEmail.endsWith('@learners.invalid')" prepend-icon="mdi-key" @click="openStudentKey">
+                  <v-list-item-title>Student Key</v-list-item-title>
+                </v-list-item>
                 <v-list-item class="rounded" prepend-icon="mdi-logout" color="error" @click="confirmLogout">
                   <v-list-item-title class="text-caption font-weight-bold text-error">Sign Out</v-list-item-title>
                 </v-list-item>
@@ -481,6 +489,13 @@
         />
 
         <!-- Logout Confirmation Dialog -->
+        <v-dialog v-model="showStudentKey" max-width="500">
+          <v-card class="pa-4">
+            <v-card-title>Student Recovery Key</v-card-title>
+            <v-card-text>Keep this key privately with a parent. It restores your profile on another device. Anyone with this key can access your profile.<p class="mt-3" style="overflow-wrap:anywhere">{{ studentRecoveryKey }}</p></v-card-text>
+            <v-card-actions><v-btn @click="showStudentKey = false">Close</v-btn></v-card-actions>
+          </v-card>
+        </v-dialog>
         <v-dialog v-model="showLogoutDialog" max-width="400">
           <v-card border flat class="pa-4 bg-white" rounded="lg">
             <div class="d-flex align-center ga-3 mb-3">
@@ -489,7 +504,7 @@
               </v-avatar>
               <div>
                 <div class="text-subtitle-1 font-weight-black text-secondary">Confirm Sign Out</div>
-                <div class="text-caption text-grey-darken-1">Are you sure you want to sign out?</div>
+                <div class="text-caption text-grey-darken-1">Are you sure you want to sign out? Save your Student Key first if you use an email-free profile. Signing out removes its saved sign-in from this browser.</div>
               </div>
             </div>
 
@@ -623,7 +638,7 @@
         <AIAgentWidget
           :backend-url="backendUrl"
           :user-role="userRole"
-          :user-id="userId || 1"
+          :user-id="currentUserId"
         />
       </template>
   </v-app>
@@ -634,6 +649,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useTheme, useDisplay } from 'vuetify'
 import LoginPage from '@/components/LoginPage.vue'
+import ClassJoinView from '@/views/ClassJoinView.vue'
 import PracticeTab from '@/components/PracticeTab.vue'
 import LeaderboardTab from '@/components/LeaderboardTab.vue'
 import StatsTab from '@/components/StatsTab.vue'
@@ -741,6 +757,12 @@ const showProfile = ref(false)
 const showAchievements = ref(false)
 const showWeakWords = ref(false)
 const showLogoutDialog = ref(false)
+const showStudentKey = ref(false)
+const studentRecoveryKey = ref('')
+const openStudentKey = () => {
+  studentRecoveryKey.value = localStorage.getItem('myhanh_student_key') || ''
+  showStudentKey.value = true
+}
 const showAdminLoginModal = ref(false)
 
 const adminEmailInput = ref('')
@@ -822,15 +844,24 @@ onMounted(async () => {
     } finally {
       window.history.replaceState({}, document.title, window.location.pathname)
       isCheckingAuth.value = false
-      if (!isLoggedIn.value && !isStandalonePortalRoute.value && route.path !== '/') {
+      if (!isLoggedIn.value && !isStandalonePortalRoute.value && route.path !== '/' && route.path !== '/join') {
         router.replace('/')
       }
     }
   } else {
     // Normal auto login check by stored email or educator role
     try {
+      const learnerKey = localStorage.getItem('myhanh_student_key')
       const storedEmail = localStorage.getItem('speak_user_email')
-      if (storedEmail) {
+      if (learnerKey && (!storedEmail || storedEmail.endsWith('@learners.invalid'))) {
+        const response = await fetch(`${backendUrl.value}/api/learners/resume`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({student_key:learnerKey})})
+        if (response.ok) {
+          const data = await response.json()
+          await handleLogin(data.user)
+        } else if (isMyHanhDomain.value && route.path !== '/join') {
+          await router.replace('/join')
+        }
+      } else if (storedEmail && !storedEmail.endsWith('@learners.invalid')) {
         userEmail.value = storedEmail
         await autoLoginByEmail(storedEmail)
       } else {
@@ -843,10 +874,14 @@ onMounted(async () => {
       }
     } finally {
       isCheckingAuth.value = false
-      if (!isLoggedIn.value && !isStandalonePortalRoute.value && route.path !== '/') {
+      if (!isLoggedIn.value && !isStandalonePortalRoute.value && route.path !== '/' && route.path !== '/join') {
         router.replace('/')
       }
     }
+  }
+
+  if (!isLoggedIn.value && isMyHanhDomain.value && route.path === '/' && route.query.signin !== '1') {
+    await router.replace('/join')
   }
 
   const storedTheme = localStorage.getItem('speak_theme')
@@ -858,7 +893,7 @@ onMounted(async () => {
 watch(
   () => route.path,
   (newPath) => {
-    if (!isCheckingAuth.value && !isLoggedIn.value && !isStandalonePortalRoute.value && newPath !== '/') {
+    if (!isCheckingAuth.value && !isLoggedIn.value && !isStandalonePortalRoute.value && newPath !== '/' && newPath !== '/join') {
       router.replace('/')
     }
   }
@@ -1237,6 +1272,7 @@ const handleLogout = () => {
   localStorage.removeItem('speak_user_name')
   localStorage.removeItem('user_role')
   localStorage.removeItem('user_id')
+  localStorage.removeItem('myhanh_student_key')
   localStorage.removeItem('token')
   localStorage.removeItem('admin_token')
   localStorage.removeItem('admin_auth_token')

@@ -615,7 +615,7 @@ const submitJoinClass = async (codeToJoin = null) => {
   try {
     const res = await fetch(`${props.backendUrl}/api/classes/join`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
       body: JSON.stringify({
         student_id: uid,
         join_code: code

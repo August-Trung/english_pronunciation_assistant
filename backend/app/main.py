@@ -2496,6 +2496,8 @@ def google_login(req: GoogleLoginRequest):
     import random
     try:
         email = req.email or f"user_{random.randint(1000,9999)}@gmail.com"
+        if email.lower().endswith('@learners.invalid'):
+            raise HTTPException(status_code=401, detail="Use the saved Student Key to restore this learner profile.")
         default_name = email.split('@')[0].replace('.', ' ').title() if '@' in email else "Học sinh"
         
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
@@ -2562,6 +2564,8 @@ def google_login(req: GoogleLoginRequest):
                 "streak_count": streak_val
             }
         }
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Google login error: {e}")
         return {
@@ -2947,12 +2951,46 @@ def remove_student_from_class(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+class LearnerInviteRequest(BaseModel):
+    join_code: str
+    name: str = ""
+    student_key: str
+
+class LearnerResumeRequest(BaseModel):
+    student_key: str
+
+@app.get("/api/class-invites/{join_code}")
+def preview_learner_invite(join_code: str):
+    from .learner_access import invite_preview
+    return invite_preview(DB_PATH, join_code)
+
+@app.post("/api/learners/resume")
+def resume_learner(req: LearnerResumeRequest):
+    from .learner_access import learner_identity
+    user = learner_identity(DB_PATH, req.student_key, '', hash_password, verify_password)
+    user['token'] = create_access_token(user['id'], user['email'], 'student', user['tenant_id'])
+    get_current_user_from_db(DB_PATH, user['token'])
+    return {'success':True, 'user':user}
+
+@app.post("/api/learners/join")
+def join_learner_invite(req: LearnerInviteRequest):
+    from .learner_access import invite_preview, learner_identity
+    invite_preview(DB_PATH, req.join_code)
+    user = learner_identity(DB_PATH, req.student_key, req.name, hash_password, verify_password, create=True)
+    # Reuse existing enrollment, seat and license checks; repeated requests reuse identity.
+    enrollment = join_class(JoinClassRequest(student_id=user['id'], join_code=req.join_code), current_user=user)
+    user['token'] = create_access_token(user['id'], user['email'], 'student', user['tenant_id'])
+    get_current_user_from_db(DB_PATH, user['token'])
+    return {'success':True, 'user':user, 'class_id':enrollment['class_id'], 'class_name':enrollment['class_name']}
+
 class JoinClassRequest(BaseModel):
     student_id: int
     join_code: str
 
 @app.post("/api/classes/join")
-def join_class(req: JoinClassRequest):
+def join_class(req: JoinClassRequest, current_user: dict = Depends(get_current_authenticated_user)):
+    if current_user.get('role') != 'student' or req.student_id != current_user.get('id'):
+        raise HTTPException(status_code=403, detail="You may only enroll your own student profile.")
     try:
         conn = sqlite3.connect(DB_PATH, timeout=20.0)
         cursor = conn.cursor()

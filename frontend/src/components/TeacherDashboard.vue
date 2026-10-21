@@ -2022,7 +2022,7 @@ const qrClass = ref(null)
 
 const getFullClassLink = (joinCode) => {
   const origin = window.location.origin || 'https://fluent.augusttrung.com'
-  return `${origin}/homework?join_code=${joinCode}`
+  return `${origin}${isMyHanhSite() ? "/join" : "/homework"}?join_code=${encodeURIComponent(joinCode)}`
 }
 
 const getQrCodeUrl = (joinCode) => {

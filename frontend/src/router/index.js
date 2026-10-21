@@ -10,10 +10,12 @@ import TeacherView from '@/views/TeacherView.vue'
 import AdminView from '@/views/AdminView.vue'
 import ParentView from '@/views/ParentView.vue'
 import StudentHomeworkView from '@/views/StudentHomeworkView.vue'
+import ClassJoinView from '@/views/ClassJoinView.vue'
 
 const routes = [
   { path: '/', name: 'practice', component: PracticeView },
   { path: '/shadowing', name: 'shadowing', component: ShadowingView },
+  { path: '/join', name: 'class-join', component: ClassJoinView },
   { path: '/homework', name: 'homework', component: StudentHomeworkView },
   { path: '/history', name: 'history', component: () => import('@/views/HistoryView.vue') },
   { path: '/teacher', name: 'teacher', component: TeacherView },
@@ -37,7 +39,8 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const isMyHanh = window.location.hostname.includes('myhanh') || window.location.search.includes('mode=myhanh')
   if (isMyHanh) {
-    const allowed = ['/', '/shadowing', '/homework', '/leaderboard', '/history', '/profile', '/teacher']
+    if (to.path === '/homework' && to.query.join_code) return next({ path: '/join', query: { ...to.query } })
+    const allowed = ['/join', '/', '/shadowing', '/homework', '/leaderboard', '/history', '/profile', '/teacher']
     if (!allowed.includes(to.path)) {
       return next('/')
     }
