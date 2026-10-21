@@ -11,7 +11,7 @@ from zoneinfo import ZoneInfo
 
 VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
 from typing import Optional, List, Dict, Any
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Body, Depends, Header
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Body, Depends, Header, Request
 try:
     from security import (
         hash_password, verify_password, create_access_token, decode_access_token,
@@ -2496,7 +2496,7 @@ def google_login(req: GoogleLoginRequest):
     import random
     try:
         email = req.email or f"user_{random.randint(1000,9999)}@gmail.com"
-        if email.lower().endswith('@learners.invalid'):
+        if email.lower().endswith(('@learners.invalid', '@students.invalid')):
             raise HTTPException(status_code=401, detail="Use the saved Student Key to restore this learner profile.")
         default_name = email.split('@')[0].replace('.', ' ').title() if '@' in email else "Học sinh"
         
@@ -2950,6 +2950,42 @@ def remove_student_from_class(
         raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+class StudentAccountRequest(BaseModel):
+    username: str
+    password: str
+    name: str = ""
+    join_code: str = ""
+
+
+def student_session_response(user):
+    user['token'] = create_access_token(user['id'], user['email'], 'student', user['tenant_id'], expires_hours=24*90)
+    get_current_user_from_db(DB_PATH, user['token'])
+    return {'success':True, 'user':user}
+
+@app.post("/api/learners/register")
+def register_student_account(req: StudentAccountRequest, request: Request):
+    from .learner_access import invite_preview, student_account
+    invite_preview(DB_PATH, req.join_code)
+    user = student_account(DB_PATH, req.username, req.password, req.name, hash_password, verify_password,
+                           register=True, scope=request.client.host if request.client else 'unknown')
+    export_db_to_json()
+    return student_session_response(user)
+
+@app.post("/api/learners/login")
+def login_student_account(req: StudentAccountRequest, request: Request):
+    from .learner_access import student_account
+    user = student_account(DB_PATH, req.username, req.password, '', hash_password, verify_password,
+                           scope=request.client.host if request.client else 'unknown')
+    return student_session_response(user)
+
+@app.post("/api/learners/session")
+def restore_student_account(current_user: dict = Depends(get_current_authenticated_user)):
+    if current_user.get('role') != 'student' or not current_user.get('email','').endswith('@students.invalid'):
+        raise HTTPException(status_code=403, detail="A student account session is required.")
+    user = {key:current_user.get(key) for key in ('id','email','name','role','tenant_id')}
+    user['username'] = user['email'].split('@')[0]
+    return student_session_response(user)
 
 class LearnerInviteRequest(BaseModel):
     join_code: str

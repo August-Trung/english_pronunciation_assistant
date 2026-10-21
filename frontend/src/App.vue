@@ -340,7 +340,7 @@
                     {{ userName }}
                   </v-list-item-title>
                   <v-list-item-subtitle class="text-caption text-grey">
-                    Role: {{ userRole.toUpperCase() }}
+                    {{ userEmail.endsWith('@students.invalid') ? 'Username: ' + userEmail.split('@')[0] : 'Role: ' + userRole.toUpperCase() }}
                   </v-list-item-subtitle>
                 </v-list-item>
 
@@ -504,7 +504,7 @@
               </v-avatar>
               <div>
                 <div class="text-subtitle-1 font-weight-black text-secondary">Confirm Sign Out</div>
-                <div class="text-caption text-grey-darken-1">Are you sure you want to sign out? Save your Student Key first if you use an email-free profile. Signing out removes its saved sign-in from this browser.</div>
+                <div class="text-caption text-grey-darken-1">{{ userEmail.endsWith('@learners.invalid') ? 'Save your Student Key before signing out. This browser will forget the saved key.' : 'Are you sure you want to sign out? You can sign in again with your account credentials.' }}</div>
               </div>
             </div>
 
@@ -812,6 +812,7 @@ const connectionStatus = ref(null)
 
 // Lifecycle - Load persistent device session & handle OAuth redirects
 onMounted(async () => {
+  await router.isReady()
   const storedUrl = localStorage.getItem('speak_backend_url')
   if (storedUrl && storedUrl.startsWith('http') && !storedUrl.includes('august-trung-english-pronunciation-assistant')) {
     backendUrl.value = storedUrl
@@ -853,7 +854,15 @@ onMounted(async () => {
     try {
       const learnerKey = localStorage.getItem('myhanh_student_key')
       const storedEmail = localStorage.getItem('speak_user_email')
-      if (learnerKey && (!storedEmail || storedEmail.endsWith('@learners.invalid'))) {
+      if (storedEmail?.endsWith('@students.invalid')) {
+        const response = await fetch(`${backendUrl.value}/api/learners/session`, {method:'POST',headers:{Authorization:`Bearer ${localStorage.getItem('token') || ''}`}})
+        if (response.ok) {
+          const data = await response.json()
+          await handleLogin(data.user)
+        } else if (isMyHanhDomain.value && route.path !== '/join') {
+          await router.replace('/join')
+        }
+      } else if (learnerKey && (!storedEmail || storedEmail.endsWith('@learners.invalid'))) {
         const response = await fetch(`${backendUrl.value}/api/learners/resume`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({student_key:learnerKey})})
         if (response.ok) {
           const data = await response.json()
@@ -861,7 +870,7 @@ onMounted(async () => {
         } else if (isMyHanhDomain.value && route.path !== '/join') {
           await router.replace('/join')
         }
-      } else if (storedEmail && !storedEmail.endsWith('@learners.invalid')) {
+      } else if (storedEmail && !storedEmail.endsWith('@learners.invalid') && !storedEmail.endsWith('@students.invalid')) {
         userEmail.value = storedEmail
         await autoLoginByEmail(storedEmail)
       } else {

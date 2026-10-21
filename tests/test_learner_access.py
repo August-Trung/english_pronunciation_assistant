@@ -7,10 +7,11 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import Mock
+from types import SimpleNamespace
 sys.path.insert(0,str(Path(__file__).resolve().parents[1] / 'backend' / 'app'))
-from fastapi import HTTPException, Depends
+from fastapi import HTTPException, Depends, Request
 from pydantic import BaseModel
-from learner_access import learner_identity, invite_preview
+from learner_access import learner_identity, invite_preview, student_account
 from security import hash_password, verify_password, create_access_token
 import learner_access
 
@@ -28,12 +29,12 @@ class LearnerAccessTests(unittest.TestCase):
                 INSERT INTO classrooms VALUES(3,'High School','secondary','CLS-HIGH',NULL,0,10,0);
             """)
         self.key='a'*64
-        self.namespace=dict(Depends=Depends,get_current_authenticated_user=Mock(),__package__='backend.app',BaseModel=BaseModel,DB_PATH=self.db,
+        self.namespace=dict(Request=Request,Depends=Depends,get_current_authenticated_user=Mock(),__package__='backend.app',BaseModel=BaseModel,DB_PATH=self.db,
             hash_password=hash_password,verify_password=verify_password,create_access_token=create_access_token,
             get_current_user_from_db=Mock(),sqlite3=sqlite3,HTTPException=HTTPException,
             get_teacher_quota_info=Mock(return_value=None),export_db_to_json=Mock())
         sys.modules['backend.app.learner_access']=learner_access
-        names={'GoogleLoginRequest','google_login','LearnerInviteRequest','LearnerResumeRequest','JoinClassRequest','join_learner_invite','resume_learner','join_class'}
+        names={'StudentAccountRequest','student_session_response','register_student_account','login_student_account','restore_student_account','GoogleLoginRequest','google_login','LearnerInviteRequest','LearnerResumeRequest','JoinClassRequest','join_learner_invite','resume_learner','join_class'}
         nodes=[]
         for n in ast.parse(Path('backend/app/main.py').read_text(encoding='utf-8')).body:
             if isinstance(n,(ast.ClassDef,ast.FunctionDef)) and n.name in names:
@@ -107,3 +108,51 @@ class LearnerAccessTests(unittest.TestCase):
         self.namespace['get_current_user_from_db'].side_effect=HTTPException(403,'Suspended')
         with self.assertRaises(HTTPException):self.join()
         with closing(sqlite3.connect(self.db)) as c:self.assertEqual(c.execute('SELECT COUNT(*) FROM class_enrollments').fetchone()[0],0)
+
+    def register_account(self,username='minhan4a1',password='test-password-123'):
+        req=self.namespace['StudentAccountRequest'](username=username,password=password,name='Minh An',join_code='CLS-TEST')
+        return self.namespace['register_student_account'](req,SimpleNamespace(client=SimpleNamespace(host=self.db)))
+
+    def test_username_registration_then_auto_enrollment_uses_same_identity(self):
+        user=self.register_account()['user']
+        self.assertEqual(user['username'],'minhan4a1')
+        self.namespace['join_class'](self.namespace['JoinClassRequest'](student_id=user['id'],join_code='CLS-TEST'),user)
+        req=self.namespace['StudentAccountRequest'](username='MINHAN4A1',password='test-password-123')
+        restored=self.namespace['login_student_account'](req,SimpleNamespace(client=SimpleNamespace(host=self.db)))['user']
+        self.assertEqual(restored['id'],user['id'])
+        with closing(sqlite3.connect(self.db)) as c:
+            stored=c.execute('SELECT password_hash FROM users WHERE id=?',(user['id'],)).fetchone()[0]
+            self.assertNotEqual(stored,'test-password-123')
+            self.assertEqual(c.execute('SELECT COUNT(*) FROM class_enrollments').fetchone()[0],1)
+
+    def test_duplicate_username_returns_conflict_without_merging_or_changing_password(self):
+        first=self.register_account()['user']
+        with self.assertRaises(HTTPException) as error:self.register_account(username='MINHAN4A1',password='different-password')
+        self.assertEqual(error.exception.status_code,409)
+        with closing(sqlite3.connect(self.db)) as c:self.assertEqual(c.execute('SELECT COUNT(*) FROM users').fetchone()[0],1)
+
+    def test_registration_rejects_invalid_class_before_creating_account(self):
+        req=self.namespace['StudentAccountRequest'](username='minhan4a1',password='test-password-123',join_code='WRONG')
+        with self.assertRaises(HTTPException):self.namespace['register_student_account'](req,SimpleNamespace(client=None))
+        with closing(sqlite3.connect(self.db)) as c:self.assertEqual(c.execute('SELECT COUNT(*) FROM users').fetchone()[0],0)
+
+    def test_student_password_login_is_rate_limited(self):
+        self.register_account()
+        for _ in range(6):
+            with self.assertRaises(HTTPException) as error:student_account(self.db,'minhan4a1','wrong-password','',hash_password,verify_password,scope=self.db)
+            self.assertEqual(error.exception.status_code,401)
+        with self.assertRaises(HTTPException) as error:student_account(self.db,'minhan4a1','wrong-password','',hash_password,verify_password,scope=self.db)
+        self.assertEqual(error.exception.status_code,429)
+
+    def test_email_only_login_cannot_take_over_username_account(self):
+        user=self.register_account()['user']
+        with self.assertRaises(HTTPException) as error:self.namespace['google_login'](self.namespace['GoogleLoginRequest'](email=user['email']))
+        self.assertEqual(error.exception.status_code,401)
+
+    def test_saved_session_refreshes_without_storing_password(self):
+        user=self.register_account()['user']
+        restored=self.namespace['restore_student_account'](user)['user']
+        self.assertEqual(restored['id'],user['id'])
+        self.assertTrue(restored['token'])
+        self.assertNotIn('password',restored)
+        self.assertNotIn('password_hash',restored)

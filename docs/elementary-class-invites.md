@@ -1,36 +1,39 @@
-# Email-free MyHanh classroom entry
+# MyHanh classroom registration and sign-in
 
-Teachers share /join?join_code=... on MyHanh. Existing /homework?join_code=...
-links redirect to the new entry while preserving the code. Unauthenticated learners
-see class metadata, enter their full name and join without Gmail/email/password.
-The server creates a normal student identity and reuses existing enrollment/license
-quota checks. Name alone never restores or merges identities.
+Primary flow requested by the user:
+class invite -> Create Account (username/password, optional full name) -> authenticated
+student session -> automatically enroll into the invited class -> Homework.
+Sign In is available alongside registration for returning learners. No Gmail or
+email address is required. Existing email/Google account sign-in remains available.
 
-The browser generates a 256-bit random Student Key and saves it before requesting
-join (idempotent retries). The backend derives an internal learners.invalid identifier
-and stores only the salted password hash of the key. On return, /learners/resume
-verifies the key and issues a fresh JWT; no email-only auto-login is allowed for
-these identities. Existing email account users can still sign in and join their own
-profile. Join enrollment now requires authenticated ownership for ordinary users.
+Username is case-insensitive, 3–30 ASCII letters/digits/dot/underscore/hyphen.
+Password is 8–128 characters and stored only as salted PBKDF2 hash. Internal
+username@students.invalid identifiers are blocked from legacy email-only Google
+login. Registration detects conflicts (409) and never merges users by name.
+Authentication uses the actual student token when enrolling, not a supplied ID.
+Six failed password checks per username/client within five minutes are rate-limited.
+The rate counter is in-process and resets on backend restart.
 
-Keys are sensitive account credentials: never send them in chat/logs/URLs. The
-learner can privately save their key with a parent or open Student Key in the account
-menu. The same key restores the same user/enrollments on another device. If browser
-data is cleared, private browsing is used, or the user explicitly signs out, automatic
-return cannot be guaranteed; the saved key is needed. Explicit sign-out has a
-confirmation and clears the device key. Existing student sessions are reused; an
-educator is not silently switched to a new student account.
+The browser stores the signed JWT, never the plaintext password. The session is
+valid for 90 days and refreshed on authenticated return. Deleted/suspended users
+remain subject to the existing authentication checks. Explicit sign-out clears the
+token and has a confirmation. If browser storage is cleared, the learner signs in
+again with username/password. There is no recovery key step in the new flow.
+Existing key-based learner profiles remain supported without deleting their data.
 
-The database stores profiles, enrollments, history and submissions, so retaining
-live DB snapshots across ephemeral backend redeployments remains required.
-No migration/new table is introduced. If quota prevents joining, an un-enrolled
-identity may remain for a safe retry; it does not count as an enrolled seat.
-The frontend must be deployed with app/main.py and app/learner_access.py together.
-Preserve live data/media before restart and never publish raw account backups.
+The registration response is saved before enrollment is attempted. If quota or a
+network error prevents joining, the UI explicitly says the account is signed in but
+the class could not be joined, and offers retry; it does not recreate the account.
+If registration succeeded but its response was lost, the learner can use Sign In
+with the same credentials. Registration and enrollment are separate transactions.
+Existing /homework?join_code links redirect to /join preserving the invitation.
+Email sign-in retains pending class intent. Educators are not silently switched.
 
-Validation: 11 focused tests cover first join, repeat requests, resume, same-name
-separation, invalid/archived/non-elementary links, recovery key validation, deleted
-profiles, quotas, email-only login rejection and enrollment ownership.
-Local browser fixture verified legacy link redirect, no-email enrollment, entering
-Homework, reload restoring the same learner and class, and confirmed sign-out
-preventing silent re-entry. It used an isolated SQLite fixture, not real children.
+Deploy app/main.py + app/learner_access.py and frontend together. Preserve live
+DB/media before restart. No new database table is required. Old recordings, scores,
+users and enrollments must not be deleted. Never publish raw account snapshots.
+
+Validation: tests/test_learner_access.py covers legacy profile compatibility,
+registration/sign-in, normalized usernames/conflicts, invalid classes, password
+hashing, login throttling, session refresh, enrollment identity, and quotas. Check
+browser registration -> automatic class entry -> reload on a disposable local DB.
