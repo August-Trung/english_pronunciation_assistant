@@ -6433,12 +6433,17 @@
       "tenant_id": null,
       "details": "Admin authenticated successfully",
       "created_at": "2026-10-21 02:12:53"
+    },
+    {
+      "id": 347,
+      "user_id": 5,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "5",
+      "tenant_id": null,
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-21 03:18:06"
     }
   ],
-  "system_configs": [
-    {
-      "config_key": "storage_retention_days",
-      "config_value": "90"
-    }
-  ]
+  "system_configs": []
 }
