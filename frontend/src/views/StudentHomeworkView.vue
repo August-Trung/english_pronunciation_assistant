@@ -680,11 +680,18 @@
 </template>
 
 <script setup>
-import AssessmentDialog from '@/components/AssessmentDialog.vue'
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-const selectedAssessment = ref(null)
+import AssessmentDialog from '@/components/AssessmentDialog.vue'
 import SubmissionEvaluation from '@/components/SubmissionEvaluation.vue'
 import { isMyHanhSite, isElementaryGrade, mediaUrl } from '@/utils/siteProfile.js'
+import { speakBritishText } from '@/utils/tts.js'
+import {
+  runTour,
+  TOUR_KEYS,
+  STUDENT_HOMEWORK_TOUR_STEPS
+} from '@/utils/tours.js'
+
+const selectedAssessment = ref(null)
 
 const props = defineProps({
   backendUrl: String,
@@ -705,14 +712,6 @@ const toast = ref({ show: false, text: '', color: 'success', icon: 'mdi-check-ci
 const notify = (text, color = 'success', icon = 'mdi-check-circle') => {
   toast.value = { show: true, text, color, icon }
 }
-
-
-import { speakBritishText } from '@/utils/tts.js'
-import {
-  runTour,
-  TOUR_KEYS,
-  STUDENT_HOMEWORK_TOUR_STEPS
-} from '@/utils/tours.js'
 
 
 const worksheetAnswers = ref({})

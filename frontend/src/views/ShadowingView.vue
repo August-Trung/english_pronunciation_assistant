@@ -606,9 +606,15 @@
 </template>
 
 <script setup>
+import { ref, computed, watch, onMounted } from 'vue'
 import { isMyHanhSite } from '@/utils/siteProfile.js'
+import {
+  runTour,
+  TOUR_KEYS,
+  STUDENT_SHADOWING_TOUR_STEPS
+} from '@/utils/tours.js'
+
 const isMyHanh = isMyHanhSite()
-import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
   backendUrl: String,

@@ -2114,13 +2114,21 @@
 </template>
 
 <script setup>
-import AssessmentDialog from './AssessmentDialog.vue'
 import { ref, computed, watch, onMounted } from 'vue'
-const selectedAssessment = ref(null)
 import { useRouter } from 'vue-router'
+import AssessmentDialog from './AssessmentDialog.vue'
 import SubmissionEvaluation from './SubmissionEvaluation.vue'
 import { isMyHanhSite, isElementaryGrade, ELEMENTARY_GRADE, mediaUrl } from '@/utils/siteProfile.js'
 import { GRADE_LEVELS } from '@/constants/topics.js'
+import { speakBritishText } from '@/utils/tts.js'
+import {
+  runTour,
+  TOUR_KEYS,
+  TEACHER_HUB_TOUR_STEPS,
+  TEACHER_WORKSHEET_TOUR_STEPS
+} from '@/utils/tours.js'
+
+const selectedAssessment = ref(null)
 
 const props = defineProps({
   backendUrl: String,
@@ -2366,14 +2374,6 @@ const printQrPoster = () => {
 }
 
 
-import { speakBritishText } from '../utils/tts.js'
-import {
-  runTour,
-  TOUR_KEYS,
-  TEACHER_HUB_TOUR_STEPS,
-  TEACHER_WORKSHEET_TOUR_STEPS
-} from '@/utils/tours.js'
-
 
 // --- Worksheet Generator State ---
 const newAsgVocabText = ref('')
@@ -2473,38 +2473,6 @@ const deleteExercise = (index) => {
 }
 
 
-// --- Role-Based Tour Triggers for Teacher ---
-onMounted(() => {
-  // Trigger Teacher Hub Tour once if user has teacher role
-  setTimeout(() => {
-    runTour(TOUR_KEYS.TEACHER_HUB, TEACHER_HUB_TOUR_STEPS)
-  }, 1000)
-})
-
-watch(showCreateAssignmentModal, (open) => {
-  if (open && newAsgType.value === 'worksheet') {
-    setTimeout(() => {
-      runTour(TOUR_KEYS.TEACHER_WORKSHEET_MODAL, TEACHER_WORKSHEET_TOUR_STEPS)
-    }, 400)
-  }
-})
-
-watch(newAsgType, (type) => {
-  if (showCreateAssignmentModal.value && type === 'worksheet') {
-    setTimeout(() => {
-      runTour(TOUR_KEYS.TEACHER_WORKSHEET_MODAL, TEACHER_WORKSHEET_TOUR_STEPS)
-    }, 300)
-  }
-})
-
-const replayTeacherHubTour = () => {
-  runTour(TOUR_KEYS.TEACHER_HUB, TEACHER_HUB_TOUR_STEPS, true)
-}
-
-const replayWorksheetTour = () => {
-  runTour(TOUR_KEYS.TEACHER_WORKSHEET_MODAL, TEACHER_WORKSHEET_TOUR_STEPS, true)
-}
-
 const generateWorksheetAI = async () => {
   const vocabList = newAsgVocabText.value
     .split(/[,;\n]+/)
@@ -2561,6 +2529,40 @@ const newAsgTargetKeywordsText = ref('')
 const isGeneratingAsgPicture = ref(false)
 const newAsgDueDate = ref('')
 const isCreatingAsg = ref(false)
+
+// --- Role-Based Tour Triggers for Teacher ---
+onMounted(() => {
+  // Trigger Teacher Hub Tour once if user has teacher role
+  if (['teacher', 'admin', 'super_admin'].includes(activeUserRole.value)) {
+    setTimeout(() => {
+      runTour(TOUR_KEYS.TEACHER_HUB, TEACHER_HUB_TOUR_STEPS)
+    }, 1000)
+  }
+})
+
+watch(showCreateAssignmentModal, (open) => {
+  if (open && newAsgType.value === 'worksheet') {
+    setTimeout(() => {
+      runTour(TOUR_KEYS.TEACHER_WORKSHEET_MODAL, TEACHER_WORKSHEET_TOUR_STEPS)
+    }, 400)
+  }
+})
+
+watch(newAsgType, (type) => {
+  if (showCreateAssignmentModal.value && type === 'worksheet') {
+    setTimeout(() => {
+      runTour(TOUR_KEYS.TEACHER_WORKSHEET_MODAL, TEACHER_WORKSHEET_TOUR_STEPS)
+    }, 300)
+  }
+})
+
+const replayTeacherHubTour = () => {
+  runTour(TOUR_KEYS.TEACHER_HUB, TEACHER_HUB_TOUR_STEPS, true)
+}
+
+const replayWorksheetTour = () => {
+  runTour(TOUR_KEYS.TEACHER_WORKSHEET_MODAL, TEACHER_WORKSHEET_TOUR_STEPS, true)
+}
 
 const syncNewAsgQuestionsFromText = () => {
   newAsgGuidingQuestionsList.value = newAsgGuidingQuestionsText.value
