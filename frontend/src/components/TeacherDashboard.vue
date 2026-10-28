@@ -472,12 +472,12 @@
                         <span class="text-subtitle-2 font-weight-black text-primary">{{ asg.title }}</span>
                         <v-chip
                           size="x-small"
-                          :color="asg.assignment_type === 'picture' ? 'purple-darken-2' : 'indigo-darken-2'"
+                          :color="asg.assignment_type === 'worksheet' ? 'teal-darken-2' : (asg.assignment_type === 'picture' ? 'purple-darken-2' : 'indigo-darken-2')"
                           variant="tonal"
                           class="font-weight-bold"
-                          :prepend-icon="asg.assignment_type === 'picture' ? 'mdi-image-filter-frames' : 'mdi-waveform'"
+                          :prepend-icon="asg.assignment_type === 'worksheet' ? 'mdi-format-list-checks' : (asg.assignment_type === 'picture' ? 'mdi-image-filter-frames' : 'mdi-waveform')"
                         >
-                          {{ asg.assignment_type === 'picture' ? 'Describe Picture' : 'Sentence Reading' }}
+                          {{ asg.assignment_type === 'worksheet' ? 'Dynamic Worksheet' : (asg.assignment_type === 'picture' ? 'Describe Picture' : 'Sentence Reading') }}
                         </v-chip>
                         <v-chip
                           size="x-small"
@@ -1174,7 +1174,7 @@
       </v-card>
     </v-dialog>
     <!-- Modal: 1-Click Assignment Creation with AI Picture Speaking & Sentence -->
-    <v-dialog v-model="showCreateAssignmentModal" :max-width="newAsgType === 'picture' ? 1100 : 760">
+    <v-dialog v-model="showCreateAssignmentModal" :max-width="newAsgType === 'picture' || newAsgType === 'worksheet' ? 1100 : 760">
       <v-card border rounded="lg" class="pa-4 bg-white">
         <div class="d-flex align-center justify-space-between mb-3 border-b pb-2">
           <div class="d-flex align-center ga-2">
@@ -1191,12 +1191,15 @@
         <!-- Format Switcher -->
         <div class="mb-3">
           <div class="text-caption font-weight-bold text-grey mb-1">Homework Format:</div>
-          <v-btn-toggle v-model="newAsgType" mandatory color="purple-darken-2" density="comfortable" class="w-100 border">
+          <v-btn-toggle v-model="newAsgType" mandatory color="primary" density="comfortable" class="w-100 border">
             <v-btn value="sentence" class="flex-grow-1 text-none font-weight-bold" prepend-icon="mdi-waveform">
               Sentence Reading
             </v-btn>
             <v-btn value="picture" class="flex-grow-1 text-none font-weight-bold" prepend-icon="mdi-image-filter-frames">
-              {{ isMyHanh ? 'Describe Picture' : 'Describe Picture (IELTS/TOEIC)' }}
+              {{ isMyHanh ? 'Describe Picture' : 'Describe Picture' }}
+            </v-btn>
+            <v-btn value="worksheet" class="flex-grow-1 text-none font-weight-bold" prepend-icon="mdi-format-list-checks">
+              Dynamic Vocab Worksheet
             </v-btn>
           </v-btn-toggle>
         </div>
@@ -1205,7 +1208,7 @@
         <v-text-field
           v-model="newAsgTitle"
           label="Assignment Title:"
-          :placeholder="newAsgType === 'picture' ? (isMyHanh ? 'e.g. A Morning at School' : 'e.g. IELTS Speaking Part 2 - Modern Airport') : 'e.g. Unit 3 - Practice Daily Routine Sentence'"
+          :placeholder="newAsgType === 'worksheet' ? 'e.g. Unit 4 - Zoo Animals Vocabulary Quiz' : (newAsgType === 'picture' ? 'e.g. A Morning at School' : 'e.g. Unit 3 - Practice Daily Routine Sentence')"
           variant="outlined"
           density="comfortable"
           class="mb-2"
@@ -1227,7 +1230,7 @@
         </div>
 
         <!-- Branch 2: Picture Speaking with AI Generator -->
-        <div v-else>
+        <div v-else-if="newAsgType === 'picture'">
           <div class="mb-2">
             <div class="d-flex align-center justify-space-between mb-2">
               <span class="text-caption font-weight-bold text-grey">Creation Method:</span>
@@ -1452,6 +1455,255 @@
           </div>
         </div>
 
+        <!-- Branch 3: Dynamic Vocab Worksheet -->
+        <div v-else-if="newAsgType === 'worksheet'">
+          <v-alert
+            density="compact"
+            color="indigo-lighten-5"
+            class="text-indigo-darken-3 border border-indigo-200 mb-3"
+            icon="mdi-auto-fix"
+            variant="flat"
+          >
+            <div class="text-caption font-weight-bold">
+              AI Dynamic Worksheet: Enter your target vocabulary list, pick exercise formats, and AI will construct auto-graded pedagogical exercises with British English voice.
+            </div>
+          </v-alert>
+
+          <!-- Vocabulary Input -->
+          <v-textarea
+            v-model="newAsgVocabText"
+            label="Target Vocabulary Words (comma or newline separated):"
+            placeholder="e.g. apple, banana, orange, grape, watermelon"
+            variant="outlined"
+            density="comfortable"
+            rows="2"
+            class="mb-2"
+            prepend-inner-icon="mdi-format-list-bulleted"
+            hint="Enter key vocabulary words pupils need to master."
+            persistent-hint
+          />
+
+          <!-- Grade Level & Accent Selector (British English priority) -->
+          <v-row dense class="mb-2">
+            <v-col cols="12" sm="6">
+              <v-select
+                v-model="newAsgGradeLevel"
+                :items="['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Secondary']"
+                label="Pupil Grade Level:"
+                variant="outlined"
+                density="compact"
+                prepend-inner-icon="mdi-school"
+                hide-details
+              />
+            </v-col>
+            <v-col cols="12" sm="6">
+              <v-select
+                v-model="newAsgAccent"
+                :items="[
+                  { title: 'UK British Voice (en-GB) [Standard Priority]', value: 'en-GB' },
+                  { title: 'US American Voice (en-US)', value: 'en-US' }
+                ]"
+                label="Listening Audio Accent:"
+                variant="outlined"
+                density="compact"
+                prepend-inner-icon="mdi-account-voice"
+                hide-details
+              />
+            </v-col>
+          </v-row>
+
+          <!-- Grouped Exercise Formats Picker -->
+          <div class="border rounded pa-3 bg-grey-lighten-5 mb-3">
+            <div class="d-flex align-center justify-space-between mb-2">
+              <div class="text-caption font-weight-bold text-grey-darken-3 d-flex align-center ga-1">
+                <v-icon size="small" color="primary">mdi-checkbox-multiple-marked</v-icon>
+                <span>Select Exercise Formats to Include:</span>
+              </div>
+              <div class="d-flex ga-1">
+                <v-btn size="x-small" variant="text" color="primary" class="font-weight-bold text-none" @click="selectAllExerciseTypes">Select All</v-btn>
+                <v-btn size="x-small" variant="text" color="grey-darken-1" class="font-weight-bold text-none" @click="selectRecommendedExerciseTypes">Default 4</v-btn>
+              </div>
+            </div>
+
+            <!-- Listening Formats -->
+            <div class="text-caption font-weight-bold text-indigo-darken-2 mb-1 d-flex align-center ga-1">
+              <v-icon size="14" color="indigo">mdi-headphones</v-icon>
+              <span>1. Listening Tasks (British English en-GB Voice):</span>
+            </div>
+            <div class="d-flex flex-wrap ga-1 mb-2">
+              <v-chip
+                v-for="fmt in listeningFormats"
+                :key="fmt.value"
+                size="small"
+                filter
+                :color="newAsgSelectedExerciseTypes.includes(fmt.value) ? 'indigo' : 'grey'"
+                :variant="newAsgSelectedExerciseTypes.includes(fmt.value) ? 'flat' : 'outlined'"
+                @click="toggleExerciseType(fmt.value)"
+              >
+                {{ fmt.title }}
+              </v-chip>
+            </div>
+
+            <!-- Reading Formats -->
+            <div class="text-caption font-weight-bold text-teal-darken-2 mb-1 d-flex align-center ga-1">
+              <v-icon size="14" color="teal">mdi-book-open-page-variant</v-icon>
+              <span>2. Reading Tasks:</span>
+            </div>
+            <div class="d-flex flex-wrap ga-1 mb-2">
+              <v-chip
+                v-for="fmt in readingFormats"
+                :key="fmt.value"
+                size="small"
+                filter
+                :color="newAsgSelectedExerciseTypes.includes(fmt.value) ? 'teal' : 'grey'"
+                :variant="newAsgSelectedExerciseTypes.includes(fmt.value) ? 'flat' : 'outlined'"
+                @click="toggleExerciseType(fmt.value)"
+              >
+                {{ fmt.title }}
+              </v-chip>
+            </div>
+
+            <!-- Writing Formats -->
+            <div class="text-caption font-weight-bold text-amber-darken-3 mb-1 d-flex align-center ga-1">
+              <v-icon size="14" color="amber-darken-3">mdi-pencil</v-icon>
+              <span>3. Writing & Production Tasks:</span>
+            </div>
+            <div class="d-flex flex-wrap ga-1 mb-2">
+              <v-chip
+                v-for="fmt in writingFormats"
+                :key="fmt.value"
+                size="small"
+                filter
+                :color="newAsgSelectedExerciseTypes.includes(fmt.value) ? 'amber-darken-3' : 'grey'"
+                :variant="newAsgSelectedExerciseTypes.includes(fmt.value) ? 'flat' : 'outlined'"
+                @click="toggleExerciseType(fmt.value)"
+              >
+                {{ fmt.title }}
+              </v-chip>
+            </div>
+
+            <!-- AI Generate Action Button -->
+            <v-btn
+              color="indigo-darken-2"
+              variant="flat"
+              block
+              class="text-none font-weight-bold mt-2"
+              prepend-icon="mdi-creation"
+              :loading="isGeneratingExercises"
+              @click="generateWorksheetAI"
+            >
+              Generate {{ newAsgSelectedExerciseTypes.length }} Exercises with AI
+            </v-btn>
+          </div>
+
+          <!-- Preview & Edit Generated Exercises -->
+          <div v-if="generatedExercises.length" class="mb-3">
+            <div class="d-flex align-center justify-space-between mb-2">
+              <span class="text-subtitle-2 font-weight-black text-secondary">
+                Preview & Edit Exercises ({{ generatedExercises.length }} questions):
+              </span>
+              <v-chip size="x-small" color="success" variant="flat" class="font-weight-bold">
+                Auto-Grading Ready
+              </v-chip>
+            </div>
+
+            <div class="d-flex flex-column ga-2" style="max-height: 380px; overflow-y: auto;">
+              <v-card
+                v-for="(ex, index) in generatedExercises"
+                :key="ex.id || index"
+                variant="outlined"
+                class="pa-3 bg-white"
+              >
+                <div class="d-flex align-center justify-space-between mb-2">
+                  <div class="d-flex align-center ga-1 flex-wrap">
+                    <v-chip size="x-small" color="primary" variant="flat" class="font-weight-black">
+                      #{{ index + 1 }}
+                    </v-chip>
+                    <v-chip size="x-small" color="grey-darken-2" variant="tonal" class="font-weight-bold">
+                      {{ formatExerciseTypeName(ex.type) }}
+                    </v-chip>
+                    <v-btn
+                      v-if="ex.audio_text || (ex.type && ex.type.startsWith('listen_'))"
+                      size="x-small"
+                      color="indigo"
+                      variant="tonal"
+                      class="text-none font-weight-bold"
+                      prepend-icon="mdi-volume-high"
+                      @click="playExerciseAudio(ex.audio_text || ex.question_text)"
+                    >
+                      Listen (en-GB)
+                    </v-btn>
+                  </div>
+                  <div class="d-flex align-center ga-1">
+                    <v-btn
+                      icon="mdi-chevron-up"
+                      size="x-small"
+                      variant="text"
+                      :disabled="index === 0"
+                      @click="moveExercise(index, -1)"
+                    />
+                    <v-btn
+                      icon="mdi-chevron-down"
+                      size="x-small"
+                      variant="text"
+                      :disabled="index === generatedExercises.length - 1"
+                      @click="moveExercise(index, 1)"
+                    />
+                    <v-btn
+                      icon="mdi-delete-outline"
+                      size="x-small"
+                      color="error"
+                      variant="text"
+                      @click="deleteExercise(index)"
+                    />
+                  </div>
+                </div>
+
+                <!-- Instruction -->
+                <v-text-field
+                  v-model="ex.instruction"
+                  label="Pupil Instruction:"
+                  density="compact"
+                  variant="underlined"
+                  hide-details
+                  class="text-caption mb-1"
+                />
+
+                <!-- Audio prompt text if listening -->
+                <v-text-field
+                  v-if="ex.audio_text"
+                  v-model="ex.audio_text"
+                  label="Audio Utterance (read aloud by en-GB voice):"
+                  density="compact"
+                  variant="outlined"
+                  hide-details
+                  class="text-caption mb-1 bg-indigo-lighten-5"
+                />
+
+                <!-- Question or Context text -->
+                <v-text-field
+                  v-if="ex.question_text"
+                  v-model="ex.question_text"
+                  label="Question / Sentence:"
+                  density="compact"
+                  variant="outlined"
+                  hide-details
+                  class="text-caption mb-1"
+                />
+
+                <!-- Correct Answer Display -->
+                <div class="d-flex align-center ga-2 mt-2 pt-1 border-t">
+                  <span class="text-caption font-weight-bold text-success">Key:</span>
+                  <span class="text-caption text-grey-darken-3 font-mono">
+                    {{ typeof ex.correct_answer === 'object' ? JSON.stringify(ex.correct_answer) : ex.correct_answer }}
+                  </span>
+                </div>
+              </v-card>
+            </div>
+          </div>
+        </div>
+
+
         <v-text-field
           v-model="newAsgDueDate"
           type="date"
@@ -1466,7 +1718,7 @@
         <v-card-actions class="px-0 pb-0 border-t pt-2">
           <v-spacer />
           <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showCreateAssignmentModal = false">Cancel</v-btn>
-          <v-btn color="secondary" variant="flat" class="text-none font-weight-bold" :loading="isCreatingAsg" :disabled="isGeneratingAsgPicture || (newAsgType === 'picture' && !newAsgImageUrl)" @click="submitCreateAssignment">
+          <v-btn color="secondary" variant="flat" class="text-none font-weight-bold" :loading="isCreatingAsg" :disabled="isGeneratingAsgPicture || (newAsgType === 'picture' && !newAsgImageUrl) || (newAsgType === 'worksheet' && (!generatedExercises.length || isGeneratingExercises))" @click="submitCreateAssignment">
             Assign Homework
           </v-btn>
         </v-card-actions>
@@ -2097,6 +2349,149 @@ const copyFullClassLink = (joinCode) => {
 
 const printQrPoster = () => {
   window.print()
+}
+
+
+import { speakBritishText } from '../utils/tts.js'
+
+// --- Worksheet Generator State ---
+const newAsgVocabText = ref('')
+const newAsgGradeLevel = ref('Grade 3')
+const newAsgAccent = ref('en-GB')
+const isGeneratingExercises = ref(false)
+const generatedExercises = ref([])
+
+const listeningFormats = [
+  { title: 'Listen & Circle', value: 'listen_and_circle' },
+  { title: 'Listen & Tick', value: 'listen_and_tick' },
+  { title: 'Listen & Tick / Cross', value: 'listen_and_tick_or_cross' },
+  { title: 'Listen & Match', value: 'listen_and_match' },
+  { title: 'Listen & Number', value: 'listen_and_number' }
+]
+
+const readingFormats = [
+  { title: 'Read & Fill in Blank', value: 'read_and_fill_in_the_blank' },
+  { title: 'Read & Circle', value: 'read_and_circle' },
+  { title: 'Read & Match', value: 'read_and_match' },
+  { title: 'Read & Number', value: 'read_and_number' }
+]
+
+const writingFormats = [
+  { title: 'Write Missing Word', value: 'write_the_missing_word' },
+  { title: 'Unscramble Sentence', value: 'unscramble_words' },
+  { title: 'Answer Question', value: 'answer_the_question' }
+]
+
+const newAsgSelectedExerciseTypes = ref([
+  'listen_and_circle',
+  'read_and_fill_in_the_blank',
+  'unscramble_words',
+  'write_the_missing_word'
+])
+
+const toggleExerciseType = (val) => {
+  const idx = newAsgSelectedExerciseTypes.value.indexOf(val)
+  if (idx > -1) {
+    newAsgSelectedExerciseTypes.value.splice(idx, 1)
+  } else {
+    newAsgSelectedExerciseTypes.value.push(val)
+  }
+}
+
+const selectAllExerciseTypes = () => {
+  newAsgSelectedExerciseTypes.value = [
+    ...listeningFormats.map(f => f.value),
+    ...readingFormats.map(f => f.value),
+    ...writingFormats.map(f => f.value)
+  ]
+}
+
+const selectRecommendedExerciseTypes = () => {
+  newAsgSelectedExerciseTypes.value = [
+    'listen_and_circle',
+    'read_and_fill_in_the_blank',
+    'unscramble_words',
+    'write_the_missing_word'
+  ]
+}
+
+const formatExerciseTypeName = (type) => {
+  const map = {
+    listen_and_circle: 'Listen & Circle',
+    listen_and_tick: 'Listen & Tick',
+    listen_and_tick_or_cross: 'Listen & Tick / Cross',
+    listen_and_match: 'Listen & Match',
+    listen_and_number: 'Listen & Number',
+    read_and_fill_in_the_blank: 'Read & Fill Blank',
+    read_and_circle: 'Read & Circle',
+    read_and_match: 'Read & Match',
+    read_and_number: 'Read & Number',
+    write_the_missing_word: 'Write Missing Word',
+    unscramble_words: 'Unscramble Sentence',
+    answer_the_question: 'Answer Question'
+  }
+  return map[type] || type
+}
+
+const playExerciseAudio = (text) => {
+  if (text) {
+    speakBritishText(text, 0.9)
+  }
+}
+
+const moveExercise = (index, delta) => {
+  const newIndex = index + delta
+  if (newIndex >= 0 && newIndex < generatedExercises.value.length) {
+    const item = generatedExercises.value.splice(index, 1)[0]
+    generatedExercises.value.splice(newIndex, 0, item)
+  }
+}
+
+const deleteExercise = (index) => {
+  generatedExercises.value.splice(index, 1)
+}
+
+const generateWorksheetAI = async () => {
+  const vocabList = newAsgVocabText.value
+    .split(/[,;\n]+/)
+    .map(w => w.trim())
+    .filter(Boolean)
+  if (!vocabList.length) {
+    notify('Please enter at least 1 vocabulary word.', 'warning')
+    return
+  }
+  if (!newAsgSelectedExerciseTypes.value.length) {
+    notify('Please select at least 1 exercise format.', 'warning')
+    return
+  }
+  isGeneratingExercises.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/teacher/worksheet/generate`, {
+      method: 'POST',
+      headers: getTeacherAuthHeaders(),
+      body: JSON.stringify({
+        target_vocabulary: vocabList,
+        exercise_types: newAsgSelectedExerciseTypes.value,
+        grade_level: newAsgGradeLevel.value,
+        accent: newAsgAccent.value || 'en-GB',
+        title: newAsgTitle.value.trim()
+      })
+    })
+    if (!res.ok) {
+      const err = await res.json()
+      throw new Error(err.detail || 'Failed to generate exercises')
+    }
+    const data = await res.json()
+    if (!newAsgTitle.value.trim() && data.title) {
+      newAsgTitle.value = data.title
+    }
+    generatedExercises.value = data.exercises || []
+    notify(`Generated ${generatedExercises.value.length} interactive exercises with AI!`, 'success')
+  } catch (e) {
+    notify(e.message || 'Error generating worksheet.', 'error')
+  } finally {
+    isGeneratingExercises.value = false
+  }
 }
 
 const showCreateAssignmentModal = ref(false)
@@ -2754,16 +3149,21 @@ const submitCreateClass = async () => {
 
 const submitCreateAssignment = async () => {
   const isPicture = newAsgType.value === 'picture'
+  const isWorksheet = newAsgType.value === 'worksheet'
   if (!newAsgTitle.value.trim()) {
     notify('Please enter an assignment title.', 'warning')
     return
   }
-  if (!isPicture && !newAsgSentence.value.trim()) {
+  if (!isPicture && !isWorksheet && !newAsgSentence.value.trim()) {
     notify('Please enter the model reading sentence.', 'warning')
     return
   }
   if (isPicture && !newAsgImageUrl.value) {
     notify('Please generate or upload an image before assigning picture homework.', 'warning')
+    return
+  }
+  if (isWorksheet && !generatedExercises.value.length) {
+    notify('Please generate or add at least 1 exercise before assigning the worksheet.', 'warning')
     return
   }
   const tid = getActiveTeacherId()
@@ -2787,12 +3187,13 @@ const submitCreateAssignment = async () => {
         class_id: selectedClassId.value,
         teacher_id: tid,
         title: newAsgTitle.value.trim(),
-        topic_sentence: (isPicture ? (newAsgPictureTopic.value.trim() || newAsgTitle.value.trim()) : newAsgSentence.value.trim()),
+        topic_sentence: (isWorksheet ? (newAsgVocabText.value.trim() || newAsgTitle.value.trim()) : (isPicture ? (newAsgPictureTopic.value.trim() || newAsgTitle.value.trim()) : newAsgSentence.value.trim())),
         due_date: newAsgDueDate.value.trim(),
         assignment_type: newAsgType.value,
         image_url: newAsgImageUrl.value.trim(),
         guiding_questions: gQuestions,
         target_keywords: tKeywords,
+        content_json: isWorksheet ? JSON.stringify(generatedExercises.value) : '',
         time_limit_seconds: 0
       })
     })
@@ -2805,6 +3206,8 @@ const submitCreateAssignment = async () => {
       newAsgGuidingQuestionsList.value = []
       newAsgTargetKeywordsText.value = ''
       newAsgDueDate.value = ''
+      newAsgVocabText.value = ''
+      generatedExercises.value = []
       showCreateAssignmentModal.value = false
       notify('Homework assigned to classroom!', 'success')
       await selectClass(selectedClassId.value)
