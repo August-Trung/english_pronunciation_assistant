@@ -19,9 +19,12 @@ except ImportError:
 import requests
 
 try:
-    from app.picture_storage import persist_picture_url
+    from picture_storage import persist_picture_url
 except ImportError:
-    from .picture_storage import persist_picture_url
+    try:
+        from app.picture_storage import persist_picture_url
+    except ImportError:
+        from .picture_storage import persist_picture_url
 
 logger = logging.getLogger("hf_service")
 logger.setLevel(logging.INFO)

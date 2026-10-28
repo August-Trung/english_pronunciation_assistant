@@ -38,8 +38,16 @@ except ImportError:
     )
 from fastapi.responses import StreamingResponse, Response, FileResponse
 from fastapi.staticfiles import StaticFiles
-from .picture_storage import persist_picture_url, store_picture_bytes, PictureStorageError
-from .audio_storage import store_submission_audio, AudioStorageError, MAX_AUDIO_BYTES
+try:
+    from picture_storage import persist_picture_url, store_picture_bytes, PictureStorageError
+    from audio_storage import store_submission_audio, AudioStorageError, MAX_AUDIO_BYTES
+except ImportError:
+    try:
+        from .picture_storage import persist_picture_url, store_picture_bytes, PictureStorageError
+        from .audio_storage import store_submission_audio, AudioStorageError, MAX_AUDIO_BYTES
+    except ImportError:
+        from app.picture_storage import persist_picture_url, store_picture_bytes, PictureStorageError
+        from app.audio_storage import store_submission_audio, AudioStorageError, MAX_AUDIO_BYTES
 from fastapi.middleware.cors import CORSMiddleware
 from pydub import AudioSegment
 try:
@@ -1903,7 +1911,8 @@ def init_db():
             ("image_url", "TEXT DEFAULT ''"),
             ("guiding_questions", "TEXT DEFAULT ''"),
             ("target_keywords", "TEXT DEFAULT ''"),
-            ("time_limit_seconds", "INTEGER DEFAULT 60")
+            ("time_limit_seconds", "INTEGER DEFAULT 60"),
+            ("content_json", "TEXT DEFAULT ''")
         ]
         for col, col_type in assignment_cols:
             try:
@@ -1911,6 +1920,14 @@ def init_db():
             except Exception:
                 pass
         cursor.execute("UPDATE assignments SET assignment_type = 'sentence' WHERE assignment_type IS NULL OR assignment_type = ''")
+        submission_cols = [
+            ("answers_json", "TEXT DEFAULT ''")
+        ]
+        for col, col_type in submission_cols:
+            try:
+                cursor.execute(f"ALTER TABLE submissions ADD COLUMN {col} {col_type}")
+            except Exception:
+                pass
 
         # P3 Migrations: Tenant status (active, trial, suspended, expired)
         try:
@@ -3278,7 +3295,7 @@ def get_class_gradebook(
         
         cursor.execute("""
             SELECT id, title, topic_sentence, target_ipa, due_date, created_at, COALESCE(status, 'active'),
-                   COALESCE(assignment_type, 'sentence'), COALESCE(image_url, ''), guiding_questions, target_keywords, COALESCE(time_limit_seconds, 60)
+                   COALESCE(assignment_type, 'sentence'), COALESCE(image_url, ''), guiding_questions, target_keywords, COALESCE(time_limit_seconds, 60), COALESCE(content_json, '')
             FROM assignments
             WHERE class_id = ? AND (IsXoa IS NULL OR IsXoa = 0)
             ORDER BY id DESC
@@ -3287,7 +3304,7 @@ def get_class_gradebook(
         
         cursor.execute("""
             SELECT s.id, s.assignment_id, s.student_id, s.student_name, s.audio_url,
-                   s.transcribed_text, s.score, s.ipa_json, s.teacher_feedback, s.score_override, s.submitted_at
+                   s.transcribed_text, s.score, s.ipa_json, s.teacher_feedback, s.score_override, s.submitted_at, COALESCE(s.answers_json, '')
             FROM submissions s
             JOIN assignments a ON s.assignment_id = a.id
             WHERE a.class_id = ? AND (s.IsXoa IS NULL OR s.IsXoa = 0)
@@ -3313,7 +3330,8 @@ def get_class_gradebook(
                 "image_url": r[8] or "",
                 "guiding_questions": g_q,
                 "target_keywords": t_k,
-                "time_limit_seconds": 0
+                "time_limit_seconds": 0,
+                "content_json": r[12] if len(r) > 12 else ""
             })
         submissions = [{
             "id": r[0], "assignment_id": r[1], "student_id": r[2], "student_name": r[3],
@@ -3339,6 +3357,99 @@ def get_class_gradebook(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+def grade_worksheet_submission(exercises: list, submitted_answers: dict) -> dict:
+    if not isinstance(exercises, list):
+        try:
+            exercises = json.loads(exercises) if exercises else []
+        except Exception:
+            exercises = []
+    
+    total_points = 0.0
+    earned_points = 0.0
+    details = []
+
+    for ex in exercises:
+        ex_id = str(ex.get("id", ""))
+        ex_type = ex.get("type", "")
+        pts = float(ex.get("points", 1) or 1)
+        total_points += pts
+        correct_ans = ex.get("correct_answer")
+        student_ans = submitted_answers.get(ex_id)
+
+        is_correct = False
+        earned = 0.0
+
+        if student_ans is not None:
+            if ex_type in ["listen_and_circle", "listen_and_tick", "read_and_circle", "read_and_fill_in_the_blank", "write_the_missing_word", "answer_the_question"]:
+                s_clean = str(student_ans).strip().lower().rstrip(".!?,")
+                c_clean = str(correct_ans).strip().lower().rstrip(".!?,")
+                if s_clean == c_clean:
+                    is_correct = True
+                    earned = pts
+
+            elif ex_type in ["listen_and_tick_or_cross"]:
+                s_val = str(student_ans).strip().lower()
+                c_val = str(correct_ans).strip().lower()
+                s_norm = "tick" if s_val in ["true", "tick", "1", "yes"] else "cross"
+                c_norm = "tick" if c_val in ["true", "tick", "1", "yes"] else "cross"
+                if s_norm == c_norm:
+                    is_correct = True
+                    earned = pts
+
+            elif ex_type in ["unscramble_words"]:
+                if isinstance(student_ans, list):
+                    s_joined = " ".join(str(w).strip() for w in student_ans).strip().lower()
+                else:
+                    s_joined = str(student_ans).strip().lower()
+                if isinstance(correct_ans, list):
+                    c_joined = " ".join(str(w).strip() for w in correct_ans).strip().lower()
+                else:
+                    c_joined = str(correct_ans).strip().lower()
+                if " ".join(s_joined.split()) == " ".join(c_joined.split()):
+                    is_correct = True
+                    earned = pts
+
+            elif ex_type in ["read_and_match", "listen_and_match"]:
+                if isinstance(student_ans, dict) and isinstance(correct_ans, dict):
+                    total_pairs = len(correct_ans)
+                    matched_pairs = sum(1 for k, v in correct_ans.items() if str(student_ans.get(k, "")).strip().lower() == str(v).strip().lower())
+                    if total_pairs > 0:
+                        earned = round(pts * (matched_pairs / total_pairs), 2)
+                        is_correct = (matched_pairs == total_pairs)
+
+            elif ex_type in ["listen_and_number", "read_and_number"]:
+                if isinstance(student_ans, list) and isinstance(correct_ans, list):
+                    if len(student_ans) == len(correct_ans) and len(correct_ans) > 0:
+                        matches = sum(1 for s_item, c_item in zip(student_ans, correct_ans) if str(s_item).strip().lower() == str(c_item).strip().lower())
+                        if matches == len(correct_ans):
+                            is_correct = True
+                            earned = pts
+                        else:
+                            earned = round(pts * (matches / len(correct_ans)), 2)
+
+        earned_points += earned
+        details.append({
+            "exercise_id": ex_id,
+            "type": ex_type,
+            "instruction": ex.get("instruction", ""),
+            "question_text": ex.get("question_text", ""),
+            "audio_text": ex.get("audio_text", ""),
+            "options": ex.get("options", []),
+            "student_answer": student_ans,
+            "correct_answer": correct_ans,
+            "is_correct": is_correct,
+            "points": pts,
+            "earned": earned
+        })
+
+    final_score = round((earned_points / max(1.0, total_points)) * 10.0, 1) if total_points > 0 else 10.0
+    return {
+        "score": final_score,
+        "earned_points": round(earned_points, 2),
+        "total_points": round(total_points, 2),
+        "details": details
+    }
+
 class CreateAssignmentRequest(BaseModel):
     class_id: int
     teacher_id: Optional[int] = None
@@ -3351,6 +3462,7 @@ class CreateAssignmentRequest(BaseModel):
     guiding_questions: Optional[List[str]] = None
     target_keywords: Optional[List[str]] = None
     time_limit_seconds: Optional[int] = 0
+    content_json: Optional[str] = ""
 
 @app.post("/api/assignments/create")
 def create_assignment(
@@ -3371,11 +3483,12 @@ def create_assignment(
         questions_json = json.dumps(req.guiding_questions or [])
         keywords_json = json.dumps(req.target_keywords or [])
         asg_type = req.assignment_type or "sentence"
+        content_json_str = (req.content_json or "").strip()
         cursor.execute(
             """INSERT INTO assignments 
-            (class_id, teacher_id, tenant_id, title, topic_sentence, target_ipa, due_date, status, assignment_type, image_url, guiding_questions, target_keywords, time_limit_seconds) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?)""",
-            (req.class_id, teacher_id, tenant_id, req.title.strip(), req.topic_sentence.strip(), req.target_ipa.strip(), req.due_date.strip(), asg_type, stored_image, questions_json, keywords_json, 0)
+            (class_id, teacher_id, tenant_id, title, topic_sentence, target_ipa, due_date, status, assignment_type, image_url, guiding_questions, target_keywords, time_limit_seconds, content_json) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?)""",
+            (req.class_id, teacher_id, tenant_id, req.title.strip(), req.topic_sentence.strip(), req.target_ipa.strip(), req.due_date.strip(), asg_type, stored_image, questions_json, keywords_json, 0, content_json_str)
         )
         conn.commit()
         assignment_id = cursor.lastrowid
@@ -3399,6 +3512,7 @@ class UpdateAssignmentRequest(BaseModel):
     guiding_questions: Optional[List[str]] = None
     target_keywords: Optional[List[str]] = None
     time_limit_seconds: Optional[int] = None
+    content_json: Optional[str] = None
 
 @app.post("/api/assignments/{assignment_id}/update")
 def update_assignment(
@@ -3438,6 +3552,9 @@ def update_assignment(
         if req.time_limit_seconds is not None:
             updates.append("time_limit_seconds = ?")
             params.append(req.time_limit_seconds)
+        if req.content_json is not None:
+            updates.append("content_json = ?")
+            params.append(req.content_json.strip())
             
         params.append(assignment_id)
         sql = f"UPDATE assignments SET {', '.join(updates)} WHERE id = ?"
@@ -4037,7 +4154,7 @@ def get_student_assignments(student_id: int):
         cursor.execute("""
             SELECT a.id, a.class_id, c.name as class_name, c.join_code, a.title, a.topic_sentence, a.target_ipa, a.due_date,
                    s.id as submission_id, COALESCE(s.score_override, s.score), s.audio_url, s.teacher_feedback,
-                   COALESCE(a.assignment_type, 'sentence'), COALESCE(a.image_url, ''), a.guiding_questions, a.target_keywords, COALESCE(a.time_limit_seconds, 0), s.ipa_json, s.transcribed_text, s.score, s.score_override, c.grade_level
+                   COALESCE(a.assignment_type, 'sentence'), COALESCE(a.image_url, ''), a.guiding_questions, a.target_keywords, COALESCE(a.time_limit_seconds, 0), s.ipa_json, s.transcribed_text, s.score, s.score_override, c.grade_level, COALESCE(a.content_json, ''), COALESCE(s.answers_json, '')
             FROM class_enrollments e
             JOIN classrooms c ON e.class_id = c.id
             JOIN assignments a ON a.class_id = c.id
@@ -4083,7 +4200,9 @@ def get_student_assignments(student_id: int):
                 "time_limit_seconds": 0,
                 "evaluation": submission_evaluation(r[17]),
                 "transcribed_text": r[18] or "",
-                "ai_score": r[19], "score_override": r[20], "grade_level": r[21]
+                "ai_score": r[19], "score_override": r[20], "grade_level": r[21],
+                "content_json": r[22] if len(r) > 22 else "",
+                "answers_json": r[23] if len(r) > 23 else ""
             })
         return {"assignments": assignments}
     except Exception as e:
@@ -4097,6 +4216,69 @@ def submission_evaluation(raw):
     except (ValueError, TypeError):
         return {}
 
+
+
+class SubmitWorksheetRequest(BaseModel):
+    assignment_id: int
+    student_id: int
+    student_name: Optional[str] = "Learner"
+    answers: dict
+
+@app.post("/api/assignments/submit-worksheet")
+def submit_worksheet_assignment(req: SubmitWorksheetRequest):
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=20.0)
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT a.id, a.title, COALESCE(a.content_json, ''), c.tenant_id
+            FROM assignments a
+            JOIN class_enrollments e ON e.class_id = a.class_id
+            JOIN classrooms c ON c.id = a.class_id
+            WHERE a.id = ? AND e.student_id = ?
+              AND COALESCE(a.IsXoa, 0) = 0 AND COALESCE(e.IsXoa, 0) = 0
+              AND COALESCE(c.IsXoa, 0) = 0
+        """, (req.assignment_id, req.student_id))
+        row = cursor.fetchone()
+        if not row:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Worksheet assignment not found in your enrolled classrooms.")
+        
+        assignment_id, title, content_json, tenant_id = row
+        exercises = json.loads(content_json) if content_json else []
+        
+        grading_result = grade_worksheet_submission(exercises, req.answers)
+        score = grading_result["score"]
+        earned = grading_result["earned_points"]
+        total = grading_result["total_points"]
+        transcribed_text = f"Worksheet completed: {earned}/{total} questions correct"
+        answers_json_str = json.dumps(grading_result, ensure_ascii=False)
+        evaluation_json_str = json.dumps({
+            "version": 1,
+            "score": score,
+            "transcribed_text": transcribed_text,
+            "worksheet_result": grading_result,
+            "score_method": "worksheet_auto_grade"
+        }, ensure_ascii=False)
+
+        cursor.execute("""
+            INSERT INTO submissions
+            (assignment_id, student_id, student_name, tenant_id, audio_url, audio_size_bytes, transcribed_text, score, ipa_json, answers_json)
+            VALUES (?, ?, ?, ?, '', 0, ?, ?, ?, ?)
+        """, (assignment_id, req.student_id, req.student_name, tenant_id, transcribed_text, score, evaluation_json_str, answers_json_str))
+        conn.commit()
+        sub_id = cursor.lastrowid
+        conn.close()
+        export_db_to_json()
+        return {
+            "status": "success",
+            "submission_id": sub_id,
+            "score": score,
+            "grading_result": grading_result
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @app.post("/api/assignments/submit")
 async def submit_assignment(
