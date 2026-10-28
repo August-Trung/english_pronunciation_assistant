@@ -30,8 +30,16 @@
           </div>
         </div>
 
-        <div class="d-flex flex-wrap ga-2">
-        <v-btn color="white" variant="outlined" prepend-icon="mdi-refresh" :loading="isRefreshing" class="text-none" @click="refreshHomework">Refresh All Assignments</v-btn>
+        <div class="d-flex flex-wrap ga-2 align-center">
+          <v-btn
+            icon="mdi-lightbulb-on-outline"
+            variant="tonal"
+            color="white"
+            size="small"
+            title="Hướng dẫn làm bài tập về nhà"
+            @click="replayStudentHwTour"
+          />
+          <v-btn color="white" variant="outlined" prepend-icon="mdi-refresh" :loading="isRefreshing" class="text-none" @click="refreshHomework">Refresh All Assignments</v-btn>
         <v-btn
           color="white"
           variant="flat"
@@ -116,7 +124,7 @@
     </div>
 
     <!-- Assignments List -->
-    <div class="d-flex flex-column ga-3">
+    <div id="tour-student-hw-list" class="d-flex flex-column ga-3">
       <v-card
         v-for="asg in filteredAssignments"
         :key="asg.assignment_id"

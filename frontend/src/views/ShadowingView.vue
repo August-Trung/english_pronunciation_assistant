@@ -16,6 +16,7 @@
         <div class="d-flex align-center ga-2">
           <!-- Level selection toggle -->
           <v-btn-toggle
+            id="tour-shadowing-level-picker"
             v-model="selectedLevel"
             mandatory
             color="white"
@@ -28,6 +29,14 @@
             <v-btn v-if="!isMyHanh" value="medium" size="x-small" class="font-weight-bold">Medium</v-btn>
             <v-btn v-if="!isMyHanh" value="hard" size="x-small" class="font-weight-bold">Hard</v-btn>
           </v-btn-toggle>
+          <v-btn
+            icon="mdi-lightbulb-on-outline"
+            variant="tonal"
+            color="white"
+            size="small"
+            title="Hướng dẫn Shadowing Studio"
+            @click="replayShadowingTour"
+          />
         </div>
       </div>
     </v-card>

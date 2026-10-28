@@ -276,6 +276,7 @@
                     class="position-absolute"
                   />
                   <v-btn
+                    id="tour-speaking-record-btn"
                     :color="isRecording ? 'grey-darken-3' : 'error'"
                     size="large"
                     icon

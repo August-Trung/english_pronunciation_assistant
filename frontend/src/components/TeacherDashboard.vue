@@ -95,6 +95,7 @@
 
         <div class="d-flex align-center ga-2">
           <v-btn
+            id="tour-teacher-create-class-btn"
             color="primary"
             variant="flat"
             size="small"
@@ -104,6 +105,14 @@
           >
             Create Class
           </v-btn>
+          <v-btn
+            icon="mdi-lightbulb-on-outline"
+            variant="tonal"
+            color="primary"
+            size="small"
+            title="Hướng dẫn nhanh Teacher Hub"
+            @click="replayTeacherHubTour"
+          />
           <v-btn
             color="grey-darken-2"
             variant="text"

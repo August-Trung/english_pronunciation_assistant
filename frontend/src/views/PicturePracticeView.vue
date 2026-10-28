@@ -19,6 +19,14 @@
 
         <div class="d-flex align-center ga-2">
           <v-btn
+            icon="mdi-lightbulb-on-outline"
+            variant="tonal"
+            color="white"
+            size="small"
+            title="Hướng dẫn Picture Studio"
+            @click="replayPictureTour"
+          />
+          <v-btn
             color="white"
             variant="flat"
             size="small"
@@ -239,7 +247,7 @@
             </div>
 
             <!-- Microphone Controls -->
-            <div class="d-flex flex-column align-center ga-3">
+            <div id="tour-picture-record-btn" class="d-flex flex-column align-center ga-3">
               <div class="d-flex align-center ga-3 w-100 justify-center">
                 <v-btn
                   v-if="!isRecording"
@@ -600,6 +608,11 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import {
+  runTour,
+  TOUR_KEYS,
+  STUDENT_PICTURE_TOUR_STEPS
+} from '@/utils/tours.js'
 
 const props = defineProps({
   backendUrl: String,
@@ -979,7 +992,14 @@ const resetChallenge = () => {
 
 onMounted(() => {
   fetchScenarios()
+  setTimeout(() => {
+    runTour(TOUR_KEYS.STUDENT_PICTURE, STUDENT_PICTURE_TOUR_STEPS)
+  }, 1200)
 })
+
+const replayPictureTour = () => {
+  runTour(TOUR_KEYS.STUDENT_PICTURE, STUDENT_PICTURE_TOUR_STEPS, true)
+}
 
 onUnmounted(() => {
   if (timerInterval) clearInterval(timerInterval)
