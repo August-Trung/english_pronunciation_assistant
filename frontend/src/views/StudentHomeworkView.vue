@@ -206,18 +206,250 @@
         </div>
 
         <!-- Format Branch 2: Standard Sentence Reading -->
-        <div v-else class="pa-3 bg-purple-lighten-5 rounded border border-purple mb-3">
+        <div v-else-if="asg.assignment_type === 'sentence'" class="pa-3 bg-purple-lighten-5 rounded border border-purple mb-3">
           <div class="text-caption font-weight-bold text-purple-darken-3 mb-1">Assigned Model Reading Sentence:</div>
           <div class="text-body-1 font-weight-black text-secondary" style="white-space: pre-wrap;">"{{ asg.topic_sentence }}"</div>
         </div>
 
-        <div v-if="drafts[asg.assignment_id]" class="mb-3 pa-3 border rounded">
-          <div class="text-subtitle-2 mb-2">Review Your Recording</div>
-          <audio controls :src="drafts[asg.assignment_id].url" class="w-100" />
-          <v-btn class="mt-2 text-none" color="success" :loading="submittingId === asg.assignment_id" :disabled="isSubmitting || isStartingRecording || currentRecordingAsgId !== null" @click="uploadSubmission(asg)">Submit Recording</v-btn>
+        <!-- Format Branch 3: Dynamic Vocab Worksheet -->
+        <div v-else-if="asg.assignment_type === 'worksheet'" class="mb-3">
+          <div class="d-flex align-center justify-space-between mb-2 pb-2 border-b">
+            <div class="d-flex align-center ga-1">
+              <v-chip size="x-small" color="teal-darken-2" variant="tonal" class="font-weight-black" prepend-icon="mdi-format-list-checks">
+                DYNAMIC WORKSHEET
+              </v-chip>
+              <span class="text-caption font-weight-bold text-grey-darken-2">
+                {{ parseExercises(asg.content_json).length }} Interactive Questions
+              </span>
+            </div>
+            <v-chip size="x-small" color="indigo" variant="flat" class="font-weight-bold" prepend-icon="mdi-account-voice">
+              British Accent (en-GB)
+            </v-chip>
+          </div>
+
+          <!-- Submitted View for Worksheet: Question-by-question breakdown -->
+          <div v-if="asg.is_submitted && parseGradingResult(asg.answers_json)" class="mt-2">
+            <div class="d-flex align-center justify-space-between bg-teal-lighten-5 pa-3 rounded border border-teal mb-3">
+              <div class="d-flex align-center ga-2">
+                <v-icon color="teal-darken-2" size="28">mdi-check-decagram</v-icon>
+                <div>
+                  <div class="text-subtitle-2 font-weight-black text-teal-darken-3">Worksheet Completed & Graded</div>
+                  <div class="text-caption text-grey-darken-3">
+                    Score: <strong>{{ asg.score }}/10</strong> ({{ parseGradingResult(asg.answers_json).earned_points }}/{{ parseGradingResult(asg.answers_json).total_points }} points)
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex flex-column ga-2">
+              <div
+                v-for="(detail, qIdx) in parseGradingResult(asg.answers_json).details || []"
+                :key="detail.exercise_id || qIdx"
+                class="pa-3 rounded border"
+                :class="detail.is_correct ? 'bg-green-lighten-5 border-green' : 'bg-red-lighten-5 border-red'"
+              >
+                <div class="d-flex align-center justify-space-between mb-1">
+                  <span class="text-caption font-weight-black text-secondary">
+                    Question #{{ qIdx + 1 }}: {{ detail.instruction }}
+                  </span>
+                  <v-chip size="x-small" :color="detail.is_correct ? 'success' : 'error'" variant="flat" class="font-weight-bold">
+                    {{ detail.is_correct ? '✓ Correct (+ ' + detail.earned + ')' : '✗ Incorrect' }}
+                  </v-chip>
+                </div>
+                <div v-if="detail.audio_text" class="d-flex align-center ga-2 mb-1">
+                  <v-btn size="x-small" color="indigo" variant="flat" prepend-icon="mdi-volume-high" @click="playWorksheetAudio(detail.audio_text)">
+                    Listen Audio (en-GB)
+                  </v-btn>
+                  <span class="text-caption text-grey-darken-3 font-italic">"{{ detail.audio_text }}"</span>
+                </div>
+                <div v-if="detail.question_text" class="text-caption font-weight-bold text-grey-darken-4 mb-1">
+                  {{ detail.question_text }}
+                </div>
+                <div class="text-caption mt-1 d-flex flex-column ga-0.5">
+                  <div>Your Answer: <strong :class="detail.is_correct ? 'text-success' : 'text-error'">{{ typeof detail.student_answer === 'object' ? JSON.stringify(detail.student_answer) : (detail.student_answer || 'No answer') }}</strong></div>
+                  <div v-if="!detail.is_correct" class="text-grey-darken-2">Correct Key: <strong class="text-success">{{ typeof detail.correct_answer === 'object' ? JSON.stringify(detail.correct_answer) : detail.correct_answer }}</strong></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Unsubmitted View: Interactive Question Player -->
+          <div v-else class="d-flex flex-column ga-3 mt-2">
+            <div
+              v-for="(ex, exIdx) in parseExercises(asg.content_json)"
+              :key="ex.id || exIdx"
+              class="pa-3 rounded border bg-white"
+            >
+              <div class="d-flex align-center justify-space-between mb-2">
+                <div class="d-flex align-center ga-1">
+                  <v-chip size="x-small" color="secondary" variant="flat" class="font-weight-black">
+                    #{{ exIdx + 1 }}
+                  </v-chip>
+                  <span class="text-caption font-weight-black text-grey-darken-3">
+                    {{ ex.instruction }}
+                  </span>
+                </div>
+                <v-chip size="x-small" color="grey" variant="tonal">
+                  {{ ex.points || 1 }} pt
+                </v-chip>
+              </div>
+
+              <!-- Audio Player Button for Listening Questions -->
+              <div v-if="ex.audio_text || (ex.type && ex.type.startsWith('listen_'))" class="mb-2 pa-2 rounded bg-indigo-lighten-5 border border-indigo d-flex align-center justify-space-between flex-wrap ga-2">
+                <div class="d-flex align-center ga-2">
+                  <v-btn
+                    color="indigo-darken-2"
+                    variant="flat"
+                    size="small"
+                    prepend-icon="mdi-volume-high"
+                    class="text-none font-weight-bold"
+                    @click="playWorksheetAudio(ex.audio_text || ex.question_text)"
+                  >
+                    Play Audio Clip (UK)
+                  </v-btn>
+                  <span class="text-caption text-indigo-darken-3 font-weight-medium">
+                    Tap to hear native British pronunciation
+                  </span>
+                </div>
+              </div>
+
+              <!-- Question context / prompt text -->
+              <div v-if="ex.question_text" class="text-subtitle-2 font-weight-bold text-grey-darken-4 mb-2">
+                {{ ex.question_text }}
+              </div>
+
+              <!-- Interactive Format 1: Tick or Cross -->
+              <div v-if="ex.type === 'listen_and_tick_or_cross'" class="d-flex ga-2 mt-1">
+                <v-btn
+                  size="small"
+                  :color="getWorksheetAnswer(asg.assignment_id, ex.id) === 'tick' ? 'success' : 'grey-lighten-3'"
+                  :variant="getWorksheetAnswer(asg.assignment_id, ex.id) === 'tick' ? 'flat' : 'outlined'"
+                  class="text-none font-weight-bold flex-grow-1"
+                  prepend-icon="mdi-check"
+                  @click="setWorksheetAnswer(asg.assignment_id, ex.id, 'tick')"
+                >
+                  Tick (✓ True)
+                </v-btn>
+                <v-btn
+                  size="small"
+                  :color="getWorksheetAnswer(asg.assignment_id, ex.id) === 'cross' ? 'error' : 'grey-lighten-3'"
+                  :variant="getWorksheetAnswer(asg.assignment_id, ex.id) === 'cross' ? 'flat' : 'outlined'"
+                  class="text-none font-weight-bold flex-grow-1"
+                  prepend-icon="mdi-close"
+                  @click="setWorksheetAnswer(asg.assignment_id, ex.id, 'cross')"
+                >
+                  Cross (✗ False)
+                </v-btn>
+              </div>
+
+              <!-- Interactive Format 2: Unscramble Words -->
+              <div v-else-if="ex.type === 'unscramble_words'" class="mt-1">
+                <div class="pa-2 bg-grey-lighten-4 rounded border mb-2 d-flex align-center justify-space-between">
+                  <div>
+                    <span class="text-caption font-weight-bold text-grey-darken-2 mr-2">Your Sentence:</span>
+                    <span class="text-subtitle-2 font-weight-black text-primary">
+                      {{ (getWorksheetAnswer(asg.assignment_id, ex.id) || []).join(' ') || '(Tap words below in order)' }}
+                    </span>
+                  </div>
+                  <v-btn size="x-small" color="grey" variant="text" @click="resetUnscramble(asg.assignment_id, ex.id)">
+                    Reset
+                  </v-btn>
+                </div>
+                <div class="d-flex flex-wrap ga-1">
+                  <v-chip
+                    v-for="(tok, tIdx) in (ex.options || [])"
+                    :key="tIdx"
+                    size="small"
+                    color="primary"
+                    variant="outlined"
+                    class="font-weight-bold"
+                    @click="toggleUnscrambleToken(asg.assignment_id, ex.id, tok)"
+                  >
+                    {{ tok }}
+                  </v-chip>
+                </div>
+              </div>
+
+              <!-- Interactive Format 3: Fill in Blank / Spelling / Missing Word -->
+              <div v-else-if="ex.type === 'read_and_fill_in_the_blank' || ex.type === 'write_the_missing_word'" class="mt-1">
+                <div v-if="ex.options && ex.options.length" class="mb-2">
+                  <span class="text-caption font-weight-bold text-grey-darken-2 mr-1">Word Bank:</span>
+                  <v-chip
+                    v-for="opt in ex.options"
+                    :key="opt"
+                    size="x-small"
+                    color="indigo"
+                    variant="tonal"
+                    class="mr-1 font-weight-bold cursor-pointer"
+                    @click="setWorksheetAnswer(asg.assignment_id, ex.id, opt)"
+                  >
+                    {{ opt }}
+                  </v-chip>
+                </div>
+                <v-text-field
+                  :model-value="getWorksheetAnswer(asg.assignment_id, ex.id)"
+                  label="Type your answer here:"
+                  placeholder="Type missing word..."
+                  density="compact"
+                  variant="outlined"
+                  hide-details
+                  @update:model-value="val => setWorksheetAnswer(asg.assignment_id, ex.id, val)"
+                />
+              </div>
+
+              <!-- Interactive Format 4: Options Picker (Circle, Tick, Multiple Choice) -->
+              <div v-else-if="ex.options && ex.options.length" class="d-flex flex-wrap ga-2 mt-1">
+                <v-btn
+                  v-for="(opt, oIdx) in ex.options"
+                  :key="oIdx"
+                  size="small"
+                  :color="getWorksheetAnswer(asg.assignment_id, ex.id) === opt ? 'primary' : 'grey-lighten-4'"
+                  :variant="getWorksheetAnswer(asg.assignment_id, ex.id) === opt ? 'flat' : 'outlined'"
+                  class="text-none font-weight-bold flex-grow-1"
+                  @click="setWorksheetAnswer(asg.assignment_id, ex.id, opt)"
+                >
+                  {{ opt }}
+                </v-btn>
+              </div>
+
+              <!-- Interactive Format 5: Generic Text input -->
+              <div v-else class="mt-1">
+                <v-text-field
+                  :model-value="getWorksheetAnswer(asg.assignment_id, ex.id)"
+                  label="Your Answer:"
+                  density="compact"
+                  variant="outlined"
+                  hide-details
+                  @update:model-value="val => setWorksheetAnswer(asg.assignment_id, ex.id, val)"
+                />
+              </div>
+            </div>
+
+            <!-- Submit Worksheet Button -->
+            <v-btn
+              color="success"
+              variant="flat"
+              size="large"
+              block
+              class="text-none font-weight-black mt-2"
+              prepend-icon="mdi-send-check"
+              :loading="isSubmittingWorksheet"
+              @click="submitWorksheet(asg)"
+            >
+              Submit Worksheet & Grade
+            </v-btn>
+          </div>
         </div>
-        <!-- Submission Controls or Result -->
-        <div v-if="!asg.is_submitted" class="d-flex align-center flex-wrap ga-2">
+
+
+        <template v-if="asg.assignment_type !== 'worksheet'">
+          <div v-if="drafts[asg.assignment_id]" class="mb-3 pa-3 border rounded">
+            <div class="text-subtitle-2 mb-2">Review Your Recording</div>
+            <audio controls :src="drafts[asg.assignment_id].url" class="w-100" />
+            <v-btn class="mt-2 text-none" color="success" :loading="submittingId === asg.assignment_id" :disabled="isSubmitting || isStartingRecording || currentRecordingAsgId !== null" @click="uploadSubmission(asg)">Submit Recording</v-btn>
+          </div>
+          <!-- Submission Controls or Result -->
+          <div v-if="!asg.is_submitted" class="d-flex align-center flex-wrap ga-2">
           <v-btn
             :color="currentRecordingAsgId === asg.assignment_id ? 'error' : 'primary'"
             variant="flat"
@@ -249,6 +481,7 @@
             {{ asg.teacher_feedback }}
           </div>
         </div>
+        </template>
       </v-card>
 
       <div v-if="!filteredAssignments.length" class="text-center pa-8 bg-white border rounded-lg">
@@ -469,6 +702,121 @@ const previewImage = (url) => {
 const toast = ref({ show: false, text: '', color: 'success', icon: 'mdi-check-circle' })
 const notify = (text, color = 'success', icon = 'mdi-check-circle') => {
   toast.value = { show: true, text, color, icon }
+}
+
+
+import { speakBritishText } from '@/utils/tts.js'
+
+const worksheetAnswers = ref({})
+const isSubmittingWorksheet = ref(false)
+
+const parseExercises = (contentJson) => {
+  if (!contentJson) return []
+  try {
+    const parsed = typeof contentJson === 'string' ? JSON.parse(contentJson) : contentJson
+    return Array.isArray(parsed) ? parsed : (parsed.exercises || [])
+  } catch (e) {
+    return []
+  }
+}
+
+const parseGradingResult = (answersJson) => {
+  if (!answersJson) return null
+  try {
+    return typeof answersJson === 'string' ? JSON.parse(answersJson) : answersJson
+  } catch (e) {
+    return null
+  }
+}
+
+const getWorksheetAnswer = (asgId, exId) => {
+  const key = `${asgId}_${exId}`
+  return worksheetAnswers.value[key]
+}
+
+const setWorksheetAnswer = (asgId, exId, val) => {
+  const key = `${asgId}_${exId}`
+  worksheetAnswers.value[key] = val
+}
+
+const toggleUnscrambleToken = (asgId, exId, token) => {
+  const key = `${asgId}_${exId}`
+  const current = worksheetAnswers.value[key] || []
+  const list = Array.isArray(current) ? [...current] : []
+  list.push(token)
+  worksheetAnswers.value[key] = list
+}
+
+const resetUnscramble = (asgId, exId) => {
+  const key = `${asgId}_${exId}`
+  worksheetAnswers.value[key] = []
+}
+
+const playWorksheetAudio = (text) => {
+  if (text) {
+    speakBritishText(text, 0.9)
+  }
+}
+
+const submitWorksheet = async (asg) => {
+  const uid = getActiveStudentId()
+  if (!uid) {
+    showToast('Please sign in as a student to submit homework.', 'warning')
+    return
+  }
+  const exercises = parseExercises(asg.content_json)
+  if (!exercises.length) {
+    showToast('No exercises found in this worksheet.', 'warning')
+    return
+  }
+  
+  const answersMap = {}
+  let answeredCount = 0
+  for (const ex of exercises) {
+    const val = getWorksheetAnswer(asg.assignment_id, ex.id)
+    if (val !== undefined && val !== null && val !== '') {
+      answersMap[ex.id] = val
+      answeredCount++
+    }
+  }
+
+  if (answeredCount < exercises.length) {
+    if (!confirm(`You have completed ${answeredCount} of ${exercises.length} questions. Are you sure you want to submit now?`)) {
+      return
+    }
+  }
+
+  isSubmittingWorksheet.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/assignments/submit-worksheet`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        assignment_id: asg.assignment_id,
+        student_id: uid,
+        student_name: props.userName || 'Student',
+        answers: answersMap
+      })
+    })
+
+    if (!res.ok) {
+      const err = await res.json()
+      throw new Error(err.detail || 'Failed to submit worksheet')
+    }
+
+    const data = await res.json()
+    asg.is_submitted = true
+    asg.score = data.score
+    asg.answers_json = JSON.stringify(data.grading_result)
+    asg.transcribed_text = `Worksheet completed: ${data.grading_result?.earned_points}/${data.grading_result?.total_points} correct`
+    showToast(`Worksheet submitted successfully! Your score: ${data.score}/10`, 'success')
+  } catch (e) {
+    showToast(e.message || 'Error submitting worksheet.', 'error')
+  } finally {
+    isSubmittingWorksheet.value = false
+  }
 }
 
 const assignments = ref([])
