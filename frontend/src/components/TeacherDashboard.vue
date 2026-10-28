@@ -1765,11 +1765,11 @@
               <v-icon color="primary">mdi-volume-high</v-icon>
               <audio controls :src="getMediaUrl(sub.audio_url)" class="w-100" style="height: 32px;" />
             </div>
-            <div v-else class="text-caption text-warning font-weight-bold mb-2">
+            <div v-else-if="!isWorksheetSubmission(sub)" class="text-caption text-warning font-weight-bold mb-2">
               <v-icon size="x-small">mdi-alert</v-icon> The audio file was not retained for this earlier submission.
             </div>
 
-            <SubmissionEvaluation :evaluation="sub.evaluation || {}" :transcript="sub.transcribed_text || ''" />
+            <SubmissionEvaluation :evaluation="parseSubEvaluation(sub)" :transcript="sub.transcribed_text || ''" />
             <!-- Teacher Feedback Input -->
             <div class="d-flex align-center ga-2">
               <v-text-field
@@ -3220,6 +3220,37 @@ const submitCreateAssignment = async () => {
   } finally {
     isCreatingAsg.value = false
   }
+}
+
+
+const parseSubEvaluation = (sub) => {
+  if (sub?.evaluation && Object.keys(sub.evaluation).length) return sub.evaluation
+  if (sub?.ipa_json) {
+    try {
+      return typeof sub.ipa_json === 'string' ? JSON.parse(sub.ipa_json) : sub.ipa_json
+    } catch (e) {
+      // ignore
+    }
+  }
+  if (sub?.answers_json) {
+    try {
+      const grading = typeof sub.answers_json === 'string' ? JSON.parse(sub.answers_json) : sub.answers_json
+      return {
+        version: 1,
+        score: sub.score_override ?? sub.score,
+        score_method: 'worksheet_auto_grade',
+        worksheet_result: grading
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+  return {}
+}
+
+const isWorksheetSubmission = (sub) => {
+  const evalObj = parseSubEvaluation(sub)
+  return evalObj.score_method === 'worksheet_auto_grade' || !!evalObj.worksheet_result
 }
 
 const getStudentSubmissions = (studentId) => {
