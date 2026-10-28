@@ -274,7 +274,7 @@
           </div>
 
           <!-- Unsubmitted View: Interactive Question Player -->
-          <div v-else class="d-flex flex-column ga-3 mt-2">
+          <div v-else id="tour-student-hw-interactive-area" class="d-flex flex-column ga-3 mt-2">
             <div
               v-for="(ex, exIdx) in parseExercises(asg.content_json)"
               :key="ex.id || exIdx"
@@ -298,6 +298,7 @@
               <div v-if="ex.audio_text || (ex.type && ex.type.startsWith('listen_'))" class="mb-2 pa-2 rounded bg-indigo-lighten-5 border border-indigo d-flex align-center justify-space-between flex-wrap ga-2">
                 <div class="d-flex align-center ga-2">
                   <v-btn
+                    id="tour-student-hw-audio-btn"
                     color="indigo-darken-2"
                     variant="flat"
                     size="small"
@@ -427,6 +428,7 @@
 
             <!-- Submit Worksheet Button -->
             <v-btn
+              id="tour-student-hw-submit-btn"
               color="success"
               variant="flat"
               size="large"
@@ -706,6 +708,12 @@ const notify = (text, color = 'success', icon = 'mdi-check-circle') => {
 
 
 import { speakBritishText } from '@/utils/tts.js'
+import {
+  runTour,
+  TOUR_KEYS,
+  STUDENT_HOMEWORK_TOUR_STEPS
+} from '@/utils/tours.js'
+
 
 const worksheetAnswers = ref({})
 const isSubmittingWorksheet = ref(false)
@@ -756,6 +764,18 @@ const playWorksheetAudio = (text) => {
   if (text) {
     speakBritishText(text, 0.9)
   }
+}
+
+
+// Trigger Student Homework Tour once
+onMounted(() => {
+  setTimeout(() => {
+    runTour(TOUR_KEYS.STUDENT_HOMEWORK, STUDENT_HOMEWORK_TOUR_STEPS)
+  }, 1200)
+})
+
+const replayStudentHwTour = () => {
+  runTour(TOUR_KEYS.STUDENT_HOMEWORK, STUDENT_HOMEWORK_TOUR_STEPS, true)
 }
 
 const submitWorksheet = async (asg) => {

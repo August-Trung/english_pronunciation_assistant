@@ -72,6 +72,7 @@
             </v-chip-group>
 
             <v-btn
+              id="tour-shadowing-sample-btn"
               color="teal-darken-2"
               variant="flat"
               size="small"
@@ -111,6 +112,7 @@
               class="position-absolute"
             />
             <v-btn
+              id="tour-shadowing-record-btn"
               :color="isRecording ? 'grey-darken-4' : 'teal-darken-1'"
               icon
               elevation="2"
@@ -850,6 +852,18 @@ watch(selectedLevel, () => {
 })
 
 const ttsAccent = ref('en-GB')
+
+
+// Trigger Shadowing Tour once
+onMounted(() => {
+  setTimeout(() => {
+    runTour(TOUR_KEYS.STUDENT_SHADOWING, STUDENT_SHADOWING_TOUR_STEPS)
+  }, 1200)
+})
+
+const replayShadowingTour = () => {
+  runTour(TOUR_KEYS.STUDENT_SHADOWING, STUDENT_SHADOWING_TOUR_STEPS, true)
+}
 
 const playSampleTTS = () => {
   speakText(currentSentence.value.text)

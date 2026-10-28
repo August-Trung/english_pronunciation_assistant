@@ -99,7 +99,7 @@
             </div>
 
             <!-- Picture Image Canvas with Hover Zoom -->
-            <div class="image-wrapper rounded-lg overflow-hidden border mb-3 position-relative cursor-pointer" @click="showImagePreview = true">
+            <div id="tour-picture-image-card" class="image-wrapper rounded-lg overflow-hidden border mb-3 position-relative cursor-pointer" @click="showImagePreview = true">
               <v-img
                 :src="currentScenarioImage"
                 height="300"
@@ -201,7 +201,7 @@
 
       <!-- Right Column: Speaking Studio & Assessment Report -->
       <v-col cols="12" md="6">
-        <v-card border flat class="pa-4 rounded-lg bg-white h-100 d-flex flex-column justify-space-between">
+        <v-card id="tour-picture-guiding-panel" border flat class="pa-4 rounded-lg bg-white h-100 d-flex flex-column justify-space-between">
           <!-- State 1: Active Recording Studio / Ready to Speak -->
           <div v-if="!evaluationResult && !isEvaluating">
             <div class="d-flex align-center justify-space-between mb-3 border-b pb-2">

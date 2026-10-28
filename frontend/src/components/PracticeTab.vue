@@ -37,7 +37,17 @@
               >
                 Remember Result
               </v-btn>
+              <v-btn
+                icon="mdi-lightbulb-on-outline"
+                variant="tonal"
+                color="amber-darken-3"
+                size="small"
+                class="mr-1"
+                title="Xem hướng dẫn luyện phát âm"
+                @click="replaySpeakingTour"
+              />
               <v-btn-toggle
+                id="tour-speaking-mode-toggle"
                 v-model="practiceMode"
                 color="primary"
                 density="compact"
@@ -69,6 +79,7 @@
             <template #append-inner>
               <span class="d-inline-flex align-center cursor-pointer mr-1">
                 <v-btn
+                  id="tour-speaking-settings-btn"
                   icon="mdi-tune"
                   size="x-small"
                   variant="text"
@@ -934,6 +945,12 @@
 
 <script setup>
 import { ref, computed, watch, onUnmounted, onMounted } from 'vue'
+import {
+  runTour,
+  TOUR_KEYS,
+  STUDENT_SPEAKING_TOUR_STEPS
+} from '@/utils/tours.js'
+
 import { GRADE_LEVELS as ALL_GRADE_LEVELS, SPEAKING_TOPICS, READING_LIBRARY } from '../constants/topics.js'
 import { isMyHanhSite } from '@/utils/siteProfile.js'
 const GRADE_LEVELS = ALL_GRADE_LEVELS.filter(grade => !isMyHanhSite() || grade.id === 'primary')
@@ -1036,6 +1053,18 @@ const emit = defineEmits(['add-history', 'history-updated'])
 const topic = ref('')
 const practiceMode = ref('speaking') // 'speaking' | 'reading'
 const selectedGrade = ref('primary')
+
+// Trigger Speaking Studio Tour once
+onMounted(() => {
+  setTimeout(() => {
+    runTour(TOUR_KEYS.STUDENT_SPEAKING, STUDENT_SPEAKING_TOUR_STEPS)
+  }, 1200)
+})
+
+const replaySpeakingTour = () => {
+  runTour(TOUR_KEYS.STUDENT_SPEAKING, STUDENT_SPEAKING_TOUR_STEPS, true)
+}
+
 const isSpeaking = ref(false)
 
 const ttsAccent = ref(localStorage.getItem('fluent_tts_accent') || 'en-GB')

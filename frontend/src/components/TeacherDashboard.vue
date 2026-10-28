@@ -220,7 +220,7 @@
 
       <!-- Desktop Left Column: Sticky & Searchable Class Selector List -->
       <v-col cols="12" md="3" class="d-none d-md-block">
-        <v-card border flat class="pa-3 bg-white rounded-lg class-sidebar-sticky">
+        <v-card id="tour-teacher-classes-list" border flat class="pa-3 bg-white rounded-lg class-sidebar-sticky">
           <!-- Header with Quick Add & Refresh -->
           <div class="text-subtitle-2 font-weight-black text-secondary mb-2 d-flex align-center justify-space-between">
             <span class="d-flex align-center ga-1">
@@ -305,7 +305,7 @@
                 <v-btn icon="mdi-pencil-outline" size="x-small" color="grey-darken-2" variant="text" title="Edit Class Information" @click="openEditClassModal" />
                 <v-btn icon="mdi-delete-outline" size="x-small" color="error" variant="text" title="Delete Classroom" @click="showDeleteClassModal = true" />
               </div>
-              <div class="text-caption text-grey-darken-2 d-flex align-center flex-wrap ga-2 mt-1">
+              <div id="tour-teacher-join-code" class="text-caption text-grey-darken-2 d-flex align-center flex-wrap ga-2 mt-1">
                 <v-chip
                   color="primary"
                   size="small"
@@ -332,6 +332,7 @@
 
             <div class="d-flex align-center ga-2">
               <v-btn
+                id="tour-teacher-assign-btn"
                 color="secondary"
                 variant="flat"
                 size="small"
@@ -362,7 +363,7 @@
 
           <v-window v-model="activeTab">
             <!-- Tab 1: Gradebook Roster Table -->
-            <v-window-item value="gradebook">
+            <v-window-item value="gradebook" id="tour-teacher-gradebook">
               <div class="mb-3 d-flex align-center justify-space-between flex-wrap ga-2">
                 <v-text-field
                   v-model="searchStudentText"
@@ -1185,7 +1186,18 @@
               Assign Homework to {{ selectedClass?.name }}
             </div>
           </div>
-          <v-btn icon="mdi-close" variant="text" size="small" @click="showCreateAssignmentModal = false" />
+          <div class="d-flex align-center ga-1">
+            <v-btn
+              v-if="newAsgType === 'worksheet'"
+              icon="mdi-lightbulb-on-outline"
+              size="small"
+              variant="text"
+              color="amber-darken-3"
+              title="Xem hướng dẫn Dynamic Worksheet"
+              @click="replayWorksheetTour"
+            />
+            <v-btn icon="mdi-close" variant="text" size="small" @click="showCreateAssignmentModal = false" />
+          </div>
         </div>
 
         <!-- Format Switcher -->
@@ -1198,7 +1210,7 @@
             <v-btn value="picture" class="flex-grow-1 text-none font-weight-bold" prepend-icon="mdi-image-filter-frames">
               {{ isMyHanh ? 'Describe Picture' : 'Describe Picture' }}
             </v-btn>
-            <v-btn value="worksheet" class="flex-grow-1 text-none font-weight-bold" prepend-icon="mdi-format-list-checks">
+            <v-btn id="tour-asg-format-worksheet" value="worksheet" class="flex-grow-1 text-none font-weight-bold" prepend-icon="mdi-format-list-checks">
               Dynamic Vocab Worksheet
             </v-btn>
           </v-btn-toggle>
@@ -1471,6 +1483,7 @@
 
           <!-- Vocabulary Input -->
           <v-textarea
+            id="tour-asg-vocab-input"
             v-model="newAsgVocabText"
             label="Target Vocabulary Words (comma or newline separated):"
             placeholder="e.g. apple, banana, orange, grape, watermelon"
@@ -1484,7 +1497,7 @@
           />
 
           <!-- Grade Level & Accent Selector (British English priority) -->
-          <v-row dense class="mb-2">
+          <v-row id="tour-asg-settings-row" dense class="mb-2">
             <v-col cols="12" sm="6">
               <v-select
                 v-model="newAsgGradeLevel"
@@ -1513,7 +1526,7 @@
           </v-row>
 
           <!-- Grouped Exercise Formats Picker -->
-          <div class="border rounded pa-3 bg-grey-lighten-5 mb-3">
+          <div id="tour-asg-formats-picker" class="border rounded pa-3 bg-grey-lighten-5 mb-3">
             <div class="d-flex align-center justify-space-between mb-2">
               <div class="text-caption font-weight-bold text-grey-darken-3 d-flex align-center ga-1">
                 <v-icon size="small" color="primary">mdi-checkbox-multiple-marked</v-icon>
@@ -1584,6 +1597,7 @@
 
             <!-- AI Generate Action Button -->
             <v-btn
+              id="tour-asg-generate-btn"
               color="indigo-darken-2"
               variant="flat"
               block
@@ -2353,6 +2367,13 @@ const printQrPoster = () => {
 
 
 import { speakBritishText } from '../utils/tts.js'
+import {
+  runTour,
+  TOUR_KEYS,
+  TEACHER_HUB_TOUR_STEPS,
+  TEACHER_WORKSHEET_TOUR_STEPS
+} from '@/utils/tours.js'
+
 
 // --- Worksheet Generator State ---
 const newAsgVocabText = ref('')
@@ -2449,6 +2470,39 @@ const moveExercise = (index, delta) => {
 
 const deleteExercise = (index) => {
   generatedExercises.value.splice(index, 1)
+}
+
+
+// --- Role-Based Tour Triggers for Teacher ---
+onMounted(() => {
+  // Trigger Teacher Hub Tour once if user has teacher role
+  setTimeout(() => {
+    runTour(TOUR_KEYS.TEACHER_HUB, TEACHER_HUB_TOUR_STEPS)
+  }, 1000)
+})
+
+watch(showCreateAssignmentModal, (open) => {
+  if (open && newAsgType.value === 'worksheet') {
+    setTimeout(() => {
+      runTour(TOUR_KEYS.TEACHER_WORKSHEET_MODAL, TEACHER_WORKSHEET_TOUR_STEPS)
+    }, 400)
+  }
+})
+
+watch(newAsgType, (type) => {
+  if (showCreateAssignmentModal.value && type === 'worksheet') {
+    setTimeout(() => {
+      runTour(TOUR_KEYS.TEACHER_WORKSHEET_MODAL, TEACHER_WORKSHEET_TOUR_STEPS)
+    }, 300)
+  }
+})
+
+const replayTeacherHubTour = () => {
+  runTour(TOUR_KEYS.TEACHER_HUB, TEACHER_HUB_TOUR_STEPS, true)
+}
+
+const replayWorksheetTour = () => {
+  runTour(TOUR_KEYS.TEACHER_WORKSHEET_MODAL, TEACHER_WORKSHEET_TOUR_STEPS, true)
 }
 
 const generateWorksheetAI = async () => {
