@@ -67,8 +67,8 @@
           <!-- Audio Accent & Playback Controls -->
           <div class="d-flex align-center justify-center ga-2 flex-wrap pt-2 border-t">
             <v-chip-group v-model="ttsAccent" mandatory density="compact" color="teal" class="mr-2">
-              <v-chip value="en-US" size="x-small" label variant="tonal">US Accent</v-chip>
               <v-chip value="en-GB" size="x-small" label variant="tonal">UK Accent</v-chip>
+              <v-chip value="en-US" size="x-small" label variant="tonal">US Accent</v-chip>
             </v-chip-group>
 
             <v-btn
@@ -849,7 +849,7 @@ watch(selectedLevel, () => {
   audioBlob.value = null
 })
 
-const ttsAccent = ref('en-US')
+const ttsAccent = ref('en-GB')
 
 const playSampleTTS = () => {
   speakText(currentSentence.value.text)
@@ -859,7 +859,7 @@ const speakText = (text) => {
   if ('speechSynthesis' in window && text) {
     window.speechSynthesis.cancel()
     const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = ttsAccent.value || 'en-US'
+    utterance.lang = ttsAccent.value || 'en-GB'
     utterance.rate = 0.9
     window.speechSynthesis.speak(utterance)
   }

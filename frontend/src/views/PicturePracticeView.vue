@@ -954,7 +954,7 @@ const toggleSampleAudio = (text) => {
   }
   window.speechSynthesis?.cancel()
   const utterance = new SpeechSynthesisUtterance(text)
-  utterance.lang = 'en-US'
+  utterance.lang = 'en-GB'
   utterance.rate = 0.95
   utterance.onend = () => {
     isPlayingSample.value = false

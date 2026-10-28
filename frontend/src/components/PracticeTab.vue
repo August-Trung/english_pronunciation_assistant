@@ -93,11 +93,11 @@
                       variant="outlined"
                       @update:model-value="saveTtsSettings"
                     >
-                      <v-btn value="en-US" size="small" class="text-none font-weight-bold flex-grow-1" prepend-icon="mdi-earth">
-                        US Accent
-                      </v-btn>
                       <v-btn value="en-GB" size="small" class="text-none font-weight-bold flex-grow-1" prepend-icon="mdi-earth">
-                        UK Accent
+                        UK Accent (British)
+                      </v-btn>
+                      <v-btn value="en-US" size="small" class="text-none font-weight-bold flex-grow-1" prepend-icon="mdi-earth">
+                        US Accent (American)
                       </v-btn>
                     </v-btn-toggle>
 
@@ -1038,7 +1038,7 @@ const practiceMode = ref('speaking') // 'speaking' | 'reading'
 const selectedGrade = ref('primary')
 const isSpeaking = ref(false)
 
-const ttsAccent = ref(localStorage.getItem('fluent_tts_accent') || 'en-US')
+const ttsAccent = ref(localStorage.getItem('fluent_tts_accent') || 'en-GB')
 const ttsGender = ref(localStorage.getItem('fluent_tts_gender') || 'female')
 
 const saveTtsSettings = () => {
