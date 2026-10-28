@@ -1006,6 +1006,7 @@
 
         <v-text-field
           v-model="editAsgTitle"
+          id="tour-asg-title"
           label="Assignment Title:"
           variant="outlined"
           density="comfortable"
@@ -1017,7 +1018,8 @@
         <v-textarea
           v-if="editingAsg?.assignment_type !== 'picture'"
           v-model="editAsgSentence"
-          label="Model Reading Sentence:"
+          id="tour-asg-sentence-input"
+            label="Model Reading Sentence:"
           variant="outlined"
           density="comfortable"
           rows="3"
@@ -1117,6 +1119,7 @@
         <v-text-field
           v-model="editAsgDueDate"
           type="date"
+          id="tour-asg-due-date"
           label="Due Date (Optional):"
           placeholder="Example: 2026-08-05"
           variant="outlined"
@@ -1197,13 +1200,12 @@
           </div>
           <div class="d-flex align-center ga-1">
             <v-btn
-              v-if="newAsgType === 'worksheet'"
               icon="mdi-lightbulb-on-outline"
               size="small"
               variant="text"
               color="amber-darken-3"
-              title="Xem hướng dẫn Dynamic Worksheet"
-              @click="replayWorksheetTour"
+              title="Xem hướng dẫn giao bài tập"
+              @click="replayAssignmentModalTour"
             />
             <v-btn icon="mdi-close" variant="text" size="small" @click="showCreateAssignmentModal = false" />
           </div>
@@ -1212,7 +1214,7 @@
         <!-- Format Switcher -->
         <div class="mb-3">
           <div class="text-caption font-weight-bold text-grey mb-1">Homework Format:</div>
-          <v-btn-toggle v-model="newAsgType" mandatory color="primary" density="comfortable" class="w-100 border">
+          <v-btn-toggle id="tour-asg-format-switcher" v-model="newAsgType" mandatory color="primary" density="comfortable" class="w-100 border">
             <v-btn value="sentence" class="flex-grow-1 text-none font-weight-bold" prepend-icon="mdi-waveform">
               Sentence Reading
             </v-btn>
@@ -1228,6 +1230,7 @@
         <!-- Common: Assignment Title -->
         <v-text-field
           v-model="newAsgTitle"
+          id="tour-asg-title"
           label="Assignment Title:"
           :placeholder="newAsgType === 'worksheet' ? 'e.g. Unit 4 - Zoo Animals Vocabulary Quiz' : (newAsgType === 'picture' ? 'e.g. A Morning at School' : 'e.g. Unit 3 - Practice Daily Routine Sentence')"
           variant="outlined"
@@ -1240,6 +1243,7 @@
         <div v-if="newAsgType === 'sentence'">
           <v-textarea
             v-model="newAsgSentence"
+            id="tour-asg-sentence-input"
             label="Model Reading Sentence:"
             :placeholder="isMyHanh ? 'Example: I like cats and dogs.' : 'Example: Learning a new language opens up a world of opportunities.'"
             variant="outlined"
@@ -1278,6 +1282,7 @@
                 </v-btn>
               </div>
               <v-text-field
+                id="tour-asg-pic-topic"
                 v-model="newAsgPictureTopic"
                 :placeholder="isMyHanh ? 'e.g. My Classroom, Family Picnic, Playground' : 'e.g. Hospital Emergency Hallway, Airport Lounge, Tech Office'"
                 variant="outlined"
@@ -1314,7 +1319,7 @@
           <!-- Quick Topic Idea Chips for Teachers -->
           <div class="mb-3">
             <div class="text-caption font-weight-bold text-grey mb-1">Suggested Curricular Themes:</div>
-            <div class="d-flex flex-wrap ga-1">
+            <div id="tour-asg-pic-themes" class="d-flex flex-wrap ga-1">
               <v-chip
                 v-for="theme in teacherTopicIdeas"
                 :key="theme"
@@ -1730,6 +1735,7 @@
         <v-text-field
           v-model="newAsgDueDate"
           type="date"
+          id="tour-asg-due-date"
           label="Due Date (Optional):"
           placeholder="Example: 2026-10-30"
           variant="outlined"
@@ -1741,7 +1747,7 @@
         <v-card-actions class="px-0 pb-0 border-t pt-2">
           <v-spacer />
           <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showCreateAssignmentModal = false">Cancel</v-btn>
-          <v-btn color="secondary" variant="flat" class="text-none font-weight-bold" :loading="isCreatingAsg" :disabled="isGeneratingAsgPicture || (newAsgType === 'picture' && !newAsgImageUrl) || (newAsgType === 'worksheet' && (!generatedExercises.length || isGeneratingExercises))" @click="submitCreateAssignment">
+          <v-btn id="tour-asg-submit-btn" color="secondary" variant="flat" class="text-none font-weight-bold" :loading="isCreatingAsg" :disabled="isGeneratingAsgPicture || (newAsgType === 'picture' && !newAsgImageUrl) || (newAsgType === 'worksheet' && (!generatedExercises.length || isGeneratingExercises))" @click="submitCreateAssignment">
             Assign Homework
           </v-btn>
         </v-card-actions>
@@ -2134,7 +2140,9 @@ import {
   runTour,
   TOUR_KEYS,
   TEACHER_HUB_TOUR_STEPS,
-  TEACHER_WORKSHEET_TOUR_STEPS
+  TEACHER_WORKSHEET_TOUR_STEPS,
+  TEACHER_ASSIGN_SENTENCE_TOUR_STEPS,
+  TEACHER_ASSIGN_PICTURE_TOUR_STEPS
 } from '@/utils/tours.js'
 
 const selectedAssessment = ref(null)
@@ -2549,19 +2557,25 @@ onMounted(() => {
   }
 })
 
+const runAssignmentModalTour = () => {
+  if (newAsgType.value === 'worksheet') {
+    runTour(TOUR_KEYS.TEACHER_WORKSHEET_MODAL, TEACHER_WORKSHEET_TOUR_STEPS)
+  } else if (newAsgType.value === 'picture') {
+    runTour(TOUR_KEYS.TEACHER_ASSIGN_PICTURE, TEACHER_ASSIGN_PICTURE_TOUR_STEPS)
+  } else {
+    runTour(TOUR_KEYS.TEACHER_ASSIGN_SENTENCE, TEACHER_ASSIGN_SENTENCE_TOUR_STEPS)
+  }
+}
+
 watch(showCreateAssignmentModal, (open) => {
-  if (open && newAsgType.value === 'worksheet') {
-    setTimeout(() => {
-      runTour(TOUR_KEYS.TEACHER_WORKSHEET_MODAL, TEACHER_WORKSHEET_TOUR_STEPS)
-    }, 400)
+  if (open) {
+    setTimeout(runAssignmentModalTour, 400)
   }
 })
 
-watch(newAsgType, (type) => {
-  if (showCreateAssignmentModal.value && type === 'worksheet') {
-    setTimeout(() => {
-      runTour(TOUR_KEYS.TEACHER_WORKSHEET_MODAL, TEACHER_WORKSHEET_TOUR_STEPS)
-    }, 300)
+watch(newAsgType, () => {
+  if (showCreateAssignmentModal.value) {
+    setTimeout(runAssignmentModalTour, 300)
   }
 })
 
@@ -2569,9 +2583,17 @@ const replayTeacherHubTour = () => {
   runTour(TOUR_KEYS.TEACHER_HUB, TEACHER_HUB_TOUR_STEPS, true)
 }
 
-const replayWorksheetTour = () => {
-  runTour(TOUR_KEYS.TEACHER_WORKSHEET_MODAL, TEACHER_WORKSHEET_TOUR_STEPS, true)
+const replayAssignmentModalTour = () => {
+  if (newAsgType.value === 'worksheet') {
+    runTour(TOUR_KEYS.TEACHER_WORKSHEET_MODAL, TEACHER_WORKSHEET_TOUR_STEPS, true)
+  } else if (newAsgType.value === 'picture') {
+    runTour(TOUR_KEYS.TEACHER_ASSIGN_PICTURE, TEACHER_ASSIGN_PICTURE_TOUR_STEPS, true)
+  } else {
+    runTour(TOUR_KEYS.TEACHER_ASSIGN_SENTENCE, TEACHER_ASSIGN_SENTENCE_TOUR_STEPS, true)
+  }
 }
+
+const replayWorksheetTour = replayAssignmentModalTour
 
 const syncNewAsgQuestionsFromText = () => {
   newAsgGuidingQuestionsList.value = newAsgGuidingQuestionsText.value

@@ -378,7 +378,7 @@
     <!-- ========================================== -->
     <div v-else-if="activeTab === 'weak-words'">
       <!-- AI Smart Remedial Practice Banner -->
-      <v-card border flat class="pa-3 pa-sm-4 mb-4 bg-indigo-lighten-5 border-indigo rounded-lg">
+      <v-card id="tour-weak-words-banner" border flat class="pa-3 pa-sm-4 mb-4 bg-indigo-lighten-5 border-indigo rounded-lg">
         <div class="d-flex align-center justify-space-between flex-wrap ga-3">
           <div class="d-flex align-center ga-3">
             <v-avatar color="indigo" size="44" class="elevation-1">
@@ -392,17 +392,28 @@
             </div>
           </div>
 
-          <v-btn
-            color="indigo-darken-3"
-            variant="flat"
-            size="small"
-            class="font-weight-black text-none"
-            prepend-icon="mdi-flash"
-            :loading="isLoadingRemedial"
-            @click="startRemedialPractice"
-          >
-            Start AI Practice Set
-          </v-btn>
+          <div class="d-flex align-center ga-1">
+            <v-btn
+              icon="mdi-lightbulb-on-outline"
+              size="small"
+              variant="text"
+              color="indigo-darken-4"
+              title="Xem hướng dẫn Từ phát âm yếu"
+              @click="replayWeakWordsTour"
+            />
+            <v-btn
+              id="tour-weak-words-remedial-btn"
+              color="indigo-darken-3"
+              variant="flat"
+              size="small"
+              class="font-weight-black text-none"
+              prepend-icon="mdi-flash"
+              :loading="isLoadingRemedial"
+              @click="startRemedialPractice"
+            >
+              Start AI Practice Set
+            </v-btn>
+          </div>
         </div>
       </v-card>
 
@@ -419,7 +430,7 @@
       </div>
 
       <!-- Active Weak Words Flashcard -->
-      <div v-else>
+      <div v-else id="tour-weak-words-list">
         <div class="d-flex align-center justify-space-between mb-2">
           <span class="text-caption text-grey-darken-2">Card {{ currentCardIndex + 1 }} / {{ weakWords.length }}</span>
           <v-btn size="x-small" variant="text" color="grey-darken-2" prepend-icon="mdi-refresh" @click="resetIndex">
@@ -514,7 +525,17 @@
             </v-avatar>
             <div class="text-subtitle-1 font-weight-black text-grey-darken-4">Generate AI Flashcard Deck</div>
           </div>
-          <v-btn icon="mdi-close" variant="text" size="small" @click="showCreateModal = false" />
+          <div class="d-flex align-center ga-1">
+            <v-btn
+              icon="mdi-lightbulb-on-outline"
+              size="small"
+              variant="text"
+              color="amber-darken-3"
+              title="Xem hướng dẫn Tạo bộ thẻ AI"
+              @click="replayCreateDeckTour"
+            />
+            <v-btn icon="mdi-close" variant="text" size="small" @click="showCreateModal = false" />
+          </div>
         </div>
 
         <div class="text-caption text-grey-darken-1 mb-3">
@@ -523,6 +544,7 @@
 
         <v-text-field
           v-model="deckForm.topic"
+          id="tour-deck-topic-input"
           label="Deck Topic / Subject"
           placeholder="e.g. IELTS Environment, Airport Travel, Job Interview..."
           variant="outlined"
@@ -535,7 +557,7 @@
         <!-- Quick Topic Chips -->
         <div class="mb-3">
           <div class="text-caption font-weight-bold text-grey mb-1">Quick Suggestions:</div>
-          <div class="d-flex flex-wrap ga-1">
+          <div id="tour-deck-suggestions" class="d-flex flex-wrap ga-1">
             <v-chip
               v-for="s in suggestedTopics"
               :key="s"
@@ -550,7 +572,7 @@
           </div>
         </div>
 
-        <v-row dense class="mb-2">
+        <v-row id="tour-deck-settings-row" dense class="mb-2">
           <v-col cols="6">
             <v-select
               v-model="deckForm.difficulty"
@@ -573,6 +595,7 @@
 
         <v-checkbox
           v-model="deckForm.generateImages"
+          id="tour-deck-illustrate-check"
           label="Include illustration pictures for cards"
           color="primary"
           density="compact"
@@ -588,6 +611,7 @@
             variant="flat"
             class="text-none font-weight-bold"
             prepend-icon="mdi-auto-fix"
+            id="tour-deck-generate-btn"
             :loading="isGeneratingDeck"
             @click="handleCreateDeck"
           >
@@ -668,8 +692,11 @@ import { ref, computed, onMounted } from 'vue'
 import {
   runTour,
   TOUR_KEYS,
-  STUDENT_FLASHCARDS_TOUR_STEPS
+  STUDENT_FLASHCARDS_TOUR_STEPS,
+  FLASHCARD_CREATE_MODAL_TOUR_STEPS,
+  FLASHCARD_WEAK_WORDS_TOUR_STEPS
 } from '@/utils/tours.js'
+import { watch } from 'vue'
 
 const props = defineProps({
   backendUrl: String,
@@ -1186,8 +1213,32 @@ onMounted(() => {
   }, 1000)
 })
 
+watch(showCreateModal, (open) => {
+  if (open) {
+    setTimeout(() => {
+      runTour(TOUR_KEYS.FLASHCARD_CREATE_MODAL, FLASHCARD_CREATE_MODAL_TOUR_STEPS)
+    }, 400)
+  }
+})
+
+watch(activeTab, (tab) => {
+  if (tab === 'weak-words') {
+    setTimeout(() => {
+      runTour(TOUR_KEYS.FLASHCARD_WEAK_WORDS, FLASHCARD_WEAK_WORDS_TOUR_STEPS)
+    }, 400)
+  }
+})
+
 const replayFlashcardsTour = () => {
   runTour(TOUR_KEYS.STUDENT_FLASHCARDS, STUDENT_FLASHCARDS_TOUR_STEPS, true)
+}
+
+const replayCreateDeckTour = () => {
+  runTour(TOUR_KEYS.FLASHCARD_CREATE_MODAL, FLASHCARD_CREATE_MODAL_TOUR_STEPS, true)
+}
+
+const replayWeakWordsTour = () => {
+  runTour(TOUR_KEYS.FLASHCARD_WEAK_WORDS, FLASHCARD_WEAK_WORDS_TOUR_STEPS, true)
 }
 </script>
 

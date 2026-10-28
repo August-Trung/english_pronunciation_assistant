@@ -1,7 +1,7 @@
 <template>
   <v-container fluid class="pa-0 max-width-1400">
     <!-- Header Banner -->
-    <v-card border flat class="pa-3 pa-sm-4 mb-4 text-white rounded-lg" style="background: linear-gradient(135deg, #0EA5E9 0%, #2563EB 100%);">
+    <v-card id="tour-picture-banner" border flat class="pa-3 pa-sm-4 mb-4 text-white rounded-lg" style="background: linear-gradient(135deg, #0EA5E9 0%, #2563EB 100%);">
       <div class="d-flex align-center justify-space-between flex-wrap ga-2">
         <div class="d-flex align-center ga-2 ga-sm-3">
           <v-avatar color="white" size="44" class="flex-shrink-0 elevation-1">
@@ -69,7 +69,7 @@
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="!currentScenario" class="text-center py-12 border rounded-lg bg-white pa-6">
+    <div v-else-if="!currentScenario" id="tour-picture-empty-card" class="text-center py-12 border rounded-lg bg-white pa-6">
       <v-avatar color="blue-lighten-5" size="64" class="mb-3">
         <v-icon size="large" color="primary">mdi-image-plus</v-icon>
       </v-avatar>
@@ -77,7 +77,7 @@
       <div class="text-caption text-grey mb-4 max-width-500 mx-auto">
         Create an AI scenario with custom prompt, search real photos, or upload your own image to practice describing scenes.
       </div>
-      <v-btn color="primary" variant="flat" class="text-none font-weight-bold" prepend-icon="mdi-sparkles" @click="openCreateModal">
+      <v-btn id="tour-picture-empty-btn" color="primary" variant="flat" class="text-none font-weight-bold" prepend-icon="mdi-sparkles" @click="openCreateModal">
         Create Scenario
       </v-btn>
     </div>
@@ -427,11 +427,21 @@
               <div class="text-caption text-grey">Create with AI prompt, search photos, or upload an image</div>
             </div>
           </div>
-          <v-btn icon="mdi-close" variant="text" size="small" @click="showCreateModal = false" />
+          <div class="d-flex align-center ga-1">
+            <v-btn
+              icon="mdi-lightbulb-on-outline"
+              size="small"
+              variant="text"
+              color="amber-darken-3"
+              title="Xem hướng dẫn Tạo tình huống tranh"
+              @click="replayScenarioModalTour"
+            />
+            <v-btn icon="mdi-close" variant="text" size="small" @click="showCreateModal = false" />
+          </div>
         </div>
 
         <!-- 3 Modes Tabs -->
-        <v-tabs v-model="creationMode" color="primary" density="comfortable" class="mb-3 border-b">
+        <v-tabs id="tour-scenario-tabs" v-model="creationMode" color="primary" density="comfortable" class="mb-3 border-b">
           <v-tab value="ai_gen" class="text-none font-weight-bold text-caption">
             <v-icon start size="small">mdi-auto-fix</v-icon>
             AI Prompt
@@ -459,6 +469,7 @@
               </v-chip>
             </div>
             <v-textarea
+              id="tour-scenario-prompt-input"
               v-model="scenarioTopic"
               placeholder="e.g. A family having a picnic in the park with a cute puppy and colorful balloons..."
               variant="outlined"
@@ -476,7 +487,7 @@
                 <v-icon size="x-small" color="primary">mdi-lightbulb-on-outline</v-icon>
                 <span>Quick Prompt Sparks:</span>
               </div>
-              <div class="d-flex flex-wrap ga-1">
+              <div id="tour-scenario-sparks" class="d-flex flex-wrap ga-1">
                 <v-chip
                   v-for="spark in promptSparks"
                   :key="spark"
@@ -577,6 +588,7 @@
           Target Speaking Level:
         </label>
         <v-select
+          id="tour-scenario-level"
           v-model="scenarioLevel"
           :items="['Beginner', 'Intermediate', 'Advanced']"
           variant="outlined"
@@ -595,6 +607,7 @@
             variant="flat"
             class="text-none font-weight-bold px-4"
             prepend-icon="mdi-auto-fix"
+            id="tour-scenario-generate-btn"
             :loading="isGeneratingScenario"
             @click="handleCreateScenario"
           >
@@ -611,7 +624,9 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import {
   runTour,
   TOUR_KEYS,
-  STUDENT_PICTURE_TOUR_STEPS
+  STUDENT_PICTURE_TOUR_STEPS,
+  STUDENT_PICTURE_EMPTY_TOUR_STEPS,
+  PICTURE_SCENARIO_MODAL_TOUR_STEPS
 } from '@/utils/tours.js'
 
 const props = defineProps({
@@ -990,15 +1005,35 @@ const resetChallenge = () => {
   elapsedSeconds.value = 0
 }
 
-onMounted(() => {
-  fetchScenarios()
+onMounted(async () => {
+  await fetchScenarios()
   setTimeout(() => {
-    runTour(TOUR_KEYS.STUDENT_PICTURE, STUDENT_PICTURE_TOUR_STEPS)
-  }, 1200)
+    if (scenarios.value.length > 0) {
+      runTour(TOUR_KEYS.STUDENT_PICTURE, STUDENT_PICTURE_TOUR_STEPS)
+    } else {
+      runTour(TOUR_KEYS.STUDENT_PICTURE_EMPTY, STUDENT_PICTURE_EMPTY_TOUR_STEPS)
+    }
+  }, 1000)
+})
+
+watch(showCreateModal, (open) => {
+  if (open) {
+    setTimeout(() => {
+      runTour(TOUR_KEYS.PICTURE_SCENARIO_MODAL, PICTURE_SCENARIO_MODAL_TOUR_STEPS)
+    }, 400)
+  }
 })
 
 const replayPictureTour = () => {
-  runTour(TOUR_KEYS.STUDENT_PICTURE, STUDENT_PICTURE_TOUR_STEPS, true)
+  if (scenarios.value.length > 0) {
+    runTour(TOUR_KEYS.STUDENT_PICTURE, STUDENT_PICTURE_TOUR_STEPS, true)
+  } else {
+    runTour(TOUR_KEYS.STUDENT_PICTURE_EMPTY, STUDENT_PICTURE_EMPTY_TOUR_STEPS, true)
+  }
+}
+
+const replayScenarioModalTour = () => {
+  runTour(TOUR_KEYS.PICTURE_SCENARIO_MODAL, PICTURE_SCENARIO_MODAL_TOUR_STEPS, true)
 }
 
 onUnmounted(() => {

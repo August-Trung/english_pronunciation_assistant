@@ -10,7 +10,13 @@ import './tours.css'
 export const TOUR_KEYS = {
   // Teacher Tours
   TEACHER_WORKSHEET_MODAL: 'fluent_tour_teacher_worksheet_seen',
+  TEACHER_ASSIGN_SENTENCE: 'fluent_tour_teacher_assign_sentence_seen',
+  TEACHER_ASSIGN_PICTURE: 'fluent_tour_teacher_assign_picture_seen',
   TEACHER_HUB: 'fluent_tour_teacher_hub_seen',
+  STUDENT_PICTURE_EMPTY: 'fluent_tour_student_picture_empty_seen',
+  PICTURE_SCENARIO_MODAL: 'fluent_tour_picture_scenario_modal_seen',
+  FLASHCARD_CREATE_MODAL: 'fluent_tour_flashcard_create_modal_seen',
+  FLASHCARD_WEAK_WORDS: 'fluent_tour_flashcard_weak_words_seen',
   // Student Studios & Homework
   STUDENT_SPEAKING: 'fluent_tour_student_speaking_seen',
   STUDENT_SHADOWING: 'fluent_tour_student_shadowing_seen',
@@ -607,6 +613,258 @@ export const ADMIN_PORTAL_TOUR_STEPS = [
     popover: {
       title: 'Các phân hệ quản lý',
       description: 'Dễ dàng chuyển đổi giữa phân hệ Trường học, Quản lý tài khoản Người dùng và Nhật ký bảo mật.',
+      side: 'top',
+      align: 'center'
+    }
+  }
+]
+
+export const TEACHER_ASSIGN_SENTENCE_TOUR_STEPS = [
+  {
+    element: '#tour-asg-format-switcher',
+    popover: {
+      title: 'Chọn định dạng bài tập',
+      description: 'Chuyển đổi giữa 3 định dạng: Đọc câu mẫu, Miêu tả tranh tình huống hoặc Dynamic Vocab Worksheet.',
+      side: 'bottom',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-asg-title',
+    popover: {
+      title: 'Tiêu đề bài tập',
+      description: 'Đặt tiêu đề bài tập rõ ràng cho học sinh dễ nhận biết (ví dụ: Unit 3 - Practice Daily Routine Sentence).',
+      side: 'bottom',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-asg-sentence-input',
+    popover: {
+      title: 'Câu văn tiếng Anh mẫu',
+      description: 'Nhập câu văn tiếng Anh để học sinh luyện đọc to và nhận phản hồi chấm điểm phát âm từng âm vị IPA.',
+      side: 'bottom',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-asg-due-date',
+    popover: {
+      title: 'Hạn chót nộp bài',
+      description: 'Chọn ngày hạn nộp bài. Học sinh sẽ nhận thông báo hạn chót ngay trên trang làm bài tập.',
+      side: 'top',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-asg-submit-btn',
+    popover: {
+      title: 'Giao bài cho cả lớp',
+      description: 'Bấm nút này để giao bài tập ngay cho toàn bộ học sinh trong lớp học đã chọn.',
+      side: 'top',
+      align: 'end'
+    }
+  }
+]
+
+export const TEACHER_ASSIGN_PICTURE_TOUR_STEPS = [
+  {
+    element: '#tour-asg-format-switcher',
+    popover: {
+      title: 'Định dạng Miêu tả Tranh (Describe Picture)',
+      description: 'Giao bài luyện nói miêu tả tranh theo chuẩn định dạng thi IELTS Speaking Part 2 & TOEIC Speaking.',
+      side: 'bottom',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-asg-pic-topic',
+    popover: {
+      title: 'Chủ đề bức tranh tình huống',
+      description: 'Nhập chủ đề bức tranh hoặc bối cảnh cần mô tả (ví dụ: Family Picnic, Zoo, Science Lab...).',
+      side: 'bottom',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-asg-pic-themes',
+    popover: {
+      title: 'Gợi ý chủ đề nhanh',
+      description: 'Bấm vào các chủ đề chương trình có sẵn để AI tự động vẽ tranh và sinh bộ câu hỏi gợi ý phù hợp.',
+      side: 'top',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-asg-due-date',
+    popover: {
+      title: 'Hạn chót nộp bài',
+      description: 'Đặt ngày hết hạn bài nộp để nhắc nhở học sinh hoàn thành đúng hạn.',
+      side: 'top',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-asg-submit-btn',
+    popover: {
+      title: 'Giao bài tập tranh',
+      description: 'Hoàn tất và giao bài tập miêu tả tranh cho lớp học.',
+      side: 'top',
+      align: 'end'
+    }
+  }
+]
+
+export const STUDENT_PICTURE_EMPTY_TOUR_STEPS = [
+  {
+    element: '#tour-picture-banner',
+    popover: {
+      title: 'Describe The Picture Studio',
+      description: 'Phòng luyện nói miêu tả tranh đa phương thức theo chuẩn IELTS Speaking Part 2 & TOEIC Speaking.',
+      side: 'bottom',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-picture-empty-card',
+    popover: {
+      title: 'Chưa có tình huống tranh',
+      description: 'Hiện tại chưa có bức tranh nào được tạo. Bạn có thể tự tạo tình huống bằng AI hoặc tải ảnh lên.',
+      side: 'bottom',
+      align: 'center'
+    }
+  },
+  {
+    element: '#tour-picture-empty-btn',
+    popover: {
+      title: 'Bấm Tạo tình huống tranh',
+      description: 'Nhấp vào đây để mở cửa sổ tạo bức tranh tình huống và bộ câu hỏi gợi ý luyện nói.',
+      side: 'top',
+      align: 'center'
+    }
+  }
+]
+
+export const PICTURE_SCENARIO_MODAL_TOUR_STEPS = [
+  {
+    element: '#tour-scenario-tabs',
+    popover: {
+      title: '3 Chế độ tạo tranh đa dạng',
+      description: 'Chọn vẽ tranh 3D bằng AI Prompt, tìm kiếm ảnh thật trên Unsplash hoặc tải ảnh bài học từ máy tính.',
+      side: 'bottom',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-scenario-prompt-input',
+    popover: {
+      title: 'Nhập mô tả ý tưởng bức tranh',
+      description: 'Mô tả khung cảnh bạn muốn luyện nói (ví dụ: A family having a picnic in the park with a cute puppy...).',
+      side: 'bottom',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-scenario-sparks',
+    popover: {
+      title: 'Gợi ý chủ đề nhanh',
+      description: 'Nhấp vào các chủ đề mẫu sinh động như Chuyến thăm sở thú, Phòng thí nghiệm trường học để điền nhanh prompt.',
+      side: 'top',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-scenario-level',
+    popover: {
+      title: 'Cấp độ nói mục tiêu',
+      description: 'Chọn trình độ Beginner (Cơ bản), Intermediate (Trung cấp) hoặc Advanced (Nâng cao) để AI cá nhân hóa câu hỏi.',
+      side: 'top',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-scenario-generate-btn',
+    popover: {
+      title: 'Bấm Sinh tình huống tranh AI',
+      description: 'AI sẽ vẽ tranh và tạo trọn bộ câu hỏi gợi ý cùng từ khóa trọng tâm để bạn bắt đầu bấm giờ luyện nói!',
+      side: 'top',
+      align: 'end'
+    }
+  }
+]
+
+export const FLASHCARD_CREATE_MODAL_TOUR_STEPS = [
+  {
+    element: '#tour-deck-topic-input',
+    popover: {
+      title: 'Chủ đề bộ thẻ từ vựng',
+      description: 'Nhập chủ đề bạn muốn ôn tập (ví dụ: IELTS Environment, Airport Travel, Job Interview...).',
+      side: 'bottom',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-deck-suggestions',
+    popover: {
+      title: 'Chủ đề gợi ý nhanh',
+      description: 'Bấm nhanh vào các chủ đề phổ biến có sẵn để tiết kiệm thời gian nhập liệu.',
+      side: 'top',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-deck-settings-row',
+    popover: {
+      title: 'Cấp độ & Số lượng thẻ',
+      description: 'Chọn cấp độ phù hợp và số lượng từ vựng muốn học trong một bộ thẻ (từ 3 đến 10 từ).',
+      side: 'top',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-deck-illustrate-check',
+    popover: {
+      title: 'Hình ảnh minh họa AI',
+      description: 'Tick chọn để AI tự động vẽ tranh minh họa sinh động cho từng từ vựng giúp ghi nhớ lâu hơn.',
+      side: 'top',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-deck-generate-btn',
+    popover: {
+      title: 'Bấm Tạo bộ thẻ Flashcards',
+      description: 'Hệ thống tự động sinh từ, nghĩa tiếng Việt, câu ví dụ, phiên âm IPA chuẩn và audio bản xứ Anh-Anh!',
+      side: 'top',
+      align: 'end'
+    }
+  }
+]
+
+export const FLASHCARD_WEAK_WORDS_TOUR_STEPS = [
+  {
+    element: '#tour-weak-words-banner',
+    popover: {
+      title: 'Ngân hàng từ phát âm yếu (SRS)',
+      description: 'Tự động tổng hợp tất cả các từ bạn từng phát âm dưới 8.0 điểm từ mọi bài tập để ôn luyện ngắt quãng.',
+      side: 'bottom',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-weak-words-remedial-btn',
+    popover: {
+      title: 'Luyện tập phục hồi với AI',
+      description: 'Bấm vào đây để AI hướng dẫn sửa lỗi phát âm và luyện lại các từ còn phát âm sai.',
+      side: 'bottom',
+      align: 'end'
+    }
+  },
+  {
+    element: '#tour-weak-words-list',
+    popover: {
+      title: 'Danh sách từ & Phiên âm IPA',
+      description: 'Nghe lại phát âm bản xứ chuẩn Anh-Anh, xem phiên âm IPA và số lần bạn đã luyện tập từ này.',
       side: 'top',
       align: 'center'
     }
