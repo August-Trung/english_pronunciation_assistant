@@ -4218,6 +4218,252 @@ def submission_evaluation(raw):
 
 
 
+
+# ==============================================================================
+# AI DYNAMIC WORKSHEET GENERATOR (British English en-GB Priority)
+# ==============================================================================
+
+class GenerateWorksheetRequest(BaseModel):
+    target_vocabulary: List[str]
+    exercise_types: List[str]
+    grade_level: Optional[str] = "Grade 3"
+    accent: Optional[str] = "en-GB"
+    title: Optional[str] = ""
+
+def generate_ai_worksheet(target_vocabulary: List[str], exercise_types: List[str], grade_level: str = "Grade 3", accent: str = "en-GB", custom_title: str = "") -> dict:
+    clean_vocab = [v.strip() for v in target_vocabulary if v.strip()]
+    if not clean_vocab:
+        clean_vocab = ["apple", "banana", "orange"]
+    
+    clean_types = [t.strip() for t in exercise_types if t.strip()]
+    if not clean_types:
+        clean_types = ["listen_and_circle", "read_and_fill_in_the_blank", "unscramble_words"]
+
+    # Try Groq AI Generation
+    groq_keys = get_groq_api_keys()
+    exercises = []
+    worksheet_title = custom_title.strip() or f"Vocabulary Practice: {', '.join(clean_vocab[:3]).title()}"
+
+    if groq_keys:
+        for key in groq_keys:
+            try:
+                system_prompt = f"""You are a British English curriculum specialist creating an interactive primary school worksheet for {grade_level} pupils.
+Target vocabulary: {json.dumps(clean_vocab)}
+Requested exercise types: {json.dumps(clean_types)}
+Language: British English (en-GB spelling and phrasing e.g., 'colour', 'favourite', 'have got').
+
+Create exactly 1 or 2 high-quality exercises for EACH requested exercise type in JSON format.
+Supported types and their required fields:
+1. "listen_and_number": {{"id": "ex_1", "type": "listen_and_number", "instruction": "Listen and number the words in the order you hear them.", "audio_text": "Number 1: apple. Number 2: banana.", "options": ["apple", "banana"], "correct_answer": ["apple", "banana"], "accent": "en-GB", "points": 1}}
+2. "listen_and_circle": {{"id": "ex_2", "type": "listen_and_circle", "instruction": "Listen to the audio and circle the correct word.", "audio_text": "I would like a yellow banana please.", "options": ["apple", "banana", "orange"], "correct_answer": "banana", "accent": "en-GB", "points": 1}}
+3. "listen_and_tick": {{"id": "ex_3", "type": "listen_and_tick", "instruction": "Listen and tick the item you hear.", "audio_text": "Look at the lovely orange.", "options": ["orange", "apple", "grape"], "correct_answer": "orange", "accent": "en-GB", "points": 1}}
+4. "listen_and_match": {{"id": "ex_4", "type": "listen_and_match", "instruction": "Listen to the clips and match each sound with the correct word.", "pairs": {{"Clip A": "apple", "Clip B": "banana"}}, "audio_prompts": {{"Clip A": "Here is a red apple.", "Clip B": "Here is a yellow banana."}}, "correct_answer": {{"Clip A": "apple", "Clip B": "banana"}}, "accent": "en-GB", "points": 2}}
+5. "listen_and_tick_or_cross": {{"id": "ex_5", "type": "listen_and_tick_or_cross", "instruction": "Listen and choose Tick (✓) if correct or Cross (✗) if false.", "audio_text": "The apple is green.", "question_text": "The speaker says the apple is red.", "correct_answer": "cross", "accent": "en-GB", "points": 1}}
+6. "read_and_match": {{"id": "ex_6", "type": "read_and_match", "instruction": "Read and match the words with their meanings or descriptions.", "pairs": {{"apple": "A round red or green fruit", "banana": "A long curved yellow fruit"}}, "correct_answer": {{"apple": "A round red or green fruit", "banana": "A long curved yellow fruit"}}, "points": 2}}
+7. "read_and_fill_in_the_blank": {{"id": "ex_7", "type": "read_and_fill_in_the_blank", "instruction": "Read and fill in the missing word from the word bank.", "question_text": "Monkeys love to eat yellow _______.", "options": ["bananas", "apples", "oranges"], "correct_answer": "bananas", "points": 1}}
+8. "read_and_circle": {{"id": "ex_8", "type": "read_and_circle", "instruction": "Read the question and circle the correct answer.", "question_text": "Which fruit is round and can be red or green?", "options": ["Apple", "Banana", "Grape"], "correct_answer": "Apple", "points": 1}}
+9. "read_and_number": {{"id": "ex_9", "type": "read_and_number", "instruction": "Read the sentences and arrange them in the correct order (1 to 3).", "options": ["First, wash the fruit.", "Next, slice the fruit carefully.", "Finally, enjoy your healthy snack."], "correct_answer": ["First, wash the fruit.", "Next, slice the fruit carefully.", "Finally, enjoy your healthy snack."], "points": 1}}
+10. "write_the_missing_word": {{"id": "ex_10", "type": "write_the_missing_word", "instruction": "Look at the clue and write the missing word.", "question_text": "A sweet yellow fruit that monkeys eat: b_ _ _ _ _", "hint": "banana", "correct_answer": "banana", "points": 1}}
+11. "unscramble_words": {{"id": "ex_11", "type": "unscramble_words", "instruction": "Put the words in the correct order to make a complete sentence.", "options": ["like", "apples.", "I", "eating"], "correct_answer": "I like eating apples.", "points": 1}}
+12. "answer_the_question": {{"id": "ex_12", "type": "answer_the_question", "instruction": "Read the question and select the best answer.", "question_text": "Do you like eating fruit?", "options": ["Yes, I do.", "No, it isn't.", "Yes, they are."], "correct_answer": "Yes, I do.", "points": 1}}
+
+Return ONLY a valid JSON object matching:
+{{
+  "title": "{worksheet_title}",
+  "exercises": [...]
+}}"""
+                resp = requests.post(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                    json={
+                        "model": "llama-3.3-70b-versatile",
+                        "messages": [{"role": "user", "content": system_prompt}],
+                        "temperature": 0.4,
+                        "response_format": {"type": "json_object"}
+                    },
+                    timeout=10
+                )
+                if resp.status_code == 200:
+                    payload = resp.json()["choices"][0]["message"]["content"]
+                    parsed = json.loads(payload)
+                    if "exercises" in parsed and isinstance(parsed["exercises"], list) and len(parsed["exercises"]) > 0:
+                        # Ensure all exercises have valid id, accent=en-GB if audio
+                        idx = 1
+                        for ex in parsed["exercises"]:
+                            ex["id"] = f"ex_{idx}"
+                            if "audio_text" in ex or ex.get("type", "").startswith("listen_"):
+                                ex["accent"] = "en-GB"
+                            idx += 1
+                        return {
+                            "success": True,
+                            "title": parsed.get("title", worksheet_title),
+                            "exercises": parsed["exercises"]
+                        }
+            except Exception as e:
+                print(f"Groq worksheet generation attempt failed: {e}")
+
+    # Deterministic Grounded Fallback if LLM unavailable
+    fallback_exercises = []
+    f_idx = 1
+    for t in clean_types:
+        v_main = clean_vocab[(f_idx - 1) % len(clean_vocab)]
+        v_others = [w for w in clean_vocab if w != v_main][:3]
+        if not v_others:
+            v_others = ["fruit", "snack"]
+
+        if t == "listen_and_circle":
+            fallback_exercises.append({
+                "id": f"ex_{f_idx}",
+                "type": "listen_and_circle",
+                "instruction": "Listen to the audio and circle the correct word.",
+                "audio_text": f"Can you find the {v_main} on the table?",
+                "options": [v_main] + v_others[:2],
+                "correct_answer": v_main,
+                "accent": "en-GB",
+                "points": 1
+            })
+        elif t == "listen_and_tick":
+            fallback_exercises.append({
+                "id": f"ex_{f_idx}",
+                "type": "listen_and_tick",
+                "instruction": "Listen and tick the word you hear.",
+                "audio_text": f"I have got a fresh {v_main}.",
+                "options": [v_main] + v_others[:2],
+                "correct_answer": v_main,
+                "accent": "en-GB",
+                "points": 1
+            })
+        elif t == "listen_and_tick_or_cross":
+            fallback_exercises.append({
+                "id": f"ex_{f_idx}",
+                "type": "listen_and_tick_or_cross",
+                "instruction": "Listen and choose Tick (✓) if correct or Cross (✗) if false.",
+                "audio_text": f"This is a delicious {v_main}.",
+                "question_text": f"The audio is talking about a {v_main}.",
+                "correct_answer": "tick",
+                "accent": "en-GB",
+                "points": 1
+            })
+        elif t == "listen_and_match":
+            v_second = v_others[0] if v_others else "snack"
+            fallback_exercises.append({
+                "id": f"ex_{f_idx}",
+                "type": "listen_and_match",
+                "instruction": "Listen to each sound clip and match with the correct word.",
+                "pairs": {"Clip A": v_main, "Clip B": v_second},
+                "audio_prompts": {"Clip A": f"This is a {v_main}.", "Clip B": f"This is a {v_second}."},
+                "correct_answer": {"Clip A": v_main, "Clip B": v_second},
+                "accent": "en-GB",
+                "points": 2
+            })
+        elif t == "listen_and_number":
+            seq = [v_main] + v_others[:2]
+            audio_seq = ". ".join([f"Number {i+1}: {w}" for i, w in enumerate(seq)])
+            fallback_exercises.append({
+                "id": f"ex_{f_idx}",
+                "type": "listen_and_number",
+                "instruction": "Listen and number the words in the order you hear them.",
+                "audio_text": audio_seq,
+                "options": seq,
+                "correct_answer": seq,
+                "accent": "en-GB",
+                "points": 1
+            })
+        elif t == "read_and_fill_in_the_blank":
+            fallback_exercises.append({
+                "id": f"ex_{f_idx}",
+                "type": "read_and_fill_in_the_blank",
+                "instruction": "Read and fill in the missing word from the word bank.",
+                "question_text": f"I really like eating a fresh _______ every morning.",
+                "options": [v_main] + v_others[:2],
+                "correct_answer": v_main,
+                "points": 1
+            })
+        elif t == "read_and_circle":
+            fallback_exercises.append({
+                "id": f"ex_{f_idx}",
+                "type": "read_and_circle",
+                "instruction": "Read and choose the correct word.",
+                "question_text": f"Which word matches this vocabulary item: '{v_main}'?",
+                "options": [v_main] + v_others[:2],
+                "correct_answer": v_main,
+                "points": 1
+            })
+        elif t == "read_and_match":
+            v_second = v_others[0] if v_others else "fruit"
+            fallback_exercises.append({
+                "id": f"ex_{f_idx}",
+                "type": "read_and_match",
+                "instruction": "Read and match each word with its clue.",
+                "pairs": {v_main: f"A common healthy {v_main}", v_second: f"A tasty {v_second}"},
+                "correct_answer": {v_main: f"A common healthy {v_main}", v_second: f"A tasty {v_second}"},
+                "points": 2
+            })
+        elif t == "read_and_number":
+            fallback_exercises.append({
+                "id": f"ex_{f_idx}",
+                "type": "read_and_number",
+                "instruction": "Read the sentences and arrange them in the correct sequence.",
+                "options": [f"First, pick up the {v_main}.", f"Next, wash the {v_main}.", f"Finally, enjoy the {v_main}."],
+                "correct_answer": [f"First, pick up the {v_main}.", f"Next, wash the {v_main}.", f"Finally, enjoy the {v_main}."],
+                "points": 1
+            })
+        elif t == "write_the_missing_word":
+            masked = v_main[0] + " _ " * (len(v_main) - 2) + v_main[-1] if len(v_main) > 2 else v_main[0] + " _"
+            fallback_exercises.append({
+                "id": f"ex_{f_idx}",
+                "type": "write_the_missing_word",
+                "instruction": "Spell the missing target vocabulary word.",
+                "question_text": f"Target word: {masked}",
+                "hint": v_main,
+                "correct_answer": v_main,
+                "points": 1
+            })
+        elif t == "unscramble_words":
+            words = f"I have got a {v_main}.".split()
+            shuffled = list(words)
+            shuffled.reverse()
+            fallback_exercises.append({
+                "id": f"ex_{f_idx}",
+                "type": "unscramble_words",
+                "instruction": "Put the words in the correct order to make a complete sentence.",
+                "options": shuffled,
+                "correct_answer": f"I have got a {v_main}.",
+                "points": 1
+            })
+        else:
+            # answer_the_question
+            fallback_exercises.append({
+                "id": f"ex_{f_idx}",
+                "type": "answer_the_question",
+                "instruction": "Answer the question with the best choice.",
+                "question_text": f"What is your favourite snack?",
+                "options": [f"I like {v_main}.", "It is cloudy today.", "I am ten years old."],
+                "correct_answer": f"I like {v_main}.",
+                "points": 1
+            })
+        f_idx += 1
+
+    return {
+        "success": True,
+        "title": worksheet_title,
+        "exercises": fallback_exercises
+    }
+
+@app.post("/api/teacher/worksheet/generate")
+def api_generate_worksheet(req: GenerateWorksheetRequest, current_user: dict = Depends(require_educator_or_admin)):
+    try:
+        res = generate_ai_worksheet(
+            target_vocabulary=req.target_vocabulary,
+            exercise_types=req.exercise_types,
+            grade_level=req.grade_level or "Grade 3",
+            accent=req.accent or "en-GB",
+            custom_title=req.title or ""
+        )
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 class SubmitWorksheetRequest(BaseModel):
     assignment_id: int
     student_id: int
