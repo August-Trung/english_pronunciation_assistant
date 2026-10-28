@@ -103,6 +103,7 @@
       <!-- HEADER BANNER: Super Admin vs School Admin -->
       <!-- Case A: SUPER ADMIN Header -->
       <v-card
+        id="tour-admin-banner"
         v-if="isSuperAdmin"
         border
         flat
@@ -151,6 +152,7 @@
 
       <!-- Case B: SCHOOL ADMIN Header (Strict Data Isolation) -->
       <v-card
+        id="tour-admin-banner"
         v-else
         border
         flat
@@ -176,6 +178,14 @@
           </div>
 
           <div class="d-flex align-center ga-2">
+            <v-btn
+              icon="mdi-lightbulb-on-outline"
+              size="small"
+              variant="text"
+              color="white"
+              title="Xem hướng dẫn Quản trị hệ thống"
+              @click="replayAdminTour"
+            />
             <v-chip color="teal-lighten-4" variant="flat" class="font-weight-black text-teal-darken-4">
               School ID: {{ userTenantId || '1' }}
             </v-chip>
@@ -205,7 +215,7 @@
       </v-card>
 
       <!-- DYNAMIC KPI METRICS ROW -->
-      <v-row class="mb-4" density="comfortable">
+      <v-row id="tour-admin-kpis" class="mb-4" density="comfortable">
         <!-- KPI 1: Tenants (Super Admin) OR Seat Usage (School Admin) -->
         <v-col v-if="isSuperAdmin" cols="12" sm="6" md="2-4">
           <v-card border flat class="pa-3 bg-white rounded-lg d-flex align-center ga-3 cursor-pointer" hover @click="activeTab = 'tenants'">
@@ -282,7 +292,7 @@
 
       <!-- MAIN ADMIN WORKSPACE TABS -->
       <v-card border flat class="pa-4 bg-white rounded-lg">
-        <v-tabs v-model="activeTab" color="primary" density="compact" class="mb-4">
+        <v-tabs id="tour-admin-tabs" v-model="activeTab" color="primary" density="compact" class="mb-4">
           <!-- Super Admin Only Tab: Tenants -->
           <v-tab v-if="isSuperAdmin" value="tenants" class="font-weight-black text-none" prepend-icon="mdi-domain">
             School Tenants & Licensing

@@ -7,22 +7,32 @@
     </div>
 
     <div v-else>
-      <div class="d-flex align-center justify-space-between mb-3 flex-wrap ga-2">
+      <div id="tour-stats-header" class="d-flex align-center justify-space-between mb-3 flex-wrap ga-2">
         <div class="text-subtitle-1 font-weight-black text-teal-darken-4">AI Progress Analytics Report</div>
-        <v-btn
-          color="teal"
-          variant="tonal"
-          size="small"
-          class="text-none"
-          prepend-icon="mdi-file-pdf-box"
-          @click="showPdfReport = true"
-        >
-          Export Progress PDF
-        </v-btn>
+        <div class="d-flex align-center ga-1">
+          <v-btn
+            icon="mdi-lightbulb-on-outline"
+            size="small"
+            variant="text"
+            color="amber-darken-3"
+            title="Xem hướng dẫn Báo cáo tiến độ"
+            @click="replayStatsTour"
+          />
+          <v-btn
+            color="teal"
+            variant="tonal"
+            size="small"
+            class="text-none"
+            prepend-icon="mdi-file-pdf-box"
+            @click="showPdfReport = true"
+          >
+            Export Progress PDF
+          </v-btn>
+        </div>
       </div>
 
       <!-- Streak Badge -->
-      <v-card v-if="streak > 0" border flat class="mb-4 pa-3 text-center bg-info text-white" rounded="lg">
+      <v-card id="tour-stats-streak" v-if="streak > 0" border flat class="mb-4 pa-3 text-center bg-info text-white" rounded="lg">
         <div class="text-subtitle-2 font-weight-black d-flex align-center justify-center ga-1">
           <v-icon color="amber">mdi-fire</v-icon>
           Outstanding! You have maintained a {{ streak }}-day learning streak!
@@ -36,7 +46,7 @@
       </v-card>
 
       <!-- Overview Cards -->
-      <v-row class="ma-0 mb-4 ga-2">
+      <v-row id="tour-stats-overview" class="ma-0 mb-4 ga-2">
         <v-col v-for="stat in overviewStats" :key="stat.title" cols="6" sm="3" class="pa-1">
           <v-card border flat class="pa-3 text-center bg-white" rounded="lg">
             <v-icon :color="stat.color" size="large" class="mb-1">{{ stat.icon }}</v-icon>
@@ -47,7 +57,7 @@
       </v-row>
 
       <!-- SVG Charts -->
-      <v-row class="ma-0 mb-4 ga-2">
+      <v-row id="tour-stats-charts" class="ma-0 mb-4 ga-2">
         <!-- Chart 1: Progress (Line) -->
         <v-col cols="12" md="6" class="pa-1">
           <v-card border flat class="pa-3 bg-white" rounded="lg">
@@ -282,10 +292,25 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import {
+  runTour,
+  TOUR_KEYS,
+  STUDENT_STATS_TOUR_STEPS
+} from '@/utils/tours.js'
 import PdfReportDialog from '@/components/PdfReportDialog.vue'
 
 const showPdfReport = ref(false)
+onMounted(() => {
+  setTimeout(() => {
+    runTour(TOUR_KEYS.STUDENT_STATS, STUDENT_STATS_TOUR_STEPS)
+  }, 1000)
+})
+
+const replayStatsTour = () => {
+  runTour(TOUR_KEYS.STUDENT_STATS, STUDENT_STATS_TOUR_STEPS, true)
+}
+
 
 const props = defineProps({
   history: {

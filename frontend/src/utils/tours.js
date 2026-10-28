@@ -11,11 +11,22 @@ export const TOUR_KEYS = {
   // Teacher Tours
   TEACHER_WORKSHEET_MODAL: 'fluent_tour_teacher_worksheet_seen',
   TEACHER_HUB: 'fluent_tour_teacher_hub_seen',
-  // Student Tours
-  STUDENT_HOMEWORK: 'fluent_tour_student_homework_seen',
+  // Student Studios & Homework
   STUDENT_SPEAKING: 'fluent_tour_student_speaking_seen',
   STUDENT_SHADOWING: 'fluent_tour_student_shadowing_seen',
-  STUDENT_PICTURE: 'fluent_tour_student_picture_seen'
+  STUDENT_PICTURE: 'fluent_tour_student_picture_seen',
+  STUDENT_HOMEWORK: 'fluent_tour_student_homework_seen',
+  // Student Tools & Portfolio
+  STUDENT_HISTORY: 'fluent_tour_student_history_seen',
+  STUDENT_LEADERBOARD: 'fluent_tour_student_leaderboard_seen',
+  STUDENT_FLASHCARDS: 'fluent_tour_student_flashcards_seen',
+  STUDENT_STATS: 'fluent_tour_student_stats_seen',
+  STUDENT_JOIN: 'fluent_tour_student_join_seen',
+  STUDENT_PROFILE: 'fluent_tour_student_profile_seen',
+  STUDENT_SETTINGS: 'fluent_tour_student_settings_seen',
+  // Specialized Portals
+  PARENT_PORTAL: 'fluent_tour_parent_portal_seen',
+  ADMIN_PORTAL: 'fluent_tour_admin_portal_seen'
 }
 
 /**
@@ -192,7 +203,7 @@ export const TEACHER_HUB_TOUR_STEPS = [
 ]
 
 // =============================================================================
-// 2. STUDENT TOUR DEFINITIONS
+// 2. STUDENT STUDIOS & HOMEWORK TOURS
 // =============================================================================
 
 export const STUDENT_HOMEWORK_TOUR_STEPS = [
@@ -318,6 +329,284 @@ export const STUDENT_PICTURE_TOUR_STEPS = [
     popover: {
       title: 'Bấm giờ & Thu âm bài nói',
       description: 'Bấm giờ linh hoạt và thu âm bài miêu tả tranh để nhận điểm đánh giá chuẩn IELTS/TOEIC Speaking.',
+      side: 'top',
+      align: 'center'
+    }
+  }
+]
+
+// =============================================================================
+// 3. STUDENT TOOLS & PORTFOLIO TOURS
+// =============================================================================
+
+export const STUDENT_HISTORY_TOUR_STEPS = [
+  {
+    element: '#tour-history-header',
+    popover: {
+      title: 'Nhật ký luyện tập & Hồ sơ năng lực',
+      description: 'Lưu trữ toàn bộ bản ghi âm phát âm, điểm số 5 kỹ năng và lịch sử học tập cá nhân.',
+      side: 'bottom',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-history-exports',
+    popover: {
+      title: 'Xuất báo cáo PDF & Tải tệp nén ZIP',
+      description: 'Tải trọn bộ bản ghi âm dạng file ZIP hoặc xuất phiếu đánh giá PDF chi tiết để lưu trữ.',
+      side: 'bottom',
+      align: 'end'
+    }
+  },
+  {
+    element: '#tour-history-filters',
+    popover: {
+      title: 'Bộ lọc theo mốc thời gian',
+      description: 'Xem các bài đã luyện tập Hôm nay, 30 ngày qua hoặc tùy chỉnh khoảng ngày mong muốn.',
+      side: 'bottom',
+      align: 'start'
+    }
+  }
+]
+
+export const STUDENT_LEADERBOARD_TOUR_STEPS = [
+  {
+    element: '#tour-leaderboard-banner',
+    popover: {
+      title: 'Đấu trường Phát âm & Bảng Vinh danh',
+      description: 'Xem thứ hạng và tranh tài cùng các bạn trong lớp học hoặc toàn thể cộng đồng người học.',
+      side: 'bottom',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-leaderboard-podium',
+    popover: {
+      title: 'Bục vinh quang Top 3 xuất sắc',
+      description: 'Vinh danh 3 gương mặt dẫn đầu có điểm số phát âm và chuỗi chuyên cần cao nhất.',
+      side: 'bottom',
+      align: 'center'
+    }
+  },
+  {
+    element: '#tour-leaderboard-list',
+    popover: {
+      title: 'Bảng xếp hạng chi tiết',
+      description: 'Theo dõi điểm trung bình, huy hiệu và số lượt phát âm để cùng nhau tiến bộ mỗi ngày.',
+      side: 'top',
+      align: 'center'
+    }
+  }
+]
+
+export const STUDENT_FLASHCARDS_TOUR_STEPS = [
+  {
+    element: '#tour-flashcards-banner',
+    popover: {
+      title: 'Thẻ từ vựng thông minh Flashcards',
+      description: 'Ôn tập từ vựng kèm hình ảnh trực quan và nghe phát âm chuẩn giọng bản xứ Anh-Anh.',
+      side: 'bottom',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-flashcards-create-btn',
+    popover: {
+      title: 'Tạo bộ thẻ AI mới',
+      description: 'Tự tạo bộ thẻ từ vựng mới theo chủ đề yêu thích với hình ảnh minh họa do AI tự động vẽ.',
+      side: 'bottom',
+      align: 'end'
+    }
+  },
+  {
+    element: '#tour-flashcards-tabs',
+    popover: {
+      title: 'Bộ thẻ AI & Ngân hàng từ yếu (SRS)',
+      description: 'Chuyển đổi giữa các bộ thẻ theo chủ đề và danh sách các từ bạn phát âm còn yếu để ôn luyện lặp lại ngắt quãng.',
+      side: 'bottom',
+      align: 'start'
+    }
+  }
+]
+
+export const STUDENT_STATS_TOUR_STEPS = [
+  {
+    element: '#tour-stats-header',
+    popover: {
+      title: 'Báo cáo Phân tích Tiến độ AI',
+      description: 'Tổng hợp dữ liệu học tập chuyên sâu, đánh giá chi tiết quá trình cải thiện phát âm.',
+      side: 'bottom',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-stats-streak',
+    popover: {
+      title: 'Chuỗi ngày học liên tục (Streak)',
+      description: 'Duy trì học phát âm mỗi ngày để thắp sáng ngọn lửa học tập và nhận thêm điểm thưởng.',
+      side: 'bottom',
+      align: 'center'
+    }
+  },
+  {
+    element: '#tour-stats-overview',
+    popover: {
+      title: 'Các chỉ số tổng quan',
+      description: 'Theo dõi tổng thời gian luyện tập, số câu đã đọc và điểm trung bình đạt được.',
+      side: 'bottom',
+      align: 'center'
+    }
+  },
+  {
+    element: '#tour-stats-charts',
+    popover: {
+      title: 'Biểu đồ phát âm trực quan',
+      description: 'Biểu đồ đường thể hiện phong độ và biểu đồ radar phân tích 5 khía cạnh phát âm của bạn.',
+      side: 'top',
+      align: 'center'
+    }
+  }
+]
+
+export const STUDENT_JOIN_TOUR_STEPS = [
+  {
+    element: '#tour-join-card',
+    popover: {
+      title: 'Cổng tham gia lớp học dành cho học sinh',
+      description: 'Dễ dàng gia nhập lớp của thầy cô mà không cần tài khoản Google hay email phức tạp.',
+      side: 'bottom',
+      align: 'center'
+    }
+  },
+  {
+    element: '#tour-join-code-field',
+    popover: {
+      title: 'Nhập mã lớp học',
+      description: 'Nhập mã 6 ký tự (ví dụ: CLS-586-57) được giáo viên cung cấp trên lớp hoặc quét mã QR.',
+      side: 'bottom',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-join-auth-box',
+    popover: {
+      title: 'Đăng nhập hoặc Đăng ký nhanh',
+      description: 'Chỉ cần chọn tên tài khoản và mật khẩu đơn giản để bắt đầu làm bài và nhận điểm số.',
+      side: 'top',
+      align: 'center'
+    }
+  }
+]
+
+export const STUDENT_PROFILE_TOUR_STEPS = [
+  {
+    element: '#tour-profile-banner',
+    popover: {
+      title: 'Hồ sơ cá nhân & Thông tin tài khoản',
+      description: 'Quản lý thông tin học sinh, ảnh đại diện và trạng thái liên kết lớp học.',
+      side: 'bottom',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-profile-identity',
+    popover: {
+      title: 'Huy hiệu & Lớp học tham gia',
+      description: 'Xem các danh hiệu đã mở khóa và mã lớp học đang theo học.',
+      side: 'right',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-profile-parent-code',
+    popover: {
+      title: 'Mã kết nối phụ huynh',
+      description: 'Cung cấp mã này cho ba mẹ để ba mẹ theo dõi điểm số và nghe lại bài nói của bạn tại Cổng Phụ huynh.',
+      side: 'top',
+      align: 'start'
+    }
+  }
+]
+
+export const STUDENT_SETTINGS_TOUR_STEPS = [
+  {
+    element: '#tour-settings-profile',
+    popover: {
+      title: 'Hồ sơ người học & Mục tiêu hàng ngày',
+      description: 'Đặt tên hiển thị và điều chỉnh mục tiêu số câu luyện đọc phát âm mỗi ngày.',
+      side: 'bottom',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-settings-faq',
+    popover: {
+      title: 'Câu hỏi thường gặp & Giải đáp sư phạm',
+      description: 'Tìm hiểu cơ chế chấm điểm IPA 3 tầng, chuẩn đánh giá phát âm và bảo mật dữ liệu giọng nói.',
+      side: 'top',
+      align: 'start'
+    }
+  }
+]
+
+// =============================================================================
+// 4. SPECIALIZED PORTALS TOURS
+// =============================================================================
+
+export const PARENT_PORTAL_TOUR_STEPS = [
+  {
+    element: '#tour-parent-banner',
+    popover: {
+      title: 'Cổng thông tin & Theo dõi tiến độ cho Phụ huynh',
+      description: 'Đồng hành cùng con: Xem kết quả học tập, điểm chuẩn IPA và nghe các đoạn thu âm giọng đọc thực tế.',
+      side: 'bottom',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-parent-code-input',
+    popover: {
+      title: 'Nhập mã theo dõi của học sinh',
+      description: 'Nhập mã theo dõi (ví dụ: PA-9842 lấy từ trang Cá nhân của con) để xem hồ sơ học tập.',
+      side: 'bottom',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-parent-report-card',
+    popover: {
+      title: 'Bảng đánh giá & Nhận xét từ Giáo viên',
+      description: 'Theo dõi điểm phát âm, bài tập đã hoàn thành và lời nhận xét chi tiết của thầy cô.',
+      side: 'top',
+      align: 'center'
+    }
+  }
+]
+
+export const ADMIN_PORTAL_TOUR_STEPS = [
+  {
+    element: '#tour-admin-banner',
+    popover: {
+      title: 'Bảng điều khiển Quản trị Hệ thống',
+      description: 'Quản lý toàn diện tổ chức trường học, phân bổ giáo viên, học sinh và bản quyền phần mềm.',
+      side: 'bottom',
+      align: 'start'
+    }
+  },
+  {
+    element: '#tour-admin-kpis',
+    popover: {
+      title: 'Chỉ số KPI & Bản quyền tài khoản',
+      description: 'Theo dõi số lượng trường học, tài khoản giáo viên và số ghế học sinh đang hoạt động.',
+      side: 'bottom',
+      align: 'center'
+    }
+  },
+  {
+    element: '#tour-admin-tabs',
+    popover: {
+      title: 'Các phân hệ quản lý',
+      description: 'Dễ dàng chuyển đổi giữa phân hệ Trường học, Quản lý tài khoản Người dùng và Nhật ký bảo mật.',
       side: 'top',
       align: 'center'
     }

@@ -1,7 +1,7 @@
 <template>
   <v-container fluid class="pa-0">
     <!-- Header Card -->
-    <v-card border flat class="pa-3 pa-sm-4 mb-4 bg-gradient-to-r text-white" rounded="lg" style="background: linear-gradient(135deg, #3F51B5 0%, #1A237E 100%);">
+    <v-card id="tour-leaderboard-banner" border flat class="pa-3 pa-sm-4 mb-4 bg-gradient-to-r text-white" rounded="lg" style="background: linear-gradient(135deg, #3F51B5 0%, #1A237E 100%);">
       <div class="d-flex align-center justify-space-between flex-wrap ga-2">
         <div class="d-flex align-center ga-2 ga-sm-3">
           <v-avatar color="amber" size="40" class="elevation-3 flex-shrink-0">
@@ -20,17 +20,27 @@
             </div>
           </div>
         </div>
-        <v-btn
-          color="amber"
-          variant="flat"
-          size="small"
-          class="font-weight-black text-none"
-          prepend-icon="mdi-refresh"
-          :loading="isLoading"
-          @click="fetchLeaderboard"
-        >
-          Refresh Standings
-        </v-btn>
+        <div class="d-flex align-center ga-1">
+          <v-btn
+            icon="mdi-lightbulb-on-outline"
+            size="small"
+            variant="text"
+            color="amber"
+            title="Xem hướng dẫn Bảng vinh danh"
+            @click="replayLeaderboardTour"
+          />
+          <v-btn
+            color="amber"
+            variant="flat"
+            size="small"
+            class="font-weight-black text-none"
+            prepend-icon="mdi-refresh"
+            :loading="isLoading"
+            @click="fetchLeaderboard"
+          >
+            Refresh Standings
+          </v-btn>
+        </div>
       </div>
     </v-card>
 
@@ -42,7 +52,7 @@
     <div v-else>
       <p class="text-caption my-3">Ranked by average score, then practice count. Classroom scores include educator adjustments.</p>
       <!-- Always Show Top 3 Podium Winners (Top 2 | Top 1 | Top 3) -->
-      <v-row class="ma-0 mb-4 align-end justify-center ga-1 ga-sm-3">
+      <v-row id="tour-leaderboard-podium" class="ma-0 mb-4 align-end justify-center ga-1 ga-sm-3">
         <!-- Top 2 (Silver) -->
         <v-col cols="4" sm="3" class="pa-1">
       <v-card border flat class="pa-2 pa-sm-3 text-center elevation-1 rounded-lg" :class="top2.isEmpty ? 'bg-grey-lighten-4 opacity-70 border-dashed' : 'bg-white'">
@@ -135,7 +145,7 @@
       </v-row>
 
       <!-- Remaining Rankings Table (Ranks 4 - 10) -->
-      <v-card border flat class="bg-white elevation-1 rounded-lg">
+      <v-card id="tour-leaderboard-list" border flat class="bg-white elevation-1 rounded-lg">
         <v-table density="comfortable" hover>
           <thead>
             <tr class="bg-grey-lighten-4">
@@ -199,6 +209,11 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import {
+  runTour,
+  TOUR_KEYS,
+  STUDENT_LEADERBOARD_TOUR_STEPS
+} from '@/utils/tours.js'
 
 const props = defineProps({
   backendUrl: {
@@ -276,7 +291,14 @@ const fetchLeaderboard = async () => {
 onMounted(async () => {
   await checkAccountTypeAndSetTab()
   fetchLeaderboard()
+  setTimeout(() => {
+    runTour(TOUR_KEYS.STUDENT_LEADERBOARD, STUDENT_LEADERBOARD_TOUR_STEPS)
+  }, 1000)
 })
+
+const replayLeaderboardTour = () => {
+  runTour(TOUR_KEYS.STUDENT_LEADERBOARD, STUDENT_LEADERBOARD_TOUR_STEPS, true)
+}
 </script>
 
 <style scoped>

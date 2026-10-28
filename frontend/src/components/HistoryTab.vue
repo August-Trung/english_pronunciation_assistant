@@ -1,7 +1,7 @@
 <template>
   <v-container fluid class="pa-0">
     <!-- Header Banner -->
-    <v-card flat border class="pa-4 pa-md-6 mb-4 bg-white" rounded="lg">
+    <v-card id="tour-history-header" flat border class="pa-4 pa-md-6 mb-4 bg-white" rounded="lg">
       <div class="d-flex flex-column flex-md-row align-start align-md-center justify-space-between ga-3">
         <div class="d-flex align-center ga-3">
           <v-avatar color="indigo-lighten-5" size="48" class="text-indigo border flex-shrink-0">
@@ -24,7 +24,15 @@
         </div>
 
         <!-- Export Actions -->
-        <div class="d-flex align-center ga-2 flex-wrap">
+        <div id="tour-history-exports" class="d-flex align-center ga-2 flex-wrap">
+          <v-btn
+            icon="mdi-lightbulb-on-outline"
+            size="small"
+            variant="text"
+            color="amber-darken-3"
+            title="Xem hướng dẫn Lịch sử luyện tập"
+            @click="replayHistoryTour"
+          />
           <v-btn
             color="secondary"
             variant="outlined"
@@ -70,7 +78,7 @@
     </v-alert>
 
     <!-- Filter Toolbar -->
-    <v-card flat border class="pa-3 mb-4 bg-grey-lighten-5" rounded="lg">
+    <v-card id="tour-history-filters" flat border class="pa-3 mb-4 bg-grey-lighten-5" rounded="lg">
       <div class="d-flex flex-column flex-sm-row align-start align-sm-center justify-space-between ga-3">
         <!-- Date Range Toggle -->
         <v-btn-toggle
@@ -251,6 +259,11 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import {
+  runTour,
+  TOUR_KEYS,
+  STUDENT_HISTORY_TOUR_STEPS
+} from '@/utils/tours.js'
 
 const props = defineProps({
   backendUrl: {
@@ -492,7 +505,14 @@ const downloadZipArchive = async () => {
 
 onMounted(() => {
   fetchHistoryLogs()
+  setTimeout(() => {
+    runTour(TOUR_KEYS.STUDENT_HISTORY, STUDENT_HISTORY_TOUR_STEPS)
+  }, 1000)
 })
+
+const replayHistoryTour = () => {
+  runTour(TOUR_KEYS.STUDENT_HISTORY, STUDENT_HISTORY_TOUR_STEPS, true)
+}
 </script>
 
 <style scoped>

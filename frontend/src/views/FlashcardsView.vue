@@ -1,7 +1,7 @@
 <template>
   <v-container fluid class="pa-0 max-width-1400">
     <!-- Header Banner -->
-    <v-card border flat class="pa-3 pa-sm-4 mb-4 text-white rounded-lg" style="background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);">
+    <v-card id="tour-flashcards-banner" border flat class="pa-3 pa-sm-4 mb-4 text-white rounded-lg" style="background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);">
       <div class="d-flex align-center justify-space-between flex-wrap ga-2">
         <div class="d-flex align-center ga-2 ga-sm-3">
           <v-avatar color="white" size="44" class="flex-shrink-0 elevation-1">
@@ -19,6 +19,15 @@
 
         <div class="d-flex align-center ga-2">
           <v-btn
+            icon="mdi-lightbulb-on-outline"
+            size="small"
+            variant="text"
+            color="white"
+            title="Xem hướng dẫn Thẻ từ vựng"
+            @click="replayFlashcardsTour"
+          />
+          <v-btn
+            id="tour-flashcards-create-btn"
             color="white"
             variant="flat"
             size="small"
@@ -33,7 +42,7 @@
     </v-card>
 
     <!-- Main Navigation Tabs -->
-    <v-tabs v-model="activeTab" color="primary" align-tabs="start" class="mb-4 border-b">
+    <v-tabs id="tour-flashcards-tabs" v-model="activeTab" color="primary" align-tabs="start" class="mb-4 border-b">
       <v-tab value="ai-decks" class="font-weight-bold text-none">
         <v-icon start>mdi-sparkles</v-icon>
         AI Vocabulary Decks
@@ -656,6 +665,11 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import {
+  runTour,
+  TOUR_KEYS,
+  STUDENT_FLASHCARDS_TOUR_STEPS
+} from '@/utils/tours.js'
 
 const props = defineProps({
   backendUrl: String,
@@ -1167,7 +1181,14 @@ const markMastered = async () => {
 onMounted(() => {
   fetchDecks()
   fetchWeakWords()
+  setTimeout(() => {
+    runTour(TOUR_KEYS.STUDENT_FLASHCARDS, STUDENT_FLASHCARDS_TOUR_STEPS)
+  }, 1000)
 })
+
+const replayFlashcardsTour = () => {
+  runTour(TOUR_KEYS.STUDENT_FLASHCARDS, STUDENT_FLASHCARDS_TOUR_STEPS, true)
+}
 </script>
 
 <style scoped>

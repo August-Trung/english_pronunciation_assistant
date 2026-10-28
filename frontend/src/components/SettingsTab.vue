@@ -3,12 +3,22 @@
     <v-row class="ma-0">
       <!-- Section 1: Student Profile & Daily Goal (Always Visible) -->
       <v-col cols="12" class="pa-1">
-        <v-card border flat class="pa-3 bg-white" rounded="lg">
-          <div class="d-flex align-center ga-2 mb-3">
-            <v-avatar color="blue-lighten-5" size="36" class="text-primary mr-1 border">
-              <v-icon size="small">mdi-account-outline</v-icon>
-            </v-avatar>
-            <div class="text-subtitle-1 font-weight-black text-secondary">Learner Profile Settings</div>
+        <v-card id="tour-settings-profile" border flat class="pa-3 bg-white" rounded="lg">
+          <div class="d-flex align-center justify-space-between mb-3">
+            <div class="d-flex align-center ga-2">
+              <v-avatar color="blue-lighten-5" size="36" class="text-primary mr-1 border">
+                <v-icon size="small">mdi-account-outline</v-icon>
+              </v-avatar>
+              <div class="text-subtitle-1 font-weight-black text-secondary">Learner Profile Settings</div>
+            </div>
+            <v-btn
+              icon="mdi-lightbulb-on-outline"
+              size="small"
+              variant="text"
+              color="amber-darken-3"
+              title="Xem hướng dẫn Cài đặt"
+              @click="replaySettingsTour"
+            />
           </div>
           
           <v-row class="ma-0 align-center ga-2">
@@ -166,7 +176,7 @@
 
       <!-- Section 5: Frequently Asked Questions (FAQ) -->
       <v-col cols="12" class="pa-1">
-        <v-card border flat class="pa-3 bg-white" rounded="lg">
+        <v-card id="tour-settings-faq" border flat class="pa-3 bg-white" rounded="lg">
           <div class="d-flex align-center ga-2 mb-3">
             <v-avatar color="amber-lighten-5" size="36" class="text-amber-darken-3 mr-1 border">
               <v-icon size="small">mdi-help-circle-outline</v-icon>
@@ -197,7 +207,12 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
+import {
+  runTour,
+  TOUR_KEYS,
+  STUDENT_SETTINGS_TOUR_STEPS
+} from '@/utils/tours.js'
 
 const faqs = ref([
   {

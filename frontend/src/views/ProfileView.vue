@@ -1,26 +1,36 @@
 <template>
   <v-container fluid class="pa-0 max-width-1100">
     <!-- Header Banner -->
-    <v-card border flat class="pa-3 pa-sm-4 mb-4 text-white rounded-lg" style="background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);">
-      <div class="d-flex align-center ga-3">
-        <v-avatar color="white" size="44" class="elevation-1">
-          <v-icon color="blue-darken-3" size="default">mdi-account-circle</v-icon>
-        </v-avatar>
-        <div>
-          <div class="text-subtitle-1 text-sm-h6 font-weight-black tracking-tight leading-tight">
-            STUDENT PROFILE & SETTINGS
-          </div>
-          <div class="text-caption text-blue-lighten-4">
-            Manage your personal learning parameters, daily goals, and parent progress reports
+    <v-card id="tour-profile-banner" border flat class="pa-3 pa-sm-4 mb-4 text-white rounded-lg" style="background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);">
+      <div class="d-flex align-center justify-space-between flex-wrap ga-2">
+        <div class="d-flex align-center ga-3">
+          <v-avatar color="white" size="44" class="elevation-1">
+            <v-icon color="blue-darken-3" size="default">mdi-account-circle</v-icon>
+          </v-avatar>
+          <div>
+            <div class="text-subtitle-1 text-sm-h6 font-weight-black tracking-tight leading-tight">
+              STUDENT PROFILE & SETTINGS
+            </div>
+            <div class="text-caption text-blue-lighten-4">
+              Manage your personal learning parameters, daily goals, and parent progress reports
+            </div>
           </div>
         </div>
+        <v-btn
+          icon="mdi-lightbulb-on-outline"
+          size="small"
+          variant="tonal"
+          color="white"
+          title="Xem hướng dẫn Trang cá nhân"
+          @click="replayProfileTour"
+        />
       </div>
     </v-card>
 
     <v-row class="ma-0 ga-3">
       <!-- Left Column: User Identity & Summary Card (Cols 12, md 5) -->
       <v-col cols="12" md="5" class="pa-0">
-        <v-card border flat class="pa-4 bg-white rounded-lg h-100 d-flex flex-column justify-space-between">
+        <v-card id="tour-profile-identity" border flat class="pa-4 bg-white rounded-lg h-100 d-flex flex-column justify-space-between">
           <div class="text-center mb-4">
             <v-avatar size="80" color="primary" class="mb-3 border border-2 elevation-2">
               <v-img v-if="userAvatar" :src="userAvatar" alt="Avatar" />
@@ -91,7 +101,7 @@
 
       <!-- Right Column: Settings Form & Goals (Cols 12, md 7) -->
       <v-col cols="12" md="7" class="pa-0">
-        <v-card border flat class="pa-4 bg-white rounded-lg h-100 d-flex flex-column justify-space-between">
+        <v-card id="tour-profile-goals" border flat class="pa-4 bg-white rounded-lg h-100 d-flex flex-column justify-space-between">
           <div>
             <div class="text-subtitle-2 font-weight-black text-secondary mb-3 d-flex align-center ga-1 border-b pb-2">
               <v-icon size="small" color="secondary">mdi-account-cog-outline</v-icon>
@@ -165,6 +175,11 @@
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
+import {
+  runTour,
+  TOUR_KEYS,
+  STUDENT_PROFILE_TOUR_STEPS
+} from '@/utils/tours.js'
 import PdfReportDialog from '@/components/PdfReportDialog.vue'
 
 const showPdfReport = ref(false)

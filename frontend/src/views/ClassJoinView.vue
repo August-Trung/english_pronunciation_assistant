@@ -1,12 +1,22 @@
 <template>
   <v-main class="d-flex align-center justify-center pa-4" style="min-height:100vh">
-    <v-card max-width="520" width="100%" class="pa-5" rounded="xl">
-      <v-card-title class="text-wrap">{{ classroom ? 'Join ' + classroom.class_name : 'Student Sign In' }}</v-card-title>
+    <v-card id="tour-join-card" max-width="520" width="100%" class="pa-5" rounded="xl">
+      <div class="d-flex align-center justify-space-between mb-1">
+        <v-card-title class="pa-0 text-wrap">{{ classroom ? 'Join ' + classroom.class_name : 'Student Sign In' }}</v-card-title>
+        <v-btn
+          icon="mdi-lightbulb-on-outline"
+          size="small"
+          variant="text"
+          color="amber-darken-3"
+          title="Xem hướng dẫn Tham gia lớp học"
+          @click="replayJoinTour"
+        />
+      </div>
       <v-card-subtitle class="text-wrap mb-4">Use a username and password. No email or Google account required.</v-card-subtitle>
       <v-alert v-if="error" type="error" variant="tonal" class="mb-3">{{ error }}</v-alert>
       <v-progress-linear v-if="loading" indeterminate class="mb-3" />
       <template v-if="!$route.query.join_code">
-        <v-text-field v-model="code" label="Class Code (for a new class)" @keyup.enter="loadClass" />
+        <v-text-field id="tour-join-code-field" v-model="code" label="Class Code (for a new class)" @keyup.enter="loadClass" />
         <v-btn v-if="code && !classroom" variant="tonal" class="mb-3" :disabled="loading" @click="loadClass">Find Class</v-btn>
       </template>
       <template v-if="userId && userRole === 'student'">
@@ -15,6 +25,7 @@
       </template>
       <v-alert v-else-if="userId" type="info" variant="tonal">You are signed in as an educator. Open this link on the student's device.</v-alert>
       <template v-else-if="classroom || !$route.query.join_code">
+        <div id="tour-join-auth-box">
         <v-btn-toggle v-model="mode" mandatory divided class="w-100 mb-4">
           <v-btn value="register" :disabled="!classroom" class="flex-grow-1">Create Account</v-btn>
           <v-btn value="login" class="flex-grow-1">Sign In</v-btn>
@@ -25,6 +36,7 @@
           <v-text-field v-if="mode === 'register'" v-model="name" label="Full Name (Optional)" maxlength="80" hint="Your teacher will see this name. You can add it later." persistent-hint />
           <v-btn type="submit" color="primary" block size="large" class="mt-4" :loading="loading" :disabled="!canSubmit">{{ mode === 'register' ? 'Register and Join Class' : (classroom ? 'Sign In and Join Class' : 'Sign In') }}</v-btn>
         </v-form>
+        </div>
         <p class="text-caption mt-4">This browser remembers your sign-in. Use your username and password on another device. Sign out on shared devices.</p>
       </template>
       <v-btn variant="text" block class="mt-3" @click="router.push({path:'/',query:{signin:'1'}})">Use an Email or Google Account</v-btn>
@@ -33,6 +45,11 @@
 </template>
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import {
+  runTour,
+  TOUR_KEYS,
+  STUDENT_JOIN_TOUR_STEPS
+} from '@/utils/tours.js'
 import { useRoute, useRouter } from 'vue-router'
 const props = defineProps({ backendUrl: String, userId: Number, userName: String, userRole: String })
 const emit = defineEmits(['login'])
@@ -89,5 +106,14 @@ async function joinExisting() {
   loading.value = true; error.value = ''
   try { await enroll({id:props.userId},localStorage.getItem('token') || '') } catch(e) { error.value = e.message } finally { loading.value = false }
 }
-onMounted(() => { if (code.value.trim()) loadClass() })
+onMounted(() => {
+  if (code.value.trim()) loadClass()
+  setTimeout(() => {
+    runTour(TOUR_KEYS.STUDENT_JOIN, STUDENT_JOIN_TOUR_STEPS)
+  }, 1000)
+})
+
+const replayJoinTour = () => {
+  runTour(TOUR_KEYS.STUDENT_JOIN, STUDENT_JOIN_TOUR_STEPS, true)
+}
 </script>

@@ -16,22 +16,40 @@
     </v-snackbar>
 
     <!-- Parent Portal Header -->
-    <v-card border flat class="pa-4 mb-4 bg-gradient-teal text-white rounded-lg elevation-1">
-      <div class="d-flex align-center ga-3">
-        <v-avatar color="white" size="48" class="elevation-1">
-          <v-icon color="teal-darken-3" size="large">mdi-human-female-boy</v-icon>
-        </v-avatar>
-        <div>
-          <div class="text-h6 font-weight-black tracking-tight">PARENT PORTAL & LEARNING PROGRESS</div>
-          <div class="text-caption opacity-90 font-weight-medium">
-            Monitor IPA pronunciation scores, stream voice audio recordings, & view teacher feedback
+    <v-card id="tour-parent-banner" border flat class="pa-4 mb-4 bg-gradient-teal text-white rounded-lg elevation-1">
+      <div class="d-flex align-center justify-space-between flex-wrap ga-2">
+        <div class="d-flex align-center ga-3">
+          <v-avatar color="white" size="48" class="elevation-1">
+            <v-icon color="teal-darken-3" size="large">mdi-human-female-boy</v-icon>
+          </v-avatar>
+          <div>
+            <div class="text-h6 font-weight-black tracking-tight">PARENT PORTAL & LEARNING PROGRESS</div>
+            <div class="text-caption opacity-90 font-weight-medium">
+              Monitor IPA pronunciation scores, stream voice audio recordings, & view teacher feedback
+            </div>
           </div>
         </div>
+        <v-btn
+          icon="mdi-lightbulb-on-outline"
+          size="small"
+          variant="tonal"
+          color="white"
+          title="Xem hướng dẫn Cổng phụ huynh"
+          @click="replayParentTour"
+        />
       </div>
     </v-card>
 
+    <!-- Helpful Instructions for Parents -->
+    <v-card id="tour-parent-guide" border flat class="pa-3 mb-4 bg-teal-lighten-5 text-teal-darken-4 rounded-lg d-flex align-center ga-2">
+      <v-icon color="teal-darken-3">mdi-information-outline</v-icon>
+      <span class="text-caption font-weight-medium">
+        Nhập mã theo dõi (bắt đầu bằng PA-) được cấp tại trang Hồ sơ học sinh để nghe lại bài đọc phát âm và xem nhận xét chi tiết.
+      </span>
+    </v-card>
+
     <!-- Tracking Code Input Form -->
-    <v-card border flat class="pa-4 mb-4 bg-white rounded-lg">
+    <v-card id="tour-parent-code-input" border flat class="pa-4 mb-4 bg-white rounded-lg">
       <div class="text-subtitle-2 font-weight-black text-secondary mb-2">ENTER STUDENT TRACKING CODE</div>
       <div class="d-flex align-center ga-2">
         <v-text-field
@@ -125,7 +143,12 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import {
+  runTour,
+  TOUR_KEYS,
+  PARENT_PORTAL_TOUR_STEPS
+} from '@/utils/tours.js'
 
 const props = defineProps({
   backendUrl: String
