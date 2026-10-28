@@ -505,17 +505,17 @@
       "license_expiry": "2027-12-31"
     },
     {
-      "id": 1028,
-      "email": "test_st_1ea5b7a6@students.invalid",
-      "name": "Live Test Learner",
-      "avatar": null,
+      "id": 1030,
+      "email": "trphuong1988@gmail.com",
+      "name": "Trần Thị Phượng",
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocJoiW1FNbmSqVnUi3HrxLX2p7KoaN_s4u5aMMTB3m3cjYm6r78U=s96-c",
       "google_id": null,
-      "created_at": "2026-10-21 05:11:10",
-      "IsXoa": 1,
+      "created_at": "2026-10-22 15:24:32",
+      "IsXoa": 0,
       "role": "student",
       "tenant_id": null,
       "parent_code": null,
-      "password_hash": "pbkdf2:sha256:100000$c60a316e83d1789156932afb983f78ae$95a7fb25f64de21c1aae6c5d19469d1d28a4914bb2e9c260d16352776dee7074",
+      "password_hash": null,
       "status": "active",
       "teacher_type": "institutional",
       "max_classes": 3,
@@ -523,17 +523,17 @@
       "license_expiry": "2027-12-31"
     },
     {
-      "id": 1029,
-      "email": "test_st_36a56c64@students.invalid",
-      "name": "Live Test Learner",
-      "avatar": null,
+      "id": 1031,
+      "email": "thuynguyen29122003@gmail.com",
+      "name": "Nguyễn Đan Thuỳ",
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocJr4t1Q3sPq0oM0E_2Dw8mpxNFOaRco1EKRWUgq4gkDDslESdQ-=s96-c",
       "google_id": null,
-      "created_at": "2026-10-21 05:11:50",
-      "IsXoa": 1,
+      "created_at": "2026-10-27 15:32:58",
+      "IsXoa": 0,
       "role": "student",
       "tenant_id": null,
       "parent_code": null,
-      "password_hash": "pbkdf2:sha256:100000$e77bf832488e55f371be36f36c5dd954$36921a13c0cd4398b93ded03bf8a11d52fa29d87b8e1b5f2b1b0245d5e653e73",
+      "password_hash": null,
       "status": "active",
       "teacher_type": "institutional",
       "max_classes": 3,
@@ -749,6 +749,71 @@
       "date": "2026-10-21",
       "IsXoa": 0,
       "audio_url": "/uploads/recordings/rec_1025_1792540717_547.wav"
+    },
+    {
+      "id": 117,
+      "user_id": 1025,
+      "topic": "Practice makes perfect!",
+      "transcribed": "You will be able to hear my recording again. After that, Thank you.",
+      "score": 1.0,
+      "breakdown_json": "{\"Pronunciation\": 1.0, \"Fluency\": 1.0, \"Grammar\": 2.0, \"Vocabulary\": 2.0, \"Communication\": 1.2, \"Total\": 7.2, \"Confidence\": 79.0, \"RawConfidence\": 79.0, \"WordCount\": 13, \"SpeechRate\": 0.42, \"SpeedCategory\": \"very_slow\", \"IsFluentSpeaker\": false, \"SpeakerLevel\": \"beginner\", \"DetectedWarnings\": []}",
+      "feedback": "ĐÁNH GIÁ CHI TIẾT KỸ NĂNG:\n\n• Trôi chảy & Diễn đạt:\n  Cố gắng lên! Em nên luyện tập nói các câu dài hơn một chút nhé.\n\n• Từ vựng:\n  Rất tốt! Em đã sử dụng từ vựng đa dạng và chính xác.\n\n• Ngữ pháp:\n  Chúc mừng! Cấu trúc câu ngữ pháp của em hoàn toàn chính xác.\n\n• Phát âm:\n  Hãy luyện tập thêm! Hãy phát âm chậm rãi và tròn vành rõ chữ hơn.\n\n• Giao tiếp:\n  Hãy cố gắng mở rộng thêm ý: Nói chi tiết hơn vì sao, khi nào hoặc như thế nào.\n\nLỜI KHUYÊN ĐỂ TIẾN BỘ:\n\nTiến bộ rất tốt! Để nâng cao điểm số:\n  + Thử nói dài hơn (mục tiêu trên 25 từ)\n  + Dùng thêm từ nối như: 'and', 'but', 'because'\n\nHãy nhớ rằng: Càng luyện tập nhiều, em sẽ nói càng hay! Cố lên nhé!",
+      "timestamp": "2026-10-22 08:22:14",
+      "date": "2026-10-22",
+      "IsXoa": 0,
+      "audio_url": "/uploads/recordings/rec_1025_1792632134_751.wav"
+    },
+    {
+      "id": 118,
+      "user_id": 1025,
+      "topic": "Practice makes perfect!",
+      "transcribed": "Practice making perfect.",
+      "score": 6.7,
+      "breakdown_json": "{\"Pronunciation\": 1.0, \"Fluency\": 0.8, \"Grammar\": 2.0, \"Vocabulary\": 2.0, \"Communication\": 0.7, \"Total\": 6.5, \"Confidence\": 97.9, \"RawConfidence\": 97.9, \"WordCount\": 3, \"SpeechRate\": 0.41, \"SpeedCategory\": \"very_slow\", \"IsFluentSpeaker\": false, \"SpeakerLevel\": \"beginner\", \"DetectedWarnings\": []}",
+      "feedback": "ĐÁNH GIÁ CHI TIẾT KỸ NĂNG:\n\n• Trôi chảy & Diễn đạt:\n  Hãy luyện tập thêm! Hãy cố gắng nói trọn vẹn cả câu thay vì ngắt quãng nhiều.\n\n• Từ vựng:\n  Rất tốt! Em đã sử dụng từ vựng đa dạng và chính xác.\n\n• Ngữ pháp:\n  Chúc mừng! Cấu trúc câu ngữ pháp của em hoàn toàn chính xác.\n\n• Phát âm:\n  Hãy luyện tập thêm! Hãy phát âm chậm rãi và tròn vành rõ chữ hơn.\n\n• Giao tiếp:\n  Hãy cố gắng mở rộng thêm ý: Nói chi tiết hơn vì sao, khi nào hoặc như thế nào.\n\nLỜI KHUYÊN ĐỂ TIẾN BỘ:\n\nEm đang làm rất tốt! Lần tới:\n  + Cố gắng nói ít nhất 15-20 từ\n  + Hãy tự tin nói to, rõ ràng và đừng sợ sai sót nhé!\n\nHãy nhớ rằng: Càng luyện tập nhiều, em sẽ nói càng hay! Cố lên nhé!",
+      "timestamp": "2026-10-22 09:12:57",
+      "date": "2026-10-22",
+      "IsXoa": 0,
+      "audio_url": "/uploads/recordings/rec_1025_1792635177_397.wav"
+    },
+    {
+      "id": 119,
+      "user_id": 1025,
+      "topic": "I really love learning English!",
+      "transcribed": "I really love learning English.",
+      "score": 10.0,
+      "breakdown_json": "{\"Pronunciation\": 1.0, \"Fluency\": 0.8, \"Grammar\": 2.0, \"Vocabulary\": 2.0, \"Communication\": 0.9, \"Total\": 6.7, \"Confidence\": 97.2, \"RawConfidence\": 97.2, \"WordCount\": 5, \"SpeechRate\": 1.85, \"SpeedCategory\": \"normal\", \"IsFluentSpeaker\": false, \"SpeakerLevel\": \"beginner\", \"DetectedWarnings\": []}",
+      "feedback": "ĐÁNH GIÁ CHI TIẾT KỸ NĂNG:\n\n• Trôi chảy & Diễn đạt:\n  Hãy luyện tập thêm! Hãy cố gắng nói trọn vẹn cả câu thay vì ngắt quãng nhiều.\n\n• Từ vựng:\n  Rất tốt! Em đã sử dụng từ vựng đa dạng và chính xác.\n\n• Ngữ pháp:\n  Chúc mừng! Cấu trúc câu ngữ pháp của em hoàn toàn chính xác.\n\n• Phát âm:\n  Hãy luyện tập thêm! Hãy phát âm chậm rãi và tròn vành rõ chữ hơn.\n\n• Giao tiếp:\n  Hãy cố gắng mở rộng thêm ý: Nói chi tiết hơn vì sao, khi nào hoặc như thế nào.\n\nLỜI KHUYÊN ĐỂ TIẾN BỘ:\n\nEm đang làm rất tốt! Lần tới:\n  + Cố gắng nói ít nhất 15-20 từ\n  + Hãy tự tin nói to, rõ ràng và đừng sợ sai sót nhé!\n\nHãy nhớ rằng: Càng luyện tập nhiều, em sẽ nói càng hay! Cố lên nhé!",
+      "timestamp": "2026-10-22 09:14:21",
+      "date": "2026-10-22",
+      "IsXoa": 0,
+      "audio_url": "/uploads/recordings/rec_1025_1792635261_848.wav"
+    },
+    {
+      "id": 120,
+      "user_id": 1025,
+      "topic": "What is your name?",
+      "transcribed": "My name's Hanh.",
+      "score": 9.4,
+      "breakdown_json": "{\"Pronunciation\": 1.0, \"Fluency\": 0.8, \"Grammar\": 2.0, \"Vocabulary\": 2.0, \"Communication\": 0.9, \"Total\": 6.7, \"Confidence\": 83.2, \"RawConfidence\": 83.2, \"WordCount\": 3, \"SpeechRate\": 1.35, \"SpeedCategory\": \"slow\", \"IsFluentSpeaker\": false, \"SpeakerLevel\": \"beginner\", \"DetectedWarnings\": []}",
+      "feedback": "ĐÁNH GIÁ CHI TIẾT KỸ NĂNG:\n\n• Trôi chảy & Diễn đạt:\n  Hãy luyện tập thêm! Hãy cố gắng nói trọn vẹn cả câu thay vì ngắt quãng nhiều.\n\n• Từ vựng:\n  Rất tốt! Em đã sử dụng từ vựng đa dạng và chính xác.\n\n• Ngữ pháp:\n  Chúc mừng! Cấu trúc câu ngữ pháp của em hoàn toàn chính xác.\n\n• Phát âm:\n  Hãy luyện tập thêm! Hãy phát âm chậm rãi và tròn vành rõ chữ hơn.\n\n• Giao tiếp:\n  Hãy cố gắng mở rộng thêm ý: Nói chi tiết hơn vì sao, khi nào hoặc như thế nào.\n\nLỜI KHUYÊN ĐỂ TIẾN BỘ:\n\nEm đang làm rất tốt! Lần tới:\n  + Cố gắng nói ít nhất 15-20 từ\n  + Hãy tự tin nói to, rõ ràng và đừng sợ sai sót nhé!\n\nHãy nhớ rằng: Càng luyện tập nhiều, em sẽ nói càng hay! Cố lên nhé!",
+      "timestamp": "2026-10-22 09:15:22",
+      "date": "2026-10-22",
+      "IsXoa": 0,
+      "audio_url": "/uploads/recordings/rec_1025_1792635322_543.wav"
+    },
+    {
+      "id": 121,
+      "user_id": 1025,
+      "topic": "Hello, my name is Nam.",
+      "transcribed": "Hello, my name is Nam.",
+      "score": 10.0,
+      "breakdown_json": "{\"Pronunciation\": 1.0, \"Fluency\": 0.8, \"Grammar\": 2.0, \"Vocabulary\": 2.0, \"Communication\": 0.9, \"Total\": 6.7, \"Confidence\": 99.6, \"RawConfidence\": 99.6, \"WordCount\": 5, \"SpeechRate\": 1.74, \"SpeedCategory\": \"normal\", \"IsFluentSpeaker\": false, \"SpeakerLevel\": \"beginner\", \"DetectedWarnings\": []}",
+      "feedback": "ĐÁNH GIÁ CHI TIẾT KỸ NĂNG:\n\n• Trôi chảy & Diễn đạt:\n  Hãy luyện tập thêm! Hãy cố gắng nói trọn vẹn cả câu thay vì ngắt quãng nhiều.\n\n• Từ vựng:\n  Rất tốt! Em đã sử dụng từ vựng đa dạng và chính xác.\n\n• Ngữ pháp:\n  Chúc mừng! Cấu trúc câu ngữ pháp của em hoàn toàn chính xác.\n\n• Phát âm:\n  Hãy luyện tập thêm! Hãy phát âm chậm rãi và tròn vành rõ chữ hơn.\n\n• Giao tiếp:\n  Hãy cố gắng mở rộng thêm ý: Nói chi tiết hơn vì sao, khi nào hoặc như thế nào.\n\nLỜI KHUYÊN ĐỂ TIẾN BỘ:\n\nEm đang làm rất tốt! Lần tới:\n  + Cố gắng nói ít nhất 15-20 từ\n  + Hãy tự tin nói to, rõ ràng và đừng sợ sai sót nhé!\n\nHãy nhớ rằng: Càng luyện tập nhiều, em sẽ nói càng hay! Cố lên nhé!",
+      "timestamp": "2026-10-22 09:16:26",
+      "date": "2026-10-22",
+      "IsXoa": 0,
+      "audio_url": "/uploads/recordings/rec_1025_1792635386_760.wav"
     }
   ],
   "user_settings": [],
@@ -861,6 +926,36 @@
       "meaning": "Từ cần luyện tập lại",
       "error_count": 1,
       "created_at": "2026-10-20 23:53:17",
+      "IsXoa": 0
+    },
+    {
+      "id": 58,
+      "user_id": 1025,
+      "word": "Practice",
+      "ipa": "/ˈpræktɪs/",
+      "meaning": "Từ cần luyện tập lại",
+      "error_count": 1,
+      "created_at": "2026-10-22 01:22:14",
+      "IsXoa": 0
+    },
+    {
+      "id": 59,
+      "user_id": 1025,
+      "word": "makes",
+      "ipa": "/meɪks/",
+      "meaning": "Từ cần luyện tập lại",
+      "error_count": 2,
+      "created_at": "2026-10-22 01:22:14",
+      "IsXoa": 0
+    },
+    {
+      "id": 60,
+      "user_id": 1025,
+      "word": "perfect",
+      "ipa": "/ˈpərˌfɪkt/",
+      "meaning": "Từ cần luyện tập lại",
+      "error_count": 1,
+      "created_at": "2026-10-22 01:22:14",
       "IsXoa": 0
     }
   ],
@@ -1217,6 +1312,17 @@
       "IsXoa": 0,
       "tenant_id": "1",
       "is_archived": 0
+    },
+    {
+      "id": 68,
+      "teacher_id": 7,
+      "name": "class 5a",
+      "grade_level": "Elementary (Grades 1 - 5)",
+      "join_code": "CLS-586-57",
+      "created_at": "2026-10-22 02:17:37",
+      "IsXoa": 0,
+      "tenant_id": "1",
+      "is_archived": 0
     }
   ],
   "class_enrollments": [
@@ -1434,14 +1540,6 @@
       "student_id": 1009,
       "joined_at": "2026-10-20 13:47:55",
       "IsXoa": 1,
-      "tenant_id": "1"
-    },
-    {
-      "id": 110,
-      "class_id": 67,
-      "student_id": 1009,
-      "joined_at": "2026-10-20 13:52:25",
-      "IsXoa": 0,
       "tenant_id": "1"
     }
   ],
@@ -6655,6 +6753,56 @@
       "tenant_id": null,
       "details": "Admin authenticated successfully",
       "created_at": "2026-10-21 05:12:05"
+    },
+    {
+      "id": 362,
+      "user_id": 7,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "7",
+      "tenant_id": "1",
+      "details": "User Educator Lead (teacher) logged in",
+      "created_at": "2026-10-22 02:03:59"
+    },
+    {
+      "id": 363,
+      "user_id": 7,
+      "action": "CREATE",
+      "target_type": "classroom",
+      "target_id": "68",
+      "tenant_id": "1",
+      "details": "Created classroom class 5a",
+      "created_at": "2026-10-22 02:17:37"
+    },
+    {
+      "id": 364,
+      "user_id": 7,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "7",
+      "tenant_id": "1",
+      "details": "User Educator Lead (teacher) logged in",
+      "created_at": "2026-10-22 02:43:09"
+    },
+    {
+      "id": 365,
+      "user_id": 7,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "7",
+      "tenant_id": "1",
+      "details": "User Educator Lead (teacher) logged in",
+      "created_at": "2026-10-24 07:55:33"
+    },
+    {
+      "id": 366,
+      "user_id": 5,
+      "action": "LOGIN",
+      "target_type": "session",
+      "target_id": "5",
+      "tenant_id": null,
+      "details": "Admin authenticated successfully",
+      "created_at": "2026-10-28 04:05:01"
     }
   ],
   "system_configs": []
