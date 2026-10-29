@@ -4378,11 +4378,16 @@ CRITICAL PEDAGOGICAL & GRAMMAR RULES:
 Supported types and format example:
 - "listen_and_circle": {{"id": "ex_1", "type": "listen_and_circle", "instruction": "Listen to the audio and circle the correct word or phrase.", "audio_text": "sentence", "options": ["opt1", "opt2", "opt3"], "correct_answer": "opt1", "accent": "en-GB", "points": 1}}
 - "listen_and_tick": {{"id": "ex_2", "type": "listen_and_tick", "instruction": "Listen and tick the item you hear.", "audio_text": "sentence", "options": ["opt1", "opt2"], "correct_answer": "opt1", "accent": "en-GB", "points": 1}}
-- "listen_and_tick_or_cross": {{"id": "ex_3", "type": "listen_and_tick_or_cross", "instruction": "Listen and choose Tick (✓) if correct or Cross (✗) if false.", "audio_text": "sentence", "question_text": "claim", "correct_answer": "tick", "accent": "en-GB", "points": 1}}
-- "read_and_fill_in_the_blank": {{"id": "ex_4", "type": "read_and_fill_in_the_blank", "instruction": "Read and fill in the missing word from the word bank.", "question_text": "sentence with _______", "options": ["opt1", "opt2", "opt3"], "correct_answer": "opt1", "points": 1}}
-- "write_the_missing_word": {{"id": "ex_5", "type": "write_the_missing_word", "instruction": "Spell the missing target vocabulary word.", "question_text": "Target: f _ x   m _   b _ _ e", "hint": "target", "correct_answer": "target", "points": 1}}
-- "unscramble_words": {{"id": "ex_6", "type": "unscramble_words", "instruction": "Put the words in the correct order to make a complete sentence.", "options": ["words", "shuffled"], "correct_answer": "Natural sentence.", "points": 1}}
-- "answer_the_question": {{"id": "ex_7", "type": "answer_the_question", "instruction": "Read the question and select the best answer.", "question_text": "question?", "options": ["opt1", "opt2"], "correct_answer": "opt1", "points": 1}}
+- "listen_and_tick_or_cross": {{"id": "ex_3", "type": "listen_and_tick_or_cross", "instruction": "Listen and choose Tick (True) or Cross (False).", "audio_text": "sentence", "question_text": "claim", "correct_answer": "tick", "accent": "en-GB", "points": 1}}
+- "listen_and_match": {{"id": "ex_4", "type": "listen_and_match", "instruction": "Listen to each sound clip and match with the correct item.", "audio_text": "Clip A: sentence A. Clip B: sentence B.", "pairs": {{"Clip A": "opt1", "Clip B": "opt2"}}, "audio_prompts": {{"Clip A": "sentence A", "Clip B": "sentence B"}}, "correct_answer": {{"Clip A": "opt1", "Clip B": "opt2"}}, "accent": "en-GB", "points": 2}}
+- "listen_and_number": {{"id": "ex_5", "type": "listen_and_number", "instruction": "Listen and number the items in the order you hear them.", "audio_text": "Number 1: opt1. Number 2: opt2. Number 3: opt3.", "options": ["opt1", "opt2", "opt3"], "correct_answer": ["opt1", "opt2", "opt3"], "accent": "en-GB", "points": 1}}
+- "read_and_fill_in_the_blank": {{"id": "ex_6", "type": "read_and_fill_in_the_blank", "instruction": "Read and fill in the missing word from the word bank.", "question_text": "sentence with _______", "options": ["opt1", "opt2", "opt3"], "correct_answer": "opt1", "points": 1}}
+- "read_and_circle": {{"id": "ex_7", "type": "read_and_circle", "instruction": "Read and choose the correct word.", "question_text": "Which phrase matches this task?", "options": ["opt1", "opt2", "opt3"], "correct_answer": "opt1", "points": 1}}
+- "read_and_match": {{"id": "ex_8", "type": "read_and_match", "instruction": "Read and match each item with its clue.", "pairs": {{"item1": "clue1", "item2": "clue2"}}, "correct_answer": {{"item1": "clue1", "item2": "clue2"}}, "points": 2}}
+- "read_and_number": {{"id": "ex_9", "type": "read_and_number", "instruction": "Read the sentences and arrange them in the correct sequence.", "options": ["First...", "Next...", "Finally..."], "correct_answer": ["First...", "Next...", "Finally..."], "points": 1}}
+- "write_the_missing_word": {{"id": "ex_10", "type": "write_the_missing_word", "instruction": "Spell the missing target vocabulary word.", "question_text": "Target: f _ x   m _   b _ _ e", "hint": "target", "correct_answer": "target", "points": 1}}
+- "unscramble_words": {{"id": "ex_11", "type": "unscramble_words", "instruction": "Put the words in the correct order to make a complete sentence.", "options": ["words", "shuffled"], "correct_answer": "Natural sentence.", "points": 1}}
+- "answer_the_question": {{"id": "ex_12", "type": "answer_the_question", "instruction": "Read the question and select the best answer.", "question_text": "question?", "options": ["opt1", "opt2", "opt3"], "correct_answer": "opt1", "points": 1}}
 
 Return ONLY a valid JSON object matching:
 {{
@@ -4414,6 +4419,10 @@ Return ONLY a valid JSON object matching:
                                         ex["accent"] = "en-GB"
                                     if ex.get("type") == "write_the_missing_word" and ex.get("correct_answer"):
                                         ex["question_text"] = f"Target word: {mask_target_word(ex['correct_answer'])}"
+                                    if ex.get("type") == "listen_and_match" and not ex.get("audio_text"):
+                                        prompts = ex.get("audio_prompts") or ex.get("pairs") or {}
+                                        if isinstance(prompts, dict) and prompts:
+                                            ex["audio_text"] = ". ".join([f"{k}: {v}" for k, v in prompts.items()])
                                     idx += 1
                                 return {
                                     "success": True,
@@ -4481,10 +4490,12 @@ Return ONLY a valid JSON object matching:
             v_second = v_others[0] if v_others else ("routine" if is_act else "item")
             prompt_a = f"I need to {v_main}." if is_act else f"This is a {v_main}."
             prompt_b = f"I need to {v_second}." if is_action_phrase(v_second) else f"This is a {v_second}."
+            audio_text = f"Clip A: {prompt_a}. Clip B: {prompt_b}."
             fallback_exercises.append({
                 "id": f"ex_{f_idx}",
                 "type": "listen_and_match",
                 "instruction": "Listen to each sound clip and match with the correct item.",
+                "audio_text": audio_text,
                 "pairs": {"Clip A": v_main, "Clip B": v_second},
                 "audio_prompts": {"Clip A": prompt_a, "Clip B": prompt_b},
                 "correct_answer": {"Clip A": v_main, "Clip B": v_second},

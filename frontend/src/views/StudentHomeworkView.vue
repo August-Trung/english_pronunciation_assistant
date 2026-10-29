@@ -276,8 +276,8 @@
                   {{ detail.question_text }}
                 </div>
                 <div class="text-caption mt-1 d-flex flex-column ga-0.5">
-                  <div>Your Answer: <strong :class="detail.is_correct ? 'text-success' : 'text-error'">{{ Array.isArray(detail.student_answer) ? detail.student_answer.join(' ') : (detail.student_answer || 'No answer') }}</strong></div>
-                  <div v-if="!detail.is_correct" class="text-grey-darken-2">Correct Key: <strong class="text-success">{{ Array.isArray(detail.correct_answer) ? detail.correct_answer.join(' ') : detail.correct_answer }}</strong></div>
+                  <div>Your Answer: <strong :class="detail.is_correct ? 'text-success' : 'text-error'">{{ formatStudentAnswer(detail.student_answer) }}</strong></div>
+                  <div v-if="!detail.is_correct" class="text-grey-darken-2">Correct Key: <strong class="text-success">{{ formatStudentAnswer(detail.correct_answer) }}</strong></div>
                 </div>
               </div>
             </div>
@@ -314,7 +314,7 @@
                     size="small"
                     prepend-icon="mdi-volume-high"
                     class="text-none font-weight-bold"
-                    @click="playWorksheetAudio(ex.audio_text || ex.question_text)"
+                    @click="playWorksheetAudio(getExerciseAudioText(ex))"
                   >
                     Play Audio Clip (UK)
                   </v-btn>
@@ -410,7 +410,97 @@
                 />
               </div>
 
-              <!-- Interactive Format 4: Options Picker (Circle, Tick, Multiple Choice) -->
+              <!-- Interactive Format 4: Match Pairs (listen_and_match & read_and_match) -->
+              <div v-else-if="ex.type === 'listen_and_match' || ex.type === 'read_and_match' || ex.pairs || (ex.correct_answer && typeof ex.correct_answer === 'object' && !Array.isArray(ex.correct_answer))" class="mt-2">
+                <div class="text-caption font-weight-bold text-grey-darken-3 mb-2">
+                  Match each item on the left with the correct option on the right:
+                </div>
+                <div class="d-flex flex-column ga-2">
+                  <div
+                    v-for="(val, key) in (ex.pairs || ex.correct_answer || ex.audio_prompts || {})"
+                    :key="key"
+                    class="pa-2 rounded bg-grey-lighten-5 border d-flex align-center justify-space-between flex-wrap ga-2"
+                  >
+                    <div class="d-flex align-center ga-2">
+                      <v-chip size="small" color="primary" variant="flat" class="font-weight-bold">
+                        {{ key }}
+                      </v-chip>
+                      <v-btn
+                        v-if="ex.audio_prompts && ex.audio_prompts[key]"
+                        size="x-small"
+                        color="indigo"
+                        variant="tonal"
+                        prepend-icon="mdi-volume-high"
+                        class="text-none font-weight-bold"
+                        @click="playWorksheetAudio(ex.audio_prompts[key])"
+                      >
+                        Listen
+                      </v-btn>
+                      <span v-else-if="ex.type === 'read_and_match'" class="text-body-2 font-weight-medium text-grey-darken-4">
+                        {{ key }}
+                      </span>
+                    </div>
+
+                    <div style="min-width: 220px; max-width: 340px;" class="flex-grow-1">
+                      <v-select
+                        :model-value="(getWorksheetAnswer(asg.assignment_id, ex.id) || {})[key]"
+                        :items="getMatchingOptions(ex)"
+                        placeholder="Select matching item..."
+                        density="compact"
+                        variant="outlined"
+                        hide-details
+                        bg-color="white"
+                        @update:model-value="selVal => setWorksheetMatchAnswer(asg.assignment_id, ex.id, key, selVal)"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Interactive Format 5: Ordering / Numbering (listen_and_number & read_and_number) -->
+              <div v-else-if="ex.type === 'listen_and_number' || ex.type === 'read_and_number'" class="mt-1">
+                <div class="pa-2 bg-grey-lighten-4 rounded border mb-2 d-flex align-center justify-space-between flex-wrap ga-2">
+                  <div>
+                    <span class="text-caption font-weight-bold text-grey-darken-2 mr-2">Your Order:</span>
+                    <span v-if="(getWorksheetAnswer(asg.assignment_id, ex.id) || []).length" class="text-body-2 font-weight-bold text-primary">
+                      <span v-for="(item, idx) in getWorksheetAnswer(asg.assignment_id, ex.id)" :key="idx" class="mr-2">
+                        <v-chip size="x-small" color="primary" variant="flat" class="mr-1 font-weight-bold">#{{ idx + 1 }}</v-chip>
+                        {{ item }}
+                      </span>
+                    </span>
+                    <span v-else class="text-caption font-italic text-grey">
+                      (Tap items below in the order you hear/read them)
+                    </span>
+                  </div>
+                  <v-btn
+                    size="x-small"
+                    color="grey"
+                    variant="text"
+                    :disabled="!(getWorksheetAnswer(asg.assignment_id, ex.id) || []).length"
+                    @click="setWorksheetAnswer(asg.assignment_id, ex.id, [])"
+                  >
+                    Reset Order
+                  </v-btn>
+                </div>
+
+                <div class="d-flex flex-wrap ga-2">
+                  <v-btn
+                    v-for="(opt, oIdx) in (ex.options || [])"
+                    :key="oIdx"
+                    size="small"
+                    :color="(getWorksheetAnswer(asg.assignment_id, ex.id) || []).includes(opt) ? 'indigo-darken-3' : 'grey-darken-3'"
+                    :variant="(getWorksheetAnswer(asg.assignment_id, ex.id) || []).includes(opt) ? 'tonal' : 'outlined'"
+                    class="text-none font-weight-bold"
+                    :disabled="(getWorksheetAnswer(asg.assignment_id, ex.id) || []).includes(opt)"
+                    @click="toggleNumberToken(asg.assignment_id, ex.id, opt)"
+                  >
+                    <v-icon start size="small">mdi-numeric</v-icon>
+                    {{ opt }}
+                  </v-btn>
+                </div>
+              </div>
+
+              <!-- Interactive Format 6: Options Picker (Circle, Tick, Multiple Choice) -->
               <div v-else-if="ex.options && ex.options.length" class="d-flex flex-wrap ga-2 mt-1">
                 <v-btn
                   v-for="(opt, oIdx) in ex.options"
@@ -771,6 +861,60 @@ const toggleUnscrambleToken = (asgId, exId, token) => {
 const resetUnscramble = (asgId, exId) => {
   const key = `${asgId}_${exId}`
   worksheetAnswers.value[key] = []
+}
+
+const getExerciseAudioText = (ex) => {
+  if (!ex) return ''
+  if (ex.audio_text) return ex.audio_text
+  if (ex.audio_prompts && typeof ex.audio_prompts === 'object') {
+    return Object.entries(ex.audio_prompts).map(([k, v]) => `${k}. ${v}`).join('. ')
+  }
+  if (ex.pairs && typeof ex.pairs === 'object') {
+    return Object.entries(ex.pairs).map(([k, v]) => `${k}. ${v}`).join('. ')
+  }
+  if (ex.question_text) return ex.question_text
+  if (ex.correct_answer && typeof ex.correct_answer === 'string') return ex.correct_answer
+  return ''
+}
+
+const getMatchingOptions = (ex) => {
+  if (!ex) return []
+  if (ex.options && Array.isArray(ex.options) && ex.options.length) {
+    return ex.options
+  }
+  const source = ex.correct_answer || ex.pairs || {}
+  if (typeof source === 'object' && !Array.isArray(source)) {
+    return Array.from(new Set(Object.values(source).filter(Boolean)))
+  }
+  return []
+}
+
+const setWorksheetMatchAnswer = (asgId, exId, itemKey, selVal) => {
+  const mapKey = `${asgId}_${exId}`
+  const current = worksheetAnswers.value[mapKey] && typeof worksheetAnswers.value[mapKey] === 'object' && !Array.isArray(worksheetAnswers.value[mapKey])
+    ? { ...worksheetAnswers.value[mapKey] }
+    : {}
+  current[itemKey] = selVal
+  worksheetAnswers.value[mapKey] = current
+}
+
+const toggleNumberToken = (asgId, exId, item) => {
+  const mapKey = `${asgId}_${exId}`
+  const current = worksheetAnswers.value[mapKey] || []
+  const list = Array.isArray(current) ? [...current] : []
+  if (!list.includes(item)) {
+    list.push(item)
+  }
+  worksheetAnswers.value[mapKey] = list
+}
+
+const formatStudentAnswer = (ans) => {
+  if (ans === null || ans === undefined || ans === '') return 'No answer'
+  if (Array.isArray(ans)) return ans.join(' -> ')
+  if (typeof ans === 'object') {
+    return Object.entries(ans).map(([k, v]) => `${k}: ${v}`).join(', ')
+  }
+  return String(ans)
 }
 
 const playWorksheetAudio = (text) => {

@@ -1415,7 +1415,7 @@
                       variant="tonal"
                       class="text-none font-weight-bold"
                       prepend-icon="mdi-volume-high"
-                      @click="playExerciseAudio(ex.audio_text || ex.question_text)"
+                      @click="playExerciseAudio(ex)"
                     >
                       Listen (en-GB)
                     </v-btn>
@@ -2069,7 +2069,7 @@
                       variant="tonal"
                       class="text-none font-weight-bold"
                       prepend-icon="mdi-volume-high"
-                      @click="playExerciseAudio(ex.audio_text || ex.question_text)"
+                      @click="playExerciseAudio(ex)"
                     >
                       Listen (en-GB)
                     </v-btn>
@@ -2905,7 +2905,17 @@ const formatExerciseTypeName = (type) => {
   return map[type] || type
 }
 
-const playExerciseAudio = (text) => {
+const playExerciseAudio = (target) => {
+  if (!target) return
+  if (typeof target === 'string') {
+    speakBritishText(target, 0.9)
+    return
+  }
+  const text = target.audio_text ||
+    (target.audio_prompts && typeof target.audio_prompts === 'object' ? Object.entries(target.audio_prompts).map(([k, v]) => `${k}. ${v}`).join('. ') : '') ||
+    (target.pairs && typeof target.pairs === 'object' ? Object.entries(target.pairs).map(([k, v]) => `${k}. ${v}`).join('. ') : '') ||
+    target.question_text ||
+    (typeof target.correct_answer === 'string' ? target.correct_answer : '')
   if (text) {
     speakBritishText(text, 0.9)
   }
