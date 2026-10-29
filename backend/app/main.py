@@ -4230,6 +4230,44 @@ class GenerateWorksheetRequest(BaseModel):
     accent: Optional[str] = "en-GB"
     title: Optional[str] = ""
 
+ACTION_KEYWORDS = {
+    "clean", "cook", "feed", "fix", "go", "make", "practice", "take", "wash", "water",
+    "play", "read", "write", "study", "run", "swim", "do", "help", "visit", "listen",
+    "brush", "tidy", "walk", "sing", "dance", "draw", "paint", "drive", "ride", "eat",
+    "drink", "sleep", "wake", "learn", "speak", "talk", "watch", "buy", "sell", "climb"
+}
+
+def is_action_phrase(vocab: str) -> bool:
+    """Determine if a vocabulary item is an action / verb phrase."""
+    words = vocab.strip().lower().split()
+    if not words:
+        return False
+    return any(w in ACTION_KEYWORDS for w in words)
+
+def mask_target_word(phrase: str) -> str:
+    """Mask a word or multi-word phrase with clearly visible gaps between separate words."""
+    tokens = phrase.strip().split()
+    masked_tokens = []
+    for token in tokens:
+        clean = token
+        punct = ""
+        if clean and not clean[-1].isalnum():
+            punct = clean[-1]
+            clean = clean[:-1]
+        
+        if len(clean) <= 1:
+            masked = clean
+        elif len(clean) == 2:
+            masked = f"{clean[0]} _"
+        elif len(clean) == 3:
+            masked = f"{clean[0]} _ {clean[-1]}"
+        else:
+            middle = " ".join(["_"] * (len(clean) - 2))
+            masked = f"{clean[0]} {middle} {clean[-1]}"
+        masked_tokens.append(masked + punct)
+    # Use wide gap '   ' (3 spaces) so distinct words are immediately visible
+    return "   ".join(masked_tokens)
+
 def generate_ai_worksheet(target_vocabulary: List[str], exercise_types: List[str], grade_level: str = "Grade 3", accent: str = "en-GB", custom_title: str = "") -> dict:
     clean_vocab = [v.strip() for v in target_vocabulary if v.strip()]
     if not clean_vocab:
@@ -4239,7 +4277,7 @@ def generate_ai_worksheet(target_vocabulary: List[str], exercise_types: List[str
     if not clean_types:
         clean_types = ["listen_and_circle", "read_and_fill_in_the_blank", "unscramble_words"]
 
-    # Try Groq AI Generation
+    # Try Groq AI Generation with models
     groq_keys = get_groq_api_keys()
     exercises = []
     worksheet_title = custom_title.strip() or f"Vocabulary Practice: {', '.join(clean_vocab[:3]).title()}"
@@ -4247,58 +4285,75 @@ def generate_ai_worksheet(target_vocabulary: List[str], exercise_types: List[str
     if groq_keys:
         for key in groq_keys:
             try:
-                system_prompt = f"""You are a British English curriculum specialist creating an interactive primary school worksheet for {grade_level} pupils.
+                system_prompt = f"""You are an expert British English curriculum specialist creating an interactive primary school worksheet for {grade_level} pupils.
 Target vocabulary: {json.dumps(clean_vocab)}
 Requested exercise types: {json.dumps(clean_types)}
 Language: British English (en-GB spelling and phrasing e.g., 'colour', 'favourite', 'have got').
 
 Create exactly 1 or 2 high-quality exercises for EACH requested exercise type in JSON format.
-Supported types and their required fields:
-1. "listen_and_number": {{"id": "ex_1", "type": "listen_and_number", "instruction": "Listen and number the words in the order you hear them.", "audio_text": "Number 1: apple. Number 2: banana.", "options": ["apple", "banana"], "correct_answer": ["apple", "banana"], "accent": "en-GB", "points": 1}}
-2. "listen_and_circle": {{"id": "ex_2", "type": "listen_and_circle", "instruction": "Listen to the audio and circle the correct word.", "audio_text": "I would like a yellow banana please.", "options": ["apple", "banana", "orange"], "correct_answer": "banana", "accent": "en-GB", "points": 1}}
-3. "listen_and_tick": {{"id": "ex_3", "type": "listen_and_tick", "instruction": "Listen and tick the item you hear.", "audio_text": "Look at the lovely orange.", "options": ["orange", "apple", "grape"], "correct_answer": "orange", "accent": "en-GB", "points": 1}}
-4. "listen_and_match": {{"id": "ex_4", "type": "listen_and_match", "instruction": "Listen to the clips and match each sound with the correct word.", "pairs": {{"Clip A": "apple", "Clip B": "banana"}}, "audio_prompts": {{"Clip A": "Here is a red apple.", "Clip B": "Here is a yellow banana."}}, "correct_answer": {{"Clip A": "apple", "Clip B": "banana"}}, "accent": "en-GB", "points": 2}}
-5. "listen_and_tick_or_cross": {{"id": "ex_5", "type": "listen_and_tick_or_cross", "instruction": "Listen and choose Tick (✓) if correct or Cross (✗) if false.", "audio_text": "The apple is green.", "question_text": "The speaker says the apple is red.", "correct_answer": "cross", "accent": "en-GB", "points": 1}}
-6. "read_and_match": {{"id": "ex_6", "type": "read_and_match", "instruction": "Read and match the words with their meanings or descriptions.", "pairs": {{"apple": "A round red or green fruit", "banana": "A long curved yellow fruit"}}, "correct_answer": {{"apple": "A round red or green fruit", "banana": "A long curved yellow fruit"}}, "points": 2}}
-7. "read_and_fill_in_the_blank": {{"id": "ex_7", "type": "read_and_fill_in_the_blank", "instruction": "Read and fill in the missing word from the word bank.", "question_text": "Monkeys love to eat yellow _______.", "options": ["bananas", "apples", "oranges"], "correct_answer": "bananas", "points": 1}}
-8. "read_and_circle": {{"id": "ex_8", "type": "read_and_circle", "instruction": "Read the question and circle the correct answer.", "question_text": "Which fruit is round and can be red or green?", "options": ["Apple", "Banana", "Grape"], "correct_answer": "Apple", "points": 1}}
-9. "read_and_number": {{"id": "ex_9", "type": "read_and_number", "instruction": "Read the sentences and arrange them in the correct order (1 to 3).", "options": ["First, wash the fruit.", "Next, slice the fruit carefully.", "Finally, enjoy your healthy snack."], "correct_answer": ["First, wash the fruit.", "Next, slice the fruit carefully.", "Finally, enjoy your healthy snack."], "points": 1}}
-10. "write_the_missing_word": {{"id": "ex_10", "type": "write_the_missing_word", "instruction": "Look at the clue and write the missing word.", "question_text": "A sweet yellow fruit that monkeys eat: b_ _ _ _ _", "hint": "banana", "correct_answer": "banana", "points": 1}}
-11. "unscramble_words": {{"id": "ex_11", "type": "unscramble_words", "instruction": "Put the words in the correct order to make a complete sentence.", "options": ["like", "apples.", "I", "eating"], "correct_answer": "I like eating apples.", "points": 1}}
-12. "answer_the_question": {{"id": "ex_12", "type": "answer_the_question", "instruction": "Read the question and select the best answer.", "question_text": "Do you like eating fruit?", "options": ["Yes, I do.", "No, it isn't.", "Yes, they are."], "correct_answer": "Yes, I do.", "points": 1}}
+
+CRITICAL PEDAGOGICAL & GRAMMAR RULES:
+1. PART-OF-SPEECH SENSITIVITY:
+   - Identify whether each target vocabulary item is a VERB / ACTION PHRASE (e.g. 'clean up my bedroom', 'cook', 'feed the dog', 'fix my bike', 'go shopping', 'make my bed', 'practice the piano', 'take out the garbage', 'wash the dishes', 'water the plants') or a NOUN / OBJECT / FOOD / ANIMAL.
+   - For VERBS or ACTION PHRASES:
+     * NEVER use noun-only frames like 'a fresh [verb]', 'a delicious [verb]', 'favourite snack is [verb]', 'I have got a [verb phrase]'.
+     * USE natural action contexts, such as: 'At the weekend, I help my mum to [verb].', 'Can you please [verb]?', 'Every day, I like to [verb].', 'After dinner, we [verb].'
+   - For NOUNS / OBJECTS:
+     * Use appropriate noun frames (e.g. 'This is a red apple.', 'Look at the green ball.').
+2. SPELLING EXERCISES ("write_the_missing_word"):
+   - For multi-word phrases (e.g. 'fix my bike'), mask EACH word separately with wide spaces: 'f _ x   m _   b _ _ e', so pupils clearly see multiple distinct words instead of one giant word.
+3. UNSCRAMBLE SENTENCES ("unscramble_words"):
+   - Ensure the unscrambled sentence is 100% grammatically correct, natural British English (e.g. 'I always help to feed the dog.', NOT 'I have got a feed the dog.').
+4. ALL OPTIONS & DISTRACTORS:
+   - In multiple choice questions, make sure all options are sensible words/phrases of the same grammatical category.
+
+Supported types and format example:
+- "listen_and_circle": {{"id": "ex_1", "type": "listen_and_circle", "instruction": "Listen to the audio and circle the correct word or phrase.", "audio_text": "sentence", "options": ["opt1", "opt2", "opt3"], "correct_answer": "opt1", "accent": "en-GB", "points": 1}}
+- "listen_and_tick": {{"id": "ex_2", "type": "listen_and_tick", "instruction": "Listen and tick the item you hear.", "audio_text": "sentence", "options": ["opt1", "opt2"], "correct_answer": "opt1", "accent": "en-GB", "points": 1}}
+- "listen_and_tick_or_cross": {{"id": "ex_3", "type": "listen_and_tick_or_cross", "instruction": "Listen and choose Tick (✓) if correct or Cross (✗) if false.", "audio_text": "sentence", "question_text": "claim", "correct_answer": "tick", "accent": "en-GB", "points": 1}}
+- "read_and_fill_in_the_blank": {{"id": "ex_4", "type": "read_and_fill_in_the_blank", "instruction": "Read and fill in the missing word from the word bank.", "question_text": "sentence with _______", "options": ["opt1", "opt2", "opt3"], "correct_answer": "opt1", "points": 1}}
+- "write_the_missing_word": {{"id": "ex_5", "type": "write_the_missing_word", "instruction": "Spell the missing target vocabulary word.", "question_text": "Target: f _ x   m _   b _ _ e", "hint": "target", "correct_answer": "target", "points": 1}}
+- "unscramble_words": {{"id": "ex_6", "type": "unscramble_words", "instruction": "Put the words in the correct order to make a complete sentence.", "options": ["words", "shuffled"], "correct_answer": "Natural sentence.", "points": 1}}
+- "answer_the_question": {{"id": "ex_7", "type": "answer_the_question", "instruction": "Read the question and select the best answer.", "question_text": "question?", "options": ["opt1", "opt2"], "correct_answer": "opt1", "points": 1}}
 
 Return ONLY a valid JSON object matching:
 {{
   "title": "{worksheet_title}",
   "exercises": [...]
 }}"""
-                resp = requests.post(
-                    "https://api.groq.com/openai/v1/chat/completions",
-                    headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
-                    json={
-                        "model": "llama-3.3-70b-versatile",
-                        "messages": [{"role": "user", "content": system_prompt}],
-                        "temperature": 0.4,
-                        "response_format": {"type": "json_object"}
-                    },
-                    timeout=10
-                )
-                if resp.status_code == 200:
-                    payload = resp.json()["choices"][0]["message"]["content"]
-                    parsed = json.loads(payload)
-                    if "exercises" in parsed and isinstance(parsed["exercises"], list) and len(parsed["exercises"]) > 0:
-                        # Ensure all exercises have valid id, accent=en-GB if audio
-                        idx = 1
-                        for ex in parsed["exercises"]:
-                            ex["id"] = f"ex_{idx}"
-                            if "audio_text" in ex or ex.get("type", "").startswith("listen_"):
-                                ex["accent"] = "en-GB"
-                            idx += 1
-                        return {
-                            "success": True,
-                            "title": parsed.get("title", worksheet_title),
-                            "exercises": parsed["exercises"]
-                        }
+                models_to_try = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
+                for model_name in models_to_try:
+                    try:
+                        resp = requests.post(
+                            "https://api.groq.com/openai/v1/chat/completions",
+                            headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                            json={
+                                "model": model_name,
+                                "messages": [{"role": "user", "content": system_prompt}],
+                                "temperature": 0.3,
+                                "response_format": {"type": "json_object"}
+                            },
+                            timeout=25
+                        )
+                        if resp.status_code == 200:
+                            payload = resp.json()["choices"][0]["message"]["content"]
+                            parsed = json.loads(payload)
+                            if "exercises" in parsed and isinstance(parsed["exercises"], list) and len(parsed["exercises"]) > 0:
+                                idx = 1
+                                for ex in parsed["exercises"]:
+                                    ex["id"] = f"ex_{idx}"
+                                    if "audio_text" in ex or ex.get("type", "").startswith("listen_"):
+                                        ex["accent"] = "en-GB"
+                                    if ex.get("type") == "write_the_missing_word" and ex.get("correct_answer"):
+                                        ex["question_text"] = f"Target word: {mask_target_word(ex['correct_answer'])}"
+                                    idx += 1
+                                return {
+                                    "success": True,
+                                    "title": parsed.get("title", worksheet_title),
+                                    "exercises": parsed["exercises"]
+                                }
+                    except Exception as model_err:
+                        print(f"Groq model {model_name} failed: {model_err}")
             except Exception as e:
                 print(f"Groq worksheet generation attempt failed: {e}")
 
@@ -4309,60 +4364,75 @@ Return ONLY a valid JSON object matching:
         v_main = clean_vocab[(f_idx - 1) % len(clean_vocab)]
         v_others = [w for w in clean_vocab if w != v_main][:3]
         if not v_others:
-            v_others = ["fruit", "snack"]
+            v_others = ["activity", "routine"] if is_action_phrase(v_main) else ["object", "item"]
+
+        is_act = is_action_phrase(v_main)
 
         if t == "listen_and_circle":
+            audio_text = f"Every afternoon, I like to {v_main} with my family." if is_act else f"Can you see the {v_main} on the table?"
             fallback_exercises.append({
                 "id": f"ex_{f_idx}",
                 "type": "listen_and_circle",
-                "instruction": "Listen to the audio and circle the correct word.",
-                "audio_text": f"Can you find the {v_main} on the table?",
+                "instruction": "Listen to the audio and circle the correct word or phrase.",
+                "audio_text": audio_text,
                 "options": [v_main] + v_others[:2],
                 "correct_answer": v_main,
                 "accent": "en-GB",
                 "points": 1
             })
         elif t == "listen_and_tick":
+            audio_text = f"Can you help me {v_main} please?" if is_act else f"Look at the lovely {v_main}."
             fallback_exercises.append({
                 "id": f"ex_{f_idx}",
                 "type": "listen_and_tick",
-                "instruction": "Listen and tick the word you hear.",
-                "audio_text": f"I have got a fresh {v_main}.",
+                "instruction": "Listen and tick the word or phrase you hear.",
+                "audio_text": audio_text,
                 "options": [v_main] + v_others[:2],
                 "correct_answer": v_main,
                 "accent": "en-GB",
                 "points": 1
             })
         elif t == "listen_and_tick_or_cross":
+            if is_act:
+                audio_text = f"On Saturdays, I always {v_main}."
+                q_text = f"The speaker says they always {v_main} on Saturdays."
+            else:
+                audio_text = f"Here is a wonderful {v_main}."
+                q_text = f"The audio is talking about a {v_main}."
             fallback_exercises.append({
                 "id": f"ex_{f_idx}",
                 "type": "listen_and_tick_or_cross",
                 "instruction": "Listen and choose Tick (✓) if correct or Cross (✗) if false.",
-                "audio_text": f"This is a delicious {v_main}.",
-                "question_text": f"The audio is talking about a {v_main}.",
+                "audio_text": audio_text,
+                "question_text": q_text,
                 "correct_answer": "tick",
                 "accent": "en-GB",
                 "points": 1
             })
         elif t == "listen_and_match":
-            v_second = v_others[0] if v_others else "snack"
+            v_second = v_others[0] if v_others else ("routine" if is_act else "item")
+            prompt_a = f"I need to {v_main}." if is_act else f"This is a {v_main}."
+            prompt_b = f"I need to {v_second}." if is_action_phrase(v_second) else f"This is a {v_second}."
             fallback_exercises.append({
                 "id": f"ex_{f_idx}",
                 "type": "listen_and_match",
-                "instruction": "Listen to each sound clip and match with the correct word.",
+                "instruction": "Listen to each sound clip and match with the correct item.",
                 "pairs": {"Clip A": v_main, "Clip B": v_second},
-                "audio_prompts": {"Clip A": f"This is a {v_main}.", "Clip B": f"This is a {v_second}."},
+                "audio_prompts": {"Clip A": prompt_a, "Clip B": prompt_b},
                 "correct_answer": {"Clip A": v_main, "Clip B": v_second},
                 "accent": "en-GB",
                 "points": 2
             })
         elif t == "listen_and_number":
             seq = [v_main] + v_others[:2]
-            audio_seq = ". ".join([f"Number {i+1}: {w}" for i, w in enumerate(seq)])
+            if is_act:
+                audio_seq = ". ".join([f"Step {i+1}: I {w}" for i, w in enumerate(seq)])
+            else:
+                audio_seq = ". ".join([f"Number {i+1}: {w}" for i, w in enumerate(seq)])
             fallback_exercises.append({
                 "id": f"ex_{f_idx}",
                 "type": "listen_and_number",
-                "instruction": "Listen and number the words in the order you hear them.",
+                "instruction": "Listen and number the items in the order you hear them.",
                 "audio_text": audio_seq,
                 "options": seq,
                 "correct_answer": seq,
@@ -4370,57 +4440,68 @@ Return ONLY a valid JSON object matching:
                 "points": 1
             })
         elif t == "read_and_fill_in_the_blank":
+            q_text = f"After school, I always help my family to _______." if is_act else f"Please look at the _______ carefully."
             fallback_exercises.append({
                 "id": f"ex_{f_idx}",
                 "type": "read_and_fill_in_the_blank",
                 "instruction": "Read and fill in the missing word from the word bank.",
-                "question_text": f"I really like eating a fresh _______ every morning.",
+                "question_text": q_text,
                 "options": [v_main] + v_others[:2],
                 "correct_answer": v_main,
                 "points": 1
             })
         elif t == "read_and_circle":
+            q_text = f"Which phrase matches this daily task: '{v_main}'?" if is_act else f"Which word matches this vocabulary item: '{v_main}'?"
             fallback_exercises.append({
                 "id": f"ex_{f_idx}",
                 "type": "read_and_circle",
                 "instruction": "Read and choose the correct word.",
-                "question_text": f"Which word matches this vocabulary item: '{v_main}'?",
+                "question_text": q_text,
                 "options": [v_main] + v_others[:2],
                 "correct_answer": v_main,
                 "points": 1
             })
         elif t == "read_and_match":
-            v_second = v_others[0] if v_others else "fruit"
+            v_second = v_others[0] if v_others else ("routine" if is_act else "item")
+            clue_a = f"A daily task to {v_main}" if is_act else f"A common {v_main}"
+            clue_b = f"A daily task to {v_second}" if is_action_phrase(v_second) else f"A useful {v_second}"
             fallback_exercises.append({
                 "id": f"ex_{f_idx}",
                 "type": "read_and_match",
-                "instruction": "Read and match each word with its clue.",
-                "pairs": {v_main: f"A common healthy {v_main}", v_second: f"A tasty {v_second}"},
-                "correct_answer": {v_main: f"A common healthy {v_main}", v_second: f"A tasty {v_second}"},
+                "instruction": "Read and match each item with its clue.",
+                "pairs": {v_main: clue_a, v_second: clue_b},
+                "correct_answer": {v_main: clue_a, v_second: clue_b},
                 "points": 2
             })
         elif t == "read_and_number":
+            if is_act:
+                opts = [f"First, remember to {v_main}.", f"Next, do it carefully.", f"Finally, well done!"]
+            else:
+                opts = [f"First, look at the {v_main}.", f"Next, pick up the {v_main}.", f"Finally, place the {v_main} safely."]
             fallback_exercises.append({
                 "id": f"ex_{f_idx}",
                 "type": "read_and_number",
                 "instruction": "Read the sentences and arrange them in the correct sequence.",
-                "options": [f"First, pick up the {v_main}.", f"Next, wash the {v_main}.", f"Finally, enjoy the {v_main}."],
-                "correct_answer": [f"First, pick up the {v_main}.", f"Next, wash the {v_main}.", f"Finally, enjoy the {v_main}."],
+                "options": opts,
+                "correct_answer": opts,
                 "points": 1
             })
         elif t == "write_the_missing_word":
-            masked = v_main[0] + " _ " * (len(v_main) - 2) + v_main[-1] if len(v_main) > 2 else v_main[0] + " _"
             fallback_exercises.append({
                 "id": f"ex_{f_idx}",
                 "type": "write_the_missing_word",
                 "instruction": "Spell the missing target vocabulary word.",
-                "question_text": f"Target word: {masked}",
+                "question_text": f"Target word: {mask_target_word(v_main)}",
                 "hint": v_main,
                 "correct_answer": v_main,
                 "points": 1
             })
         elif t == "unscramble_words":
-            words = f"I have got a {v_main}.".split()
+            if is_act:
+                correct_sent = f"I always help to {v_main}."
+            else:
+                correct_sent = f"This is my favourite {v_main}."
+            words = correct_sent.split()
             shuffled = list(words)
             shuffled.reverse()
             fallback_exercises.append({
@@ -4428,18 +4509,26 @@ Return ONLY a valid JSON object matching:
                 "type": "unscramble_words",
                 "instruction": "Put the words in the correct order to make a complete sentence.",
                 "options": shuffled,
-                "correct_answer": f"I have got a {v_main}.",
+                "correct_answer": correct_sent,
                 "points": 1
             })
         else:
             # answer_the_question
+            if is_act:
+                q_text = "What daily activity do you usually do at home?"
+                ans = f"I usually {v_main}."
+                opts = [ans, "It is ten o'clock.", "They are in the garden."]
+            else:
+                q_text = "What is this item?"
+                ans = f"It is a {v_main}."
+                opts = [ans, "It is cloudy today.", "They are running."]
             fallback_exercises.append({
                 "id": f"ex_{f_idx}",
                 "type": "answer_the_question",
                 "instruction": "Answer the question with the best choice.",
-                "question_text": f"What is your favourite snack?",
-                "options": [f"I like {v_main}.", "It is cloudy today.", "I am ten years old."],
-                "correct_answer": f"I like {v_main}.",
+                "question_text": q_text,
+                "options": opts,
+                "correct_answer": ans,
                 "points": 1
             })
         f_idx += 1

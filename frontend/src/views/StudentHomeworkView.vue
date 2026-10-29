@@ -276,8 +276,8 @@
                   {{ detail.question_text }}
                 </div>
                 <div class="text-caption mt-1 d-flex flex-column ga-0.5">
-                  <div>Your Answer: <strong :class="detail.is_correct ? 'text-success' : 'text-error'">{{ typeof detail.student_answer === 'object' ? JSON.stringify(detail.student_answer) : (detail.student_answer || 'No answer') }}</strong></div>
-                  <div v-if="!detail.is_correct" class="text-grey-darken-2">Correct Key: <strong class="text-success">{{ typeof detail.correct_answer === 'object' ? JSON.stringify(detail.correct_answer) : detail.correct_answer }}</strong></div>
+                  <div>Your Answer: <strong :class="detail.is_correct ? 'text-success' : 'text-error'">{{ Array.isArray(detail.student_answer) ? detail.student_answer.join(' ') : (detail.student_answer || 'No answer') }}</strong></div>
+                  <div v-if="!detail.is_correct" class="text-grey-darken-2">Correct Key: <strong class="text-success">{{ Array.isArray(detail.correct_answer) ? detail.correct_answer.join(' ') : detail.correct_answer }}</strong></div>
                 </div>
               </div>
             </div>
