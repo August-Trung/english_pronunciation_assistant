@@ -994,45 +994,77 @@
       </v-card>
     </v-dialog>
 
-    <!-- Modal: Edit Assignment -->
-    <v-dialog v-model="showEditAssignmentModal" :max-width="editingAsg?.assignment_type === 'picture' ? 1100 : 760">
+    <!-- Modal: Edit Assignment (Full feature parity with Create Assignment) -->
+    <v-dialog v-model="showEditAssignmentModal" :max-width="editAsgType === 'picture' || editAsgType === 'worksheet' ? 1050 : 760">
       <v-card border rounded="lg" class="pa-4 bg-white">
-        <div class="text-subtitle-1 font-weight-black text-primary mb-3 d-flex align-center ga-2">
-          <v-icon color="primary">mdi-pencil</v-icon>
-          <span>Edit Homework Assignment</span>
-          <v-chip v-if="editingAsg?.assignment_type === 'picture'" size="x-small" color="purple" variant="tonal" class="ml-auto font-weight-bold">
-            Describe Picture
-          </v-chip>
+        <div class="d-flex align-center justify-space-between mb-3 border-b pb-2">
+          <div class="text-subtitle-1 font-weight-black text-primary d-flex align-center ga-2">
+            <v-icon color="primary">mdi-pencil</v-icon>
+            <span>Edit Homework Assignment</span>
+          </div>
+          <div class="d-flex align-center ga-2">
+            <v-chip
+              size="small"
+              :color="editAsgType === 'worksheet' ? 'teal-darken-2' : (editAsgType === 'picture' ? 'purple-darken-2' : 'primary')"
+              variant="flat"
+              class="font-weight-bold"
+            >
+              <v-icon start size="x-small">
+                {{ editAsgType === 'worksheet' ? 'mdi-format-list-checks' : (editAsgType === 'picture' ? 'mdi-image-filter-frames' : 'mdi-waveform') }}
+              </v-icon>
+              {{ editAsgType === 'worksheet' ? 'Dynamic Vocab Worksheet' : (editAsgType === 'picture' ? 'Describe Picture' : 'Sentence Reading') }}
+            </v-chip>
+            <v-btn icon="mdi-close" variant="text" size="small" @click="showEditAssignmentModal = false" />
+          </div>
         </div>
 
+        <!-- Format Switcher -->
+        <div class="mb-3">
+          <div class="text-caption font-weight-bold text-grey mb-1">Homework Format:</div>
+          <v-btn-toggle v-model="editAsgType" mandatory color="primary" density="comfortable" class="w-100 border">
+            <v-btn value="sentence" class="flex-grow-1 text-none font-weight-bold" prepend-icon="mdi-waveform">
+              Sentence Reading
+            </v-btn>
+            <v-btn value="picture" class="flex-grow-1 text-none font-weight-bold" prepend-icon="mdi-image-filter-frames">
+              Describe Picture
+            </v-btn>
+            <v-btn value="worksheet" class="flex-grow-1 text-none font-weight-bold" prepend-icon="mdi-format-list-checks">
+              Dynamic Vocab Worksheet
+            </v-btn>
+          </v-btn-toggle>
+        </div>
+
+        <!-- Common: Assignment Title -->
         <v-text-field
           v-model="editAsgTitle"
-          id="tour-asg-title"
           label="Assignment Title:"
+          :placeholder="editAsgType === 'worksheet' ? 'e.g. Unit 4 - Zoo Animals Vocabulary Quiz' : (editAsgType === 'picture' ? 'e.g. A Morning at School' : 'e.g. Unit 3 - Practice Daily Routine Sentence')"
           variant="outlined"
           density="comfortable"
           class="mb-2"
           prepend-inner-icon="mdi-format-title"
         />
 
-        <!-- If Sentence Assignment -->
-        <v-textarea
-          v-if="editingAsg?.assignment_type !== 'picture'"
-          v-model="editAsgSentence"
-          id="tour-asg-sentence-input"
+        <!-- Branch 1: Sentence Reading -->
+        <div v-if="editAsgType === 'sentence'">
+          <v-textarea
+            v-model="editAsgSentence"
             label="Model Reading Sentence:"
-          variant="outlined"
-          density="comfortable"
-          rows="3"
-          class="mb-2"
-          prepend-inner-icon="mdi-subtitles"
-        />
+            :placeholder="isMyHanh ? 'Example: I like cats and dogs.' : 'Example: Learning a new language opens up a world of opportunities.'"
+            variant="outlined"
+            density="comfortable"
+            rows="3"
+            class="mb-2"
+            prepend-inner-icon="mdi-subtitles"
+          />
+        </div>
 
-        <!-- If Picture Speaking Assignment -->
-        <div v-else class="mb-3">
+        <!-- Branch 2: Picture Speaking -->
+        <div v-else-if="editAsgType === 'picture'" class="mb-3">
           <v-text-field
             v-model="editAsgSentence"
             label="Speaking Topic / Task Prompt:"
+            placeholder="e.g. Describe what you see in the classroom"
             variant="outlined"
             density="comfortable"
             class="mb-2"
@@ -1040,23 +1072,53 @@
           />
 
           <!-- Picture & Settings Preview -->
-          <div class="d-flex ga-3 align-center mb-3 pa-2 bg-grey-lighten-5 rounded border">
+          <div class="d-flex ga-3 align-center mb-3 pa-2 bg-grey-lighten-5 rounded border flex-wrap">
             <v-img
               v-if="editAsgImageUrl"
               :src="getMediaUrl(editAsgImageUrl)"
-              height="90"
-              width="140"
+              height="140"
+              width="210"
               cover
               class="rounded border bg-white flex-shrink-0"
             />
-            <div class="flex-grow-1">
+            <div class="flex-grow-1" style="min-width: 250px;">
+              <input
+                ref="teacherEditFileInputRef"
+                type="file"
+                accept="image/*"
+                class="d-none"
+                @change="handleTeacherEditUploadImageChange"
+              />
+              <div class="d-flex ga-2 mb-2 flex-wrap">
+                <v-btn
+                  size="small"
+                  variant="outlined"
+                  color="purple-darken-2"
+                  prepend-icon="mdi-upload"
+                  class="text-none font-weight-bold"
+                  @click="$refs.teacherEditFileInputRef?.click()"
+                >
+                  Upload New Image
+                </v-btn>
+                <v-btn
+                  size="small"
+                  variant="flat"
+                  color="purple-darken-2"
+                  prepend-icon="mdi-sparkles"
+                  class="text-none font-weight-bold"
+                  :loading="isGeneratingEditPicture"
+                  @click="generateAIPictureScenarioForEdit"
+                >
+                  Regenerate with AI
+                </v-btn>
+              </div>
               <v-text-field
                 v-model="editAsgImageUrl"
                 label="Image URL:"
                 variant="outlined"
                 density="compact"
                 hide-details
-                class="mb-2 bg-white text-caption"
+                class="mb-1 bg-white text-caption"
               />
               <p class="text-caption text-grey">Students stop the recording when they have finished.</p>
             </div>
@@ -1067,40 +1129,75 @@
             <div class="d-flex align-center justify-space-between mb-2">
               <span class="text-caption font-weight-bold text-purple-darken-3 d-flex align-center ga-1">
                 <v-icon size="small" color="purple-darken-3">mdi-help-box-multiple</v-icon>
-                <span>Guiding Questions (Students will answer these):</span>
+                <span>Guiding Questions ({{ editAsgGuidingQuestionsList.length }}):</span>
               </span>
-              <v-btn
-                size="x-small"
-                variant="tonal"
-                color="purple-darken-2"
-                prepend-icon="mdi-plus"
-                class="text-none font-weight-bold"
-                @click="addEditAsgQuestion"
-              >
-                Add Question
-              </v-btn>
+              <div class="d-flex align-center ga-1">
+                <v-btn
+                  size="x-small"
+                  :variant="editAsgQuestionsMode === 'list' ? 'flat' : 'text'"
+                  :color="editAsgQuestionsMode === 'list' ? 'purple-darken-2' : 'grey'"
+                  class="text-none font-weight-bold"
+                  @click="editAsgQuestionsMode = 'list'"
+                >
+                  Question List
+                </v-btn>
+                <v-btn
+                  size="x-small"
+                  :variant="editAsgQuestionsMode === 'bulk' ? 'flat' : 'text'"
+                  :color="editAsgQuestionsMode === 'bulk' ? 'purple-darken-2' : 'grey'"
+                  class="text-none font-weight-bold"
+                  @click="syncEditAsgQuestionsToText(); editAsgQuestionsMode = 'bulk'"
+                >
+                  Bulk Text
+                </v-btn>
+                <v-btn
+                  v-if="editAsgQuestionsMode === 'list'"
+                  size="x-small"
+                  variant="tonal"
+                  color="purple-darken-2"
+                  prepend-icon="mdi-plus"
+                  class="text-none font-weight-bold"
+                  @click="addEditAsgQuestion"
+                >
+                  Add Question
+                </v-btn>
+              </div>
             </div>
 
-            <div v-for="(q, idx) in editAsgGuidingQuestionsList" :key="idx" class="d-flex align-center ga-2 mb-2">
-              <v-chip size="small" color="purple-darken-2" variant="flat" class="font-weight-bold flex-shrink-0" style="min-width: 42px; justify-content: center;">
-                Q{{ idx + 1 }}
-              </v-chip>
-              <v-text-field
-                v-model="editAsgGuidingQuestionsList[idx]"
-                placeholder="Enter guiding question for students..."
+            <div v-if="editAsgQuestionsMode === 'list'">
+              <div v-for="(q, idx) in editAsgGuidingQuestionsList" :key="idx" class="d-flex align-center ga-2 mb-2">
+                <v-chip size="small" color="purple-darken-2" variant="flat" class="font-weight-bold flex-shrink-0" style="min-width: 42px; justify-content: center;">
+                  Q{{ idx + 1 }}
+                </v-chip>
+                <v-text-field
+                  v-model="editAsgGuidingQuestionsList[idx]"
+                  placeholder="Enter guiding question for students..."
+                  variant="outlined"
+                  density="compact"
+                  hide-details
+                  class="flex-grow-1 bg-white text-body-2"
+                />
+                <v-btn
+                  icon="mdi-trash-can-outline"
+                  size="x-small"
+                  color="error"
+                  variant="text"
+                  title="Delete Question"
+                  :disabled="editAsgGuidingQuestionsList.length <= 1"
+                  @click="removeEditAsgQuestion(idx)"
+                />
+              </div>
+            </div>
+            <div v-else>
+              <v-textarea
+                v-model="editAsgGuidingQuestionsText"
+                label="Questions (1 per line):"
+                rows="4"
                 variant="outlined"
                 density="compact"
+                class="mb-1 text-caption bg-white"
                 hide-details
-                class="flex-grow-1 bg-white text-body-2"
-              />
-              <v-btn
-                icon="mdi-trash-can-outline"
-                size="x-small"
-                color="error"
-                variant="text"
-                title="Delete Question"
-                :disabled="editAsgGuidingQuestionsList.length <= 1"
-                @click="removeEditAsgQuestion(idx)"
+                @input="syncEditAsgQuestionsFromText"
               />
             </div>
           </div>
@@ -1108,19 +1205,303 @@
           <!-- Target Keywords -->
           <v-text-field
             v-model="editAsgTargetKeywordsText"
-            label="Target Keywords (comma-separated):"
+            label="Target Keywords / Collocations (comma-separated):"
             variant="outlined"
             density="compact"
             hide-details
-            class="bg-white text-caption"
+            class="bg-white text-caption mb-2"
             prepend-inner-icon="mdi-tag-multiple-outline"
           />
         </div>
 
+        <!-- Branch 3: Dynamic Vocab Worksheet -->
+        <div v-else-if="editAsgType === 'worksheet'" class="mb-3">
+          <v-alert
+            density="compact"
+            color="indigo-lighten-5"
+            class="text-indigo-darken-3 border border-indigo-200 mb-3"
+            icon="mdi-auto-fix"
+            variant="flat"
+          >
+            <div class="text-caption font-weight-bold">
+              AI Dynamic Worksheet: Edit vocabulary words, adjust exercise formats, re-generate with AI, or directly customize each interactive question below.
+            </div>
+          </v-alert>
+
+          <!-- Vocabulary Input -->
+          <v-textarea
+            v-model="editAsgVocabText"
+            label="Target Vocabulary Words (comma or newline separated):"
+            placeholder="e.g. apple, banana, orange, grape, watermelon"
+            variant="outlined"
+            density="comfortable"
+            rows="2"
+            class="mb-2"
+            prepend-inner-icon="mdi-format-list-bulleted"
+            hint="Enter key vocabulary words pupils need to master."
+            persistent-hint
+          />
+
+          <!-- Grade Level & Accent Selector -->
+          <v-row dense class="mb-2">
+            <v-col cols="12" sm="6">
+              <v-select
+                v-model="editAsgGradeLevel"
+                :items="['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Secondary']"
+                label="Pupil Grade Level:"
+                variant="outlined"
+                density="compact"
+                prepend-inner-icon="mdi-school"
+                hide-details
+              />
+            </v-col>
+            <v-col cols="12" sm="6">
+              <v-select
+                v-model="editAsgAccent"
+                :items="[
+                  { title: 'UK British Voice (en-GB) [Standard Priority]', value: 'en-GB' },
+                  { title: 'US American Voice (en-US)', value: 'en-US' }
+                ]"
+                label="Listening Audio Accent:"
+                variant="outlined"
+                density="compact"
+                prepend-inner-icon="mdi-account-voice"
+                hide-details
+              />
+            </v-col>
+          </v-row>
+
+          <!-- Grouped Exercise Formats Picker -->
+          <div class="border rounded pa-3 bg-grey-lighten-5 mb-3">
+            <div class="d-flex align-center justify-space-between mb-2">
+              <div class="text-caption font-weight-bold text-grey-darken-3 d-flex align-center ga-1">
+                <v-icon size="small" color="primary">mdi-checkbox-multiple-marked</v-icon>
+                <span>Select Exercise Formats to Re-generate:</span>
+              </div>
+              <div class="d-flex ga-1">
+                <v-btn size="x-small" variant="text" color="primary" class="font-weight-bold text-none" @click="selectAllEditExerciseTypes">Select All</v-btn>
+                <v-btn size="x-small" variant="text" color="grey-darken-1" class="font-weight-bold text-none" @click="selectRecommendedEditExerciseTypes">Default 4</v-btn>
+              </div>
+            </div>
+
+            <!-- Listening Formats -->
+            <div class="text-caption font-weight-bold text-indigo-darken-2 mb-1 d-flex align-center ga-1">
+              <v-icon size="14" color="indigo">mdi-headphones</v-icon>
+              <span>1. Listening Tasks (British English en-GB Voice):</span>
+            </div>
+            <div class="d-flex flex-wrap ga-1 mb-2">
+              <v-chip
+                v-for="fmt in listeningFormats"
+                :key="fmt.value"
+                size="small"
+                filter
+                :color="editAsgSelectedExerciseTypes.includes(fmt.value) ? 'indigo' : 'grey-darken-3'"
+                :variant="editAsgSelectedExerciseTypes.includes(fmt.value) ? 'flat' : 'outlined'"
+                @click="toggleEditExerciseType(fmt.value)"
+              >
+                {{ fmt.title }}
+              </v-chip>
+            </div>
+
+            <!-- Reading Formats -->
+            <div class="text-caption font-weight-bold text-teal-darken-2 mb-1 d-flex align-center ga-1">
+              <v-icon size="14" color="teal">mdi-book-open-page-variant</v-icon>
+              <span>2. Reading Tasks:</span>
+            </div>
+            <div class="d-flex flex-wrap ga-1 mb-2">
+              <v-chip
+                v-for="fmt in readingFormats"
+                :key="fmt.value"
+                size="small"
+                filter
+                :color="editAsgSelectedExerciseTypes.includes(fmt.value) ? 'teal' : 'grey-darken-3'"
+                :variant="editAsgSelectedExerciseTypes.includes(fmt.value) ? 'flat' : 'outlined'"
+                @click="toggleEditExerciseType(fmt.value)"
+              >
+                {{ fmt.title }}
+              </v-chip>
+            </div>
+
+            <!-- Writing Formats -->
+            <div class="text-caption font-weight-bold text-amber-darken-3 mb-1 d-flex align-center ga-1">
+              <v-icon size="14" color="amber-darken-3">mdi-pencil</v-icon>
+              <span>3. Writing & Production Tasks:</span>
+            </div>
+            <div class="d-flex flex-wrap ga-1 mb-2">
+              <v-chip
+                v-for="fmt in writingFormats"
+                :key="fmt.value"
+                size="small"
+                filter
+                :color="editAsgSelectedExerciseTypes.includes(fmt.value) ? 'amber-darken-3' : 'grey-darken-3'"
+                :variant="editAsgSelectedExerciseTypes.includes(fmt.value) ? 'flat' : 'outlined'"
+                @click="toggleEditExerciseType(fmt.value)"
+              >
+                {{ fmt.title }}
+              </v-chip>
+            </div>
+
+            <!-- AI Re-generate Button -->
+            <v-btn
+              color="indigo-darken-2"
+              variant="flat"
+              block
+              class="text-none font-weight-bold mt-2"
+              prepend-icon="mdi-creation"
+              :loading="isGeneratingEditExercises"
+              @click="generateWorksheetAIForEdit"
+            >
+              Re-generate {{ editAsgSelectedExerciseTypes.length }} Exercises with AI
+            </v-btn>
+          </div>
+
+          <!-- Preview & Edit Exercises -->
+          <div v-if="editGeneratedExercises.length" class="mb-3">
+            <div class="d-flex align-center justify-space-between mb-2">
+              <span class="text-subtitle-2 font-weight-black text-secondary">
+                Worksheet Questions ({{ editGeneratedExercises.length }} questions):
+              </span>
+              <div class="d-flex align-center ga-1">
+                <v-chip size="x-small" color="success" variant="flat" class="font-weight-bold">
+                  Auto-Grading Ready
+                </v-chip>
+                <v-btn
+                  size="x-small"
+                  color="primary"
+                  variant="tonal"
+                  prepend-icon="mdi-plus"
+                  class="text-none font-weight-bold"
+                  @click="addCustomEditExercise"
+                >
+                  Add Question
+                </v-btn>
+              </div>
+            </div>
+
+            <div class="d-flex flex-column ga-2" style="max-height: 420px; overflow-y: auto;">
+              <v-card
+                v-for="(ex, index) in editGeneratedExercises"
+                :key="ex.id || index"
+                variant="outlined"
+                class="pa-3 bg-white"
+              >
+                <div class="d-flex align-center justify-space-between mb-2">
+                  <div class="d-flex align-center ga-1 flex-wrap">
+                    <v-chip size="x-small" color="primary" variant="flat" class="font-weight-black">
+                      #{{ index + 1 }}
+                    </v-chip>
+                    <v-chip size="x-small" color="grey-darken-3" variant="outlined" class="font-weight-bold bg-grey-lighten-5">
+                      {{ formatExerciseTypeName(ex.type) }}
+                    </v-chip>
+                    <v-btn
+                      v-if="ex.audio_text || (ex.type && ex.type.startsWith('listen_'))"
+                      size="x-small"
+                      color="indigo"
+                      variant="tonal"
+                      class="text-none font-weight-bold"
+                      prepend-icon="mdi-volume-high"
+                      @click="playExerciseAudio(ex.audio_text || ex.question_text)"
+                    >
+                      Listen (en-GB)
+                    </v-btn>
+                  </div>
+                  <div class="d-flex align-center ga-1">
+                    <v-btn
+                      icon="mdi-chevron-up"
+                      size="x-small"
+                      variant="text"
+                      :disabled="index === 0"
+                      @click="moveEditExercise(index, -1)"
+                    />
+                    <v-btn
+                      icon="mdi-chevron-down"
+                      size="x-small"
+                      variant="text"
+                      :disabled="index === editGeneratedExercises.length - 1"
+                      @click="moveEditExercise(index, 1)"
+                    />
+                    <v-btn
+                      icon="mdi-delete-outline"
+                      size="x-small"
+                      color="error"
+                      variant="text"
+                      @click="deleteEditExercise(index)"
+                    />
+                  </div>
+                </div>
+
+                <!-- Instruction -->
+                <v-text-field
+                  v-model="ex.instruction"
+                  label="Pupil Instruction:"
+                  density="compact"
+                  variant="underlined"
+                  hide-details
+                  class="text-caption mb-1"
+                />
+
+                <!-- Audio prompt text if listening -->
+                <v-text-field
+                  v-if="ex.audio_text || (ex.type && ex.type.startsWith('listen_'))"
+                  v-model="ex.audio_text"
+                  label="Audio Utterance (read aloud by British en-GB voice):"
+                  density="compact"
+                  variant="outlined"
+                  hide-details
+                  class="text-caption mb-1 bg-indigo-lighten-5"
+                />
+
+                <!-- Question or Context text -->
+                <v-text-field
+                  v-if="ex.question_text"
+                  v-model="ex.question_text"
+                  label="Question / Context Sentence:"
+                  density="compact"
+                  variant="outlined"
+                  hide-details
+                  class="text-caption mb-1"
+                />
+
+                <!-- Options display if any -->
+                <div v-if="ex.options && ex.options.length" class="d-flex flex-wrap ga-1 my-1 align-center">
+                  <span class="text-caption text-grey-darken-2 font-weight-bold mr-1">Options:</span>
+                  <v-chip
+                    v-for="(opt, oIdx) in ex.options"
+                    :key="oIdx"
+                    size="x-small"
+                    variant="outlined"
+                    color="grey-darken-3"
+                    class="font-weight-medium bg-grey-lighten-5"
+                  >
+                    {{ opt }}
+                  </v-chip>
+                </div>
+
+                <!-- Correct Answer Display & Editor -->
+                <div class="d-flex align-center ga-2 mt-2 pt-1 border-t">
+                  <span class="text-caption font-weight-bold text-success">Key:</span>
+                  <v-text-field
+                    :model-value="typeof ex.correct_answer === 'object' ? JSON.stringify(ex.correct_answer) : ex.correct_answer"
+                    label="Correct Key (Auto-graded):"
+                    density="compact"
+                    variant="underlined"
+                    hide-details
+                    class="text-caption font-mono"
+                    @update:model-value="val => ex.correct_answer = val"
+                  />
+                </div>
+              </v-card>
+            </div>
+          </div>
+          <div v-else class="text-center pa-4 border rounded bg-grey-lighten-5 mb-3 text-caption text-grey-darken-2">
+            No exercises yet. Click "Re-generate Exercises with AI" above to generate questions from your vocabulary!
+          </div>
+        </div>
+
+        <!-- Due Date -->
         <v-text-field
           v-model="editAsgDueDate"
           type="date"
-          id="tour-asg-due-date"
           label="Due Date (Optional):"
           placeholder="Example: 2026-08-05"
           variant="outlined"
@@ -1129,7 +1510,7 @@
           prepend-inner-icon="mdi-calendar-clock"
         />
 
-        <v-card-actions class="px-0 pb-0">
+        <v-card-actions class="px-0 pb-0 border-t pt-2">
           <v-spacer />
           <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showEditAssignmentModal = false">Cancel</v-btn>
           <v-btn color="primary" variant="flat" class="text-none font-weight-bold" :loading="isUpdatingAsg" @click="submitEditAssignment">
@@ -2851,49 +3232,296 @@ const submitRemoveStudent = async () => {
   }
 }
 
+const editAsgType = ref('sentence')
 const editAsgImageUrl = ref('')
+const editAsgPictureTopic = ref('')
+const teacherEditFileInputRef = ref(null)
+const isGeneratingEditPicture = ref(false)
+const editAsgQuestionsMode = ref('list')
 const editAsgGuidingQuestionsList = ref([])
+const editAsgGuidingQuestionsText = ref('')
 const editAsgTargetKeywordsText = ref('')
+
+// Worksheet editing state
+const editAsgVocabText = ref('')
+const editAsgGradeLevel = ref('Grade 4')
+const editAsgAccent = ref('en-GB')
+const editAsgSelectedExerciseTypes = ref([
+  'listen_and_circle',
+  'read_and_fill_in_the_blank',
+  'unscramble_words',
+  'write_the_missing_word'
+])
+const editGeneratedExercises = ref([])
+const isGeneratingEditExercises = ref(false)
+
+const syncEditAsgQuestionsToText = () => {
+  editAsgGuidingQuestionsText.value = editAsgGuidingQuestionsList.value.join('\n')
+}
+
+const syncEditAsgQuestionsFromText = () => {
+  editAsgGuidingQuestionsList.value = editAsgGuidingQuestionsText.value
+    .split('\n')
+    .map(q => q.trim())
+    .filter(Boolean)
+}
 
 const addEditAsgQuestion = () => {
   editAsgGuidingQuestionsList.value.push('')
+  syncEditAsgQuestionsToText()
 }
 
 const removeEditAsgQuestion = (index) => {
   editAsgGuidingQuestionsList.value.splice(index, 1)
+  syncEditAsgQuestionsToText()
+}
+
+const handleTeacherEditUploadImageChange = async (e) => {
+  const file = e.target.files?.[0]
+  if (!file) return
+  isGeneratingEditPicture.value = true
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    const uploadRes = await fetch(`${props.backendUrl}/api/picture-practice/upload-image`, {
+      method: 'POST',
+      body: formData
+    })
+    if (!uploadRes.ok) throw new Error('Failed to upload image')
+    const uploadData = await uploadRes.json()
+    editAsgImageUrl.value = uploadData.image_url
+    
+    const topic = editAsgPictureTopic.value.trim() || editAsgSentence.value.trim() || file.name.replace(/\.[^/.]+$/, '')
+    const scRes = await fetch(`${props.backendUrl}/api/picture-practice/create-scenario`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        topic: topic,
+        level: isMyHanh ? 'beginner' : 'intermediate',
+        mode: 'upload',
+        image_url: uploadData.image_url,
+        user_id: props.userId || 1
+      })
+    })
+    if (scRes.ok) {
+      const data = await scRes.json()
+      if (Array.isArray(data.guiding_questions) && data.guiding_questions.length) {
+        editAsgGuidingQuestionsList.value = [...data.guiding_questions]
+        syncEditAsgQuestionsToText()
+      }
+      if (Array.isArray(data.keywords) && data.keywords.length) {
+        editAsgTargetKeywordsText.value = data.keywords.join(', ')
+      }
+    }
+    notify('Custom image uploaded successfully!', 'success')
+  } catch (err) {
+    notify('Image upload error: ' + err.message, 'error')
+  } finally {
+    isGeneratingEditPicture.value = false
+  }
+}
+
+const generateAIPictureScenarioForEdit = async () => {
+  const topic = editAsgPictureTopic.value.trim() || editAsgSentence.value.trim() || 'Daily Life'
+  isGeneratingEditPicture.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/picture-practice/create-scenario`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        topic: topic,
+        level: isMyHanh ? 'beginner' : 'intermediate',
+        user_id: props.userId || 1
+      })
+    })
+    if (res.ok) {
+      const data = await res.json()
+      editAsgImageUrl.value = data.image_url || ''
+      if (Array.isArray(data.guiding_questions)) {
+        editAsgGuidingQuestionsList.value = [...data.guiding_questions]
+        syncEditAsgQuestionsToText()
+      }
+      if (Array.isArray(data.keywords)) {
+        editAsgTargetKeywordsText.value = data.keywords.join(', ')
+      }
+      notify('AI picture scenario generated with authentic visual questions!', 'success')
+    } else {
+      const error = await res.json().catch(() => ({}))
+      notify(error.detail || 'Failed to generate picture scenario.', 'error')
+    }
+  } catch (e) {
+    notify('Scenario generation error: ' + e.message, 'error')
+  } finally {
+    isGeneratingEditPicture.value = false
+  }
+}
+
+// Worksheet edit helpers
+const toggleEditExerciseType = (val) => {
+  const idx = editAsgSelectedExerciseTypes.value.indexOf(val)
+  if (idx > -1) {
+    editAsgSelectedExerciseTypes.value.splice(idx, 1)
+  } else {
+    editAsgSelectedExerciseTypes.value.push(val)
+  }
+}
+
+const selectAllEditExerciseTypes = () => {
+  editAsgSelectedExerciseTypes.value = [
+    ...listeningFormats.map(f => f.value),
+    ...readingFormats.map(f => f.value),
+    ...writingFormats.map(f => f.value)
+  ]
+}
+
+const selectRecommendedEditExerciseTypes = () => {
+  editAsgSelectedExerciseTypes.value = [
+    'listen_and_circle',
+    'read_and_fill_in_the_blank',
+    'unscramble_words',
+    'write_the_missing_word'
+  ]
+}
+
+const generateWorksheetAIForEdit = async () => {
+  const vocabList = editAsgVocabText.value
+    .split(/[,;\n]+/)
+    .map(w => w.trim())
+    .filter(Boolean)
+  if (!vocabList.length) {
+    notify('Please enter at least 1 vocabulary word.', 'warning')
+    return
+  }
+  if (!editAsgSelectedExerciseTypes.value.length) {
+    notify('Please select at least 1 exercise format.', 'warning')
+    return
+  }
+  isGeneratingEditExercises.value = true
+  try {
+    const res = await fetch(`${props.backendUrl}/api/teacher/worksheet/generate`, {
+      method: 'POST',
+      headers: getTeacherAuthHeaders(),
+      body: JSON.stringify({
+        target_vocabulary: vocabList,
+        exercise_types: editAsgSelectedExerciseTypes.value,
+        grade_level: editAsgGradeLevel.value,
+        accent: editAsgAccent.value || 'en-GB',
+        title: editAsgTitle.value.trim()
+      })
+    })
+    if (!res.ok) {
+      const err = await res.json()
+      throw new Error(err.detail || 'Failed to generate exercises')
+    }
+    const data = await res.json()
+    if (!editAsgTitle.value.trim() && data.title) {
+      editAsgTitle.value = data.title
+    }
+    editGeneratedExercises.value = data.exercises || []
+    notify(`Generated ${editGeneratedExercises.value.length} interactive exercises with AI!`, 'success')
+  } catch (e) {
+    notify(e.message || 'Error generating worksheet.', 'error')
+  } finally {
+    isGeneratingEditExercises.value = false
+  }
+}
+
+const moveEditExercise = (index, delta) => {
+  const newIndex = index + delta
+  if (newIndex >= 0 && newIndex < editGeneratedExercises.value.length) {
+    const item = editGeneratedExercises.value.splice(index, 1)[0]
+    editGeneratedExercises.value.splice(newIndex, 0, item)
+  }
+}
+
+const deleteEditExercise = (index) => {
+  editGeneratedExercises.value.splice(index, 1)
+}
+
+const addCustomEditExercise = () => {
+  editGeneratedExercises.value.push({
+    id: `ex_custom_${Date.now()}`,
+    type: 'read_and_fill_in_the_blank',
+    instruction: 'Read and fill in the missing word from the word bank.',
+    question_text: 'The weather today is very _______ and pleasant.',
+    options: ['sunny', 'rainy', 'cloudy'],
+    correct_answer: 'sunny',
+    points: 1
+  })
 }
 
 const openEditAssignmentModal = (asg) => {
   editingAsg.value = asg
+  const type = asg.assignment_type || 'sentence'
+  editAsgType.value = type
   editAsgTitle.value = asg.title || ''
   editAsgSentence.value = asg.topic_sentence || ''
   editAsgDueDate.value = asg.due_date || ''
   editAsgImageUrl.value = asg.image_url || ''
+  editAsgPictureTopic.value = asg.topic_sentence || ''
   
+  // Guiding questions for Picture
   const gq = Array.isArray(asg.guiding_questions) ? asg.guiding_questions : []
   editAsgGuidingQuestionsList.value = gq.length > 0 ? [...gq] : ['What is the primary subject in this scene?']
+  editAsgGuidingQuestionsText.value = editAsgGuidingQuestionsList.value.join('\n')
+  editAsgQuestionsMode.value = 'list'
   
+  // Target keywords for Picture
   const tk = Array.isArray(asg.target_keywords) ? asg.target_keywords : []
   editAsgTargetKeywordsText.value = tk.join(', ')
+  
+  // Worksheet data
+  editAsgVocabText.value = asg.topic_sentence || ''
+  editAsgGradeLevel.value = selectedClass.value?.grade_level || 'Grade 4'
+  editAsgAccent.value = 'en-GB'
+  editAsgSelectedExerciseTypes.value = [
+    'listen_and_circle',
+    'read_and_fill_in_the_blank',
+    'unscramble_words',
+    'write_the_missing_word'
+  ]
+  
+  let exercises = []
+  try {
+    exercises = asg.content_json ? JSON.parse(asg.content_json) : []
+    if (!Array.isArray(exercises)) exercises = []
+  } catch (e) {
+    exercises = []
+  }
+  editGeneratedExercises.value = exercises
   
   showEditAssignmentModal.value = true
 }
 
 const submitEditAssignment = async () => {
   if (!editingAsg.value || !editAsgTitle.value.trim()) return
-  const isPicture = editingAsg.value.assignment_type === 'picture'
+  const type = editAsgType.value || editingAsg.value.assignment_type || 'sentence'
   isUpdatingAsg.value = true
   try {
     const payload = {
+      assignment_type: type,
       title: editAsgTitle.value.trim(),
-      topic_sentence: editAsgSentence.value.trim(),
       due_date: editAsgDueDate.value.trim()
     }
-    if (isPicture) {
-      payload.assignment_type = 'picture'
+    if (type === 'sentence') {
+      payload.topic_sentence = editAsgSentence.value.trim()
+      payload.content_json = ''
+    } else if (type === 'picture') {
+      const gQuestions = editAsgGuidingQuestionsList.value.length > 0
+        ? editAsgGuidingQuestionsList.value.map(q => q.trim()).filter(Boolean)
+        : (editAsgGuidingQuestionsText.value ? editAsgGuidingQuestionsText.value.split('\n').map(q => q.trim()).filter(Boolean) : [])
+      const tKeywords = editAsgTargetKeywordsText.value
+        ? editAsgTargetKeywordsText.value.split(',').map(k => k.trim()).filter(Boolean)
+        : []
+      payload.topic_sentence = editAsgSentence.value.trim() || editAsgPictureTopic.value.trim() || editAsgTitle.value.trim()
       payload.image_url = editAsgImageUrl.value.trim()
-      payload.guiding_questions = editAsgGuidingQuestionsList.value.map(q => q.trim()).filter(Boolean)
-      payload.target_keywords = editAsgTargetKeywordsText.value.split(',').map(k => k.trim()).filter(Boolean)
+      payload.guiding_questions = gQuestions
+      payload.target_keywords = tKeywords
+      payload.content_json = ''
+      payload.time_limit_seconds = 0
+    } else if (type === 'worksheet') {
+      payload.topic_sentence = editAsgVocabText.value.trim() || editAsgTitle.value.trim()
+      payload.content_json = JSON.stringify(editGeneratedExercises.value || [])
       payload.time_limit_seconds = 0
     }
     const res = await fetch(`${props.backendUrl}/api/assignments/${editingAsg.value.id}/update`, {
