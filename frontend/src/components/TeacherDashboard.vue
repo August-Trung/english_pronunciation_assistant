@@ -1378,12 +1378,13 @@
               </div>
             </div>
 
-            <div class="d-flex flex-column ga-2" style="max-height: 420px; overflow-y: auto;">
+            <div class="d-flex flex-column ga-3" style="max-height: 520px; overflow-y: auto; overflow-x: hidden; padding-right: 6px;">
               <v-card
                 v-for="(ex, index) in editGeneratedExercises"
                 :key="ex.id || index"
                 variant="outlined"
-                class="pa-3 bg-white"
+                class="pa-3 bg-white flex-shrink-0"
+                style="flex-shrink: 0;"
               >
                 <div class="d-flex align-center justify-space-between mb-2">
                   <div class="d-flex align-center ga-1 flex-wrap">
@@ -1437,7 +1438,7 @@
                   density="compact"
                   variant="underlined"
                   hide-details
-                  class="text-caption mb-1"
+                  class="mb-2"
                 />
 
                 <!-- Audio prompt text if listening -->
@@ -1448,7 +1449,7 @@
                   density="compact"
                   variant="outlined"
                   hide-details
-                  class="text-caption mb-1 bg-indigo-lighten-5"
+                  class="mb-2 bg-indigo-lighten-5"
                 />
 
                 <!-- Question or Context text -->
@@ -1459,11 +1460,11 @@
                   density="compact"
                   variant="outlined"
                   hide-details
-                  class="text-caption mb-1"
+                  class="mb-2"
                 />
 
                 <!-- Options display if any -->
-                <div v-if="ex.options && ex.options.length" class="d-flex flex-wrap ga-1 my-1 align-center">
+                <div v-if="ex.options && ex.options.length" class="d-flex flex-wrap ga-1 my-2 align-center">
                   <span class="text-caption text-grey-darken-2 font-weight-bold mr-1">Options:</span>
                   <v-chip
                     v-for="(opt, oIdx) in ex.options"
@@ -1478,7 +1479,7 @@
                 </div>
 
                 <!-- Correct Answer Display & Editor -->
-                <div class="d-flex align-center ga-2 mt-2 pt-1 border-t">
+                <div class="d-flex align-center ga-2 mt-2 pt-2 border-t">
                   <span class="text-caption font-weight-bold text-success">Key:</span>
                   <v-text-field
                     :model-value="typeof ex.correct_answer === 'object' ? JSON.stringify(ex.correct_answer) : ex.correct_answer"
@@ -1486,7 +1487,7 @@
                     density="compact"
                     variant="underlined"
                     hide-details
-                    class="text-caption font-mono"
+                    class="font-mono"
                     @update:model-value="val => ex.correct_answer = val"
                   />
                 </div>
@@ -2017,19 +2018,20 @@
               </v-chip>
             </div>
 
-            <div class="d-flex flex-column ga-2" style="max-height: 380px; overflow-y: auto;">
+            <div class="d-flex flex-column ga-3" style="max-height: 520px; overflow-y: auto; overflow-x: hidden; padding-right: 6px;">
               <v-card
                 v-for="(ex, index) in generatedExercises"
                 :key="ex.id || index"
                 variant="outlined"
-                class="pa-3 bg-white"
+                class="pa-3 bg-white flex-shrink-0"
+                style="flex-shrink: 0;"
               >
                 <div class="d-flex align-center justify-space-between mb-2">
                   <div class="d-flex align-center ga-1 flex-wrap">
                     <v-chip size="x-small" color="primary" variant="flat" class="font-weight-black">
                       #{{ index + 1 }}
                     </v-chip>
-                    <v-chip size="x-small" color="grey-darken-2" variant="tonal" class="font-weight-bold">
+                    <v-chip size="x-small" color="grey-darken-3" variant="outlined" class="font-weight-bold bg-grey-lighten-5">
                       {{ formatExerciseTypeName(ex.type) }}
                     </v-chip>
                     <v-btn
@@ -2076,37 +2078,58 @@
                   density="compact"
                   variant="underlined"
                   hide-details
-                  class="text-caption mb-1"
+                  class="mb-2"
                 />
 
                 <!-- Audio prompt text if listening -->
                 <v-text-field
-                  v-if="ex.audio_text"
+                  v-if="ex.audio_text || (ex.type && ex.type.startsWith('listen_'))"
                   v-model="ex.audio_text"
-                  label="Audio Utterance (read aloud by en-GB voice):"
+                  label="Audio Utterance (read aloud by British en-GB voice):"
                   density="compact"
                   variant="outlined"
                   hide-details
-                  class="text-caption mb-1 bg-indigo-lighten-5"
+                  class="mb-2 bg-indigo-lighten-5"
                 />
 
                 <!-- Question or Context text -->
                 <v-text-field
                   v-if="ex.question_text"
                   v-model="ex.question_text"
-                  label="Question / Sentence:"
+                  label="Question / Context Sentence:"
                   density="compact"
                   variant="outlined"
                   hide-details
-                  class="text-caption mb-1"
+                  class="mb-2"
                 />
 
-                <!-- Correct Answer Display -->
-                <div class="d-flex align-center ga-2 mt-2 pt-1 border-t">
+                <!-- Options display if any -->
+                <div v-if="ex.options && ex.options.length" class="d-flex flex-wrap ga-1 my-2 align-center">
+                  <span class="text-caption text-grey-darken-2 font-weight-bold mr-1">Options:</span>
+                  <v-chip
+                    v-for="(opt, oIdx) in ex.options"
+                    :key="oIdx"
+                    size="x-small"
+                    variant="outlined"
+                    color="grey-darken-3"
+                    class="font-weight-medium bg-grey-lighten-5"
+                  >
+                    {{ opt }}
+                  </v-chip>
+                </div>
+
+                <!-- Correct Answer Display & Editor -->
+                <div class="d-flex align-center ga-2 mt-2 pt-2 border-t">
                   <span class="text-caption font-weight-bold text-success">Key:</span>
-                  <span class="text-caption text-grey-darken-3 font-mono">
-                    {{ typeof ex.correct_answer === 'object' ? JSON.stringify(ex.correct_answer) : ex.correct_answer }}
-                  </span>
+                  <v-text-field
+                    :model-value="typeof ex.correct_answer === 'object' ? JSON.stringify(ex.correct_answer) : ex.correct_answer"
+                    label="Correct Key (Auto-graded):"
+                    density="compact"
+                    variant="underlined"
+                    hide-details
+                    class="font-mono"
+                    @update:model-value="val => ex.correct_answer = val"
+                  />
                 </div>
               </v-card>
             </div>
