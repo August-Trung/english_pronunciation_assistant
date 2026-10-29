@@ -1541,6 +1541,14 @@
       "joined_at": "2026-10-20 13:47:55",
       "IsXoa": 1,
       "tenant_id": "1"
+    },
+    {
+      "id": 110,
+      "class_id": 67,
+      "student_id": 1009,
+      "joined_at": "2026-10-20 13:52:25",
+      "IsXoa": 0,
+      "tenant_id": "1"
     }
   ],
   "assignments": [
@@ -1560,7 +1568,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 6,
@@ -1578,7 +1587,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 7,
@@ -1596,7 +1606,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 8,
@@ -1614,7 +1625,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 9,
@@ -1632,7 +1644,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 10,
@@ -1650,7 +1663,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 11,
@@ -1668,7 +1682,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 12,
@@ -1686,7 +1701,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 13,
@@ -1704,7 +1720,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 14,
@@ -1722,7 +1739,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 15,
@@ -1740,7 +1758,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 16,
@@ -1758,7 +1777,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 17,
@@ -1776,7 +1796,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 18,
@@ -1794,7 +1815,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 19,
@@ -1812,7 +1834,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 20,
@@ -1830,7 +1853,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 21,
@@ -1848,7 +1872,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 22,
@@ -1866,7 +1891,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 23,
@@ -1884,7 +1910,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 24,
@@ -1902,7 +1929,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 25,
@@ -1920,7 +1948,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 26,
@@ -1938,7 +1967,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 27,
@@ -1956,7 +1986,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 28,
@@ -1974,7 +2005,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 29,
@@ -1992,7 +2024,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 30,
@@ -2010,7 +2043,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 31,
@@ -2028,7 +2062,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 32,
@@ -2046,7 +2081,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 33,
@@ -2064,7 +2100,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 34,
@@ -2082,7 +2119,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 35,
@@ -2100,7 +2138,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 36,
@@ -2118,7 +2157,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 37,
@@ -2136,7 +2176,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 38,
@@ -2154,7 +2195,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 39,
@@ -2172,7 +2214,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 40,
@@ -2190,7 +2233,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 41,
@@ -2208,7 +2252,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 42,
@@ -2226,7 +2271,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 43,
@@ -2244,7 +2290,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 44,
@@ -2262,7 +2309,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 45,
@@ -2280,7 +2328,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 46,
@@ -2298,7 +2347,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 47,
@@ -2316,7 +2366,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 48,
@@ -2334,7 +2385,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 49,
@@ -2352,7 +2404,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 50,
@@ -2370,7 +2423,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 51,
@@ -2388,7 +2442,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 52,
@@ -2406,7 +2461,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 53,
@@ -2424,7 +2480,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 54,
@@ -2442,7 +2499,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 55,
@@ -2460,7 +2518,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 56,
@@ -2478,7 +2537,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 57,
@@ -2496,7 +2556,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 58,
@@ -2514,7 +2575,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 59,
@@ -2532,7 +2594,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 60,
@@ -2550,7 +2613,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 61,
@@ -2568,7 +2632,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 62,
@@ -2586,7 +2651,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 63,
@@ -2604,7 +2670,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 64,
@@ -2622,7 +2689,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 65,
@@ -2640,7 +2708,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 66,
@@ -2658,7 +2727,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 67,
@@ -2676,7 +2746,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 68,
@@ -2694,7 +2765,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 69,
@@ -2712,7 +2784,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 71,
@@ -2730,7 +2803,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 72,
@@ -2748,7 +2822,8 @@
       "image_url": "",
       "guiding_questions": "",
       "target_keywords": "",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 73,
@@ -2766,7 +2841,8 @@
       "image_url": "",
       "guiding_questions": "[]",
       "target_keywords": "[]",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 74,
@@ -2784,7 +2860,8 @@
       "image_url": "",
       "guiding_questions": "[]",
       "target_keywords": "[]",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 75,
@@ -2802,7 +2879,8 @@
       "image_url": "https://black-forest-labs-flux-1-schnell.hf.space/gradio_api/file=/tmp/gradio/97378174d2282542daf22fc7780d86fa7035b8de1f38d73f4912a70f2f9b24cb/image.webp",
       "guiding_questions": "[\"Q1: Where is the scene set and what is the weather like?\", \"Q2: Who are the characters, what are they wearing, and what are they doing?\", \"Q3: What distinct objects, colors, or animals can you see in the foreground and background?\", \"Q4: How does the scene make you feel and what mood does it create?\"]",
       "target_keywords": "[\"breakfast\", \"sunlight\", \"hoodie\", \"cereal bowl\", \"fluffy cat\"]",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 76,
@@ -2820,7 +2898,8 @@
       "image_url": "https://black-forest-labs-flux-1-schnell.hf.space/gradio_api/file=/tmp/gradio/1d8a186e5fa6cfa786e11b5c204c8f2b42a4995f9c89d47787eff18819c4f027/image.webp",
       "guiding_questions": "[\"Q1: What time of day is it and what is the weather like in the scene?\", \"Q2: Who are the characters, what are they wearing, and what are they doing?\", \"Q3: What distinct objects, colors, and animals can you see in the foreground and background?\", \"Q4: How does the scene make you feel and what is the overall mood?\"]",
       "target_keywords": "[\"pancake\", \"sunny\", \"red hoodie\", \"yellow apron\", \"golden retriever\"]",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 77,
@@ -2838,7 +2917,8 @@
       "image_url": "https://black-forest-labs-flux-1-schnell.hf.space/gradio_api/file=/tmp/gradio/fab2b184895739482e61cfea0164f1b19a2463a71d56b091de84f8500578083f/image.webp",
       "guiding_questions": "[\"Q1: What is the overall setting and weather like in the picture?\", \"Q2: Who are the main characters, what are they wearing, and what are they doing?\", \"Q3: What distinct objects, colors, or animals can you see in the foreground and background?\", \"Q4: How does the scene make you feel and what mood does it convey?\"]",
       "target_keywords": "[\"bicycle\", \"backpack\", \"school uniform\", \"sunshine\", \"mailbox\"]",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 78,
@@ -2856,7 +2936,8 @@
       "image_url": "https://image.pollinations.ai/prompt/A%20charming%20scene%20of%20a%20young%20boy%20riding%20a%20yellow%20bicycle%20to%20school%2C%20mother%20waving%20from%20a%20porch%2C%20cute%20golden%20retriever%20playing%20with%20a%20ball%2C%20vibrant%20park%20with%20flowers%20and%20trees%2C%20bright%20sunny%20daytime%2C%20cute%203D%20animation%20style%2C%20Pixar%20Disney%20inspired%20render%2C%20cheerful%20expressive%20characters%2C%20vibrant%20warm%20colors%2C%20clear%20sunny%20lighting%2C%20high%20quality%203D%20digital%20art?width=1024&height=680&nologo=true&seed=49893&model=flux",
       "guiding_questions": "[\"Q1: Where is the scene set and what is the weather like?\", \"Q2: Who are the main characters and what are they wearing and doing?\", \"Q3: What distinct objects, colors, or animals can you see in the foreground and background?\", \"Q4: How does the scene make you feel and what mood does it convey?\"]",
       "target_keywords": "[\"bicycle\", \"backpack\", \"sunny\", \"yellow school bus\", \"blue sky\"]",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 79,
@@ -2874,7 +2955,8 @@
       "image_url": "https://image.pollinations.ai/prompt/A%20charming%20scene%20of%20a%20cheerful%20family%20preparing%20breakfast%20in%20a%20bright%20kitchen%2C%20cute%203D%20animation%20style%2C%20Pixar%20Disney%20inspired%20render%2C%20expressive%20characters%20with%20big%20eyes%2C%20mother%20in%20a%20yellow%20apron%2C%20father%20in%20a%20green%20shirt%2C%20child%20in%20a%20red%20tshirt%2C%20fluffy%20white%20cat%20on%20the%20counter%2C%20colorful%20bowl%20of%20cereal%2C%20toast%2C%20fruit%20bowl%2C%20sunny%20morning%20light%20streaming%20through%20the%20window%2C%20vibrant%20warm%20colors%2C%20high%20quality%203D%20digital%20art?width=1024&height=680&nologo=true&seed=838354&model=flux",
       "guiding_questions": "[\"Q1: Where is the scene set and what time of day is it? (e.g., kitchen, sunny morning)\", \"Q2: Who are the characters, what are they wearing, and what are they doing?\", \"Q3: What distinct objects, colors, or items can you see in the foreground and background?\", \"Q4: How does the scene feel and what emotions does it convey?\"]",
       "target_keywords": "[\"sunny morning\", \"yellow apron\", \"green shirt\", \"red t\\u2011shirt\", \"bowl of cereal\"]",
-      "time_limit_seconds": 60
+      "time_limit_seconds": 60,
+      "content_json": ""
     },
     {
       "id": 80,
@@ -2892,7 +2974,8 @@
       "image_url": "https://image.pollinations.ai/prompt/A%20charming%20scene%20of%20a%20happy%20family%20having%20breakfast%20in%20a%20sunny%20kitchen%2C%20cute%203D%20animation%20style%2C%20Pixar%20Disney%20inspired%20render%2C%20cheerful%20expressive%20characters%20with%20big%20eyes%2C%20vibrant%20warm%20colors%2C%20clear%20sunny%20lighting%2C%20high%20quality%203D%20digital%20art%2C%20bright%20window%2C%20colorful%20fruit%2C%20friendly%20cat%2C%20daisies?width=1024&height=680&nologo=true&seed=819892&model=flux",
       "guiding_questions": "[\"Q1: What is the setting of the picture and what is the weather like?\", \"Q2: Who are the characters, what are they wearing, and what are they doing?\", \"Q3: What distinct objects, colors, or animals can you see in the foreground and background?\", \"Q4: How does the scene make you feel and what is the overall mood?\"]",
       "target_keywords": "[\"sunny\", \"breakfast\", \"blue shirt\", \"orange juice\", \"cartoon cat\"]",
-      "time_limit_seconds": 0
+      "time_limit_seconds": 0,
+      "content_json": ""
     }
   ],
   "submissions": [
@@ -2910,7 +2993,8 @@
       "submitted_at": "2026-10-07 09:38:06",
       "IsXoa": 0,
       "audio_size_bytes": 0,
-      "tenant_id": null
+      "tenant_id": null,
+      "answers_json": ""
     },
     {
       "id": 7,
@@ -2926,7 +3010,8 @@
       "submitted_at": "2026-10-07 09:43:01",
       "IsXoa": 0,
       "audio_size_bytes": 0,
-      "tenant_id": null
+      "tenant_id": null,
+      "answers_json": ""
     },
     {
       "id": 8,
@@ -2942,7 +3027,8 @@
       "submitted_at": "2026-10-07 09:59:12",
       "IsXoa": 0,
       "audio_size_bytes": 0,
-      "tenant_id": null
+      "tenant_id": null,
+      "answers_json": ""
     },
     {
       "id": 9,
@@ -2958,7 +3044,8 @@
       "submitted_at": "2026-10-07 10:05:32",
       "IsXoa": 0,
       "audio_size_bytes": 0,
-      "tenant_id": null
+      "tenant_id": null,
+      "answers_json": ""
     },
     {
       "id": 11,
@@ -2974,7 +3061,8 @@
       "submitted_at": "2026-10-07 10:46:44",
       "IsXoa": 0,
       "audio_size_bytes": 0,
-      "tenant_id": null
+      "tenant_id": null,
+      "answers_json": ""
     },
     {
       "id": 12,
@@ -2990,7 +3078,8 @@
       "submitted_at": "2026-10-20 13:21:43",
       "IsXoa": 0,
       "audio_size_bytes": 103344,
-      "tenant_id": null
+      "tenant_id": null,
+      "answers_json": ""
     },
     {
       "id": 13,
@@ -3006,7 +3095,8 @@
       "submitted_at": "2026-10-20 13:57:42",
       "IsXoa": 0,
       "audio_size_bytes": 174176,
-      "tenant_id": null
+      "tenant_id": null,
+      "answers_json": ""
     }
   ],
   "tenants": [
@@ -6805,5 +6895,10 @@
       "created_at": "2026-10-28 04:05:01"
     }
   ],
-  "system_configs": []
+  "system_configs": [
+    {
+      "config_key": "storage_retention_days",
+      "config_value": "90"
+    }
+  ]
 }
