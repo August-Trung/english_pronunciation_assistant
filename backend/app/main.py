@@ -4229,6 +4229,7 @@ class GenerateWorksheetRequest(BaseModel):
     grade_level: Optional[str] = "Grade 3"
     accent: Optional[str] = "en-GB"
     title: Optional[str] = ""
+    target_question: Optional[str] = ""
 
 ACTION_KEYWORDS = {
     "clean", "cook", "feed", "fix", "go", "make", "practice", "take", "wash", "water",
@@ -4268,8 +4269,23 @@ def mask_target_word(phrase: str) -> str:
     # Use wide gap '   ' (3 spaces) so distinct words are immediately visible
     return "   ".join(masked_tokens)
 
-def generate_ai_worksheet(target_vocabulary: List[str], exercise_types: List[str], grade_level: str = "Grade 3", accent: str = "en-GB", custom_title: str = "") -> dict:
-    clean_vocab = [v.strip() for v in target_vocabulary if v.strip()]
+def generate_ai_worksheet(target_vocabulary: List[str], exercise_types: List[str], grade_level: str = "Grade 3", accent: str = "en-GB", custom_title: str = "", target_question: str = "") -> dict:
+    # Auto-detect question pattern if teacher included it inside target_vocabulary
+    raw_clean_vocab = [v.strip() for v in target_vocabulary if v.strip()]
+    clean_vocab = []
+    extracted_q = target_question.strip()
+
+    for item in raw_clean_vocab:
+        if ('?' in item or '-->' in item or '->' in item) and not extracted_q:
+            q_match = re.search(r"([A-Za-z0-9\s,\'\"\(\)]+\?)", item)
+            if q_match:
+                extracted_q = q_match.group(1).strip()
+            stripped = re.sub(r'[\.\?\!\;]?\s*[A-Z][^.?!\n]+\?.*', '', item).strip()
+            if stripped:
+                clean_vocab.append(stripped)
+        else:
+            clean_vocab.append(item)
+
     if not clean_vocab:
         clean_vocab = ["apple", "banana", "orange"]
     
@@ -4306,6 +4322,8 @@ CRITICAL PEDAGOGICAL & GRAMMAR RULES:
    - Ensure the unscrambled sentence is 100% grammatically correct, natural British English (e.g. 'I always help to feed the dog.', NOT 'I have got a feed the dog.').
 4. ALL OPTIONS & DISTRACTORS:
    - In multiple choice questions, make sure all options are sensible words/phrases of the same grammatical category.
+5. TARGET MODEL QUESTION / DIALOGUE PROMPT:
+   {f"- The teacher specified the target question pattern: '{extracted_q}'. For any 'answer_the_question' exercise, you MUST use this exact question (question_text: '{extracted_q}') with a matching natural answer (e.g. 'I clean up my bedroom.')." if extracted_q else "- For 'answer_the_question' exercise, generate a natural communicative question matching the vocabulary theme (e.g. 'What do you do after school?')."}
 
 Supported types and format example:
 - "listen_and_circle": {{"id": "ex_1", "type": "listen_and_circle", "instruction": "Listen to the audio and circle the correct word or phrase.", "audio_text": "sentence", "options": ["opt1", "opt2", "opt3"], "correct_answer": "opt1", "accent": "en-GB", "points": 1}}
@@ -4515,11 +4533,20 @@ Return ONLY a valid JSON object matching:
         else:
             # answer_the_question
             if is_act:
-                q_text = "What daily activity do you usually do at home?"
-                ans = f"I usually {v_main}."
+                if extracted_q:
+                    q_text = extracted_q
+                    if extracted_q.lower().startswith("what do you"):
+                        ans = f"I {v_main}." if not v_main.lower().startswith("i ") else v_main
+                    elif extracted_q.lower().startswith("what does"):
+                        ans = f"He/She {v_main}."
+                    else:
+                        ans = f"I {v_main}." if not v_main.lower().startswith("i ") else v_main
+                else:
+                    q_text = "What do you do after school?"
+                    ans = f"I usually {v_main}."
                 opts = [ans, "It is ten o'clock.", "They are in the garden."]
             else:
-                q_text = "What is this item?"
+                q_text = extracted_q if extracted_q else "What is this item?"
                 ans = f"It is a {v_main}."
                 opts = [ans, "It is cloudy today.", "They are running."]
             fallback_exercises.append({
@@ -4547,7 +4574,8 @@ def api_generate_worksheet(req: GenerateWorksheetRequest, current_user: dict = D
             exercise_types=req.exercise_types,
             grade_level=req.grade_level or "Grade 3",
             accent=req.accent or "en-GB",
-            custom_title=req.title or ""
+            custom_title=req.title or "",
+            target_question=req.target_question or ""
         )
         return res
     except Exception as e:

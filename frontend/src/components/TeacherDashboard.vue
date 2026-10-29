@@ -1242,6 +1242,22 @@
             persistent-hint
           />
 
+          <!-- Target Model Question for Q&A Tasks -->
+          <v-text-field
+            v-model="editAsgCustomQuestion"
+            label="Target Model Question / Dialogue Prompt (Optional):"
+            placeholder="e.g. What do you do? or What do you do after school?"
+            variant="outlined"
+            density="compact"
+            prepend-inner-icon="mdi-chat-question-outline"
+            :disabled="!editAsgSelectedExerciseTypes.includes('answer_the_question')"
+            :hint="editAsgSelectedExerciseTypes.includes('answer_the_question')
+              ? 'This question will be used for the Answer Question task. Leave blank for AI auto-generation.'
+              : 'Select the \'Answer Question\' format below to customize this question.'"
+            persistent-hint
+            class="mb-3"
+          />
+
           <!-- Grade Level & Accent Selector -->
           <v-row dense class="mb-2">
             <v-col cols="12" sm="6">
@@ -1891,6 +1907,22 @@
             prepend-inner-icon="mdi-format-list-bulleted"
             hint="Enter key vocabulary words pupils need to master."
             persistent-hint
+          />
+
+          <!-- Target Model Question for Q&A Tasks -->
+          <v-text-field
+            v-model="newAsgCustomQuestion"
+            label="Target Model Question / Dialogue Prompt (Optional):"
+            placeholder="e.g. What do you do? or What do you do after school?"
+            variant="outlined"
+            density="compact"
+            prepend-inner-icon="mdi-chat-question-outline"
+            :disabled="!newAsgSelectedExerciseTypes.includes('answer_the_question')"
+            :hint="newAsgSelectedExerciseTypes.includes('answer_the_question')
+              ? 'This question will be used for the Answer Question task. Leave blank for AI auto-generation.'
+              : 'Select the \'Answer Question\' format below to customize this question.'"
+            persistent-hint
+            class="mb-3"
           />
 
           <!-- Grade Level & Accent Selector (British English priority) -->
@@ -2799,6 +2831,7 @@ const printQrPoster = () => {
 
 // --- Worksheet Generator State ---
 const newAsgVocabText = ref('')
+const newAsgCustomQuestion = ref('')
 const newAsgGradeLevel = ref('Grade 3')
 const newAsgAccent = ref('en-GB')
 const isGeneratingExercises = ref(false)
@@ -2904,6 +2937,27 @@ const generateWorksheetAI = async () => {
     notify('Please enter at least 1 vocabulary word.', 'warning')
     return
   }
+
+  // Auto-detect question pattern if pasted in vocab list
+  let customQ = newAsgCustomQuestion.value.trim()
+  const cleanVocab = []
+  for (const item of vocabList) {
+    if ((item.includes('?') || item.includes('-->') || item.includes('->')) && !customQ) {
+      const qMatch = item.match(/([A-Za-z0-9\s,'"\(\)]+\?)/)
+      if (qMatch) {
+        customQ = qMatch[1].trim()
+        newAsgCustomQuestion.value = customQ
+        if (!newAsgSelectedExerciseTypes.value.includes('answer_the_question')) {
+          newAsgSelectedExerciseTypes.value.push('answer_the_question')
+        }
+      }
+      const stripped = item.replace(/[\.\?\!\;]?\s*[A-Z][^.?!\n]+\?.*$/, '').trim()
+      if (stripped) cleanVocab.push(stripped)
+    } else {
+      cleanVocab.push(item)
+    }
+  }
+
   if (!newAsgSelectedExerciseTypes.value.length) {
     notify('Please select at least 1 exercise format.', 'warning')
     return
@@ -2914,14 +2968,15 @@ const generateWorksheetAI = async () => {
       method: 'POST',
       headers: getTeacherAuthHeaders(),
       body: JSON.stringify({
-        target_vocabulary: vocabList,
+        target_vocabulary: cleanVocab.length ? cleanVocab : vocabList,
         exercise_types: newAsgSelectedExerciseTypes.value,
         grade_level: newAsgGradeLevel.value,
         accent: newAsgAccent.value || 'en-GB',
-        title: newAsgTitle.value.trim()
+        title: newAsgTitle.value.trim(),
+        target_question: customQ
       })
     })
-    if (!res.ok) {
+        if (!res.ok) {
       const err = await res.json()
       throw new Error(err.detail || 'Failed to generate exercises')
     }
@@ -3267,6 +3322,7 @@ const editAsgTargetKeywordsText = ref('')
 
 // Worksheet editing state
 const editAsgVocabText = ref('')
+const editAsgCustomQuestion = ref('')
 const editAsgGradeLevel = ref('Grade 4')
 const editAsgAccent = ref('en-GB')
 const editAsgSelectedExerciseTypes = ref([
@@ -3415,6 +3471,27 @@ const generateWorksheetAIForEdit = async () => {
     notify('Please enter at least 1 vocabulary word.', 'warning')
     return
   }
+
+  // Auto-detect question pattern if pasted in vocab list
+  let customQ = editAsgCustomQuestion.value.trim()
+  const cleanVocab = []
+  for (const item of vocabList) {
+    if ((item.includes('?') || item.includes('-->') || item.includes('->')) && !customQ) {
+      const qMatch = item.match(/([A-Za-z0-9\s,'"\(\)]+\?)/)
+      if (qMatch) {
+        customQ = qMatch[1].trim()
+        editAsgCustomQuestion.value = customQ
+        if (!editAsgSelectedExerciseTypes.value.includes('answer_the_question')) {
+          editAsgSelectedExerciseTypes.value.push('answer_the_question')
+        }
+      }
+      const stripped = item.replace(/[\.\?\!\;]?\s*[A-Z][^.?!\n]+\?.*$/, '').trim()
+      if (stripped) cleanVocab.push(stripped)
+    } else {
+      cleanVocab.push(item)
+    }
+  }
+
   if (!editAsgSelectedExerciseTypes.value.length) {
     notify('Please select at least 1 exercise format.', 'warning')
     return
@@ -3425,14 +3502,15 @@ const generateWorksheetAIForEdit = async () => {
       method: 'POST',
       headers: getTeacherAuthHeaders(),
       body: JSON.stringify({
-        target_vocabulary: vocabList,
+        target_vocabulary: cleanVocab.length ? cleanVocab : vocabList,
         exercise_types: editAsgSelectedExerciseTypes.value,
         grade_level: editAsgGradeLevel.value,
         accent: editAsgAccent.value || 'en-GB',
-        title: editAsgTitle.value.trim()
+        title: editAsgTitle.value.trim(),
+        target_question: customQ
       })
     })
-    if (!res.ok) {
+        if (!res.ok) {
       const err = await res.json()
       throw new Error(err.detail || 'Failed to generate exercises')
     }
@@ -3946,6 +4024,7 @@ const submitCreateAssignment = async () => {
       newAsgTargetKeywordsText.value = ''
       newAsgDueDate.value = ''
       newAsgVocabText.value = ''
+      newAsgCustomQuestion.value = ''
       generatedExercises.value = []
       showCreateAssignmentModal.value = false
       notify('Homework assigned to classroom!', 'success')
