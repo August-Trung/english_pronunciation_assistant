@@ -605,12 +605,13 @@
           density="comfortable"
           class="mb-3"
           prepend-inner-icon="mdi-google-classroom"
+          @keyup.enter="submitJoinClass()"
         />
 
         <v-card-actions class="px-0 pb-0">
           <v-spacer />
           <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showJoinClassModal = false">Cancel</v-btn>
-          <v-btn color="primary" variant="flat" class="text-none font-weight-bold" :loading="isJoining" @click="submitJoinClass">
+          <v-btn color="primary" variant="flat" class="text-none font-weight-bold" :loading="isJoining" @click="submitJoinClass()">
             Join Class
           </v-btn>
         </v-card-actions>
@@ -979,7 +980,8 @@ const fetchStudentAssignments = async () => {
 }
 
 const submitJoinClass = async (codeToJoin = null) => {
-  const code = (codeToJoin || joinCodeInput.value || '').trim()
+  const rawCode = typeof codeToJoin === 'string' ? codeToJoin : (joinCodeInput.value || '')
+  const code = rawCode.trim()
   if (!code) return
   const uid = getActiveStudentId()
   if (!uid) {
