@@ -50,7 +50,7 @@
         <v-chip
           v-for="s in scenarios"
           :key="s.scenario_id"
-          :color="currentScenario?.scenario_id === s.scenario_id ? 'primary' : 'grey-lighten-2'"
+          :color="currentScenario?.scenario_id === s.scenario_id ? 'primary' : 'grey-darken-3'"
           :variant="currentScenario?.scenario_id === s.scenario_id ? 'flat' : 'outlined'"
           size="small"
           class="font-weight-bold cursor-pointer"
@@ -192,7 +192,7 @@
                   v-for="kw in (currentScenario.keywords || [])"
                   :key="kw"
                   size="small"
-                  :color="isKeywordSpoken(kw) ? 'success' : 'grey-lighten-2'"
+                  :color="isKeywordSpoken(kw) ? 'success' : 'grey-darken-3'"
                   :variant="isKeywordSpoken(kw) ? 'flat' : 'outlined'"
                   class="font-weight-bold"
                 >

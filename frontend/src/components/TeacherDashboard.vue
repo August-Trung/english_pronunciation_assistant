@@ -214,8 +214,9 @@
             <v-chip
               v-for="cls in classes"
               :key="cls.id"
-              :color="selectedClassId === cls.id ? 'primary' : 'grey-lighten-4'"
-              :variant="selectedClassId === cls.id ? 'flat' : 'tonal'"
+              :color="selectedClassId === cls.id ? 'primary' : 'grey-darken-3'"
+              :variant="selectedClassId === cls.id ? 'flat' : 'outlined'"
+              :class="selectedClassId === cls.id ? '' : 'bg-grey-lighten-5'"
               size="comfortable"
               class="font-weight-bold flex-shrink-0 cursor-pointer"
               @click="selectClass(cls.id)"

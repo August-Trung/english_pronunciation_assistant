@@ -102,8 +102,9 @@
     <!-- Filter Tabs by Classroom if Student is in Multiple Classes -->
     <div v-if="enrolledClasses.length > 1" class="d-flex align-center ga-2 overflow-x-auto pb-2 mb-3">
       <v-chip
-        :color="selectedClassFilter === 'all' ? 'primary' : 'grey-lighten-4'"
-        :variant="selectedClassFilter === 'all' ? 'flat' : 'tonal'"
+        :color="selectedClassFilter === 'all' ? 'primary' : 'grey-darken-3'"
+        :variant="selectedClassFilter === 'all' ? 'flat' : 'outlined'"
+        :class="selectedClassFilter === 'all' ? '' : 'bg-grey-lighten-5'"
         size="small"
         class="font-weight-bold flex-shrink-0 cursor-pointer"
         @click="selectedClassFilter = 'all'"
@@ -113,8 +114,9 @@
       <v-chip
         v-for="cls in enrolledClasses"
         :key="cls.class_id"
-        :color="selectedClassFilter === cls.class_id ? 'primary' : 'grey-lighten-4'"
-        :variant="selectedClassFilter === cls.class_id ? 'flat' : 'tonal'"
+        :color="selectedClassFilter === cls.class_id ? 'primary' : 'grey-darken-3'"
+        :variant="selectedClassFilter === cls.class_id ? 'flat' : 'outlined'"
+        :class="selectedClassFilter === cls.class_id ? '' : 'bg-grey-lighten-5'"
         size="small"
         class="font-weight-bold flex-shrink-0 cursor-pointer"
         @click="selectedClassFilter = cls.class_id"
@@ -331,9 +333,10 @@
               <div v-if="ex.type === 'listen_and_tick_or_cross'" class="d-flex ga-2 mt-1">
                 <v-btn
                   size="small"
-                  :color="getWorksheetAnswer(asg.assignment_id, ex.id) === 'tick' ? 'success' : 'grey-lighten-3'"
+                  :color="getWorksheetAnswer(asg.assignment_id, ex.id) === 'tick' ? 'success' : 'grey-darken-3'"
                   :variant="getWorksheetAnswer(asg.assignment_id, ex.id) === 'tick' ? 'flat' : 'outlined'"
                   class="text-none font-weight-bold flex-grow-1"
+                  :class="getWorksheetAnswer(asg.assignment_id, ex.id) === 'tick' ? '' : 'bg-grey-lighten-5 border-grey-lighten-2'"
                   prepend-icon="mdi-check"
                   @click="setWorksheetAnswer(asg.assignment_id, ex.id, 'tick')"
                 >
@@ -341,9 +344,10 @@
                 </v-btn>
                 <v-btn
                   size="small"
-                  :color="getWorksheetAnswer(asg.assignment_id, ex.id) === 'cross' ? 'error' : 'grey-lighten-3'"
+                  :color="getWorksheetAnswer(asg.assignment_id, ex.id) === 'cross' ? 'error' : 'grey-darken-3'"
                   :variant="getWorksheetAnswer(asg.assignment_id, ex.id) === 'cross' ? 'flat' : 'outlined'"
                   class="text-none font-weight-bold flex-grow-1"
+                  :class="getWorksheetAnswer(asg.assignment_id, ex.id) === 'cross' ? '' : 'bg-grey-lighten-5 border-grey-lighten-2'"
                   prepend-icon="mdi-close"
                   @click="setWorksheetAnswer(asg.assignment_id, ex.id, 'cross')"
                 >
@@ -386,10 +390,10 @@
                   <v-chip
                     v-for="opt in ex.options"
                     :key="opt"
-                    size="x-small"
-                    color="indigo"
+                    size="small"
+                    color="indigo-darken-3"
                     variant="tonal"
-                    class="mr-1 font-weight-bold cursor-pointer"
+                    class="mr-1 mb-1 font-weight-bold cursor-pointer bg-indigo-lighten-5 text-indigo-darken-4 border border-indigo-lighten-3"
                     @click="setWorksheetAnswer(asg.assignment_id, ex.id, opt)"
                   >
                     {{ opt }}
@@ -412,9 +416,10 @@
                   v-for="(opt, oIdx) in ex.options"
                   :key="oIdx"
                   size="small"
-                  :color="getWorksheetAnswer(asg.assignment_id, ex.id) === opt ? 'primary' : 'grey-lighten-4'"
+                  :color="getWorksheetAnswer(asg.assignment_id, ex.id) === opt ? 'primary' : 'grey-darken-3'"
                   :variant="getWorksheetAnswer(asg.assignment_id, ex.id) === opt ? 'flat' : 'outlined'"
                   class="text-none font-weight-bold flex-grow-1"
+                  :class="getWorksheetAnswer(asg.assignment_id, ex.id) === opt ? '' : 'bg-grey-lighten-5 border-grey-lighten-2'"
                   @click="setWorksheetAnswer(asg.assignment_id, ex.id, opt)"
                 >
                   {{ opt }}
@@ -568,8 +573,8 @@
                 <v-icon size="x-small" color="indigo">mdi-google-classroom</v-icon>
                 <span>{{ cls.class_name }}</span>
               </div>
-              <div class="text-caption text-grey" style="font-size: 10px;">
-                Code: <strong>{{ cls.join_code || 'Enrolled' }}</strong>
+              <div class="text-caption text-grey-darken-2" style="font-size: 11px;">
+                Code: <strong class="text-grey-darken-4">{{ cls.join_code || 'Enrolled' }}</strong>
                 <span v-if="cls.teacher_name"> &bull; Teacher: {{ cls.teacher_name }}</span>
               </div>
             </div>
