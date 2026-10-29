@@ -277,6 +277,16 @@ def transcribe_audio(audio_path):
     
     groq_keys = get_groq_api_keys()
     if groq_keys:
+        if target_questions:
+            q_instructions = (
+                f"- Target model question patterns: {json.dumps(target_questions)}.\n"
+                "     * If a single general question like 'What do you do?' is specified, NATURALLY contextualize it with realistic time phrases matching the target action (e.g. 'What do you do in the morning? -> I make my bed.', 'What do you do after school? -> I feed the dog.', 'What do you do at the weekend? -> I clean up my bedroom.', 'What do you do after dinner? -> I wash the dishes.') so pupils learn realistic, authentic communication.\n"
+                "     * If multiple questions are specified, distribute them across exercises.\n"
+                "     * Provide the correct complete answer sentence matching the subject pronoun."
+            )
+        else:
+            q_instructions = "- For 'answer_the_question' exercise, generate a natural communicative question matching the vocabulary theme (e.g. 'What do you do after school?')."
+        
         for key in groq_keys:
             try:
                 print(f"Transcribing via Groq API (key ...{key[-6:]})...")
@@ -4269,17 +4279,47 @@ def mask_target_word(phrase: str) -> str:
     # Use wide gap '   ' (3 spaces) so distinct words are immediately visible
     return "   ".join(masked_tokens)
 
+def get_contextual_question(q_list: list, q_index: int, action: str) -> tuple:
+    """Return (question_text, correct_answer_sentence) with natural contextualization."""
+    act = action.strip()
+    act_lower = act.lower()
+    base_q = q_list[q_index % len(q_list)] if q_list else "What do you do?"
+    base_lower = base_q.lower().strip()
+    
+    if base_lower in ["what do you do?", "what do you do", "what do you do at home?"]:
+        # Contextualize naturally based on the daily activity
+        if "bedroom" in act_lower or "clean" in act_lower or "shopping" in act_lower or "plant" in act_lower or "cook" in act_lower:
+            q = "What do you do at the weekend?"
+        elif "bed" in act_lower:
+            q = "What do you do in the morning?"
+        elif "dish" in act_lower or "dinner" in act_lower or "garbage" in act_lower:
+            q = "What do you do after dinner?"
+        else:
+            q = "What do you do after school?"
+        ans = f"I {act}." if not act_lower.startswith("i ") else act
+        return q, ans
+    elif "what does" in base_lower:
+        q = base_q
+        ans = f"He/She {act}."
+        return q, ans
+    else:
+        q = base_q
+        ans = f"I {act}." if not act_lower.startswith("i ") else act
+        return q, ans
+
 def generate_ai_worksheet(target_vocabulary: List[str], exercise_types: List[str], grade_level: str = "Grade 3", accent: str = "en-GB", custom_title: str = "", target_question: str = "") -> dict:
-    # Auto-detect question pattern if teacher included it inside target_vocabulary
+    # Auto-detect question patterns (single or multiple) if teacher included them inside target_vocabulary or target_question
     raw_clean_vocab = [v.strip() for v in target_vocabulary if v.strip()]
     clean_vocab = []
-    extracted_q = target_question.strip()
+    target_questions = [q.strip() for q in re.split(r'[,;\n]+', target_question) if q.strip()]
 
     for item in raw_clean_vocab:
-        if ('?' in item or '-->' in item or '->' in item) and not extracted_q:
-            q_match = re.search(r"([A-Za-z0-9\s,\'\"\(\)]+\?)", item)
-            if q_match:
-                extracted_q = q_match.group(1).strip()
+        if ('?' in item or '-->' in item or '->' in item):
+            q_matches = re.findall(r"([A-Za-z0-9\s,\'\"\(\)]+\?)", item)
+            for qm in q_matches:
+                qm_str = qm.strip()
+                if qm_str and qm_str not in target_questions:
+                    target_questions.append(qm_str)
             stripped = re.sub(r'[\.\?\!\;]?\s*[A-Z][^.?!\n]+\?.*', '', item).strip()
             if stripped:
                 clean_vocab.append(stripped)
@@ -4299,6 +4339,16 @@ def generate_ai_worksheet(target_vocabulary: List[str], exercise_types: List[str
     worksheet_title = custom_title.strip() or f"Vocabulary Practice: {', '.join(clean_vocab[:3]).title()}"
 
     if groq_keys:
+        if target_questions:
+            q_instructions = (
+                f"- Target model question patterns: {json.dumps(target_questions)}.\n"
+                "     * If a single general question like 'What do you do?' is specified, NATURALLY contextualize it with realistic time phrases matching the target action (e.g. 'What do you do in the morning? -> I make my bed.', 'What do you do after school? -> I feed the dog.', 'What do you do at the weekend? -> I clean up my bedroom.', 'What do you do after dinner? -> I wash the dishes.') so pupils learn realistic, authentic communication.\n"
+                "     * If multiple questions are specified, distribute them across exercises.\n"
+                "     * Provide the correct complete answer sentence matching the subject pronoun."
+            )
+        else:
+            q_instructions = "- For 'answer_the_question' exercise, generate a natural communicative question matching the vocabulary theme (e.g. 'What do you do after school?')."
+        
         for key in groq_keys:
             try:
                 system_prompt = f"""You are an expert British English curriculum specialist creating an interactive primary school worksheet for {grade_level} pupils.
@@ -4322,8 +4372,8 @@ CRITICAL PEDAGOGICAL & GRAMMAR RULES:
    - Ensure the unscrambled sentence is 100% grammatically correct, natural British English (e.g. 'I always help to feed the dog.', NOT 'I have got a feed the dog.').
 4. ALL OPTIONS & DISTRACTORS:
    - In multiple choice questions, make sure all options are sensible words/phrases of the same grammatical category.
-5. TARGET MODEL QUESTION / DIALOGUE PROMPT:
-   {f"- The teacher specified the target question pattern: '{extracted_q}'. For any 'answer_the_question' exercise, you MUST use this exact question (question_text: '{extracted_q}') with a matching natural answer (e.g. 'I clean up my bedroom.')." if extracted_q else "- For 'answer_the_question' exercise, generate a natural communicative question matching the vocabulary theme (e.g. 'What do you do after school?')."}
+5. TARGET MODEL QUESTIONS & CONTEXTUAL VARIATIONS:
+   {q_instructions}
 
 Supported types and format example:
 - "listen_and_circle": {{"id": "ex_1", "type": "listen_and_circle", "instruction": "Listen to the audio and circle the correct word or phrase.", "audio_text": "sentence", "options": ["opt1", "opt2", "opt3"], "correct_answer": "opt1", "accent": "en-GB", "points": 1}}
@@ -4533,20 +4583,10 @@ Return ONLY a valid JSON object matching:
         else:
             # answer_the_question
             if is_act:
-                if extracted_q:
-                    q_text = extracted_q
-                    if extracted_q.lower().startswith("what do you"):
-                        ans = f"I {v_main}." if not v_main.lower().startswith("i ") else v_main
-                    elif extracted_q.lower().startswith("what does"):
-                        ans = f"He/She {v_main}."
-                    else:
-                        ans = f"I {v_main}." if not v_main.lower().startswith("i ") else v_main
-                else:
-                    q_text = "What do you do after school?"
-                    ans = f"I usually {v_main}."
+                q_text, ans = get_contextual_question(target_questions, f_idx, v_main)
                 opts = [ans, "It is ten o'clock.", "They are in the garden."]
             else:
-                q_text = extracted_q if extracted_q else "What is this item?"
+                q_text = target_questions[f_idx % len(target_questions)] if target_questions else "What is this item?"
                 ans = f"It is a {v_main}."
                 opts = [ans, "It is cloudy today.", "They are running."]
             fallback_exercises.append({

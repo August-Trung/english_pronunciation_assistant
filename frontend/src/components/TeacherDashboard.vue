@@ -1245,15 +1245,13 @@
           <!-- Target Model Question for Q&A Tasks -->
           <v-text-field
             v-model="editAsgCustomQuestion"
-            label="Target Model Question / Dialogue Prompt (Optional):"
-            placeholder="e.g. What do you do? or What do you do after school?"
+            label="Target Model Question(s) / Dialogue Prompt (Optional):"
+            placeholder="e.g. What do you do? (or multiple: What do you do?, What does he do at the weekend?)"
             variant="outlined"
             density="compact"
             prepend-inner-icon="mdi-chat-question-outline"
             :disabled="!editAsgSelectedExerciseTypes.includes('answer_the_question')"
-            :hint="editAsgSelectedExerciseTypes.includes('answer_the_question')
-              ? 'This question will be used for the Answer Question task. Leave blank for AI auto-generation.'
-              : 'Select the \'Answer Question\' format below to customize this question.'"
+            hint="Enter 1 or multiple questions (comma-separated). AI will naturally contextualize time frames for realistic dialogues."
             persistent-hint
             class="mb-3"
           />
@@ -1912,15 +1910,13 @@
           <!-- Target Model Question for Q&A Tasks -->
           <v-text-field
             v-model="newAsgCustomQuestion"
-            label="Target Model Question / Dialogue Prompt (Optional):"
-            placeholder="e.g. What do you do? or What do you do after school?"
+            label="Target Model Question(s) / Dialogue Prompt (Optional):"
+            placeholder="e.g. What do you do? (or multiple: What do you do?, What does he do at the weekend?)"
             variant="outlined"
             density="compact"
             prepend-inner-icon="mdi-chat-question-outline"
             :disabled="!newAsgSelectedExerciseTypes.includes('answer_the_question')"
-            :hint="newAsgSelectedExerciseTypes.includes('answer_the_question')
-              ? 'This question will be used for the Answer Question task. Leave blank for AI auto-generation.'
-              : 'Select the \'Answer Question\' format below to customize this question.'"
+            hint="Enter 1 or multiple questions (comma-separated). AI will naturally contextualize time frames for realistic dialogues."
             persistent-hint
             class="mb-3"
           />
@@ -2938,27 +2934,37 @@ const generateWorksheetAI = async () => {
     return
   }
 
-  // Auto-detect question pattern if pasted in vocab list
-  let customQ = newAsgCustomQuestion.value.trim()
+  // Auto-detect question pattern(s) if pasted in vocab list
+  const existingQuestions = (newAsgCustomQuestion.value || '')
+    .split(/[,;\n]+/)
+    .map(q => q.trim())
+    .filter(Boolean)
   const cleanVocab = []
   for (const item of vocabList) {
-    if ((item.includes('?') || item.includes('-->') || item.includes('->')) && !customQ) {
-      const qMatch = item.match(/([A-Za-z0-9\s,'"\(\)]+\?)/)
-      if (qMatch) {
-        customQ = qMatch[1].trim()
-        newAsgCustomQuestion.value = customQ
+    if (item.includes('?') || item.includes('-->') || item.includes('->')) {
+      const qMatches = item.match(/([A-Za-z0-9\s,'"\(\)]+\?)/g)
+      if (qMatches) {
+        for (const q of qMatches) {
+          const qTrim = q.trim()
+          if (qTrim && !existingQuestions.includes(qTrim)) {
+            existingQuestions.push(qTrim)
+          }
+        }
+        newAsgCustomQuestion.value = existingQuestions.join(', ')
         if (!newAsgSelectedExerciseTypes.value.includes('answer_the_question')) {
           newAsgSelectedExerciseTypes.value.push('answer_the_question')
         }
       }
-      const stripped = item.replace(/[\.\?\!\;]?\s*[A-Z][^.?!\n]+\?.*$/, '').trim()
+      const qIdx = item.search(/[A-Z][^?]*\?/)
+      const stripped = qIdx > 0 ? item.substring(0, qIdx).replace(/[\.,;: ]+$/, '').trim() : (item.includes('?') ? '' : item.trim())
       if (stripped) cleanVocab.push(stripped)
     } else {
       cleanVocab.push(item)
     }
   }
+  const customQ = newAsgCustomQuestion.value.trim()
 
-  if (!newAsgSelectedExerciseTypes.value.length) {
+    if (!newAsgSelectedExerciseTypes.value.length) {
     notify('Please select at least 1 exercise format.', 'warning')
     return
   }
@@ -3472,27 +3478,37 @@ const generateWorksheetAIForEdit = async () => {
     return
   }
 
-  // Auto-detect question pattern if pasted in vocab list
-  let customQ = editAsgCustomQuestion.value.trim()
+  // Auto-detect question pattern(s) if pasted in vocab list
+  const existingEditQuestions = (editAsgCustomQuestion.value || '')
+    .split(/[,;\n]+/)
+    .map(q => q.trim())
+    .filter(Boolean)
   const cleanVocab = []
   for (const item of vocabList) {
-    if ((item.includes('?') || item.includes('-->') || item.includes('->')) && !customQ) {
-      const qMatch = item.match(/([A-Za-z0-9\s,'"\(\)]+\?)/)
-      if (qMatch) {
-        customQ = qMatch[1].trim()
-        editAsgCustomQuestion.value = customQ
+    if (item.includes('?') || item.includes('-->') || item.includes('->')) {
+      const qMatches = item.match(/([A-Za-z0-9\s,'"\(\)]+\?)/g)
+      if (qMatches) {
+        for (const q of qMatches) {
+          const qTrim = q.trim()
+          if (qTrim && !existingEditQuestions.includes(qTrim)) {
+            existingEditQuestions.push(qTrim)
+          }
+        }
+        editAsgCustomQuestion.value = existingEditQuestions.join(', ')
         if (!editAsgSelectedExerciseTypes.value.includes('answer_the_question')) {
           editAsgSelectedExerciseTypes.value.push('answer_the_question')
         }
       }
-      const stripped = item.replace(/[\.\?\!\;]?\s*[A-Z][^.?!\n]+\?.*$/, '').trim()
+      const qIdx = item.search(/[A-Z][^?]*\?/)
+      const stripped = qIdx > 0 ? item.substring(0, qIdx).replace(/[\.,;: ]+$/, '').trim() : (item.includes('?') ? '' : item.trim())
       if (stripped) cleanVocab.push(stripped)
     } else {
       cleanVocab.push(item)
     }
   }
+  const customQ = editAsgCustomQuestion.value.trim()
 
-  if (!editAsgSelectedExerciseTypes.value.length) {
+    if (!editAsgSelectedExerciseTypes.value.length) {
     notify('Please select at least 1 exercise format.', 'warning')
     return
   }
