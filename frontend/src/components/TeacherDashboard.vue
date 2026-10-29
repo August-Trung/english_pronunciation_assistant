@@ -3591,12 +3591,6 @@ const openEditAssignmentModal = (asg) => {
   editAsgVocabText.value = asg.topic_sentence || ''
   editAsgGradeLevel.value = selectedClass.value?.grade_level || 'Grade 4'
   editAsgAccent.value = 'en-GB'
-  editAsgSelectedExerciseTypes.value = [
-    'listen_and_circle',
-    'read_and_fill_in_the_blank',
-    'unscramble_words',
-    'write_the_missing_word'
-  ]
   
   let exercises = []
   try {
@@ -3606,6 +3600,31 @@ const openEditAssignmentModal = (asg) => {
     exercises = []
   }
   editGeneratedExercises.value = exercises
+
+  // Dynamically restore all exercise types present in this assignment
+  const typesInExercises = exercises.map(e => e.type).filter(Boolean)
+  if (typesInExercises.length > 0) {
+    editAsgSelectedExerciseTypes.value = Array.from(new Set(typesInExercises))
+  } else {
+    editAsgSelectedExerciseTypes.value = [
+      'listen_and_circle',
+      'read_and_fill_in_the_blank',
+      'unscramble_words',
+      'write_the_missing_word'
+    ]
+  }
+
+  // Restore Target Model Question(s)
+  let restoredQuestions = ''
+  if (Array.isArray(asg.guiding_questions) && asg.guiding_questions.length > 0) {
+    restoredQuestions = asg.guiding_questions.join(', ')
+  } else {
+    const qList = exercises.filter(e => e.type === 'answer_the_question').map(e => e.question_text).filter(Boolean)
+    if (qList.length > 0) {
+      restoredQuestions = Array.from(new Set(qList)).join(', ')
+    }
+  }
+  editAsgCustomQuestion.value = restoredQuestions
   
   showEditAssignmentModal.value = true
 }
@@ -3639,6 +3658,7 @@ const submitEditAssignment = async () => {
     } else if (type === 'worksheet') {
       payload.topic_sentence = editAsgVocabText.value.trim() || editAsgTitle.value.trim()
       payload.content_json = JSON.stringify(editGeneratedExercises.value || [])
+      payload.guiding_questions = editAsgCustomQuestion.value ? [editAsgCustomQuestion.value.trim()] : []
       payload.time_limit_seconds = 0
     }
     const res = await fetch(`${props.backendUrl}/api/assignments/${editingAsg.value.id}/update`, {
@@ -4024,7 +4044,7 @@ const submitCreateAssignment = async () => {
         due_date: newAsgDueDate.value.trim(),
         assignment_type: newAsgType.value,
         image_url: newAsgImageUrl.value.trim(),
-        guiding_questions: gQuestions,
+        guiding_questions: isWorksheet ? (newAsgCustomQuestion.value ? [newAsgCustomQuestion.value.trim()] : []) : gQuestions,
         target_keywords: tKeywords,
         content_json: isWorksheet ? JSON.stringify(generatedExercises.value) : '',
         time_limit_seconds: 0
