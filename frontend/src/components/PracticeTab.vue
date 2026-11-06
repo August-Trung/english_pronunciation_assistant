@@ -15,7 +15,7 @@
     <v-row class="ma-0 ga-2">
       <!-- Left column: Input, Mode selection, Library and Recording -->
       <v-col cols="12" md="6" class="pa-1 sticky-left-col">
-        <v-card border flat class="pa-4 bg-white" rounded="lg">
+        <v-card class="pa-4 bg-white kids-card mb-3">
           <!-- Step 1 Header & Mode Toggle -->
           <div class="d-flex flex-column flex-sm-row align-start align-sm-center justify-space-between mb-3 ga-2">
             <div class="d-flex align-center ga-2">
@@ -280,12 +280,12 @@
                     :color="isRecording ? 'grey-darken-3' : 'error'"
                     size="large"
                     icon
-                    class="elevation-2"
-                    style="width: 60px; height: 60px; z-index: 2;"
+                    class="kids-btn-3d kids-btn-coral elevation-4"
+                    style="width: 66px; height: 66px; z-index: 2; border-radius: 50% !important;"
                     :disabled="(!isSecure && !isLocalhost) || !topic.trim() || isAnalyzing"
                     @click="isRecording ? stopRecording() : startRecording()"
                   >
-                    <v-icon size="medium">{{ isRecording ? 'mdi-stop' : 'mdi-microphone' }}</v-icon>
+                    <v-icon size="large">{{ isRecording ? 'mdi-stop' : 'mdi-microphone' }}</v-icon>
                   </v-btn>
                 </div>
               </v-col>

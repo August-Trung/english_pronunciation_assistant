@@ -15,17 +15,20 @@
       </div>
     </v-snackbar>
 
-    <!-- Homework Banner -->
-    <v-card border flat class="pa-4 mb-4 bg-gradient-purple text-white rounded-lg elevation-1">
+    <!-- Homework Hero Banner (Kids 3D Pixar Style) -->
+    <v-card class="pa-5 mb-5 kids-card-hero kids-gradient-purple text-white">
       <div class="d-flex align-center justify-space-between flex-wrap ga-3">
         <div class="d-flex align-center ga-3">
-          <v-avatar color="white" size="48" class="elevation-1">
-            <v-icon color="purple-darken-3" size="large">mdi-clipboard-text-outline</v-icon>
-          </v-avatar>
+          <div class="kids-floating d-flex align-center justify-center" style="width: 56px; height: 56px; background: rgba(255,255,255,0.22); border-radius: 18px; backdrop-filter: blur(8px);">
+            <img src="/assets/kids/icon-homework-3d.webp" alt="Homework" style="width: 44px; height: 44px; object-fit: contain;" />
+          </div>
           <div>
-            <div class="text-h6 font-weight-black tracking-tight">CLASSROOM ASSIGNED HOMEWORK</div>
-            <div class="text-caption opacity-90 font-weight-medium">
-              Complete pronunciation reading exercises assigned by your teacher
+            <div class="d-flex align-center ga-2 flex-wrap">
+              <span class="text-h6 font-weight-black tracking-tight">HOMEWORK MISSIONS</span>
+              <span class="kids-pill-badge kids-pill-gold text-caption">⭐ Fun Learning</span>
+            </div>
+            <div class="text-caption font-weight-medium" style="opacity: 0.95;">
+              Complete pronunciation reading missions and earn gold stars!
             </div>
           </div>
         </div>
@@ -33,22 +36,18 @@
         <div class="d-flex flex-wrap ga-2 align-center">
           <v-btn
             icon="mdi-lightbulb-on-outline"
-            variant="tonal"
-            color="white"
+            variant="flat"
+            class="kids-btn-3d kids-btn-white"
             size="small"
             title="Hướng dẫn làm bài tập về nhà"
             @click="replayStudentHwTour"
           />
-          <v-btn color="white" variant="outlined" prepend-icon="mdi-refresh" :loading="isRefreshing" class="text-none" @click="refreshHomework">Refresh All Assignments</v-btn>
-        <v-btn
-          color="white"
-          variant="flat"
-          class="font-weight-black text-purple-darken-3 text-none"
-          prepend-icon="mdi-key-variant"
-          @click="showJoinClassModal = true"
-        >
-          Enter Class Join Code
-        </v-btn>
+          <button class="kids-btn-3d kids-btn-white px-3 py-2 text-caption font-weight-black" @click="refreshHomework">
+            <v-icon size="small" class="mr-1">mdi-refresh</v-icon> Refresh Missions
+          </button>
+          <button class="kids-btn-3d kids-btn-gold px-3 py-2 text-caption font-weight-black" @click="showJoinClassModal = true">
+            <v-icon size="small" class="mr-1">mdi-key-variant</v-icon> Enter Class Join Code
+          </button>
         </div>
       </div>
     </v-card>
@@ -130,9 +129,7 @@
       <v-card
         v-for="asg in filteredAssignments"
         :key="asg.assignment_id"
-        border
-        flat
-        class="pa-4 bg-white rounded-lg"
+        class="pa-4 pa-md-5 mb-4 kids-card kids-card-interactive"
       >
         <div class="d-flex align-center justify-space-between flex-wrap ga-2 mb-2">
           <div>
@@ -229,7 +226,7 @@
                 DYNAMIC WORKSHEET
               </v-chip>
               <span class="text-caption font-weight-bold text-grey-darken-2">
-                {{ parseExercises(asg.content_json).length }} Interactive Questions
+                {{ worksheetQuestionCount(parseExercises(asg.content_json)) }} Interactive Questions
               </span>
             </div>
             <v-chip size="x-small" color="indigo" variant="flat" class="font-weight-bold" prepend-icon="mdi-account-voice">
@@ -272,6 +269,9 @@
                   </v-btn>
                   <span class="text-caption text-grey-darken-3 font-italic">"{{ detail.audio_text }}"</span>
                 </div>
+                <WorksheetImage v-if="detail.question_image" :image="detail.question_image" :backend-url="props.backendUrl" class="mb-2" />
+                <div v-if="detail.option_images" class="d-flex flex-wrap ga-2 my-2"><div v-for="(image, option) in detail.option_images" :key="option" style="width: 140px"><WorksheetImage :image="image" :backend-url="props.backendUrl" :alt="option" /><span class="text-caption">{{ option }}</span></div></div>
+                <p v-if="detail.passage_text" class="text-body-2 mb-2">{{ detail.passage_text }}</p>
                 <div v-if="detail.question_text" class="text-caption font-weight-bold text-grey-darken-4 mb-1">
                   {{ detail.question_text }}
                 </div>
@@ -295,6 +295,7 @@
                   <v-chip size="x-small" color="secondary" variant="flat" class="font-weight-black">
                     #{{ exIdx + 1 }}
                   </v-chip>
+                  <v-chip size="small" :color="exerciseCategory(ex.type).color" :prepend-icon="exerciseCategory(ex.type).icon" variant="flat">{{ exerciseCategory(ex.type).title }}</v-chip>
                   <span class="text-caption font-weight-black text-grey-darken-3">
                     {{ ex.instruction }}
                   </span>
@@ -304,6 +305,7 @@
                 </v-chip>
               </div>
 
+              <WorksheetImage v-if="ex.question_image" :image="ex.question_image" :backend-url="props.backendUrl" class="mb-3" />
               <!-- Audio Player Button for Listening Questions -->
               <div v-if="ex.audio_text || (ex.type && ex.type.startsWith('listen_'))" class="mb-2 pa-2 rounded bg-indigo-lighten-5 border border-indigo d-flex align-center justify-space-between flex-wrap ga-2">
                 <div class="d-flex align-center ga-2">
@@ -324,13 +326,17 @@
                 </div>
               </div>
 
+              <WorksheetReadingClue v-if="ex.passage_text && !isPassageReadingTask(ex)" :key="`${asg.assignment_id}-${ex.id}`" :passage="ex.passage_text" :visual="ex.visual_clue || ''" />
               <!-- Question context / prompt text -->
               <div v-if="ex.question_text" class="text-subtitle-2 font-weight-bold text-grey-darken-4 mb-2">
                 {{ ex.question_text }}
               </div>
 
+              <div v-if="ex.type === 'write_the_missing_word' && ex.hint" class="text-body-2 text-grey-darken-2 mb-2">Hint: {{ ex.hint }}</div>
+
               <!-- Interactive Format 1: Tick or Cross -->
-              <div v-if="ex.type === 'listen_and_tick_or_cross'" class="d-flex ga-2 mt-1">
+              <WorksheetTrueFalse v-if="isPassageReadingTask(ex)" :exercise="ex" :model-value="getWorksheetAnswer(asg.assignment_id, ex.id) || {}" @update:model-value="value => setWorksheetAnswer(asg.assignment_id, ex.id, value)" />
+              <div v-else-if="ex.type === 'listen_and_tick_or_cross'" class="d-flex ga-2 mt-1">
                 <v-btn
                   size="small"
                   :color="getWorksheetAnswer(asg.assignment_id, ex.id) === 'tick' ? 'success' : 'grey-darken-3'"
@@ -338,9 +344,10 @@
                   class="text-none font-weight-bold flex-grow-1"
                   :class="getWorksheetAnswer(asg.assignment_id, ex.id) === 'tick' ? '' : 'bg-grey-lighten-5 border-grey-lighten-2'"
                   prepend-icon="mdi-check"
+                  :style="optionImage(ex, 'tick') ? { height: 'auto', padding: '12px' } : {}"
                   @click="setWorksheetAnswer(asg.assignment_id, ex.id, 'tick')"
                 >
-                  Tick (✓ True)
+                  <div><WorksheetImage v-if="optionImage(ex, 'tick')" :show-credit="false" :image="optionImage(ex, 'tick')" :backend-url="props.backendUrl" alt="True option illustration" />Tick (✓ True)</div>
                 </v-btn>
                 <v-btn
                   size="small"
@@ -349,9 +356,10 @@
                   class="text-none font-weight-bold flex-grow-1"
                   :class="getWorksheetAnswer(asg.assignment_id, ex.id) === 'cross' ? '' : 'bg-grey-lighten-5 border-grey-lighten-2'"
                   prepend-icon="mdi-close"
+                  :style="optionImage(ex, 'cross') ? { height: 'auto', padding: '12px' } : {}"
                   @click="setWorksheetAnswer(asg.assignment_id, ex.id, 'cross')"
                 >
-                  Cross (✗ False)
+                  <div><WorksheetImage v-if="optionImage(ex, 'cross')" :show-credit="false" :image="optionImage(ex, 'cross')" :backend-url="props.backendUrl" alt="False option illustration" />Cross (✗ False)</div>
                 </v-btn>
               </div>
 
@@ -394,7 +402,8 @@
                     color="indigo-darken-3"
                     variant="tonal"
                     class="mr-1 mb-1 font-weight-bold cursor-pointer bg-indigo-lighten-5 text-indigo-darken-4 border border-indigo-lighten-3"
-                    @click="setWorksheetAnswer(asg.assignment_id, ex.id, opt)"
+                    :style="optionImage(ex, opt) ? { height: 'auto', padding: '12px', maxWidth: '240px', whiteSpace: 'normal' } : {}"
+                  @click="setWorksheetAnswer(asg.assignment_id, ex.id, opt)"
                   >
                     {{ opt }}
                   </v-chip>
@@ -451,7 +460,12 @@
                         hide-details
                         bg-color="white"
                         @update:model-value="selVal => setWorksheetMatchAnswer(asg.assignment_id, ex.id, key, selVal)"
-                      />
+                      >
+                        <template #item="{ props: itemProps, item }">
+                          <v-list-item v-bind="itemProps"><template #prepend><WorksheetImage v-if="optionImage(ex, item.raw)" :show-credit="false" :image="optionImage(ex, item.raw)" :backend-url="props.backendUrl" alt="Matching option illustration" style="width: 80px" class="mr-3" /></template></v-list-item>
+                        </template>
+                        <template #selection="{ item }"><span class="d-flex align-center ga-2"><WorksheetImage v-if="optionImage(ex, item.raw)" :show-credit="false" :image="optionImage(ex, item.raw)" :backend-url="props.backendUrl" alt="Selected option illustration" style="width: 45px" />{{ item.title }}</span></template>
+                      </v-select>
                     </div>
                   </div>
                 </div>
@@ -492,10 +506,11 @@
                     :variant="(getWorksheetAnswer(asg.assignment_id, ex.id) || []).includes(opt) ? 'tonal' : 'outlined'"
                     class="text-none font-weight-bold"
                     :disabled="(getWorksheetAnswer(asg.assignment_id, ex.id) || []).includes(opt)"
+                    :style="optionImage(ex, opt) ? { height: 'auto', padding: '12px', maxWidth: '240px' } : {}"
                     @click="toggleNumberToken(asg.assignment_id, ex.id, opt)"
                   >
                     <v-icon start size="small">mdi-numeric</v-icon>
-                    {{ opt }}
+                    <div><WorksheetImage v-if="optionImage(ex, opt)" :show-credit="false" :image="optionImage(ex, opt)" :backend-url="props.backendUrl" :alt="`Answer option ${oIdx + 1}`" />{{ opt }}</div>
                   </v-btn>
                 </div>
               </div>
@@ -510,9 +525,10 @@
                   :variant="getWorksheetAnswer(asg.assignment_id, ex.id) === opt ? 'flat' : 'outlined'"
                   class="text-none font-weight-bold flex-grow-1"
                   :class="getWorksheetAnswer(asg.assignment_id, ex.id) === opt ? '' : 'bg-grey-lighten-5 border-grey-lighten-2'"
+                  :style="optionImage(ex, opt) ? { height: 'auto', padding: '12px', maxWidth: '240px', whiteSpace: 'normal' } : {}"
                   @click="setWorksheetAnswer(asg.assignment_id, ex.id, opt)"
                 >
-                  {{ opt }}
+                  <div><WorksheetImage v-if="optionImage(ex, opt)" :show-credit="false" :image="optionImage(ex, opt)" :backend-url="props.backendUrl" :alt="`Answer option ${oIdx + 1}`" /><span v-if="!ex.image_only_options || !worksheetImageChoices(ex).every(value => optionImage(ex, value))">{{ opt }}</span><span v-else class="text-caption">Option {{ oIdx + 1 }}</span></div>
                 </v-btn>
               </div>
 
@@ -527,21 +543,22 @@
                   @update:model-value="val => setWorksheetAnswer(asg.assignment_id, ex.id, val)"
                 />
               </div>
+              <WorksheetImageCredits :exercise="ex" />
             </div>
 
-            <!-- Submit Worksheet Button -->
+            <!-- Submit Worksheet Button (Chunky 3D Kids) -->
             <v-btn
               id="tour-student-hw-submit-btn"
               color="success"
               variant="flat"
               size="large"
               block
-              class="text-none font-weight-black mt-2"
+              class="kids-btn-3d kids-btn-mint text-none font-weight-black mt-3 py-3"
               prepend-icon="mdi-send-check"
               :loading="isSubmittingWorksheet"
               @click="submitWorksheet(asg)"
             >
-              Submit Worksheet & Grade
+              Submit Worksheet & Grade ⭐
             </v-btn>
           </div>
         </div>
@@ -551,19 +568,20 @@
           <div v-if="drafts[asg.assignment_id]" class="mb-3 pa-3 border rounded">
             <div class="text-subtitle-2 mb-2">Review Your Recording</div>
             <audio controls :src="drafts[asg.assignment_id].url" class="w-100" />
-            <v-btn class="mt-2 text-none" color="success" :loading="submittingId === asg.assignment_id" :disabled="isSubmitting || isStartingRecording || currentRecordingAsgId !== null" @click="uploadSubmission(asg)">Submit Recording</v-btn>
+            <v-btn class="kids-btn-3d kids-btn-mint mt-2 text-none font-weight-black" color="success" :loading="submittingId === asg.assignment_id" :disabled="isSubmitting || isStartingRecording || currentRecordingAsgId !== null" @click="uploadSubmission(asg)">Submit Recording 🚀</v-btn>
           </div>
           <!-- Submission Controls or Result -->
           <div v-if="!asg.is_submitted" class="d-flex align-center flex-wrap ga-2">
           <v-btn
             :color="currentRecordingAsgId === asg.assignment_id ? 'error' : 'primary'"
             variant="flat"
-            class="font-weight-black text-none"
+            class="kids-btn-3d font-weight-black text-none"
+            :class="currentRecordingAsgId === asg.assignment_id ? 'kids-btn-coral' : 'kids-btn-sky'"
             :prepend-icon="currentRecordingAsgId === asg.assignment_id ? 'mdi-stop' : 'mdi-microphone'"
             :disabled="isStartingRecording || isSubmitting || (currentRecordingAsgId !== null && currentRecordingAsgId !== asg.assignment_id)"
             @click="requestRecording(asg)"
           >
-            {{ currentRecordingAsgId === asg.assignment_id ? 'Stop Recording' : (drafts[asg.assignment_id] ? 'Record Again' : 'Start Voice Recording') }}
+            {{ currentRecordingAsgId === asg.assignment_id ? 'Stop Recording' : (drafts[asg.assignment_id] ? 'Record Again' : 'Start Voice Recording 🎤') }}
           </v-btn>
           <span v-if="currentRecordingAsgId === asg.assignment_id" class="text-caption text-error font-weight-bold">
             Recording: {{ elapsedSeconds }} seconds. Select Stop Recording when finished.
@@ -784,6 +802,12 @@
 </template>
 
 <script setup>
+import WorksheetReadingClue from '../components/WorksheetReadingClue.vue'
+import WorksheetTrueFalse from '../components/WorksheetTrueFalse.vue'
+import WorksheetImage from '../components/WorksheetImage.vue'
+import WorksheetImageCredits from '../components/WorksheetImageCredits.vue'
+import { optionImage, worksheetImageChoices } from '@/utils/worksheetImages.js'
+import { exerciseCategory, isPassageReadingTask, worksheetQuestionCount } from '@/utils/worksheetPresentation.js'
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import AssessmentDialog from '@/components/AssessmentDialog.vue'
 import SubmissionEvaluation from '@/components/SubmissionEvaluation.vue'
@@ -953,12 +977,15 @@ const submitWorksheet = async (asg) => {
     const val = getWorksheetAnswer(asg.assignment_id, ex.id)
     if (val !== undefined && val !== null && val !== '') {
       answersMap[ex.id] = val
-      answeredCount++
+      answeredCount += isPassageReadingTask(ex)
+        ? ex.questions.filter(q => ['True', 'False'].includes(val?.[q.id])).length
+        : 1
     }
   }
 
-  if (answeredCount < exercises.length) {
-    if (!confirm(`You have completed ${answeredCount} of ${exercises.length} questions. Are you sure you want to submit now?`)) {
+  const totalQuestions = worksheetQuestionCount(exercises)
+  if (answeredCount < totalQuestions) {
+    if (!confirm(`You have completed ${answeredCount} of ${totalQuestions} questions. Are you sure you want to submit now?`)) {
       return
     }
   }

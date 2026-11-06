@@ -1,22 +1,16 @@
 <template>
   <v-container fluid class="pa-0">
-    <!-- Header Card -->
-    <v-card id="tour-leaderboard-banner" border flat class="pa-3 pa-sm-4 mb-4 bg-gradient-to-r text-white" rounded="lg" style="background: linear-gradient(135deg, #3F51B5 0%, #1A237E 100%);">
+    <!-- Header Card (Kids 3D Champions Banner) -->
+    <v-card id="tour-leaderboard-banner" class="pa-4 mb-4 kids-card-hero kids-gradient-gold">
       <div class="d-flex align-center justify-space-between flex-wrap ga-2">
         <div class="d-flex align-center ga-2 ga-sm-3">
-          <v-avatar color="amber" size="40" class="elevation-3 flex-shrink-0">
-            <v-icon size="default" color="white">mdi-trophy-variant</v-icon>
-          </v-avatar>
+          <div class="kids-floating d-flex align-center justify-center" style="width: 52px; height: 52px; background: rgba(255,255,255,0.45); border-radius: 16px;">
+            <img src="/assets/kids/icon-leaderboard-3d.webp" alt="Trophy" style="width: 44px; height: 44px; object-fit: contain;" />
+          </div>
           <div>
-            <div class="text-subtitle-1 text-sm-h6 font-weight-black tracking-tight leading-tight">PRONUNCIATION ARENA LEADERBOARD</div>
-            <div class="text-caption text-indigo-lighten-4 font-weight-bold d-flex align-center ga-1 mt-0.5">
-              <span>Account Mode:</span>
-              <v-chip color="amber" size="x-small" variant="flat" class="font-weight-black text-black ml-1">
-                <v-icon size="x-small" class="mr-1">
-                  {{ activeCategory === 'classroom' ? 'mdi-google-classroom' : 'mdi-account-star-outline' }}
-                </v-icon>
-                {{ activeCategory === 'classroom' ? 'Classroom Enrolled Honor Roll' : 'Global Independent Learners Standings' }}
-              </v-chip>
+            <div class="text-subtitle-1 text-sm-h6 font-weight-black tracking-tight leading-tight" style="color: #3E2723;">CHAMPIONS LEADERBOARD 🏆</div>
+            <div class="text-caption font-weight-bold d-flex align-center ga-1 mt-0.5" style="color: #4E342E;">
+              <span>Star Standings & Top Speakers</span>
             </div>
           </div>
         </div>
@@ -24,22 +18,18 @@
           <v-btn
             icon="mdi-lightbulb-on-outline"
             size="small"
-            variant="text"
-            color="amber"
+            variant="flat"
+            class="kids-btn-3d kids-btn-white"
             title="Xem hướng dẫn Bảng vinh danh"
             @click="replayLeaderboardTour"
           />
-          <v-btn
-            color="amber"
-            variant="flat"
-            size="small"
-            class="font-weight-black text-none"
-            prepend-icon="mdi-refresh"
-            :loading="isLoading"
+          <button
+            class="kids-btn-3d kids-btn-white px-3 py-2 text-caption font-weight-black"
+            :disabled="isLoading"
             @click="fetchLeaderboard"
           >
-            Refresh Standings
-          </v-btn>
+            <v-icon size="small" class="mr-1">mdi-refresh</v-icon> Refresh Standings
+          </button>
         </div>
       </div>
     </v-card>

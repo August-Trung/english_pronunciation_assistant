@@ -65,10 +65,10 @@
         <!-- Brand Header inside Drawer -->
         <div class="sidebar-brand-header d-flex align-center px-3 py-3 border-b" :class="{ 'justify-center': mdAndUp && isRail }">
           <router-link to="/" class="d-flex align-center text-decoration-none overflow-hidden" :class="{ 'justify-center': mdAndUp && isRail }">
-            <img src="/logo-augusttrung.png" alt="August Trung Logo" height="32" class="flex-shrink-0" />
+            <img src="/assets/kids/mascot-robot-3d.webp" alt="Fluent Mascot" height="36" class="flex-shrink-0 kids-floating" />
             <div v-if="!mdAndUp || !isRail" class="ml-2 text-truncate">
-              <div class="text-subtitle-2 font-weight-black text-primary tracking-tight" style="line-height: 1.2;">FLUENT</div>
-              <div class="text-caption font-weight-bold text-grey-darken-1 text-truncate" style="font-size: 10px; line-height: 1;">Academic Studio</div>
+              <div class="text-subtitle-1 font-weight-black text-primary tracking-tight" style="line-height: 1.2;">FLUENT</div>
+              <div class="text-caption font-weight-black text-amber-darken-3 text-truncate" style="font-size: 11px; line-height: 1;">Kids Studio 🚀</div>
             </div>
           </router-link>
         </div>
@@ -83,51 +83,59 @@
 
           <v-list-item
             to="/"
-            rounded="lg"
+            rounded="xl"
             color="primary"
             active-class="sidebar-item-active"
-            prepend-icon="mdi-microphone"
-            class="mb-1"
+            class="mb-2"
           >
-            <v-list-item-title class="font-weight-bold text-body-2">Speaking</v-list-item-title>
+            <template #prepend>
+              <img src="/assets/kids/icon-speaking-3d.webp" class="kids-sidebar-sticker" alt="Speaking" />
+            </template>
+            <v-list-item-title class="font-weight-black text-body-2">Speaking</v-list-item-title>
             <v-tooltip v-if="mdAndUp && isRail" activator="parent" location="right">Speaking Studio</v-tooltip>
           </v-list-item>
 
           <v-list-item
             to="/shadowing"
-            rounded="lg"
+            rounded="xl"
             color="primary"
             active-class="sidebar-item-active"
-            prepend-icon="mdi-waveform"
-            class="mb-1"
+            class="mb-2"
           >
-            <v-list-item-title class="font-weight-bold text-body-2">Shadowing</v-list-item-title>
+            <template #prepend>
+              <img src="/assets/kids/icon-shadowing-3d.webp" class="kids-sidebar-sticker" alt="Shadowing" />
+            </template>
+            <v-list-item-title class="font-weight-black text-body-2">Shadowing</v-list-item-title>
             <v-tooltip v-if="mdAndUp && isRail" activator="parent" location="right">Shadowing Studio</v-tooltip>
           </v-list-item>
 
           <v-list-item
             v-if="!isMyHanhDomain"
             to="/flashcards"
-            rounded="lg"
+            rounded="xl"
             color="primary"
             active-class="sidebar-item-active"
-            prepend-icon="mdi-cards-variant"
-            class="mb-1"
+            class="mb-2"
           >
-            <v-list-item-title class="font-weight-bold text-body-2">Flashcards</v-list-item-title>
+            <template #prepend>
+              <img src="/assets/kids/icon-flashcards-3d.webp" class="kids-sidebar-sticker" alt="Flashcards" />
+            </template>
+            <v-list-item-title class="font-weight-black text-body-2">Flashcards</v-list-item-title>
             <v-tooltip v-if="mdAndUp && isRail" activator="parent" location="right">Vocabulary Flashcards</v-tooltip>
           </v-list-item>
 
           <v-list-item
             v-if="!isMyHanhDomain"
             to="/picture-practice"
-            rounded="lg"
+            rounded="xl"
             color="primary"
             active-class="sidebar-item-active"
-            prepend-icon="mdi-image-filter-frames"
-            class="mb-1"
+            class="mb-2"
           >
-            <v-list-item-title class="font-weight-bold text-body-2">Describe Picture</v-list-item-title>
+            <template #prepend>
+              <img src="/assets/kids/icon-picture-3d.webp" class="kids-sidebar-sticker" alt="Describe Picture" />
+            </template>
+            <v-list-item-title class="font-weight-black text-body-2">Describe Picture</v-list-item-title>
             <v-tooltip v-if="mdAndUp && isRail" activator="parent" location="right">Describe Picture</v-tooltip>
           </v-list-item>
 
@@ -139,13 +147,15 @@
 
           <v-list-item
             to="/homework"
-            rounded="lg"
+            rounded="xl"
             color="primary"
             active-class="sidebar-item-active"
-            prepend-icon="mdi-clipboard-text-outline"
-            class="mb-1"
+            class="mb-2"
           >
-            <v-list-item-title class="font-weight-bold text-body-2">Homework</v-list-item-title>
+            <template #prepend>
+              <img src="/assets/kids/icon-homework-3d.webp" class="kids-sidebar-sticker" alt="Homework" />
+            </template>
+            <v-list-item-title class="font-weight-black text-body-2">Homework</v-list-item-title>
             <template #append v-if="urgentHomeworkCount > 0">
               <v-badge color="error" :content="urgentHomeworkCount" inline />
             </template>
@@ -154,13 +164,15 @@
 
           <v-list-item
             to="/leaderboard"
-            rounded="lg"
+            rounded="xl"
             color="primary"
             active-class="sidebar-item-active"
-            prepend-icon="mdi-trophy-outline"
-            class="mb-1"
+            class="mb-2"
           >
-            <v-list-item-title class="font-weight-bold text-body-2">Leaderboard</v-list-item-title>
+            <template #prepend>
+              <img src="/assets/kids/icon-leaderboard-3d.webp" class="kids-sidebar-sticker" alt="Leaderboard" />
+            </template>
+            <v-list-item-title class="font-weight-black text-body-2">Leaderboard</v-list-item-title>
             <v-tooltip v-if="mdAndUp && isRail" activator="parent" location="right">Leaderboard</v-tooltip>
           </v-list-item>
 
@@ -281,34 +293,34 @@
 
           <!-- Ultra Clean Right Actions (Streak + Avatar Dropdown Menu) -->
           <div class="d-flex align-center ga-2">
-            <!-- Streak Badge (Subtle UX: Outlined + subtle glow when streak is at risk today) -->
-            <v-chip
+            <!-- Kids Top Bar Badges with 3D Stickers -->
+            <div
               v-if="streak > 0"
-              :color="hasPracticedToday ? 'warning' : 'amber-darken-3'"
-              :variant="hasPracticedToday ? 'flat' : 'outlined'"
-              density="comfortable"
-              class="font-weight-black text-caption text-sm-body-2 px-2 px-sm-3"
+              class="kids-pill-badge kids-pill-gold cursor-pointer"
               :class="{ 'streak-at-risk': !hasPracticedToday }"
-              prepend-icon="mdi-fire"
             >
-              <span class="d-none d-sm-inline">{{ streak }}-Day Streak</span>
-              <span class="d-inline d-sm-none">{{ streak }}d</span>
+              <img src="/assets/kids/badge-fire-3d.webp" alt="Streak" style="width: 22px; height: 22px; object-fit: contain;" />
+              <span class="d-none d-sm-inline font-weight-black">{{ streak }}-Day Streak!</span>
+              <span class="d-inline d-sm-none font-weight-black">{{ streak }}d</span>
               <v-tooltip activator="parent" location="bottom">
                 {{ hasPracticedToday ? 'Active streak! You practiced today.' : 'Streak at risk! Practice 1 session today to keep your streak!' }}
               </v-tooltip>
-            </v-chip>
-            <v-chip
+            </div>
+            <div
               v-else
-              color="grey-darken-1"
-              variant="tonal"
-              density="comfortable"
-              class="font-weight-bold text-caption text-sm-body-2 px-2 px-sm-3"
-              prepend-icon="mdi-fire"
+              class="kids-pill-badge"
+              style="background: #F5F5F5; color: #757575;"
             >
-              <span class="d-none d-sm-inline">0-Day Streak</span>
-              <span class="d-inline d-sm-none">{{ streak }}d</span>
+              <img src="/assets/kids/badge-fire-3d.webp" alt="Streak" style="width: 20px; height: 20px; object-fit: contain; opacity: 0.6;" />
+              <span class="d-none d-sm-inline font-weight-bold">0-Day Streak</span>
+              <span class="d-inline d-sm-none font-weight-bold">0d</span>
               <v-tooltip activator="parent" location="bottom">Practice today to ignite your streak!</v-tooltip>
-            </v-chip>
+            </div>
+
+            <div class="kids-pill-badge kids-pill-sky d-none d-sm-inline-flex">
+              <img src="/assets/kids/badge-star-3d.webp" alt="Stars" style="width: 20px; height: 20px; object-fit: contain;" />
+              <span class="font-weight-black">Super Star</span>
+            </div>
 
             <!-- Avatar Dropdown Menu -->
             <v-menu location="bottom end" transition="scale-transition">
