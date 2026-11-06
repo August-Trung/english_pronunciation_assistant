@@ -18,18 +18,33 @@
   --kids-pink: #FF4081;
   --kids-pink-depth: #C2185B;
   
-  --kids-bg-soft: #F6FAFE;
+  --kids-bg-soft: #F4F9FD;
   --kids-card-border: #E3F2FD;
-  --kids-radius-card: 20px;
-  --kids-radius-btn: 16px;
+  --kids-radius-card: 22px;
+  --kids-radius-btn: 18px;
   --kids-radius-pill: 9999px;
+}
+
+// Global Application Background
+.v-application {
+  background-color: var(--kids-bg-soft) !important;
+}
+
+.v-navigation-drawer {
+  background: #FFFFFF !important;
+  border-right: 2px solid #E3F2FD !important;
+}
+
+.v-app-bar {
+  background: #FFFFFF !important;
+  border-bottom: 2px solid #E3F2FD !important;
 }
 
 // ------------------------------------------------------------------------------
 // Gradients
 // ------------------------------------------------------------------------------
 .kids-gradient-sky {
-  background: linear-gradient(135deg, #40C4FF 0%, #0288D1 100%) !important;
+  background: linear-gradient(135deg, #29B6F6 0%, #0288D1 100%) !important;
   color: #FFFFFF !important;
 }
 
@@ -40,7 +55,7 @@
 
 .kids-gradient-gold {
   background: linear-gradient(135deg, #FFE082 0%, #FF8F00 100%) !important;
-  color: #5D4037 !important;
+  color: #3E2723 !important;
 }
 
 .kids-gradient-coral {
@@ -62,23 +77,23 @@
 // ------------------------------------------------------------------------------
 .kids-card {
   border-radius: var(--kids-radius-card) !important;
-  border: 2px solid var(--kids-card-border) !important;
-  box-shadow: 0 8px 20px rgba(41, 182, 246, 0.07) !important;
+  border: 2.5px solid var(--kids-card-border) !important;
+  box-shadow: 0 8px 24px rgba(41, 182, 246, 0.08) !important;
   background-color: #FFFFFF !important;
   transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease !important;
   overflow: hidden;
 
   &.kids-card-interactive:hover {
     transform: translateY(-4px) scale(1.005);
-    box-shadow: 0 16px 30px rgba(41, 182, 246, 0.15) !important;
+    box-shadow: 0 16px 32px rgba(41, 182, 246, 0.16) !important;
     border-color: #81D4FA !important;
   }
 }
 
 .kids-card-hero {
-  border-radius: 24px !important;
+  border-radius: 26px !important;
   border: none !important;
-  box-shadow: 0 12px 32px rgba(123, 31, 162, 0.18) !important;
+  box-shadow: 0 12px 32px rgba(2, 136, 209, 0.22) !important;
   position: relative;
   overflow: hidden;
 
@@ -89,7 +104,7 @@
     right: -40px;
     width: 140px;
     height: 140px;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.25) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.28) 0%, transparent 70%);
     border-radius: 50%;
     pointer-events: none;
   }
@@ -159,7 +174,7 @@
   &.kids-btn-white {
     background: #FFFFFF !important;
     color: #0288D1 !important;
-    --btn-shadow: #CFD8DC;
+    --btn-shadow: #B0BEC5;
   }
 }
 
@@ -216,6 +231,7 @@
   display: inline-block;
   vertical-align: middle;
   object-fit: contain;
+  background: transparent !important;
   filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.12));
   transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
 
@@ -225,25 +241,27 @@
 }
 
 .kids-sidebar-sticker {
-  width: 26px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
   margin-right: 12px;
   flex-shrink: 0;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-  transition: transform 0.18s ease;
+  object-fit: contain;
+  background: transparent !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.12));
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 // Active sidebar item highlight with candy pill background
 .sidebar-item-active {
-  background: linear-gradient(90deg, #E1F5FE 0%, #EDE7F6 100%) !important;
+  background: linear-gradient(90deg, #E1F5FE 0%, #F3E5F5 100%) !important;
   color: #0288D1 !important;
-  border-radius: 14px !important;
+  border-radius: 16px !important;
   font-weight: 800 !important;
-  border-left: 4px solid #29B6F6 !important;
+  border: 1.5px solid #81D4FA !important;
 
   .kids-sidebar-sticker {
-    transform: scale(1.12);
-    filter: drop-shadow(0 3px 8px rgba(41, 182, 246, 0.3));
+    transform: scale(1.18) rotate(4deg);
+    filter: drop-shadow(0 3px 8px rgba(41, 182, 246, 0.4));
   }
 }
 

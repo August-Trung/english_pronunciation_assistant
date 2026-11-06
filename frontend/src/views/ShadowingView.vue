@@ -1,15 +1,20 @@
 <template>
   <v-container fluid class="pa-0 max-width-1400">
-    <!-- Rich Teal Gradient Banner Card -->
-    <v-card border flat class="pa-3 pa-sm-4 mb-4 text-white rounded-lg" style="background: linear-gradient(135deg, #009688 0%, #004D40 100%);">
-      <div class="d-flex align-center justify-space-between flex-wrap ga-2">
-        <div class="d-flex align-center ga-2 ga-sm-3">
-          <v-avatar color="teal-lighten-4" size="42" class="flex-shrink-0">
-            <v-icon color="teal-darken-4" size="default">mdi-waveform</v-icon>
-          </v-avatar>
+    <!-- Kids Shadowing Hero Banner (Cute 3D Pixar Theme) -->
+    <v-card class="pa-4 pa-sm-5 mb-4 text-white kids-card-hero kids-gradient-sky">
+      <div class="d-flex align-center justify-space-between flex-wrap ga-3">
+        <div class="d-flex align-center ga-3">
+          <div class="kids-floating d-flex align-center justify-center" style="width: 58px; height: 58px; background: rgba(255,255,255,0.25); border-radius: 18px; backdrop-filter: blur(8px);">
+            <img src="/assets/kids/icon-shadowing-3d.webp" alt="Shadowing Headphones" style="width: 48px; height: 48px; object-fit: contain;" />
+          </div>
           <div>
-            <div class="text-subtitle-1 text-sm-h6 font-weight-black tracking-tight leading-tight">SHADOWING STUDIO</div>
-            <div class="text-caption text-teal-lighten-4">Master natural native rhythm and intonation by speaking along with AI models</div>
+            <div class="d-flex align-center ga-2 flex-wrap">
+              <span class="text-subtitle-1 text-sm-h5 font-weight-black tracking-tight leading-tight">SHADOWING STUDIO 🎧</span>
+              <span class="kids-pill-badge kids-pill-gold text-caption">⭐ Fun Echo Practice</span>
+            </div>
+            <div class="text-caption font-weight-medium" style="opacity: 0.95;">
+              Listen carefully, repeat after your AI buddy, and collect gold stars!
+            </div>
           </div>
         </div>
 
@@ -19,20 +24,21 @@
             id="tour-shadowing-level-picker"
             v-model="selectedLevel"
             mandatory
-            color="white"
-            density="compact"
+            color="amber-darken-3"
+            density="comfortable"
             variant="flat"
             rounded="pill"
-            class="bg-teal-darken-3"
+            class="elevation-2"
+            style="background: rgba(255,255,255,0.3) !important;"
           >
-            <v-btn value="easy" size="x-small" class="font-weight-bold">Easy</v-btn>
-            <v-btn v-if="!isMyHanh" value="medium" size="x-small" class="font-weight-bold">Medium</v-btn>
-            <v-btn v-if="!isMyHanh" value="hard" size="x-small" class="font-weight-bold">Hard</v-btn>
+            <v-btn value="easy" size="small" class="font-weight-black text-none">🌱 Easy</v-btn>
+            <v-btn v-if="!isMyHanh" value="medium" size="small" class="font-weight-black text-none">⭐ Medium</v-btn>
+            <v-btn v-if="!isMyHanh" value="hard" size="small" class="font-weight-black text-none">🚀 Hard</v-btn>
           </v-btn-toggle>
           <v-btn
             icon="mdi-lightbulb-on-outline"
-            variant="tonal"
-            color="white"
+            variant="flat"
+            class="kids-btn-3d kids-btn-white"
             size="small"
             title="Hướng dẫn Shadowing Studio"
             @click="replayShadowingTour"
@@ -47,98 +53,93 @@
       <!-- LEFT COLUMN: Practice & Recording Studio (Col 7 / 8) -->
       <!-- ============================================== -->
       <v-col cols="12" md="7" lg="8" class="pa-0">
-        <!-- Active Sample Sentence Box -->
-        <v-card border flat class="pa-4 rounded-lg mb-4 text-center bg-white" style="background: linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 100%);">
-          <div class="d-flex align-center justify-space-between mb-2">
-            <div class="text-caption text-teal-darken-4 font-weight-black d-flex align-center ga-1">
-              <v-icon size="small" color="teal-darken-3">mdi-sparkles</v-icon>
-              <span>AI SUGGESTED MODEL SENTENCE</span>
+        <!-- Active Sample Sentence Box (Kids Bubbly Card) -->
+        <v-card class="pa-5 mb-4 text-center kids-card" style="background: linear-gradient(135deg, #FFFDE7 0%, #E1F5FE 100%) !important; border: 2.5px solid #81D4FA !important;">
+          <div class="d-flex align-center justify-space-between mb-3">
+            <div class="d-flex align-center ga-2">
+              <span class="kids-pill-badge kids-pill-purple">
+                <v-icon size="small">mdi-sparkles</v-icon> Model Sentence
+              </span>
             </div>
-            <v-chip size="x-small" color="teal-darken-3" variant="flat" class="font-weight-bold text-uppercase">
-              Level: {{ selectedLevel }}
-            </v-chip>
+            <span class="kids-pill-badge kids-pill-gold text-uppercase font-weight-black">
+              ⭐ Level: {{ selectedLevel }}
+            </span>
           </div>
 
-          <div class="text-h6 text-sm-h5 font-weight-black text-grey-darken-4 mb-2 px-2" style="line-height: 1.3;">
+          <div class="text-h5 text-sm-h4 font-weight-black text-indigo-darken-4 mb-2 px-2" style="line-height: 1.35; letter-spacing: -0.3px;">
             "{{ currentSentence.text }}"
           </div>
 
-          <div class="d-flex flex-column align-center ga-1 mb-3">
-            <span class="text-subtitle-1 text-teal-darken-4 font-weight-bold font-italic">
+          <div class="d-flex flex-column align-center ga-1 mb-4">
+            <span class="text-subtitle-1 text-primary-darken-2 font-weight-bold font-italic">
               /{{ currentSentence.ipa }}/
             </span>
-            <span class="text-caption text-grey-darken-2 d-flex align-center ga-1">
-              <v-icon color="primary" size="x-small">mdi-translate</v-icon>
+            <span class="kids-pill-badge kids-pill-mint mt-1">
+              <v-icon size="x-small">mdi-translate</v-icon>
               <span>{{ currentSentence.meaning }}</span>
             </span>
           </div>
 
           <!-- Audio Accent & Playback Controls -->
-          <div class="d-flex align-center justify-center ga-2 flex-wrap pt-2 border-t">
-            <v-chip-group v-model="ttsAccent" mandatory density="compact" color="teal" class="mr-2">
-              <v-chip value="en-GB" size="x-small" label variant="tonal">UK Accent</v-chip>
-              <v-chip value="en-US" size="x-small" label variant="tonal">US Accent</v-chip>
+          <div class="d-flex align-center justify-center ga-3 flex-wrap pt-3 border-t">
+            <v-chip-group v-model="ttsAccent" mandatory density="compact" color="primary" class="mr-2">
+              <v-chip value="en-GB" size="small" class="font-weight-black" variant="tonal">🇬🇧 UK Accent</v-chip>
+              <v-chip value="en-US" size="small" class="font-weight-black" variant="tonal">🇺🇸 US Accent</v-chip>
             </v-chip-group>
 
-            <v-btn
+            <button
               id="tour-shadowing-sample-btn"
-              color="teal-darken-2"
-              variant="flat"
-              size="small"
-              class="text-none font-weight-bold"
-              prepend-icon="mdi-volume-high"
+              class="kids-btn-3d kids-btn-sky px-4 py-2 text-body-2 font-weight-black"
               @click="playSampleTTS"
             >
-              Listen Sample
-            </v-btn>
-            <v-btn
-              color="teal-darken-3"
-              variant="tonal"
-              size="small"
-              class="text-none font-weight-bold"
-              prepend-icon="mdi-auto-fix"
-              :loading="isGeneratingAI"
+              <v-icon size="small" class="mr-1">mdi-volume-high</v-icon> Listen Sample 🎧
+            </button>
+            <button
+              class="kids-btn-3d kids-btn-purple px-4 py-2 text-body-2 font-weight-black"
+              :disabled="isGeneratingAI"
               @click="generateAISentence"
             >
-              New AI Sentence
-            </v-btn>
+              <v-icon size="small" class="mr-1">mdi-auto-fix</v-icon> New AI Sentence ✨
+            </button>
           </div>
         </v-card>
 
-        <!-- Micro Studio Section -->
-        <v-card border flat class="pa-4 rounded-lg mb-4 text-center bg-white">
-          <div class="text-subtitle-2 font-weight-bold text-grey-darken-3 mb-2">
-            {{ isRecording ? 'Recording in progress... Click button to stop & evaluate:' : 'Click microphone button below to record your voice:' }}
+        <!-- Micro Studio Section (Kids Chunky 3D Bouncy Mic) -->
+        <v-card class="pa-5 mb-4 text-center bg-white kids-card">
+          <div class="text-subtitle-1 font-weight-black text-indigo-darken-4 mb-2">
+            {{ isRecording ? '🎙️ Recording Your Voice! Tap the big button when done:' : '🎤 Tap the Big Microphone below and speak aloud:' }}
           </div>
 
-          <div class="d-flex align-center justify-center position-relative mx-auto my-2" style="width: 72px; height: 72px;">
+          <div class="d-flex align-center justify-center position-relative mx-auto my-3" style="width: 90px; height: 90px;">
             <v-progress-circular
               v-if="isRecording || isAnalyzing"
               indeterminate
-              color="teal"
-              size="72"
-              width="4"
+              color="error"
+              size="90"
+              width="5"
               class="position-absolute"
             />
             <v-btn
               id="tour-shadowing-record-btn"
-              :color="isRecording ? 'grey-darken-4' : 'teal-darken-1'"
+              :color="isRecording ? 'grey-darken-4' : 'error'"
               icon
-              elevation="2"
-              style="width: 58px; height: 58px; z-index: 2;"
+              class="kids-btn-3d elevation-6"
+              :class="isRecording ? 'kids-btn-coral' : 'kids-btn-coral'"
+              style="width: 76px; height: 76px; z-index: 2; border-radius: 50% !important;"
               :disabled="isAnalyzing"
               @click="isRecording ? stopRecording() : startRecording()"
             >
-              <v-icon size="medium">{{ isRecording ? 'mdi-stop' : 'mdi-microphone' }}</v-icon>
+              <v-icon size="36">{{ isRecording ? 'mdi-stop' : 'mdi-microphone' }}</v-icon>
             </v-btn>
           </div>
 
-          <div v-if="isRecording" class="text-body-2 text-teal-darken-3 font-weight-black mt-2">
-            Recording... ({{ recordingDuration }}s)
+          <div v-if="isRecording" class="text-subtitle-2 text-error font-weight-black mt-2 d-flex align-center justify-center ga-2">
+            <span class="animate-pulse">🔴 Recording: {{ recordingDuration }}s</span>
+            <span class="kids-pill-badge kids-pill-gold">Keep speaking! ⭐</span>
           </div>
 
-          <div v-if="isAnalyzing" class="text-body-2 text-teal-darken-3 font-weight-bold animate-pulse mt-2">
-            AI is analyzing speech intonation & rhythm...
+          <div v-if="isAnalyzing" class="text-subtitle-2 text-primary font-weight-black animate-pulse mt-2">
+            🤖 AI Buddy is listening and scoring your intonation...
           </div>
         </v-card>
 
@@ -494,16 +495,16 @@
             </v-card>
           </template>
 
-          <!-- Companion Section B: Quick Model Sentence Playlist / Practice Queue -->
-          <v-card border flat rounded="lg" class="pa-3 bg-white">
-            <div class="d-flex align-center justify-space-between mb-2">
-              <div class="text-caption font-weight-black text-grey-darken-3 d-flex align-center ga-1">
-                <v-icon color="teal-darken-2" size="small">mdi-playlist-music</v-icon>
-                <span>PRACTICE QUEUE ({{ (sampleSentences[selectedLevel] || []).length }})</span>
+          <!-- Companion Section B: Quick Model Sentence Playlist / Practice Queue (Kids Theme) -->
+          <v-card class="pa-4 bg-white kids-card mb-3">
+            <div class="d-flex align-center justify-space-between mb-3">
+              <div class="text-subtitle-2 font-weight-black text-indigo-darken-4 d-flex align-center ga-2">
+                <img src="/assets/kids/icon-flashcards-3d.webp" alt="Queue" style="width: 26px; height: 26px; object-fit: contain;" />
+                <span>PRACTICE MISSIONS ({{ (sampleSentences[selectedLevel] || []).length }})</span>
               </div>
-              <v-chip size="x-small" color="teal" variant="tonal" class="font-weight-bold text-uppercase">
-                {{ selectedLevel }}
-              </v-chip>
+              <span class="kids-pill-badge kids-pill-sky text-uppercase">
+                ⭐ {{ selectedLevel }}
+              </span>
             </div>
 
             <v-list density="compact" class="pa-0">
