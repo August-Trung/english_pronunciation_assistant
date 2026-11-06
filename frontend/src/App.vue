@@ -178,26 +178,30 @@
 
           <v-list-item
             to="/history"
-            rounded="lg"
+            rounded="xl"
             color="primary"
             active-class="sidebar-item-active"
-            prepend-icon="mdi-history"
-            class="mb-1"
+            class="mb-2"
           >
-            <v-list-item-title class="font-weight-bold text-body-2">History Log</v-list-item-title>
+            <template #prepend>
+              <img src="/assets/kids/icon-history-duo.svg" class="kids-sidebar-sticker" alt="History" />
+            </template>
+            <v-list-item-title class="font-weight-black text-body-2">History Log</v-list-item-title>
             <v-tooltip v-if="mdAndUp && isRail" activator="parent" location="right">History Log</v-tooltip>
           </v-list-item>
 
           <v-list-item
             v-if="!isMyHanhDomain"
             to="/stats"
-            rounded="lg"
+            rounded="xl"
             color="primary"
             active-class="sidebar-item-active"
-            prepend-icon="mdi-chart-bar"
-            class="mb-1"
+            class="mb-2"
           >
-            <v-list-item-title class="font-weight-bold text-body-2">Analytics</v-list-item-title>
+            <template #prepend>
+              <img src="/assets/kids/icon-analytics-duo.svg" class="kids-sidebar-sticker" alt="Analytics" />
+            </template>
+            <v-list-item-title class="font-weight-black text-body-2">Analytics</v-list-item-title>
             <v-tooltip v-if="mdAndUp && isRail" activator="parent" location="right">Analytics</v-tooltip>
           </v-list-item>
 
@@ -210,26 +214,30 @@
 
             <v-list-item
               to="/teacher"
-              rounded="lg"
+              rounded="xl"
               color="indigo-darken-2"
               active-class="sidebar-item-active"
-              prepend-icon="mdi-school"
-              class="mb-1"
+              class="mb-2"
             >
-              <v-list-item-title class="font-weight-bold text-body-2 text-indigo-darken-2">Teacher Hub</v-list-item-title>
+              <template #prepend>
+                <img src="/assets/kids/icon-teacher-duo.svg" class="kids-sidebar-sticker" alt="Teacher Hub" />
+              </template>
+              <v-list-item-title class="font-weight-black text-body-2 text-indigo-darken-2">Teacher Hub</v-list-item-title>
               <v-tooltip v-if="mdAndUp && isRail" activator="parent" location="right">Teacher Hub</v-tooltip>
             </v-list-item>
 
             <v-list-item
               v-if="!isMyHanhDomain && ['admin', 'super_admin'].includes(userRole)"
               to="/admin"
-              rounded="lg"
+              rounded="xl"
               color="purple-darken-3"
               active-class="sidebar-item-active"
-              prepend-icon="mdi-shield-crown"
-              class="mb-1"
+              class="mb-2"
             >
-              <v-list-item-title class="font-weight-bold text-body-2 text-purple-darken-3">Admin Console</v-list-item-title>
+              <template #prepend>
+                <img src="/assets/kids/icon-admin-duo.svg" class="kids-sidebar-sticker" alt="Admin Console" />
+              </template>
+              <v-list-item-title class="font-weight-black text-body-2 text-purple-darken-3">Admin Console</v-list-item-title>
               <v-tooltip v-if="mdAndUp && isRail" activator="parent" location="right">Admin Console</v-tooltip>
             </v-list-item>
           </template>

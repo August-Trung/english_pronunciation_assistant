@@ -1,18 +1,19 @@
 <template>
   <v-container fluid class="pa-0 max-width-1400">
-    <!-- Header Banner -->
-    <v-card id="tour-picture-banner" border flat class="pa-3 pa-sm-4 mb-4 text-white rounded-lg" style="background: linear-gradient(135deg, #0EA5E9 0%, #2563EB 100%);">
-      <div class="d-flex align-center justify-space-between flex-wrap ga-2">
-        <div class="d-flex align-center ga-2 ga-sm-3">
-          <v-avatar color="white" size="44" class="flex-shrink-0 elevation-1">
-            <v-icon color="blue-darken-3" size="default">mdi-image-filter-frames</v-icon>
-          </v-avatar>
+    <!-- Header Banner (Kids Duolingo Style) -->
+    <v-card id="tour-picture-banner" class="pa-4 mb-4 text-white kids-card-hero kids-gradient-purple">
+      <div class="d-flex align-center justify-space-between flex-wrap ga-3">
+        <div class="d-flex align-center ga-3">
+          <div class="kids-floating d-flex align-center justify-center" style="width: 54px; height: 54px; background: rgba(255,255,255,0.25); border-radius: 16px;">
+            <img src="/assets/kids/icon-picture-duo.svg" alt="Describe Picture" style="width: 44px; height: 44px; object-fit: contain;" />
+          </div>
           <div>
-            <div class="text-subtitle-1 text-sm-h6 font-weight-black tracking-tight leading-tight">
-              DESCRIBE THE PICTURE STUDIO
+            <div class="d-flex align-center ga-2 flex-wrap">
+              <span class="text-subtitle-1 text-sm-h5 font-weight-black tracking-tight leading-tight">DESCRIBE THE PICTURE 📸</span>
+              <span class="kids-pill-badge kids-pill-gold text-caption">⭐ Fun Picture Talk</span>
             </div>
-            <div class="text-caption text-blue-lighten-4">
-              IELTS Speaking Part 2 & TOEIC Questions 3-4 Multimodal Practice with Instant AI Grounding
+            <div class="text-caption font-weight-medium" style="opacity: 0.95;">
+              Explore colorful pictures, talk about scenes, and describe what you see!
             </div>
           </div>
         </div>
@@ -620,7 +621,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import {
   runTour,
   TOUR_KEYS,

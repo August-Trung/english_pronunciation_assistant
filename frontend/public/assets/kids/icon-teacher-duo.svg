@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Duolingo style Teacher Hub Cap -->
+  <circle cx="32" cy="32" r="30" fill="#E8EAF6"/>
+  <!-- Cap Diamond -->
+  <polygon points="32,16 52,26 32,36 12,26" fill="#3F51B5"/>
+  <polygon points="32,19 48,26 32,33 16,26" fill="#5C6BC0"/>
+  <!-- Cap Skull Base -->
+  <path d="M20 30 v9 c0 5.5 5.4 10 12 10 s12 -4.5 12 -10 v-9" fill="#283593"/>
+  <!-- Tassel -->
+  <path d="M44 27 v14" stroke="#FFC800" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="44" cy="42" r="3" fill="#FF9600"/>
+</svg>

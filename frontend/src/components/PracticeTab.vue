@@ -363,27 +363,23 @@
               </div>
             </v-card>
 
-            <!-- Evaluate Action Button -->
-            <v-btn
-              color="success"
-              variant="flat"
-              block
-              height="48"
-              class="font-weight-black"
-              prepend-icon="mdi-checkbox-marked-circle-outline"
+            <!-- Evaluate Action Button (Duolingo Style) -->
+            <button
+              class="kids-btn-3d kids-btn-mint w-100 py-3 text-body-1 font-weight-black mt-2"
+              style="height: 50px;"
               :disabled="!audioBlob || !topic.trim() || isAnalyzing"
-              :loading="isAnalyzing"
               @click="analyzeSpeech"
             >
-              Evaluate Pronunciation
-            </v-btn>
+              <v-icon size="small" class="mr-1">mdi-checkbox-marked-circle-outline</v-icon>
+              {{ isAnalyzing ? 'Evaluating Your Speech...' : 'Evaluate Pronunciation ⭐' }}
+            </button>
           </div>
         </v-card>
       </v-col>
 
       <!-- Right column: Analysis Results -->
       <v-col cols="12" md="6" class="pa-1">
-        <v-card border flat class="pa-4 bg-white min-h-100 d-flex flex-column" rounded="lg">
+        <v-card class="pa-4 bg-white min-h-100 d-flex flex-column kids-card">
           <div class="d-flex align-center justify-space-between ga-2 mb-3">
             <div class="d-flex align-center ga-2">
               <v-avatar color="success-lighten-5" size="36" class="text-success mr-1 border">
