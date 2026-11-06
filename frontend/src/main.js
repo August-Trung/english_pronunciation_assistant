@@ -8,6 +8,7 @@
 import { createApp } from 'vue'
 import { registerPlugins } from '@/plugins'
 import router from '@/router'
+import '@/styles/kids-theme.scss'
 import App from './App.vue'
 
 const app = createApp(App)
