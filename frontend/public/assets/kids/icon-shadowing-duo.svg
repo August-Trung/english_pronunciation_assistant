@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Duolingo style Shadowing Headphones -->
+  <circle cx="32" cy="32" r="30" fill="#E8F5E9"/>
+  <!-- Headband -->
+  <path d="M18 34 C18 20 23 15 32 15 C41 15 46 20 46 34" fill="none" stroke="#58CC02" stroke-width="5" stroke-linecap="round"/>
+  <!-- Top Cushion -->
+  <path d="M26 15 C28 14 36 14 38 15" fill="none" stroke="#58A700" stroke-width="7" stroke-linecap="round"/>
+  <!-- Ear Cups Left & Right -->
+  <rect x="14" y="30" width="8" height="15" rx="4" fill="#58CC02"/>
+  <rect x="13" y="32" width="3" height="11" rx="1.5" fill="#58A700"/>
+  <rect x="42" y="30" width="8" height="15" rx="4" fill="#58CC02"/>
+  <rect x="48" y="32" width="3" height="11" rx="1.5" fill="#58A700"/>
+  <!-- Cute Music Notes floating -->
+  <circle cx="31" cy="42" r="2.5" fill="#FFC800"/>
+  <path d="M33.5 42 v-8 h5 v3" fill="none" stroke="#FFC800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="38.5" cy="37" r="2" fill="#FFC800"/>
+</svg>

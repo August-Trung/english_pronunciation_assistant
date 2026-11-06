@@ -9,7 +9,7 @@
       title="Open AI Agent Copilot"
       @click="isOpen = !isOpen"
     >
-      <img src="/assets/kids/mascot-robot-3d.webp" alt="AI Mascot" style="width: 44px; height: 44px; object-fit: contain;" />
+      <img src="/assets/kids/mascot-buddy-duo.svg" alt="AI Mascot" style="width: 44px; height: 44px; object-fit: contain;" />
     </v-btn>
 
     <!-- Floating Chat Drawer / Window -->
@@ -25,7 +25,7 @@
       <!-- Header (Kids Mascot Theme) -->
       <div class="pa-3 kids-gradient-purple text-white d-flex align-center justify-space-between rounded-t-xl">
         <div class="d-flex align-center ga-2">
-          <img src="/assets/kids/mascot-robot-3d.webp" alt="Mascot" style="width: 38px; height: 38px; object-fit: contain;" class="kids-floating" />
+          <img src="/assets/kids/mascot-buddy-duo.svg" alt="Mascot" style="width: 38px; height: 38px; object-fit: contain;" class="kids-floating" />
           <div>
             <div class="text-subtitle-2 font-weight-black leading-tight d-flex align-center ga-1">
               <span>FLUENT AI BUDDY</span>

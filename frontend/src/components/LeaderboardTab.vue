@@ -5,7 +5,7 @@
       <div class="d-flex align-center justify-space-between flex-wrap ga-2">
         <div class="d-flex align-center ga-2 ga-sm-3">
           <div class="kids-floating d-flex align-center justify-center" style="width: 52px; height: 52px; background: rgba(255,255,255,0.45); border-radius: 16px;">
-            <img src="/assets/kids/icon-leaderboard-3d.webp" alt="Trophy" style="width: 44px; height: 44px; object-fit: contain;" />
+            <img src="/assets/kids/icon-leaderboard-duo.svg" alt="Trophy" style="width: 44px; height: 44px; object-fit: contain;" />
           </div>
           <div>
             <div class="text-subtitle-1 text-sm-h6 font-weight-black tracking-tight leading-tight" style="color: #3E2723;">CHAMPIONS LEADERBOARD 🏆</div>

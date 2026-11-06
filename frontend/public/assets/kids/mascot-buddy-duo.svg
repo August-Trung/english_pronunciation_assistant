@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Duolingo style cute Bird/Robot buddy mascot -->
+  <!-- Cute Body -->
+  <circle cx="32" cy="34" r="22" fill="#58CC02"/>
+  <!-- Belly -->
+  <ellipse cx="32" cy="38" rx="14" ry="12" fill="#FFFFFF"/>
+  <!-- Cute Eyes -->
+  <circle cx="24" cy="27" r="7.5" fill="#FFFFFF"/>
+  <circle cx="24" cy="27" r="4.5" fill="#3E2723"/>
+  <circle cx="22.5" cy="25" r="1.8" fill="#FFFFFF"/>
+  
+  <circle cx="40" cy="27" r="7.5" fill="#FFFFFF"/>
+  <circle cx="40" cy="27" r="4.5" fill="#3E2723"/>
+  <circle cx="38.5" cy="25" r="1.8" fill="#FFFFFF"/>
+
+  <!-- Orange Beak -->
+  <polygon points="32,29 28,34 36,34" fill="#FF9600"/>
+  
+  <!-- Rosy cheeks -->
+  <circle cx="16" cy="34" r="2.5" fill="#FF8A80" opacity="0.8"/>
+  <circle cx="48" cy="34" r="2.5" fill="#FF8A80" opacity="0.8"/>
+  
+  <!-- Tiny Head Feathers -->
+  <path d="M30 13 C32 9 34 9 36 13" fill="none" stroke="#58CC02" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- Feet -->
+  <ellipse cx="26" cy="54" rx="4" ry="2" fill="#FF9600"/>
+  <ellipse cx="38" cy="54" rx="4" ry="2" fill="#FF9600"/>
+</svg>

@@ -65,7 +65,7 @@
         <!-- Brand Header inside Drawer -->
         <div class="sidebar-brand-header d-flex align-center px-3 py-3 border-b" :class="{ 'justify-center': mdAndUp && isRail }">
           <router-link to="/" class="d-flex align-center text-decoration-none overflow-hidden" :class="{ 'justify-center': mdAndUp && isRail }">
-            <img src="/assets/kids/mascot-robot-3d.webp" alt="Fluent Mascot" height="36" class="flex-shrink-0 kids-floating" />
+            <img src="/assets/kids/mascot-buddy-duo.svg" alt="Fluent Mascot" height="36" class="flex-shrink-0 kids-floating" />
             <div v-if="!mdAndUp || !isRail" class="ml-2 text-truncate">
               <div class="text-subtitle-1 font-weight-black text-primary tracking-tight" style="line-height: 1.2;">FLUENT</div>
               <div class="text-caption font-weight-black text-amber-darken-3 text-truncate" style="font-size: 11px; line-height: 1;">Kids Studio 🚀</div>
@@ -89,7 +89,7 @@
             class="mb-2"
           >
             <template #prepend>
-              <img src="/assets/kids/icon-speaking-3d.webp" class="kids-sidebar-sticker" alt="Speaking" />
+              <img src="/assets/kids/icon-speaking-duo.svg" class="kids-sidebar-sticker" alt="Speaking" />
             </template>
             <v-list-item-title class="font-weight-black text-body-2">Speaking</v-list-item-title>
             <v-tooltip v-if="mdAndUp && isRail" activator="parent" location="right">Speaking Studio</v-tooltip>
@@ -103,7 +103,7 @@
             class="mb-2"
           >
             <template #prepend>
-              <img src="/assets/kids/icon-shadowing-3d.webp" class="kids-sidebar-sticker" alt="Shadowing" />
+              <img src="/assets/kids/icon-shadowing-duo.svg" class="kids-sidebar-sticker" alt="Shadowing" />
             </template>
             <v-list-item-title class="font-weight-black text-body-2">Shadowing</v-list-item-title>
             <v-tooltip v-if="mdAndUp && isRail" activator="parent" location="right">Shadowing Studio</v-tooltip>
@@ -118,7 +118,7 @@
             class="mb-2"
           >
             <template #prepend>
-              <img src="/assets/kids/icon-flashcards-3d.webp" class="kids-sidebar-sticker" alt="Flashcards" />
+              <img src="/assets/kids/icon-flashcards-duo.svg" class="kids-sidebar-sticker" alt="Flashcards" />
             </template>
             <v-list-item-title class="font-weight-black text-body-2">Flashcards</v-list-item-title>
             <v-tooltip v-if="mdAndUp && isRail" activator="parent" location="right">Vocabulary Flashcards</v-tooltip>
@@ -133,7 +133,7 @@
             class="mb-2"
           >
             <template #prepend>
-              <img src="/assets/kids/icon-picture-3d.webp" class="kids-sidebar-sticker" alt="Describe Picture" />
+              <img src="/assets/kids/icon-picture-duo.svg" class="kids-sidebar-sticker" alt="Describe Picture" />
             </template>
             <v-list-item-title class="font-weight-black text-body-2">Describe Picture</v-list-item-title>
             <v-tooltip v-if="mdAndUp && isRail" activator="parent" location="right">Describe Picture</v-tooltip>
@@ -153,7 +153,7 @@
             class="mb-2"
           >
             <template #prepend>
-              <img src="/assets/kids/icon-homework-3d.webp" class="kids-sidebar-sticker" alt="Homework" />
+              <img src="/assets/kids/icon-homework-duo.svg" class="kids-sidebar-sticker" alt="Homework" />
             </template>
             <v-list-item-title class="font-weight-black text-body-2">Homework</v-list-item-title>
             <template #append v-if="urgentHomeworkCount > 0">
@@ -170,7 +170,7 @@
             class="mb-2"
           >
             <template #prepend>
-              <img src="/assets/kids/icon-leaderboard-3d.webp" class="kids-sidebar-sticker" alt="Leaderboard" />
+              <img src="/assets/kids/icon-leaderboard-duo.svg" class="kids-sidebar-sticker" alt="Leaderboard" />
             </template>
             <v-list-item-title class="font-weight-black text-body-2">Leaderboard</v-list-item-title>
             <v-tooltip v-if="mdAndUp && isRail" activator="parent" location="right">Leaderboard</v-tooltip>
@@ -299,7 +299,7 @@
               class="kids-pill-badge kids-pill-gold cursor-pointer"
               :class="{ 'streak-at-risk': !hasPracticedToday }"
             >
-              <img src="/assets/kids/badge-fire-3d.webp" alt="Streak" style="width: 22px; height: 22px; object-fit: contain;" />
+              <img src="/assets/kids/badge-fire-duo.svg" alt="Streak" style="width: 22px; height: 22px; object-fit: contain;" />
               <span class="d-none d-sm-inline font-weight-black">{{ streak }}-Day Streak!</span>
               <span class="d-inline d-sm-none font-weight-black">{{ streak }}d</span>
               <v-tooltip activator="parent" location="bottom">
@@ -311,14 +311,14 @@
               class="kids-pill-badge"
               style="background: #F5F5F5; color: #757575;"
             >
-              <img src="/assets/kids/badge-fire-3d.webp" alt="Streak" style="width: 20px; height: 20px; object-fit: contain; opacity: 0.6;" />
+              <img src="/assets/kids/badge-fire-duo.svg" alt="Streak" style="width: 20px; height: 20px; object-fit: contain; opacity: 0.6;" />
               <span class="d-none d-sm-inline font-weight-bold">0-Day Streak</span>
               <span class="d-inline d-sm-none font-weight-bold">0d</span>
               <v-tooltip activator="parent" location="bottom">Practice today to ignite your streak!</v-tooltip>
             </div>
 
             <div class="kids-pill-badge kids-pill-sky d-none d-sm-inline-flex">
-              <img src="/assets/kids/badge-star-3d.webp" alt="Stars" style="width: 20px; height: 20px; object-fit: contain;" />
+              <img src="/assets/kids/badge-star-duo.svg" alt="Stars" style="width: 20px; height: 20px; object-fit: contain;" />
               <span class="font-weight-black">Super Star</span>
             </div>
 

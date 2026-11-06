@@ -20,7 +20,7 @@
       <div class="d-flex align-center justify-space-between flex-wrap ga-3">
         <div class="d-flex align-center ga-3">
           <div class="kids-floating d-flex align-center justify-center" style="width: 56px; height: 56px; background: rgba(255,255,255,0.22); border-radius: 18px; backdrop-filter: blur(8px);">
-            <img src="/assets/kids/icon-homework-3d.webp" alt="Homework" style="width: 44px; height: 44px; object-fit: contain;" />
+            <img src="/assets/kids/icon-homework-duo.svg" alt="Homework" style="width: 44px; height: 44px; object-fit: contain;" />
           </div>
           <div>
             <div class="d-flex align-center ga-2 flex-wrap">

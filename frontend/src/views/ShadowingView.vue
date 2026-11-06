@@ -5,7 +5,7 @@
       <div class="d-flex align-center justify-space-between flex-wrap ga-3">
         <div class="d-flex align-center ga-3">
           <div class="kids-floating d-flex align-center justify-center" style="width: 58px; height: 58px; background: rgba(255,255,255,0.25); border-radius: 18px; backdrop-filter: blur(8px);">
-            <img src="/assets/kids/icon-shadowing-3d.webp" alt="Shadowing Headphones" style="width: 48px; height: 48px; object-fit: contain;" />
+            <img src="/assets/kids/icon-shadowing-duo.svg" alt="Shadowing Headphones" style="width: 48px; height: 48px; object-fit: contain;" />
           </div>
           <div>
             <div class="d-flex align-center ga-2 flex-wrap">
@@ -499,7 +499,7 @@
           <v-card class="pa-4 bg-white kids-card mb-3">
             <div class="d-flex align-center justify-space-between mb-3">
               <div class="text-subtitle-2 font-weight-black text-indigo-darken-4 d-flex align-center ga-2">
-                <img src="/assets/kids/icon-flashcards-3d.webp" alt="Queue" style="width: 26px; height: 26px; object-fit: contain;" />
+                <img src="/assets/kids/icon-flashcards-duo.svg" alt="Queue" style="width: 26px; height: 26px; object-fit: contain;" />
                 <span>PRACTICE MISSIONS ({{ (sampleSentences[selectedLevel] || []).length }})</span>
               </div>
               <span class="kids-pill-badge kids-pill-sky text-uppercase">
