@@ -63,18 +63,23 @@
       <div class="text-caption text-grey">Loading speaking scenarios...</div>
     </div>
 
-    <!-- Empty State -->
-    <div v-else-if="!currentScenario" id="tour-picture-empty-card" class="text-center py-12 border rounded-lg bg-white pa-6">
-      <v-avatar color="blue-lighten-5" size="64" class="mb-3">
-        <v-icon size="large" color="primary">mdi-image-plus</v-icon>
-      </v-avatar>
-      <div class="text-subtitle-1 font-weight-black text-grey-darken-4 mb-1">No Speaking Scenarios Available</div>
-      <div class="text-caption text-grey mb-4 max-width-500 mx-auto">
-        Create an AI scenario with custom prompt, search real photos, or upload your own image to practice describing scenes.
+    <!-- Empty State (Kids Duolingo Card) -->
+    <div v-else-if="!currentScenario" id="tour-picture-empty-card" class="text-center py-10 bg-white kids-card pa-6">
+      <div class="kids-floating d-flex align-center justify-center mx-auto mb-3" style="width: 64px; height: 64px; background: #E0F2FE; border-radius: 20px; border: 2.5px solid #7DD3FC;">
+        <img src="/assets/kids/icon-picture-duo.svg" alt="Picture Talk" style="width: 44px; height: 44px; object-fit: contain;" />
       </div>
-      <v-btn id="tour-picture-empty-btn" color="primary" variant="flat" class="text-none font-weight-bold" prepend-icon="mdi-sparkles" @click="openCreateModal">
-        Create Scenario
-      </v-btn>
+      <div class="text-h6 font-weight-black text-indigo-darken-4 mb-1">Ready to Describe Pictures? 📸</div>
+      <div class="text-body-2 text-grey-darken-2 mb-4 max-width-500 mx-auto font-weight-medium">
+        Pick a topic to generate an AI picture scene, explore guiding questions, and practice speaking!
+      </div>
+      <button
+        id="tour-picture-empty-btn"
+        type="button"
+        class="kids-btn-pill kids-btn-blue kids-btn-lg font-weight-black kids-sparkle-pill px-8 py-3.5"
+        @click="openCreateModal"
+      >
+        <v-icon size="small">mdi-sparkles</v-icon> Create Scenario ✨
+      </button>
     </div>
 
     <!-- Main Practice Grid (2 Columns) -->
@@ -578,23 +583,24 @@
           class="mb-3"
         />
 
-        <v-card-actions class="px-0 pb-0 pt-2 border-t">
-          <v-spacer />
-          <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showCreateModal = false">
+        <div class="d-flex align-center justify-end ga-2 pt-3 border-t">
+          <button
+            type="button"
+            class="kids-btn-pill kids-btn-white kids-btn-sm font-weight-black"
+            @click="showCreateModal = false"
+          >
             Cancel
-          </v-btn>
-          <v-btn
-            color="primary"
-            variant="flat"
-            class="text-none font-weight-bold px-4"
-            prepend-icon="mdi-auto-fix"
+          </button>
+          <button
             id="tour-scenario-generate-btn"
-            :loading="isGeneratingScenario"
+            type="button"
+            class="kids-btn-pill kids-btn-blue kids-btn-sm font-weight-black"
+            :disabled="isGeneratingScenario"
             @click="handleCreateScenario"
           >
-            Generate Scenario
-          </v-btn>
-        </v-card-actions>
+            <v-icon size="small">mdi-auto-fix</v-icon> {{ isGeneratingScenario ? 'Generating Scene...' : 'Generate Scenario ✨' }}
+          </button>
+        </div>
       </v-card>
     </v-dialog>
   </v-container>

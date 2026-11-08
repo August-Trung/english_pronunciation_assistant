@@ -43,26 +43,22 @@
 
               <!-- Equip / Unequip Action -->
               <div v-if="item.unlocked" class="flex-shrink-0">
-                <v-btn
+                <button
                   v-if="item.equipped"
-                  color="grey"
-                  variant="outlined"
-                  size="small"
-                  class="font-weight-bold text-none"
+                  type="button"
+                  class="kids-btn-pill kids-btn-white kids-btn-sm font-weight-black"
                   @click="toggleEquip('')"
                 >
                   Unequip
-                </v-btn>
-                <v-btn
+                </button>
+                <button
                   v-else
-                  color="primary"
-                  variant="flat"
-                  size="small"
-                  class="font-weight-bold text-none"
+                  type="button"
+                  class="kids-btn-pill kids-btn-blue kids-btn-sm font-weight-black"
                   @click="toggleEquip(item.code)"
                 >
                   Equip
-                </v-btn>
+                </button>
               </div>
               <div v-else class="text-caption text-grey font-weight-bold flex-shrink-0 d-flex align-center ga-1">
                 <v-icon size="x-small">mdi-lock-outline</v-icon> Locked

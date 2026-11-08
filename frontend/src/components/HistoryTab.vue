@@ -65,26 +65,33 @@
     <!-- Filter Toolbar -->
     <v-card id="tour-history-filters" flat border class="pa-3 mb-4 bg-grey-lighten-5" rounded="lg">
       <div class="d-flex flex-column flex-sm-row align-start align-sm-center justify-space-between ga-3">
-        <!-- Date Range Toggle -->
-        <v-btn-toggle
-          v-model="rangeType"
-          mandatory
-          color="indigo"
-          density="compact"
-          variant="outlined"
-          class="bg-white"
-          @update:model-value="fetchHistoryLogs"
-        >
-          <v-btn value="today" size="small" class="text-none font-weight-bold" prepend-icon="mdi-calendar-today">
-            Today
-          </v-btn>
-          <v-btn value="30days" size="small" class="text-none font-weight-bold" prepend-icon="mdi-calendar-month">
-            Last 30 Days
-          </v-btn>
-          <v-btn value="custom" size="small" class="text-none font-weight-bold" prepend-icon="mdi-calendar-range">
-            Custom Date Range
-          </v-btn>
-        </v-btn-toggle>
+        <!-- Date Range Candy Pills -->
+        <div class="d-flex align-center ga-2 flex-wrap">
+          <button
+            type="button"
+            class="kids-btn-pill kids-btn-sm font-weight-black"
+            :class="rangeType === 'today' ? 'kids-btn-blue' : 'kids-btn-white'"
+            @click="rangeType = 'today'; fetchHistoryLogs()"
+          >
+            <v-icon size="x-small">mdi-calendar-today</v-icon> Today
+          </button>
+          <button
+            type="button"
+            class="kids-btn-pill kids-btn-sm font-weight-black"
+            :class="rangeType === '30days' ? 'kids-btn-blue' : 'kids-btn-white'"
+            @click="rangeType = '30days'; fetchHistoryLogs()"
+          >
+            <v-icon size="x-small">mdi-calendar-month</v-icon> Last 30 Days
+          </button>
+          <button
+            type="button"
+            class="kids-btn-pill kids-btn-sm font-weight-black"
+            :class="rangeType === 'custom' ? 'kids-btn-purple' : 'kids-btn-white'"
+            @click="rangeType = 'custom'; fetchHistoryLogs()"
+          >
+            <v-icon size="x-small">mdi-calendar-range</v-icon> Custom Range
+          </button>
+        </div>
 
         <!-- Custom Date Range Inputs -->
         <div v-if="rangeType === 'custom'" class="d-flex align-center ga-2 flex-wrap">
@@ -231,11 +238,22 @@
           </v-card>
         </v-radio-group>
 
-        <div class="d-flex justify-end ga-2">
-          <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showPdfDialog = false">Cancel</v-btn>
-          <v-btn color="indigo" variant="flat" class="text-none font-weight-bold" prepend-icon="mdi-download" :loading="isGeneratingPdf" @click="generateAcademicPdf">
-            Generate PDF
-          </v-btn>
+        <div class="d-flex justify-end ga-2 pt-2 border-t">
+          <button
+            type="button"
+            class="kids-btn-pill kids-btn-white kids-btn-sm font-weight-black"
+            @click="showPdfDialog = false"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="kids-btn-pill kids-btn-blue kids-btn-sm font-weight-black"
+            :disabled="isGeneratingPdf"
+            @click="generateAcademicPdf"
+          >
+            <v-icon size="small">mdi-download</v-icon> {{ isGeneratingPdf ? 'Generating...' : 'Generate PDF 📄' }}
+          </button>
         </div>
       </v-card>
     </v-dialog>

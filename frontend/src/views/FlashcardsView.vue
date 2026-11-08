@@ -64,18 +64,22 @@
         <div class="text-caption text-grey">Loading your smart flashcard decks...</div>
       </div>
 
-      <!-- No Decks Empty State -->
-      <div v-else-if="decks.length === 0 && !selectedDeck" class="text-center py-10 border rounded-lg bg-white pa-6">
-        <v-avatar color="indigo-lighten-5" size="64" class="mb-3">
-          <v-icon size="large" color="indigo">mdi-cards-outline</v-icon>
-        </v-avatar>
-        <div class="text-subtitle-1 font-weight-black text-grey-darken-4 mb-1">No AI Decks Created Yet</div>
-        <div class="text-caption text-grey mb-4 max-width-500 mx-auto">
-          Generate topic-focused decks instantly with Hugging Face AI. Each card includes native IPA phonetics, Vietnamese meanings, and visual illustrations.
+      <!-- No Decks Empty State (Kids Theme) -->
+      <div v-else-if="decks.length === 0 && !selectedDeck" class="text-center py-10 bg-white kids-card pa-6 mb-4">
+        <div class="kids-floating d-flex align-center justify-center mx-auto mb-3" style="width: 64px; height: 64px; background: #EDE9FE; border-radius: 20px; border: 2.5px solid #C4B5FD;">
+          <img src="/assets/kids/icon-flashcards-duo.svg" alt="Flashcards" style="width: 44px; height: 44px; object-fit: contain;" />
         </div>
-        <v-btn color="primary" variant="flat" class="text-none font-weight-bold" prepend-icon="mdi-sparkles" @click="showCreateModal = true">
-          Generate Your First Deck
-        </v-btn>
+        <div class="text-h6 font-weight-black text-indigo-darken-4 mb-1">Ready to Build Your Word Deck? 🎴</div>
+        <div class="text-body-2 text-grey-darken-2 mb-4 max-width-500 mx-auto font-weight-medium">
+          Generate smart vocabulary cards instantly with AI illustrations, native IPA phonetics, and speech scoring!
+        </div>
+        <button
+          type="button"
+          class="kids-btn-pill kids-btn-purple kids-btn-lg font-weight-black kids-sparkle-pill px-8 py-3.5"
+          @click="showCreateModal = true"
+        >
+          <v-icon size="small">mdi-sparkles</v-icon> Generate Your First Deck ✨
+        </button>
       </div>
 
       <!-- Deck Overview Grid (when not actively studying a deck) -->
@@ -396,16 +400,21 @@
         </div>
       </v-card>
 
-      <!-- Empty State -->
-      <div v-if="weakWords.length === 0" class="text-center py-8 border rounded-lg bg-white pa-4">
-        <v-avatar color="green-lighten-5" size="64" class="mb-3">
-          <v-icon size="large" color="success">mdi-checkbox-marked-circle-outline</v-icon>
-        </v-avatar>
-        <div class="text-subtitle-1 font-weight-black text-grey-darken-4 mb-1">Excellent! No Weak Words Found!</div>
-        <div class="text-caption text-grey mb-4">Keep up your outstanding pronunciation practice across all speaking lessons.</div>
-        <v-btn to="/" color="primary" variant="flat" class="text-none" prepend-icon="mdi-microphone">
-          Go to Speaking Studio
-        </v-btn>
+      <!-- Weak Words Empty State (Kids Theme) -->
+      <div v-if="weakWords.length === 0" class="text-center py-10 bg-white kids-card pa-6 mb-4">
+        <div class="kids-floating d-flex align-center justify-center mx-auto mb-3" style="width: 64px; height: 64px; background: #DCFCE7; border-radius: 20px; border: 2.5px solid #86EFAC;">
+          <v-icon size="36" color="green-darken-3">mdi-check-decagram</v-icon>
+        </div>
+        <div class="text-h6 font-weight-black text-green-darken-4 mb-1">Outstanding! No Weak Words Found! ⭐</div>
+        <div class="text-body-2 text-grey-darken-2 mb-4 max-width-500 mx-auto font-weight-medium">
+          You've mastered all your pronunciation targets. Keep practicing in Speaking Studio!
+        </div>
+        <router-link
+          to="/"
+          class="kids-btn-pill kids-btn-green kids-btn-lg font-weight-black d-inline-flex align-center ga-2 text-decoration-none px-8 py-3.5"
+        >
+          <v-icon size="small">mdi-microphone</v-icon> Go to Speaking Studio 🎙️
+        </router-link>
       </div>
 
       <!-- Active Weak Words Flashcard -->
@@ -582,21 +591,24 @@
           class="mb-3"
         />
 
-        <v-card-actions class="px-0 pb-0 pt-2 border-t">
-          <v-spacer />
-          <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showCreateModal = false">Cancel</v-btn>
-          <v-btn
-            color="primary"
-            variant="flat"
-            class="text-none font-weight-bold"
-            prepend-icon="mdi-auto-fix"
+        <div class="d-flex align-center justify-end ga-2 pt-3 border-t">
+          <button
+            type="button"
+            class="kids-btn-pill kids-btn-white kids-btn-sm font-weight-black"
+            @click="showCreateModal = false"
+          >
+            Cancel
+          </button>
+          <button
             id="tour-deck-generate-btn"
-            :loading="isGeneratingDeck"
+            type="button"
+            class="kids-btn-pill kids-btn-purple kids-btn-sm font-weight-black"
+            :disabled="isGeneratingDeck"
             @click="handleCreateDeck"
           >
-            Generate Deck
-          </v-btn>
-        </v-card-actions>
+            <v-icon size="small">mdi-auto-fix</v-icon> {{ isGeneratingDeck ? 'Generating...' : 'Generate Deck ✨' }}
+          </button>
+        </div>
       </v-card>
     </v-dialog>
 
@@ -615,12 +627,23 @@
           </div>
         </div>
 
-        <v-card-actions class="px-0 pb-0 justify-center ga-2">
-          <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showDeleteConfirm = false">Cancel</v-btn>
-          <v-btn color="error" variant="flat" class="text-none font-weight-bold" :loading="isDeletingDeck" @click="confirmDeleteDeck">
-            Yes, Delete Deck
-          </v-btn>
-        </v-card-actions>
+        <div class="d-flex align-center justify-center ga-2 pt-2">
+          <button
+            type="button"
+            class="kids-btn-pill kids-btn-white kids-btn-sm font-weight-black"
+            @click="showDeleteConfirm = false"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="kids-btn-pill kids-btn-coral kids-btn-sm font-weight-black"
+            :disabled="isDeletingDeck"
+            @click="confirmDeleteDeck"
+          >
+            {{ isDeletingDeck ? 'Deleting...' : 'Yes, Delete Deck' }}
+          </button>
+        </div>
       </v-card>
     </v-dialog>
 
@@ -654,13 +677,22 @@
           </v-chip>
         </div>
 
-        <v-card-actions class="px-0 pb-0">
-          <v-spacer />
-          <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showRemedialModal = false">Close</v-btn>
-          <v-btn color="indigo-darken-3" variant="flat" class="text-none font-weight-bold" prepend-icon="mdi-headphones" @click="playAudio(remedialData.topic_sentence)">
-            Listen Sample
-          </v-btn>
-        </v-card-actions>
+        <div class="d-flex align-center justify-end ga-2 pt-2 border-t">
+          <button
+            type="button"
+            class="kids-btn-pill kids-btn-white kids-btn-sm font-weight-black"
+            @click="showRemedialModal = false"
+          >
+            Close
+          </button>
+          <button
+            type="button"
+            class="kids-btn-pill kids-btn-blue kids-btn-sm font-weight-black"
+            @click="playAudio(remedialData.topic_sentence)"
+          >
+            <v-icon size="small">mdi-headphones</v-icon> Listen Sample
+          </button>
+        </div>
       </v-card>
     </v-dialog>
   </v-container>

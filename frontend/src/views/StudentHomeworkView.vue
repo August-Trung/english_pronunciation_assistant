@@ -599,32 +599,31 @@
         </template>
       </v-card>
 
-      <div v-if="!filteredAssignments.length" class="text-center pa-8 bg-white border rounded-lg">
-        <v-icon size="48" color="grey-lighten-1">mdi-clipboard-check-outline</v-icon>
+      <div v-if="!filteredAssignments.length" class="text-center pa-8 bg-white kids-card mb-3">
         <template v-if="enrolledClasses.length">
-          <div class="text-subtitle-1 font-weight-black text-indigo-darken-2 mt-2">
-            You're all caught up!
+          <img src="/assets/kids/icon-homework-duo.svg" alt="Homework" style="width: 54px; height: 54px;" class="kids-floating mb-2" />
+          <div class="text-h6 font-weight-black text-indigo-darken-2 mt-2">
+            You're all caught up! 🎉
           </div>
-          <div class="text-subtitle-2 font-weight-medium text-grey-darken-1 mt-1">
+          <div class="text-body-2 font-weight-medium text-grey-darken-1 mt-1">
             Your teacher has not assigned any homework for your classroom yet. Check back soon!
           </div>
         </template>
         <template v-else>
-          <div class="text-subtitle-2 font-weight-bold text-grey-darken-1 mt-2">
-            You are not enrolled in any classroom yet.
+          <img src="/assets/kids/icon-homework-duo.svg" alt="Homework" style="width: 58px; height: 58px;" class="kids-floating mb-3" />
+          <div class="text-h6 font-weight-black text-indigo-darken-4 mb-1">
+            Join Your Classroom Adventure! 🎒
           </div>
-          <div class="text-caption text-grey mt-1">
-            Enter a classroom join code provided by your teacher to access class homework.
+          <div class="text-body-2 text-grey-darken-2 mb-4 font-weight-medium max-width-500 mx-auto">
+            Enter a classroom join code provided by your teacher to access class homework and fun speaking tasks!
           </div>
-          <v-btn
-            color="primary"
-            variant="tonal"
-            class="mt-3 text-none font-weight-bold"
-            prepend-icon="mdi-key-variant"
+          <button
+            type="button"
+            class="kids-btn-pill kids-btn-blue kids-btn-lg font-weight-black kids-sparkle-pill px-8 py-3.5"
             @click="showJoinClassModal = true"
           >
-            Enter Join Code (Example: CLS-836-58)
-          </v-btn>
+            <v-icon size="small">mdi-key-variant</v-icon> Enter Join Code (Example: CLS-836-58) 🚀
+          </button>
         </template>
       </div>
     </div>
@@ -633,26 +632,30 @@
   <!-- Right Column: Classrooms & Performance Sidebar (Cols 12, md 4) -->
   <v-col cols="12" md="4" class="pa-0">
     <div class="sticky-side d-flex flex-column ga-3">
-      <!-- Summary Metrics Card -->
-      <v-card border flat class="pa-4 bg-white rounded-lg">
-        <div class="text-caption font-weight-black text-secondary mb-2 d-flex align-center ga-1">
-          <v-icon size="small" color="secondary">mdi-chart-pie</v-icon>
-          <span>HOMEWORK PROGRESS</span>
-        </div>
-        <div class="d-flex align-center justify-space-between mb-2">
-          <span class="text-caption font-weight-bold text-grey-darken-2">Submitted Rate:</span>
-          <span class="text-subtitle-2 font-weight-black text-primary">
+      <!-- Summary Metrics Card (Photo 3 Chunky Progress) -->
+      <div class="kids-card pa-4 bg-white mb-3">
+        <div class="d-flex align-center justify-space-between mb-3">
+          <span class="kids-badge-bubble badge-green">
+            <v-icon size="x-small">mdi-chart-pie</v-icon> HOMEWORK PROGRESS
+          </span>
+          <span class="kids-pill-badge kids-pill-sky font-weight-black">
             {{ assignments.filter(a => a.is_submitted).length }} / {{ assignments.length }}
           </span>
         </div>
-        <v-progress-linear
-          :model-value="assignments.length ? (assignments.filter(a => a.is_submitted).length / assignments.length) * 100 : 0"
-          color="primary"
-          height="8"
-          rounded
-          class="mb-3"
-        />
-      </v-card>
+        <div class="d-flex align-center justify-space-between mb-1">
+          <span class="text-caption font-weight-bold text-grey-darken-2">Submitted Rate:</span>
+          <span class="text-subtitle-2 font-weight-black text-primary">
+            {{ assignments.length ? Math.round((assignments.filter(a => a.is_submitted).length / assignments.length) * 100) : 0 }}%
+          </span>
+        </div>
+        <!-- Chunky Timer/Progress Bar from Image 3 -->
+        <div class="kids-timer-bar my-2">
+          <div
+            class="kids-timer-fill"
+            :style="{ width: `${assignments.length ? (assignments.filter(a => a.is_submitted).length / assignments.length) * 100 : 0}%` }"
+          />
+        </div>
+      </div>
 
       <!-- Enrolled Classes Card -->
       <v-card v-if="enrolledClasses.length" border flat class="pa-4 bg-white rounded-lg">
@@ -713,13 +716,23 @@
           @keyup.enter="submitJoinClass()"
         />
 
-        <v-card-actions class="px-0 pb-0">
-          <v-spacer />
-          <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showJoinClassModal = false">Cancel</v-btn>
-          <v-btn color="primary" variant="flat" class="text-none font-weight-bold" :loading="isJoining" @click="submitJoinClass()">
-            Join Class
-          </v-btn>
-        </v-card-actions>
+        <div class="d-flex align-center justify-end ga-2 pt-3 border-t">
+          <button
+            type="button"
+            class="kids-btn-pill kids-btn-white kids-btn-sm font-weight-black"
+            @click="showJoinClassModal = false"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="kids-btn-pill kids-btn-blue kids-btn-sm font-weight-black"
+            :disabled="isJoining"
+            @click="submitJoinClass()"
+          >
+            <v-icon size="small">mdi-login</v-icon> {{ isJoining ? 'Joining...' : 'Join Class 🚀' }}
+          </button>
+        </div>
       </v-card>
     </v-dialog>
 
@@ -753,22 +766,23 @@
           hide-details
         />
 
-        <v-card-actions class="px-0 pt-4 pb-0">
-          <v-spacer />
-          <v-btn variant="outlined" color="grey" class="text-none font-weight-bold" @click="showLeaveModal = false">
+        <div class="d-flex align-center justify-end ga-2 pt-3 border-t">
+          <button
+            type="button"
+            class="kids-btn-pill kids-btn-white kids-btn-sm font-weight-black"
+            @click="showLeaveModal = false"
+          >
             Cancel
-          </v-btn>
-          <v-btn
-            color="error"
-            variant="flat"
-            class="text-none font-weight-bold"
-            :disabled="leaveInput.trim().toUpperCase() !== targetLeaveClass.join_code.toUpperCase()"
-            :loading="isLeaving"
+          </button>
+          <button
+            type="button"
+            class="kids-btn-pill kids-btn-coral kids-btn-sm font-weight-black"
+            :disabled="leaveInput.trim().toUpperCase() !== targetLeaveClass.join_code.toUpperCase() || isLeaving"
             @click="confirmLeaveClass"
           >
-            Confirm Leave Classroom
-          </v-btn>
-        </v-card-actions>
+            {{ isLeaving ? 'Leaving...' : 'Confirm Leave Classroom' }}
+          </button>
+        </div>
       </v-card>
     </v-dialog>
 
@@ -776,10 +790,22 @@
       <v-card class="pa-4">
         <v-card-title>Replace Your Recording?</v-card-title>
         <v-card-text>Recording again will replace the current draft after you stop. The current draft remains available if recording cannot start.</v-card-text>
-        <v-card-actions>
-          <v-btn @click="replaceRecordingTarget = null">Cancel</v-btn>
-          <v-btn color="primary" @click="confirmRecordAgain">Record Again</v-btn>
-        </v-card-actions>
+        <div class="d-flex align-center justify-end ga-2 pt-3 border-t">
+          <button
+            type="button"
+            class="kids-btn-pill kids-btn-white kids-btn-sm font-weight-black"
+            @click="replaceRecordingTarget = null"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="kids-btn-pill kids-btn-blue kids-btn-sm font-weight-black"
+            @click="confirmRecordAgain"
+          >
+            Record Again
+          </button>
+        </div>
       </v-card>
     </v-dialog>
     <!-- Dialog: Homework Picture Zoom -->

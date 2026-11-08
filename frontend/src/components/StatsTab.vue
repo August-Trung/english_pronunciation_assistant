@@ -246,54 +246,69 @@
         </v-expansion-panel>
       </v-expansion-panels>
 
-      <!-- Action Buttons -->
-      <v-card border flat class="pa-3 bg-white" rounded="lg">
-        <div class="text-subtitle-2 font-weight-bold text-secondary mb-2 d-flex align-center ga-1">
-          <v-icon color="secondary" size="small">mdi-database-outline</v-icon>
-          <span>Learning Data Management</span>
+      <!-- Action Buttons (Kids Theme) -->
+      <div class="kids-card pa-4 bg-white mb-4">
+        <div class="d-flex align-center justify-space-between mb-3 border-b pb-2">
+          <div class="kids-badge-bubble badge-purple">
+            <v-icon size="x-small">mdi-database-outline</v-icon>
+            <span>LEARNING DATA MANAGEMENT</span>
+          </div>
         </div>
-        <v-row class="ma-0 ga-2">
-          <v-col cols="12" sm="4" class="pa-1">
-            <v-btn
-              color="primary"
-              variant="outlined"
-              block
-              density="comfortable"
-              prepend-icon="mdi-download"
-              class="font-weight-bold text-caption text-sm-body-2"
-              @click="downloadCSV"
+        <div class="d-flex align-center ga-3 flex-wrap">
+          <button
+            type="button"
+            class="kids-btn-pill kids-btn-blue flex-grow-1 py-2.5 px-4 font-weight-black text-body-2"
+            @click="downloadCSV"
+          >
+            <v-icon size="small">mdi-download</v-icon> Export History (CSV)
+          </button>
+          <button
+            type="button"
+            class="kids-btn-pill kids-btn-purple flex-grow-1 py-2.5 px-4 font-weight-black text-body-2"
+            @click="downloadJSON"
+          >
+            <v-icon size="small">mdi-export</v-icon> Backup Data (JSON)
+          </button>
+          <button
+            type="button"
+            class="kids-btn-pill kids-btn-coral flex-grow-1 py-2.5 px-4 font-weight-black text-body-2"
+            @click="showClearModal = true"
+          >
+            <v-icon size="small">mdi-trash-can-outline</v-icon> Clear History
+          </button>
+        </div>
+      </div>
+
+      <!-- Safe Confirmation Modal for Clear History -->
+      <v-dialog v-model="showClearModal" max-width="440">
+        <div class="kids-card pa-5 bg-white">
+          <div class="text-center mb-3">
+            <div class="kids-floating d-flex align-center justify-center mx-auto mb-2" style="width: 54px; height: 54px; background: #FFE4E6; border-radius: 18px; border: 2.5px solid #FDA4AF;">
+              <v-icon size="30" color="error">mdi-alert-octagon-outline</v-icon>
+            </div>
+            <div class="text-h6 font-weight-black text-rose-darken-4">Clear Practice History?</div>
+            <div class="text-caption text-grey-darken-2 mt-1">
+              This will remove your previous speaking recordings and scores from this device. This action cannot be undone.
+            </div>
+          </div>
+          <div class="d-flex align-center justify-center ga-2 pt-2 border-t">
+            <button
+              type="button"
+              class="kids-btn-pill kids-btn-white kids-btn-sm font-weight-black"
+              @click="showClearModal = false"
             >
-              Export History (CSV)
-            </v-btn>
-          </v-col>
-          <v-col cols="12" sm="4" class="pa-1">
-            <v-btn
-              color="secondary"
-              variant="outlined"
-              block
-              density="comfortable"
-              prepend-icon="mdi-export"
-              class="font-weight-bold text-caption text-sm-body-2"
-              @click="downloadJSON"
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="kids-btn-pill kids-btn-coral kids-btn-sm font-weight-black"
+              @click="confirmClearHistoryAction"
             >
-              Backup Data (JSON)
-            </v-btn>
-          </v-col>
-          <v-col cols="12" sm="4" class="pa-1">
-            <v-btn
-              color="error"
-              variant="outlined"
-              block
-              density="comfortable"
-              prepend-icon="mdi-trash-can-outline"
-              class="font-weight-bold text-caption text-sm-body-2"
-              @click="confirmClearHistory"
-            >
-              {{ isConfirmingClear ? 'Click again to confirm!' : 'Clear Practice History' }}
-            </v-btn>
-          </v-col>
-        </v-row>
-      </v-card>
+              Yes, Clear History
+            </button>
+          </div>
+        </div>
+      </v-dialog>
     </div>
 
     <!-- PDF Report Dialog -->
@@ -336,7 +351,13 @@ const props = defineProps({
 const emit = defineEmits(['clear-history'])
 
 const isConfirmingClear = ref(false)
+const showClearModal = ref(false)
 let clearTimer = null
+
+const confirmClearHistoryAction = () => {
+  emit('clear-history')
+  showClearModal.value = false
+}
 
 const safeHistory = computed(() => {
   if (!props.history) return []

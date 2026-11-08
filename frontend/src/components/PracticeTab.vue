@@ -45,54 +45,52 @@
       <!-- Left column: Input, Mode selection, Library and Recording -->
       <v-col cols="12" md="6" class="pa-1 sticky-left-col">
         <div class="kids-question-box mb-3">
-          <!-- Step 1 Header & Mode Toggle -->
-          <div class="d-flex flex-column flex-sm-row align-start align-sm-center justify-space-between mb-3 ga-2">
-            <div class="d-flex align-center ga-2">
-              <v-avatar color="blue-lighten-5" size="32" class="text-primary mr-1 border flex-shrink-0">
-                <v-icon size="small">mdi-text-box-search-outline</v-icon>
-              </v-avatar>
-              <div class="text-subtitle-2 text-sm-subtitle-1 font-weight-black text-secondary">
-                Step 1: {{ practiceMode === 'reading' ? 'Choose Model Sentence' : 'Choose Speaking Topic' }}
-              </div>
+          <!-- Clean Step 1 Header & Actions (Reference Photo 2 Style) -->
+          <div class="d-flex align-center justify-space-between flex-wrap ga-2 mb-3">
+            <div class="kids-question-header-pill">
+              <v-icon size="small">{{ practiceMode === 'reading' ? 'mdi-book-open-variant' : 'mdi-microphone' }}</v-icon>
+              <span>{{ practiceMode === 'reading' ? 'STEP 1: MODEL SENTENCE' : 'STEP 1: SPEAKING TOPIC' }}</span>
             </div>
-            <div class="d-flex align-center ga-2 flex-wrap">
-              <v-btn
-                size="small"
-                :color="rememberSession ? 'primary' : 'grey'"
-                :variant="rememberSession ? 'tonal' : 'outlined'"
-                class="text-none font-weight-bold mr-1"
-                :prepend-icon="rememberSession ? 'mdi-bookmark-check-outline' : 'mdi-bookmark-off-outline'"
+
+            <div class="d-flex align-center ga-2">
+              <button
+                type="button"
+                class="kids-btn-pill kids-btn-sm font-weight-black"
+                :class="rememberSession ? 'kids-btn-blue' : 'kids-btn-white'"
                 @click="rememberSession = !rememberSession; onRememberSessionToggle(rememberSession)"
               >
-                Remember Result
-              </v-btn>
-              <v-btn
-                icon="mdi-lightbulb-on-outline"
-                variant="tonal"
-                color="amber-darken-3"
-                size="small"
-                class="mr-1"
+                <v-icon size="x-small">{{ rememberSession ? 'mdi-bookmark-check' : 'mdi-bookmark-outline' }}</v-icon>
+                <span>{{ rememberSession ? 'Result Saved' : 'Remember Result' }}</span>
+              </button>
+              <button
+                type="button"
+                class="kids-btn-pill kids-btn-white kids-btn-sm"
                 title="Xem hướng dẫn luyện phát âm"
                 @click="replaySpeakingTour"
-              />
-              <v-btn-toggle
-                id="tour-speaking-mode-toggle"
-                v-model="practiceMode"
-                color="primary"
-                density="compact"
-                mandatory
-                rounded="pill"
-                variant="outlined"
-                class="w-100 w-sm-auto"
               >
-                <v-btn value="speaking" size="small" class="text-none font-weight-bold flex-grow-1 flex-sm-grow-0" prepend-icon="mdi-account-voice">
-                  Free Topic
-                </v-btn>
-                <v-btn value="reading" size="small" class="text-none font-weight-bold flex-grow-1 flex-sm-grow-0" prepend-icon="mdi-book-open-variant">
-                  Sentence Reading
-                </v-btn>
-              </v-btn-toggle>
+                <v-icon size="small" color="amber-darken-3">mdi-lightbulb-on-outline</v-icon>
+              </button>
             </div>
+          </div>
+
+          <!-- Mode Selector: 2 Chunky Candy Pills -->
+          <div id="tour-speaking-mode-toggle" class="d-flex align-center ga-2 mb-3">
+            <button
+              type="button"
+              class="kids-btn-pill flex-grow-1 py-2 font-weight-black text-body-2"
+              :class="practiceMode === 'speaking' ? 'kids-btn-blue' : 'kids-btn-white'"
+              @click="practiceMode = 'speaking'"
+            >
+              <v-icon size="small">mdi-account-voice</v-icon> Free Speaking Topic
+            </button>
+            <button
+              type="button"
+              class="kids-btn-pill flex-grow-1 py-2 font-weight-black text-body-2"
+              :class="practiceMode === 'reading' ? 'kids-btn-purple' : 'kids-btn-white'"
+              @click="practiceMode = 'reading'"
+            >
+              <v-icon size="small">mdi-book-open-page-variant</v-icon> Sentence Reading
+            </button>
           </div>
 
           <!-- Topic input with TTS button -->

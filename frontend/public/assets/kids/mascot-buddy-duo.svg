@@ -1,29 +1,61 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <!-- Duolingo style cute Bird/Robot buddy mascot -->
-  <!-- Cute Body -->
-  <circle cx="32" cy="34" r="22" fill="#58CC02"/>
-  <!-- Belly -->
-  <ellipse cx="32" cy="38" rx="14" ry="12" fill="#FFFFFF"/>
-  <!-- Cute Eyes -->
-  <circle cx="24" cy="27" r="7.5" fill="#FFFFFF"/>
-  <circle cx="24" cy="27" r="4.5" fill="#3E2723"/>
-  <circle cx="22.5" cy="25" r="1.8" fill="#FFFFFF"/>
-  
-  <circle cx="40" cy="27" r="7.5" fill="#FFFFFF"/>
-  <circle cx="40" cy="27" r="4.5" fill="#3E2723"/>
-  <circle cx="38.5" cy="25" r="1.8" fill="#FFFFFF"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" width="72" height="72">
+  <defs>
+    <linearGradient id="fluentBotBody" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E0F7FA"/>
+      <stop offset="100%" stop-color="#FFFFFF"/>
+    </linearGradient>
+    <linearGradient id="fluentBotBlue" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+    <linearGradient id="fluentBotGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE047"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
 
-  <!-- Orange Beak -->
-  <polygon points="32,29 28,34 36,34" fill="#FF9600"/>
-  
-  <!-- Rosy cheeks -->
-  <circle cx="16" cy="34" r="2.5" fill="#FF8A80" opacity="0.8"/>
-  <circle cx="48" cy="34" r="2.5" fill="#FF8A80" opacity="0.8"/>
-  
-  <!-- Tiny Head Feathers -->
-  <path d="M30 13 C32 9 34 9 36 13" fill="none" stroke="#58CC02" stroke-width="4" stroke-linecap="round"/>
-  
-  <!-- Feet -->
-  <ellipse cx="26" cy="54" rx="4" ry="2" fill="#FF9600"/>
-  <ellipse cx="38" cy="54" rx="4" ry="2" fill="#FF9600"/>
+  <!-- Antenna with Glowing Golden Star -->
+  <line x1="36" y1="18" x2="36" y2="9" stroke="#0284C7" stroke-width="3" stroke-linecap="round"/>
+  <polygon points="36,4 38,8 42,9 39,12 40,16 36,13.5 32,16 33,12 30,9 34,8" fill="url(#fluentBotGold)" stroke="#D97706" stroke-width="0.8"/>
+
+  <!-- Headphones Arc -->
+  <path d="M14 36 A22 22 0 0 1 58 36" fill="none" stroke="#0284C7" stroke-width="4.5" stroke-linecap="round"/>
+
+  <!-- Main Chubby Robot Head/Body -->
+  <rect x="15" y="18" width="42" height="42" rx="21" fill="url(#fluentBotBody)" stroke="#0284C7" stroke-width="3"/>
+
+  <!-- Left Headphone Earcup -->
+  <rect x="9" y="30" width="8" height="16" rx="4" fill="url(#fluentBotBlue)" stroke="#0369A1" stroke-width="1.5"/>
+  <circle cx="13" cy="38" r="2.5" fill="#FDE047"/>
+
+  <!-- Right Headphone Earcup -->
+  <rect x="55" y="30" width="8" height="16" rx="4" fill="url(#fluentBotBlue)" stroke="#0369A1" stroke-width="1.5"/>
+  <circle cx="59" cy="38" r="2.5" fill="#FDE047"/>
+
+  <!-- Friendly Visor Face Screen -->
+  <rect x="20" y="25" width="32" height="18" rx="9" fill="#0F172A"/>
+
+  <!-- Cute Glowing Cyan Eyes -->
+  <ellipse cx="28" cy="34" rx="3.5" ry="4.5" fill="#38BDF8"/>
+  <circle cx="27" cy="32.5" r="1.5" fill="#FFFFFF"/>
+  <circle cx="29.5" cy="35.5" r="0.8" fill="#FFFFFF"/>
+
+  <ellipse cx="44" cy="34" rx="3.5" ry="4.5" fill="#38BDF8"/>
+  <circle cx="43" cy="32.5" r="1.5" fill="#FFFFFF"/>
+  <circle cx="45.5" cy="35.5" r="0.8" fill="#FFFFFF"/>
+
+  <!-- Cute Rosy Cheeks -->
+  <ellipse cx="19" cy="42" rx="2.5" ry="1.5" fill="#F43F5E" opacity="0.75"/>
+  <ellipse cx="53" cy="42" rx="2.5" ry="1.5" fill="#F43F5E" opacity="0.75"/>
+
+  <!-- Cute Smiling Mouth -->
+  <path d="M33 42 Q36 45 39 42" fill="none" stroke="#0F172A" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Chest Emblem: Golden Star Badge -->
+  <circle cx="36" cy="50" r="5" fill="#E0F2FE" stroke="#38BDF8" stroke-width="1.5"/>
+  <polygon points="36,47 37.2,49.5 40,49.8 38,51.8 38.5,54.5 36,53.2 33.5,54.5 34,51.8 32,49.8 34.8,49.5" fill="url(#fluentBotGold)"/>
+
+  <!-- Little Cute White Paws -->
+  <ellipse cx="27" cy="60" rx="5" ry="3" fill="#0284C7"/>
+  <ellipse cx="45" cy="60" rx="5" ry="3" fill="#0284C7"/>
 </svg>

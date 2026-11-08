@@ -94,18 +94,14 @@
           />
         </v-card>
 
-        <v-btn
-          color="primary"
-          variant="flat"
-          block
-          height="40"
-          class="font-weight-black text-none"
-          prepend-icon="mdi-content-save"
-          :loading="isSaving"
+        <button
+          type="button"
+          class="kids-btn-pill kids-btn-blue w-100 py-3 font-weight-black text-body-1"
+          :disabled="isSaving"
           @click="saveProfile"
         >
-          Save Changes
-        </v-btn>
+          <v-icon size="small">mdi-content-save</v-icon> {{ isSaving ? 'Saving...' : 'Save Profile Changes ✨' }}
+        </button>
       </v-card-text>
     </v-card>
   </v-dialog>

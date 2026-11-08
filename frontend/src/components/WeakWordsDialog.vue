@@ -36,14 +36,14 @@
             </div>
 
             <template #append>
-              <v-btn
-                icon="mdi-volume-high"
-                color="primary"
-                variant="tonal"
-                size="small"
+              <button
+                type="button"
+                class="kids-btn-pill kids-btn-blue kids-btn-sm font-weight-black"
                 title="Listen Native Pronunciation"
                 @click="speak(item.word)"
-              />
+              >
+                <v-icon size="small">mdi-volume-high</v-icon> Listen
+              </button>
             </template>
           </v-list-item>
         </v-list>
