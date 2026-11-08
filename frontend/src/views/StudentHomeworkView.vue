@@ -334,33 +334,27 @@
 
               <div v-if="ex.type === 'write_the_missing_word' && ex.hint" class="text-body-2 text-grey-darken-2 mb-2">Hint: {{ ex.hint }}</div>
 
-              <!-- Interactive Format 1: Tick or Cross -->
+              <!-- Interactive Format 1: Tick or Cross (Photo 2 Candy Pills) -->
               <WorksheetTrueFalse v-if="isPassageReadingTask(ex)" :exercise="ex" :model-value="getWorksheetAnswer(asg.assignment_id, ex.id) || {}" @update:model-value="value => setWorksheetAnswer(asg.assignment_id, ex.id, value)" />
-              <div v-else-if="ex.type === 'listen_and_tick_or_cross'" class="d-flex ga-2 mt-1">
-                <v-btn
-                  size="small"
-                  :color="getWorksheetAnswer(asg.assignment_id, ex.id) === 'tick' ? 'success' : 'grey-darken-3'"
-                  :variant="getWorksheetAnswer(asg.assignment_id, ex.id) === 'tick' ? 'flat' : 'outlined'"
-                  class="text-none font-weight-bold flex-grow-1"
-                  :class="getWorksheetAnswer(asg.assignment_id, ex.id) === 'tick' ? '' : 'bg-grey-lighten-5 border-grey-lighten-2'"
-                  prepend-icon="mdi-check"
-                  :style="optionImage(ex, 'tick') ? { height: 'auto', padding: '12px' } : {}"
+              <div v-else-if="ex.type === 'listen_and_tick_or_cross'" class="d-flex ga-3 mt-2">
+                <button
+                  type="button"
+                  class="kids-btn-pill kids-btn-green flex-grow-1 py-3 text-body-1 font-weight-black"
+                  :style="getWorksheetAnswer(asg.assignment_id, ex.id) !== 'tick' ? 'opacity: 0.75; filter: grayscale(0.2);' : ''"
                   @click="setWorksheetAnswer(asg.assignment_id, ex.id, 'tick')"
                 >
+                  <v-icon size="small">mdi-check-bold</v-icon>
                   <div><WorksheetImage v-if="optionImage(ex, 'tick')" :show-credit="false" :image="optionImage(ex, 'tick')" :backend-url="props.backendUrl" alt="True option illustration" />Tick (✓ True)</div>
-                </v-btn>
-                <v-btn
-                  size="small"
-                  :color="getWorksheetAnswer(asg.assignment_id, ex.id) === 'cross' ? 'error' : 'grey-darken-3'"
-                  :variant="getWorksheetAnswer(asg.assignment_id, ex.id) === 'cross' ? 'flat' : 'outlined'"
-                  class="text-none font-weight-bold flex-grow-1"
-                  :class="getWorksheetAnswer(asg.assignment_id, ex.id) === 'cross' ? '' : 'bg-grey-lighten-5 border-grey-lighten-2'"
-                  prepend-icon="mdi-close"
-                  :style="optionImage(ex, 'cross') ? { height: 'auto', padding: '12px' } : {}"
+                </button>
+                <button
+                  type="button"
+                  class="kids-btn-pill kids-btn-coral flex-grow-1 py-3 text-body-1 font-weight-black"
+                  :style="getWorksheetAnswer(asg.assignment_id, ex.id) !== 'cross' ? 'opacity: 0.75; filter: grayscale(0.2);' : ''"
                   @click="setWorksheetAnswer(asg.assignment_id, ex.id, 'cross')"
                 >
+                  <v-icon size="small">mdi-close-thick</v-icon>
                   <div><WorksheetImage v-if="optionImage(ex, 'cross')" :show-credit="false" :image="optionImage(ex, 'cross')" :backend-url="props.backendUrl" alt="False option illustration" />Cross (✗ False)</div>
-                </v-btn>
+                </button>
               </div>
 
               <!-- Interactive Format 2: Unscramble Words -->
@@ -515,21 +509,22 @@
                 </div>
               </div>
 
-              <!-- Interactive Format 6: Options Picker (Circle, Tick, Multiple Choice) -->
-              <div v-else-if="ex.options && ex.options.length" class="d-flex flex-wrap ga-2 mt-1">
-                <v-btn
+              <!-- Interactive Format 6: Options Picker (Photo 3 Blooket / Gimkit Chunky Number Cards) -->
+              <div v-else-if="ex.options && ex.options.length" class="kids-choice-grid mt-2">
+                <div
                   v-for="(opt, oIdx) in ex.options"
                   :key="oIdx"
-                  size="small"
-                  :color="getWorksheetAnswer(asg.assignment_id, ex.id) === opt ? 'primary' : 'grey-darken-3'"
-                  :variant="getWorksheetAnswer(asg.assignment_id, ex.id) === opt ? 'flat' : 'outlined'"
-                  class="text-none font-weight-bold flex-grow-1"
-                  :class="getWorksheetAnswer(asg.assignment_id, ex.id) === opt ? '' : 'bg-grey-lighten-5 border-grey-lighten-2'"
-                  :style="optionImage(ex, opt) ? { height: 'auto', padding: '12px', maxWidth: '240px', whiteSpace: 'normal' } : {}"
+                  class="kids-choice-card"
+                  :class="{ 'is-selected': getWorksheetAnswer(asg.assignment_id, ex.id) === opt }"
                   @click="setWorksheetAnswer(asg.assignment_id, ex.id, opt)"
                 >
-                  <div><WorksheetImage v-if="optionImage(ex, opt)" :show-credit="false" :image="optionImage(ex, opt)" :backend-url="props.backendUrl" :alt="`Answer option ${oIdx + 1}`" /><span v-if="!ex.image_only_options || !worksheetImageChoices(ex).every(value => optionImage(ex, value))">{{ opt }}</span><span v-else class="text-caption">Option {{ oIdx + 1 }}</span></div>
-                </v-btn>
+                  <span class="kids-choice-num">{{ oIdx + 1 }}</span>
+                  <div class="d-flex align-center ga-2 flex-grow-1 overflow-hidden">
+                    <WorksheetImage v-if="optionImage(ex, opt)" :show-credit="false" :image="optionImage(ex, opt)" :backend-url="props.backendUrl" :alt="`Answer option ${oIdx + 1}`" />
+                    <span v-if="!ex.image_only_options || !worksheetImageChoices(ex).every(value => optionImage(ex, value))" class="text-truncate">{{ opt }}</span>
+                    <span v-else class="text-caption font-weight-black">Option {{ oIdx + 1 }}</span>
+                  </div>
+                </div>
               </div>
 
               <!-- Interactive Format 5: Generic Text input -->
@@ -546,20 +541,17 @@
               <WorksheetImageCredits :exercise="ex" />
             </div>
 
-            <!-- Submit Worksheet Button (Chunky 3D Kids) -->
-            <v-btn
+            <!-- Submit Worksheet Button (Candy Pill Style - Photo 2) -->
+            <button
               id="tour-student-hw-submit-btn"
-              color="success"
-              variant="flat"
-              size="large"
-              block
-              class="kids-btn-3d kids-btn-mint text-none font-weight-black mt-3 py-3"
-              prepend-icon="mdi-send-check"
-              :loading="isSubmittingWorksheet"
+              type="button"
+              class="kids-btn-pill kids-btn-green kids-btn-lg w-100 py-3.5 text-h6 font-weight-black mt-4 kids-sparkle-pill"
+              :disabled="isSubmittingWorksheet"
               @click="submitWorksheet(asg)"
             >
-              Submit Worksheet & Grade ⭐
-            </v-btn>
+              <v-icon size="medium" class="mr-1">mdi-send-check</v-icon>
+              {{ isSubmittingWorksheet ? 'Submitting & Grading...' : 'Submit Worksheet & Grade ⭐' }}
+            </button>
           </div>
         </div>
 

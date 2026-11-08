@@ -534,23 +534,20 @@
             </div>
 
             <div class="d-flex align-center justify-end ga-2">
-              <v-btn
-                variant="outlined"
-                color="grey-darken-1"
-                class="font-weight-bold text-none"
+              <button
+                type="button"
+                class="kids-btn-pill kids-btn-white kids-btn-sm font-weight-black"
                 @click="showLogoutDialog = false"
               >
                 Cancel
-              </v-btn>
-              <v-btn
-                color="error"
-                variant="flat"
-                class="font-weight-bold text-none"
-                prepend-icon="mdi-logout"
+              </button>
+              <button
+                type="button"
+                class="kids-btn-pill kids-btn-coral kids-btn-sm font-weight-black"
                 @click="handleLogout"
               >
-                Sign Out
-              </v-btn>
+                <v-icon size="small">mdi-logout</v-icon> Sign Out
+              </button>
             </div>
           </v-card>
         </v-dialog>

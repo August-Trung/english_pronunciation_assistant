@@ -1,6 +1,6 @@
 <template>
   <v-main class="d-flex align-center justify-center pa-4" style="min-height:100vh">
-    <v-card id="tour-join-card" max-width="520" width="100%" class="pa-5" rounded="xl">
+    <div id="tour-join-card" class="pa-5 kids-card" style="max-width: 520px; width: 100%;">
       <div class="d-flex align-center justify-space-between mb-1">
         <v-card-title class="pa-0 text-wrap">{{ classroom ? 'Join ' + classroom.class_name : 'Student Sign In' }}</v-card-title>
         <v-btn
@@ -17,7 +17,7 @@
       <v-progress-linear v-if="loading" indeterminate class="mb-3" />
       <template v-if="!$route.query.join_code">
         <v-text-field id="tour-join-code-field" v-model="code" label="Class Code (for a new class)" @keyup.enter="loadClass" />
-        <v-btn v-if="code && !classroom" variant="tonal" class="mb-3" :disabled="loading" @click="loadClass">Find Class</v-btn>
+        <button v-if="code && !classroom" type="button" class="kids-btn-pill kids-btn-blue kids-btn-sm mb-3 font-weight-black" :disabled="loading" @click="loadClass">Find Class</button>
       </template>
       <template v-if="userId && userRole === 'student'">
         <p class="mb-4">Continue as <strong>{{ userName || 'your student account' }}</strong>.</p>
@@ -34,13 +34,13 @@
           <v-text-field v-model="username" label="Username" autocomplete="username" autocapitalize="none" :spellcheck="false" maxlength="30" hint="3–30 letters, numbers, dots, underscores or hyphens." persistent-hint />
           <v-text-field v-model="password" label="Password" :type="showPassword ? 'text' : 'password'" :autocomplete="mode === 'register' ? 'new-password' : 'current-password'" :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'" @click:append-inner="showPassword = !showPassword" hint="At least 8 characters." persistent-hint />
           <v-text-field v-if="mode === 'register'" v-model="name" label="Full Name (Optional)" maxlength="80" hint="Your teacher will see this name. You can add it later." persistent-hint />
-          <v-btn type="submit" color="primary" block size="large" class="mt-4" :loading="loading" :disabled="!canSubmit">{{ mode === 'register' ? 'Register and Join Class' : (classroom ? 'Sign In and Join Class' : 'Sign In') }}</v-btn>
+          <button type="submit" class="kids-btn-pill kids-btn-green kids-btn-lg w-100 mt-4 py-3.5 font-weight-black text-h6 kids-sparkle-pill" :disabled="!canSubmit || loading">{{ mode === 'register' ? 'Register and Join Class 🚀' : (classroom ? 'Sign In and Join Class 🚀' : 'Sign In 🚀') }}</button>
         </v-form>
         </div>
         <p class="text-caption mt-4">This browser remembers your sign-in. Use your username and password on another device. Sign out on shared devices.</p>
       </template>
       <v-btn variant="text" block class="mt-3" @click="router.push({path:'/',query:{signin:'1'}})">Use an Email or Google Account</v-btn>
-    </v-card>
+    </div>
   </v-main>
 </template>
 <script setup>

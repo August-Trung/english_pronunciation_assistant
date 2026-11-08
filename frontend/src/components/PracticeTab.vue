@@ -12,10 +12,39 @@
       text="Microphone access requires a secure HTTPS connection. If hosting on a custom domain, please configure SSL."
     />
 
+        <!-- Speaking Studio Hero Banner (Photo 1 & 2 Style) -->
+    <v-card class="pa-4 pa-sm-5 mb-4 text-white kids-card-hero kids-gradient-sky">
+      <div class="d-flex align-center justify-space-between flex-wrap ga-3">
+        <div class="d-flex align-center ga-3">
+          <div class="kids-floating d-flex align-center justify-center" style="width: 58px; height: 58px; background: rgba(255,255,255,0.25); border-radius: 18px; backdrop-filter: blur(8px);">
+            <img src="/assets/kids/icon-speaking-duo.svg" alt="Speaking Studio" style="width: 48px; height: 48px; object-fit: contain;" />
+          </div>
+          <div>
+            <div class="d-flex align-center ga-2 flex-wrap">
+              <span class="text-subtitle-1 text-sm-h5 font-weight-black tracking-tight leading-tight">SPEAKING STUDIO 🎙️</span>
+              <span class="kids-pill-badge kids-pill-gold text-caption">⭐ AI Voice Coach</span>
+            </div>
+            <div class="text-caption font-weight-medium" style="opacity: 0.95;">
+              Pick a fun topic or sentence, speak clearly, and earn star badges!
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex align-center ga-2">
+          <button
+            class="kids-btn-pill kids-btn-white kids-btn-sm font-weight-black"
+            @click="replaySpeakingTour"
+          >
+            <v-icon size="small" color="amber-darken-3">mdi-lightbulb-on-outline</v-icon> Studio Tour
+          </button>
+        </div>
+      </div>
+    </v-card>
+
     <v-row class="ma-0 ga-2">
       <!-- Left column: Input, Mode selection, Library and Recording -->
       <v-col cols="12" md="6" class="pa-1 sticky-left-col">
-        <v-card class="pa-4 bg-white kids-card mb-3">
+        <div class="kids-question-box mb-3">
           <!-- Step 1 Header & Mode Toggle -->
           <div class="d-flex flex-column flex-sm-row align-start align-sm-center justify-space-between mb-3 ga-2">
             <div class="d-flex align-center ga-2">
@@ -266,27 +295,16 @@
             <v-row class="ma-0 w-100 align-center justify-center mb-1" style="max-width: 320px;">
               <v-col cols="3" class="pa-0 d-flex justify-end"></v-col>
               <v-col cols="6" class="pa-0 d-flex justify-center">
-                <div class="d-flex align-center justify-center position-relative" style="width: 76px; height: 76px;">
-                  <v-progress-circular
-                    v-if="isRecording"
-                    indeterminate
-                    color="error"
-                    size="76"
-                    width="3"
-                    class="position-absolute"
-                  />
-                  <v-btn
+                <div class="d-flex align-center justify-center">
+                  <button
                     id="tour-speaking-record-btn"
-                    :color="isRecording ? 'grey-darken-3' : 'error'"
-                    size="large"
-                    icon
-                    class="kids-btn-3d kids-btn-coral elevation-4"
-                    style="width: 66px; height: 66px; z-index: 2; border-radius: 50% !important;"
+                    class="kids-mic-btn"
+                    :class="{ 'is-recording': isRecording }"
                     :disabled="(!isSecure && !isLocalhost) || !topic.trim() || isAnalyzing"
                     @click="isRecording ? stopRecording() : startRecording()"
                   >
-                    <v-icon size="large">{{ isRecording ? 'mdi-stop' : 'mdi-microphone' }}</v-icon>
-                  </v-btn>
+                    <v-icon size="40">{{ isRecording ? 'mdi-stop' : 'mdi-microphone' }}</v-icon>
+                  </button>
                 </div>
               </v-col>
 
@@ -363,10 +381,10 @@
               </div>
             </v-card>
 
-            <!-- Evaluate Action Button (Duolingo Style) -->
+            <!-- Evaluate Action Button (Candy Pill Style - Photo 2) -->
             <button
-              class="kids-btn-3d kids-btn-mint w-100 py-3 text-body-1 font-weight-black mt-2"
-              style="height: 50px;"
+              id="tour-speaking-evaluate-btn"
+              class="kids-btn-pill kids-btn-green kids-btn-lg w-100 py-3.5 text-body-1 font-weight-black mt-3 kids-sparkle-pill"
               :disabled="!audioBlob || !topic.trim() || isAnalyzing"
               @click="analyzeSpeech"
             >
@@ -374,7 +392,7 @@
               {{ isAnalyzing ? 'Evaluating Your Speech...' : 'Evaluate Pronunciation ⭐' }}
             </button>
           </div>
-        </v-card>
+        </div>
       </v-col>
 
       <!-- Right column: Analysis Results -->

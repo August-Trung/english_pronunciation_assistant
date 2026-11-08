@@ -7,29 +7,39 @@
     </div>
 
     <div v-else>
-      <div id="tour-stats-header" class="d-flex align-center justify-space-between mb-3 flex-wrap ga-2">
-        <div class="text-subtitle-1 font-weight-black text-teal-darken-4">AI Progress Analytics Report</div>
-        <div class="d-flex align-center ga-1">
-          <v-btn
-            icon="mdi-lightbulb-on-outline"
-            size="small"
-            variant="text"
-            color="amber-darken-3"
-            title="Xem hướng dẫn Báo cáo tiến độ"
-            @click="replayStatsTour"
-          />
-          <v-btn
-            color="teal"
-            variant="tonal"
-            size="small"
-            class="text-none"
-            prepend-icon="mdi-file-pdf-box"
-            @click="showPdfReport = true"
-          >
-            Export Progress PDF
-          </v-btn>
+      <v-card id="tour-stats-header" class="pa-4 pa-sm-5 mb-4 text-white kids-card-hero kids-gradient-mint">
+        <div class="d-flex align-center justify-space-between flex-wrap ga-3">
+          <div class="d-flex align-center ga-3">
+            <div class="kids-floating d-flex align-center justify-center" style="width: 58px; height: 58px; background: rgba(255,255,255,0.25); border-radius: 18px; backdrop-filter: blur(8px);">
+              <img src="/assets/kids/icon-analytics-duo.svg" alt="Analytics" style="width: 48px; height: 48px; object-fit: contain;" />
+            </div>
+            <div>
+              <div class="d-flex align-center ga-2 flex-wrap">
+                <span class="text-subtitle-1 text-sm-h5 font-weight-black tracking-tight leading-tight">AI PROGRESS ANALYTICS 📊</span>
+                <span class="kids-pill-badge kids-pill-gold text-caption">⭐ Growth Dashboard</span>
+              </div>
+              <div class="text-caption font-weight-medium" style="opacity: 0.95;">
+                Track your pronunciation journey, practice streaks, and detailed skill radar!
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex align-center ga-2">
+            <button
+              class="kids-btn-pill kids-btn-white kids-btn-sm font-weight-black"
+              @click="replayStatsTour"
+            >
+              <v-icon size="small" color="amber-darken-3">mdi-lightbulb-on-outline</v-icon> Tour
+            </button>
+            <button
+              class="kids-btn-pill kids-btn-white kids-btn-sm font-weight-black"
+              @click="showPdfReport = true"
+            >
+              <v-icon size="small">mdi-file-pdf-box</v-icon> Export Progress PDF
+            </button>
+          </div>
         </div>
-      </div>
+      </v-card>
 
       <!-- Streak Badge -->
       <v-card id="tour-stats-streak" v-if="streak > 0" border flat class="mb-4 pa-3 text-center bg-info text-white" rounded="lg">

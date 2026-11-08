@@ -53,25 +53,24 @@
       <!-- LEFT COLUMN: Practice & Recording Studio (Col 7 / 8) -->
       <!-- ============================================== -->
       <v-col cols="12" md="7" lg="8" class="pa-0">
-        <!-- Active Sample Sentence Box (Kids Bubbly Card) -->
-        <v-card class="pa-5 mb-4 text-center kids-card" style="background: linear-gradient(135deg, #FFFDE7 0%, #E1F5FE 100%) !important; border: 2.5px solid #81D4FA !important;">
-          <div class="d-flex align-center justify-space-between mb-3">
-            <div class="d-flex align-center ga-2">
-              <span class="kids-pill-badge kids-pill-purple">
-                <v-icon size="small">mdi-sparkles</v-icon> Model Sentence
-              </span>
+        <!-- Active Sample Sentence Box (Photo 1 & 2 Buttery Yellow Question Box) -->
+        <div class="kids-question-box text-center mb-4">
+          <div class="d-flex align-center justify-space-between mb-3 flex-wrap ga-2">
+            <div class="kids-question-header-pill">
+              <v-icon size="small">mdi-headphones</v-icon>
+              <span>MODEL SHADOWING SENTENCE</span>
             </div>
-            <span class="kids-pill-badge kids-pill-gold text-uppercase font-weight-black">
-              ⭐ Level: {{ selectedLevel }}
+            <span class="kids-badge-bubble badge-yellow">
+              ⭐ {{ selectedLevel }}
             </span>
           </div>
 
-          <div class="text-h5 text-sm-h4 font-weight-black text-indigo-darken-4 mb-2 px-2" style="line-height: 1.35; letter-spacing: -0.3px;">
+          <div class="text-h4 text-sm-h3 font-weight-black text-indigo-darken-4 my-3 px-2" style="line-height: 1.35; letter-spacing: -0.3px;">
             "{{ currentSentence.text }}"
           </div>
 
           <div class="d-flex flex-column align-center ga-1 mb-4">
-            <span class="text-subtitle-1 text-primary-darken-2 font-weight-bold font-italic">
+            <span class="text-subtitle-1 text-primary-darken-2 font-weight-black font-italic">
               /{{ currentSentence.ipa }}/
             </span>
             <span class="kids-pill-badge kids-pill-mint mt-1">
@@ -80,7 +79,7 @@
             </span>
           </div>
 
-          <!-- Audio Accent & Playback Controls -->
+          <!-- Audio Accent & Playback Candy Pill Controls (Reference Photo 2) -->
           <div class="d-flex align-center justify-center ga-3 flex-wrap pt-3 border-t">
             <v-chip-group v-model="ttsAccent" mandatory density="compact" color="primary" class="mr-2">
               <v-chip value="en-GB" size="small" class="font-weight-black" variant="tonal">🇬🇧 UK Accent</v-chip>
@@ -89,48 +88,37 @@
 
             <button
               id="tour-shadowing-sample-btn"
-              class="kids-btn-3d kids-btn-sky px-4 py-2 text-body-2 font-weight-black"
+              class="kids-btn-pill kids-btn-blue px-5 py-2 text-body-1 font-weight-black"
               @click="playSampleTTS"
             >
-              <v-icon size="small" class="mr-1">mdi-volume-high</v-icon> Listen Sample 🎧
+              <v-icon size="small">mdi-volume-high</v-icon> Listen Sample 🎧
             </button>
             <button
-              class="kids-btn-3d kids-btn-purple px-4 py-2 text-body-2 font-weight-black"
+              class="kids-btn-pill kids-btn-purple px-5 py-2 text-body-1 font-weight-black"
               :disabled="isGeneratingAI"
               @click="generateAISentence"
             >
-              <v-icon size="small" class="mr-1">mdi-auto-fix</v-icon> New AI Sentence ✨
+              <v-icon size="small">mdi-auto-fix</v-icon> New AI Sentence ✨
             </button>
           </div>
-        </v-card>
+        </div>
 
-        <!-- Micro Studio Section (Kids Chunky 3D Bouncy Mic) -->
-        <v-card class="pa-5 mb-4 text-center bg-white kids-card">
+        <!-- Micro Studio Section (Chunky 3D Candy Mic) -->
+        <div class="kids-card pa-5 mb-4 text-center bg-white">
           <div class="text-subtitle-1 font-weight-black text-indigo-darken-4 mb-2">
             {{ isRecording ? '🎙️ Recording Your Voice! Tap the big button when done:' : '🎤 Tap the Big Microphone below and speak aloud:' }}
           </div>
 
-          <div class="d-flex align-center justify-center position-relative mx-auto my-3" style="width: 90px; height: 90px;">
-            <v-progress-circular
-              v-if="isRecording || isAnalyzing"
-              indeterminate
-              color="error"
-              size="90"
-              width="5"
-              class="position-absolute"
-            />
-            <v-btn
+          <div class="d-flex align-center justify-center my-3">
+            <button
               id="tour-shadowing-record-btn"
-              :color="isRecording ? 'grey-darken-4' : 'error'"
-              icon
-              class="kids-btn-3d elevation-6"
-              :class="isRecording ? 'kids-btn-coral' : 'kids-btn-coral'"
-              style="width: 76px; height: 76px; z-index: 2; border-radius: 50% !important;"
+              class="kids-mic-btn"
+              :class="{ 'is-recording': isRecording }"
               :disabled="isAnalyzing"
               @click="isRecording ? stopRecording() : startRecording()"
             >
-              <v-icon size="36">{{ isRecording ? 'mdi-stop' : 'mdi-microphone' }}</v-icon>
-            </v-btn>
+              <v-icon size="42">{{ isRecording ? 'mdi-stop' : 'mdi-microphone' }}</v-icon>
+            </button>
           </div>
 
           <div v-if="isRecording" class="text-subtitle-2 text-error font-weight-black mt-2 d-flex align-center justify-center ga-2">
@@ -141,7 +129,7 @@
           <div v-if="isAnalyzing" class="text-subtitle-2 text-primary font-weight-black animate-pulse mt-2">
             🤖 AI Buddy is listening and scoring your intonation...
           </div>
-        </v-card>
+        </div>
 
         <!-- Error Alert -->
         <v-card v-if="errorMessage" border flat rounded="lg" class="pa-3 mb-4 bg-orange-lighten-5 text-center">
@@ -495,44 +483,42 @@
             </v-card>
           </template>
 
-          <!-- Companion Section B: Quick Model Sentence Playlist / Practice Queue (Kids Theme) -->
-          <v-card class="pa-4 bg-white kids-card mb-3">
+          <!-- Companion Section B: Practice Queue & Level Sentence Picker (Photo 3 Chunky Cards with Number Badges) -->
+          <div id="tour-shadowing-queue-panel" class="kids-card pa-4 bg-white mb-3">
             <div class="d-flex align-center justify-space-between mb-3">
               <div class="text-subtitle-2 font-weight-black text-indigo-darken-4 d-flex align-center ga-2">
-                <img src="/assets/kids/icon-flashcards-duo.svg" alt="Queue" style="width: 26px; height: 26px; object-fit: contain;" />
+                <img src="/assets/kids/icon-flashcards-duo.svg" alt="Queue" style="width: 28px; height: 28px; object-fit: contain;" />
                 <span>PRACTICE MISSIONS ({{ (sampleSentences[selectedLevel] || []).length }})</span>
               </div>
-              <span class="kids-pill-badge kids-pill-sky text-uppercase">
+              <span class="kids-badge-bubble badge-green">
                 ⭐ {{ selectedLevel }}
               </span>
             </div>
 
-            <v-list density="compact" class="pa-0">
-              <v-list-item
+            <div class="d-flex flex-column ga-2">
+              <div
                 v-for="(s, s_idx) in (sampleSentences[selectedLevel] || [])"
                 :key="s_idx"
-                rounded="lg"
-                class="mb-1 border cursor-pointer"
-                :class="currentSentence.text === s.text ? 'bg-teal-lighten-5 border-teal' : 'bg-grey-lighten-5'"
+                class="kids-choice-card"
+                :class="{ 'is-selected': currentSentence.text === s.text }"
+                style="padding: 10px 14px !important; border-radius: 14px !important;"
                 @click="selectSentence(s, s_idx)"
               >
-                <template #prepend>
-                  <v-avatar size="24" :color="currentSentence.text === s.text ? 'teal' : 'grey-lighten-2'" class="mr-2">
-                    <v-icon size="x-small" :color="currentSentence.text === s.text ? 'white' : 'grey-darken-2'">
-                      {{ currentSentence.text === s.text ? 'mdi-waveform' : 'mdi-play-circle-outline' }}
-                    </v-icon>
-                  </v-avatar>
-                </template>
-
-                <v-list-item-title class="font-weight-bold text-caption text-truncate" :class="currentSentence.text === s.text ? 'text-teal-darken-4' : 'text-grey-darken-3'">
-                  {{ s.text }}
-                </v-list-item-title>
-                <v-list-item-subtitle class="text-caption text-grey" style="font-size: 10px;">
-                  /{{ s.ipa }}/
-                </v-list-item-subtitle>
-              </v-list-item>
-            </v-list>
-          </v-card>
+                <span class="kids-choice-num" style="width: 32px; height: 32px; font-size: 0.95rem;">{{ s_idx + 1 }}</span>
+                <div class="flex-grow-1 overflow-hidden">
+                  <div class="text-body-2 font-weight-black text-truncate">
+                    {{ s.text }}
+                  </div>
+                  <div class="text-caption text-grey" style="font-size: 11px;">
+                    /{{ s.ipa }}/
+                  </div>
+                </div>
+                <v-icon :color="currentSentence.text === s.text ? 'primary' : 'grey-lighten-1'" size="small">
+                  {{ currentSentence.text === s.text ? 'mdi-volume-high' : 'mdi-play-circle-outline' }}
+                </v-icon>
+              </div>
+            </div>
+          </div>
         </div>
       </v-col>
     </v-row>

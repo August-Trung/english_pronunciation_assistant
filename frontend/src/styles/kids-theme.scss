@@ -1,98 +1,108 @@
 // ==============================================================================
-// FLUENT KIDS THEME - Duolingo Flat Kawaii / Cartoon Vector Design System
-// Tailored for primary school learners (Cấp 1): Chunky Bevels, Playful Colors
+// FLUENT KIDS THEME - Kid-Friendly Gamified Design System
+// Tailored for primary school learners: Chunky 3D Pills, Bevels, Butter Yellow Question Boxes,
+// Option Cards with Number Badges, and Rich Playful Candy Palettes (Duolingo / Blooket / Gimkit style)
 // ==============================================================================
 
 :root {
-  // Duolingo Signature Colors
-  --duo-green: #58CC02;
-  --duo-green-depth: #58A700;
-  --duo-blue: #1CB0F6;
-  --duo-blue-depth: #1899D6;
-  --duo-gold: #FFC800;
-  --duo-gold-depth: #E5A500;
-  --duo-coral: #FF4B4B;
-  --duo-coral-depth: #EA2B2B;
-  --duo-purple: #CE82FF;
-  --duo-purple-depth: #A559D9;
-  --duo-orange: #FF9600;
-  --duo-orange-depth: #CC7800;
-  
-  --kids-bg-soft: #F7F9FC;
-  --kids-card-border: #E5E5E5;
-  --kids-radius-card: 20px;
-  --kids-radius-btn: 16px;
+  // Vibrant Candy Action Palettes
+  --candy-green: #22C55E;
+  --candy-green-light: #4ADE80;
+  --candy-green-depth: #15803D;
+
+  --candy-blue: #00B4D8;
+  --candy-blue-light: #38BDF8;
+  --candy-blue-depth: #0284C7;
+
+  --candy-purple: #8B5CF6;
+  --candy-purple-light: #A78BFA;
+  --candy-purple-depth: #6D28D9;
+
+  --candy-yellow: #FBBF24;
+  --candy-yellow-light: #FDE047;
+  --candy-yellow-depth: #D97706;
+
+  --candy-coral: #EF4444;
+  --candy-coral-light: #F87171;
+  --candy-coral-depth: #B91C1C;
+
+  --kids-bg-soft: #F0F8FF;
+  --kids-card-border: #E2E8F0;
+  --kids-border-dark: #1E293B;
+  --kids-radius-card: 24px;
+  --kids-radius-btn: 9999px;
   --kids-radius-pill: 9999px;
 }
 
-// Global Application Background
+// Global Application Background (Soft, Fresh Sky/Ocean Tint)
 .v-application {
   background-color: var(--kids-bg-soft) !important;
+  color: #1E293B !important;
 }
 
 .v-navigation-drawer {
   background: #FFFFFF !important;
-  border-right: 2px solid #E5E5E5 !important;
+  border-right: 2.5px solid #E2E8F0 !important;
 }
 
 .v-app-bar {
   background: #FFFFFF !important;
-  border-bottom: 2px solid #E5E5E5 !important;
+  border-bottom: 2.5px solid #E2E8F0 !important;
 }
 
 // ------------------------------------------------------------------------------
-// Gradients & Duolingo Cards
+// Gradients & Playful Hero Banners
 // ------------------------------------------------------------------------------
 .kids-gradient-sky {
-  background: linear-gradient(135deg, #1CB0F6 0%, #0091EA 100%) !important;
+  background: linear-gradient(135deg, #00B4D8 0%, #0284C7 100%) !important;
   color: #FFFFFF !important;
 }
 
 .kids-gradient-purple {
-  background: linear-gradient(135deg, #CE82FF 0%, #9C27B0 100%) !important;
+  background: linear-gradient(135deg, #A855F7 0%, #7C3AED 100%) !important;
   color: #FFFFFF !important;
 }
 
 .kids-gradient-gold {
-  background: linear-gradient(135deg, #FFD900 0%, #FF9600 100%) !important;
-  color: #3E2723 !important;
+  background: linear-gradient(135deg, #FBBF24 0%, #EA580C 100%) !important;
+  color: #FFFFFF !important;
 }
 
 .kids-gradient-coral {
-  background: linear-gradient(135deg, #FF6B6B 0%, #FF4B4B 100%) !important;
+  background: linear-gradient(135deg, #F87171 0%, #EF4444 100%) !important;
   color: #FFFFFF !important;
 }
 
 .kids-gradient-mint {
-  background: linear-gradient(135deg, #7BE426 0%, #58CC02 100%) !important;
+  background: linear-gradient(135deg, #4ADE80 0%, #16A34A 100%) !important;
   color: #FFFFFF !important;
 }
 
 // ------------------------------------------------------------------------------
-// Duolingo Style Chunky Cards (Bottom 4px Bevel)
+// Chunky Cards & Hero Headers (Bottom 4px - 5px Bevel)
 // ------------------------------------------------------------------------------
 .kids-card {
   border-radius: var(--kids-radius-card) !important;
-  border: 2px solid var(--kids-card-border) !important;
-  border-bottom: 4px solid var(--kids-card-border) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+  border: 2.5px solid #E2E8F0 !important;
+  border-bottom: 5px solid #CBD5E1 !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04) !important;
   background-color: #FFFFFF !important;
   transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease !important;
   overflow: hidden;
 
   &.kids-card-interactive:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06) !important;
-    border-color: #BAE3FF !important;
-    border-bottom-color: #84C9FF !important;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08) !important;
+    border-color: #BAE6FD !important;
+    border-bottom-color: #7DD3FC !important;
   }
 }
 
 .kids-card-hero {
-  border-radius: 22px !important;
+  border-radius: 26px !important;
   border: none !important;
-  border-bottom: 5px solid rgba(0, 0, 0, 0.18) !important;
-  box-shadow: 0 10px 24px rgba(28, 176, 246, 0.2) !important;
+  border-bottom: 6px solid rgba(0, 0, 0, 0.18) !important;
+  box-shadow: 0 12px 28px rgba(0, 180, 216, 0.22) !important;
   position: relative;
   overflow: hidden;
 
@@ -101,82 +111,351 @@
     position: absolute;
     top: -40px;
     right: -40px;
-    width: 140px;
-    height: 140px;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.25) 0%, transparent 70%);
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.28) 0%, transparent 70%);
     border-radius: 50%;
     pointer-events: none;
   }
 }
 
 // ------------------------------------------------------------------------------
-// Duolingo Iconic 3D Press Action Buttons (Chunky 4px Bottom Bevel)
+// Question Containers (From Reference Photo 1 & 2)
+// Warm Buttery Yellow / Cream Box with Chunky Golden Border & Bevel
 // ------------------------------------------------------------------------------
+.kids-question-box {
+  background: #FFFDF0 !important;
+  border: 3.5px solid #FCD34D !important;
+  border-bottom: 6px solid #F59E0B !important;
+  border-radius: 28px !important;
+  box-shadow: 0 10px 24px rgba(245, 158, 11, 0.12) !important;
+  padding: 24px !important;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.kids-question-header-pill {
+  background: linear-gradient(180deg, #A78BFA 0%, #7C3AED 100%) !important;
+  border-bottom: 4px solid #5B21B6 !important;
+  border-radius: 9999px !important;
+  color: #FFFFFF !important;
+  padding: 8px 24px !important;
+  font-weight: 800 !important;
+  font-size: 1.05rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  box-shadow: 0 6px 14px rgba(124, 58, 237, 0.25) !important;
+}
+
+// ------------------------------------------------------------------------------
+// Multiple-Choice Option Cards (From Reference Photo 3 - Blooket / Gimkit Style)
+// Rounded Cards with Slate Dark Border, Number Badges [ 1 ], [ 2 ], [ 3 ], [ 4 ]
+// ------------------------------------------------------------------------------
+.kids-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.kids-choice-card {
+  border-radius: 18px !important;
+  border: 3px solid #334155 !important;
+  border-bottom: 5px solid #0F172A !important;
+  background: #FFFFFF !important;
+  padding: 14px 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  font-weight: 800 !important;
+  font-size: 1.1rem !important;
+  color: #1E293B !important;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease !important;
+  user-select: none;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
+  }
+
+  &:active {
+    transform: translateY(2px) !important;
+    border-bottom-width: 2px !important;
+  }
+
+  .kids-choice-num {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border: 2.5px solid #334155;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 1.05rem;
+    margin-right: 14px;
+    transition: all 0.12s ease;
+  }
+
+  // Active / Selected State (Cyan Glow Outline from Photo 3)
+  &.is-selected {
+    background: #E0F2FE !important;
+    border-color: #0284C7 !important;
+    border-bottom-color: #0369A1 !important;
+    color: #0284C7 !important;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.28) !important;
+
+    .kids-choice-num {
+      border-color: #0284C7;
+      background: #0284C7;
+      color: #FFFFFF;
+    }
+  }
+
+  // Correct State
+  &.is-correct {
+    background: #DCFCE7 !important;
+    border-color: #16A34A !important;
+    border-bottom-color: #15803D !important;
+    color: #15803D !important;
+
+    .kids-choice-num {
+      border-color: #16A34A;
+      background: #16A34A;
+      color: #FFFFFF;
+    }
+  }
+
+  // Wrong State
+  &.is-wrong {
+    background: #FEE2E2 !important;
+    border-color: #DC2626 !important;
+    border-bottom-color: #B91C1C !important;
+    color: #B91C1C !important;
+
+    .kids-choice-num {
+      border-color: #DC2626;
+      background: #DC2626;
+      color: #FFFFFF;
+    }
+  }
+}
+
+// ------------------------------------------------------------------------------
+// Category / Level Pill Badges (From Reference Photo 3)
+// ------------------------------------------------------------------------------
+.kids-badge-bubble {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 2.5px solid #0F172A !important;
+  border-radius: 9999px !important;
+  font-weight: 900 !important;
+  font-size: 0.8rem !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+  padding: 4px 16px !important;
+  background: #BAE6FD;
+  color: #0F172A;
+
+  &.badge-white {
+    background: #FFFFFF;
+  }
+  &.badge-yellow {
+    background: #FEF08A;
+  }
+  &.badge-purple {
+    background: #E9D5FF;
+  }
+  &.badge-green {
+    background: #BBF7D0;
+  }
+}
+
+// Chunky Progress / Timer Bar (Photo 3)
+.kids-timer-bar {
+  height: 16px;
+  border-radius: 9999px;
+  border: 2.5px solid #0F172A;
+  background: #FEF08A;
+  overflow: hidden;
+  position: relative;
+
+  .kids-timer-fill {
+    height: 100%;
+    background: #22C55E;
+    border-radius: 9999px;
+    transition: width 0.3s ease;
+  }
+}
+
+// ------------------------------------------------------------------------------
+// CANDY PILL 3D ACTION BUTTONS (From Reference Photo 2)
+// Rounded Pill (border-radius: 9999px), 4px-5px Bottom Bevel, Bold Font
+// ------------------------------------------------------------------------------
+.kids-btn-pill,
 .kids-btn-3d {
   position: relative !important;
-  border-radius: var(--kids-radius-btn) !important;
+  border-radius: 9999px !important;
   font-weight: 800 !important;
-  letter-spacing: 0.3px !important;
+  font-size: 0.96rem !important;
+  letter-spacing: 0.2px !important;
   text-transform: none !important;
+  padding: 10px 24px !important;
   border: none !important;
-  border-bottom: 4px solid var(--btn-shadow, #1899D6) !important;
+  border-bottom: 4px solid var(--btn-shadow, #0284C7) !important;
   outline: none !important;
   cursor: pointer;
   transform: translateY(0);
-  transition: transform 0.1s ease, border-bottom 0.1s ease !important;
+  transition: transform 0.1s ease, border-bottom 0.1s ease, filter 0.1s ease !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   gap: 8px !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
+  user-select: none;
 
   &:hover {
     filter: brightness(1.05);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(3px) !important;
+    border-bottom: 1px solid var(--btn-shadow, #0284C7) !important;
+    margin-bottom: 3px;
+  }
+
+  // Small variant
+  &.kids-btn-sm {
+    padding: 6px 16px !important;
+    font-size: 0.85rem !important;
+    border-bottom-width: 3px !important;
+    &:active {
+      transform: translateY(2px) !important;
+      border-bottom-width: 1px !important;
+    }
+  }
+
+  // Large variant
+  &.kids-btn-lg {
+    padding: 14px 32px !important;
+    font-size: 1.12rem !important;
+    border-bottom-width: 5px !important;
+    &:active {
+      transform: translateY(4px) !important;
+      border-bottom-width: 1px !important;
+    }
+  }
+
+  // Green Candy Pill (Submit / Next / Next Question - Image 2)
+  &.kids-btn-green,
+  &.kids-btn-mint {
+    background: linear-gradient(180deg, #4ADE80 0%, #22C55E 100%) !important;
+    color: #FFFFFF !important;
+    --btn-shadow: #15803D;
+    border-bottom-color: #15803D !important;
+  }
+
+  // Blue / Cyan Candy Pill (Listen / Sample / Play / Replay - Image 2)
+  &.kids-btn-blue,
+  &.kids-btn-sky {
+    background: linear-gradient(180deg, #38BDF8 0%, #00B4D8 100%) !important;
+    color: #FFFFFF !important;
+    --btn-shadow: #0284C7;
+    border-bottom-color: #0284C7 !important;
+  }
+
+  // Purple Candy Pill (Audio / Nghe lại / AI Prompt - Image 2)
+  &.kids-btn-purple {
+    background: linear-gradient(180deg, #A855F7 0%, #8B5CF6 100%) !important;
+    color: #FFFFFF !important;
+    --btn-shadow: #6D28D9;
+    border-bottom-color: #6D28D9 !important;
+  }
+
+  // Yellow / Gold Candy Pill (Hint / Stars / Bonus)
+  &.kids-btn-gold,
+  &.kids-btn-yellow {
+    background: linear-gradient(180deg, #FDE047 0%, #F59E0B 100%) !important;
+    color: #451A03 !important;
+    --btn-shadow: #B45309;
+    border-bottom-color: #B45309 !important;
+  }
+
+  // Coral / Red Candy Pill (Record / Stop / Danger)
+  &.kids-btn-coral,
+  &.kids-btn-red {
+    background: linear-gradient(180deg, #F87171 0%, #EF4444 100%) !important;
+    color: #FFFFFF !important;
+    --btn-shadow: #B91C1C;
+    border-bottom-color: #B91C1C !important;
+  }
+
+  // Cream / White Candy Pill (Secondary / Back / Về kho game - Image 2)
+  &.kids-btn-white,
+  &.kids-btn-cream {
+    background: #FFFFFF !important;
+    color: #334155 !important;
+    border: 2.5px solid #E2E8F0 !important;
+    border-bottom: 4px solid #CBD5E1 !important;
+    --btn-shadow: #CBD5E1;
+  }
+}
+
+// Sparkle rays surrounding next button (Image 2)
+.kids-sparkle-pill {
+  position: relative;
+  &::before, &::after {
+    content: '✨';
+    font-size: 1rem;
+    animation: kids-sparkle-anim 1.5s infinite alternate ease-in-out;
+  }
+}
+
+@keyframes kids-sparkle-anim {
+  0% { transform: scale(0.8) rotate(-10deg); opacity: 0.7; }
+  100% { transform: scale(1.2) rotate(15deg); opacity: 1; }
+}
+
+// Giant 3D Circular Microphone Button
+.kids-mic-btn {
+  width: 82px !important;
+  height: 82px !important;
+  min-width: 82px !important;
+  border-radius: 9999px !important;
+  background: linear-gradient(180deg, #F87171 0%, #EF4444 100%) !important;
+  border: none !important;
+  border-bottom: 6px solid #B91C1C !important;
+  box-shadow: 0 10px 24px rgba(239, 68, 68, 0.35) !important;
+  color: #FFFFFF !important;
+  cursor: pointer;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: transform 0.12s ease, border-bottom 0.12s ease !important;
+
+  &:hover {
+    transform: scale(1.05) translateY(-2px);
+    box-shadow: 0 14px 28px rgba(239, 68, 68, 0.45) !important;
   }
 
   &:active {
     transform: translateY(4px) !important;
-    border-bottom: 0px solid transparent !important;
-    margin-bottom: 4px;
+    border-bottom-width: 2px !important;
   }
 
-  // Duolingo Button Color Variants
-  &.kids-btn-sky {
-    background: var(--duo-blue) !important;
-    color: #FFFFFF !important;
-    --btn-shadow: var(--duo-blue-depth);
+  &.is-recording {
+    background: linear-gradient(180deg, #334155 0%, #0F172A 100%) !important;
+    border-bottom-color: #020617 !important;
+    animation: kids-mic-pulse 1.2s infinite ease-in-out;
   }
+}
 
-  &.kids-btn-gold {
-    background: var(--duo-gold) !important;
-    color: #4A3B00 !important;
-    --btn-shadow: var(--duo-gold-depth);
-  }
-
-  &.kids-btn-coral {
-    background: var(--duo-coral) !important;
-    color: #FFFFFF !important;
-    --btn-shadow: var(--duo-coral-depth);
-  }
-
-  &.kids-btn-mint {
-    background: var(--duo-green) !important;
-    color: #FFFFFF !important;
-    --btn-shadow: var(--duo-green-depth);
-  }
-
-  &.kids-btn-purple {
-    background: var(--duo-purple) !important;
-    color: #FFFFFF !important;
-    --btn-shadow: var(--duo-purple-depth);
-  }
-
-  &.kids-btn-white {
-    background: #FFFFFF !important;
-    color: #4B4B4B !important;
-    border: 2px solid #E5E5E5 !important;
-    border-bottom: 4px solid #CECECE !important;
-    --btn-shadow: #CECECE;
-  }
+@keyframes kids-mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+  50% { box-shadow: 0 0 0 16px rgba(239, 68, 68, 0); }
 }
 
 // ------------------------------------------------------------------------------
@@ -186,50 +465,50 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 14px;
-  border-radius: var(--kids-radius-pill);
+  padding: 6px 16px;
+  border-radius: 9999px;
   font-weight: 800;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   letter-spacing: 0.2px;
   border: 2px solid transparent;
 
   &.kids-pill-gold {
-    background-color: #FFF9E6;
-    color: #9C6E00;
-    border-color: #FFDE7A;
+    background-color: #FEF3C7;
+    color: #92400E;
+    border-color: #FCD34D;
   }
 
   &.kids-pill-sky {
-    background-color: #E6F6FE;
-    color: #0E77A8;
-    border-color: #84D8FF;
+    background-color: #E0F2FE;
+    color: #0369A1;
+    border-color: #7DD3FC;
   }
 
   &.kids-pill-mint {
-    background-color: #EDFAEE;
-    color: #388E00;
-    border-color: #A3EA82;
+    background-color: #DCFCE7;
+    color: #15803D;
+    border-color: #86EFAC;
   }
 
   &.kids-pill-purple {
-    background-color: #F8EDFF;
-    color: #7925AB;
-    border-color: #E3B4FF;
+    background-color: #F3E8FF;
+    color: #6B21A8;
+    border-color: #D8B4FE;
   }
 
   &.kids-pill-coral {
-    background-color: #FFEEEE;
-    color: #B31D1D;
-    border-color: #FFA3A3;
+    background-color: #FEE2E2;
+    color: #991B1B;
+    border-color: #FCA5A5;
   }
 }
 
 // ------------------------------------------------------------------------------
-// Duolingo Vector Sidebar Stickers
+// Vector Sidebar Stickers & Active States
 // ------------------------------------------------------------------------------
 .kids-sidebar-sticker {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   margin-right: 12px;
   flex-shrink: 0;
   display: block;
@@ -237,15 +516,15 @@
 }
 
 .sidebar-item-active {
-  background: #E8F5FE !important;
-  color: #1CB0F6 !important;
-  border-radius: 16px !important;
+  background: #E0F2FE !important;
+  color: #0284C7 !important;
+  border-radius: 18px !important;
   font-weight: 900 !important;
-  border: 2px solid #84D8FF !important;
-  border-bottom: 4px solid #1CB0F6 !important;
+  border: 2.5px solid #7DD3FC !important;
+  border-bottom: 5px solid #0284C7 !important;
 
   .kids-sidebar-sticker {
-    transform: scale(1.15) rotate(4deg);
+    transform: scale(1.18) rotate(5deg);
   }
 }
 
@@ -254,18 +533,8 @@
 }
 
 // ------------------------------------------------------------------------------
-// Cheerful Confetti / Star Animations
+// Animations
 // ------------------------------------------------------------------------------
-@keyframes kids-star-pop {
-  0% { transform: scale(0.6) rotate(-10deg); opacity: 0; }
-  60% { transform: scale(1.2) rotate(10deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0); opacity: 1; }
-}
-
-.kids-pop-in {
-  animation: kids-star-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-
 @keyframes kids-float-gentle {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-5px); }

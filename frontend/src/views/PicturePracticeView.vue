@@ -19,24 +19,18 @@
         </div>
 
         <div class="d-flex align-center ga-2">
-          <v-btn
-            icon="mdi-lightbulb-on-outline"
-            variant="tonal"
-            color="white"
-            size="small"
-            title="Hướng dẫn Picture Studio"
+          <button
+            class="kids-btn-pill kids-btn-white kids-btn-sm font-weight-black"
             @click="replayPictureTour"
-          />
-          <v-btn
-            color="white"
-            variant="flat"
-            size="small"
-            class="text-blue-darken-3 font-weight-black text-none"
-            prepend-icon="mdi-plus-circle"
+          >
+            <v-icon size="small" color="amber-darken-3">mdi-lightbulb-on-outline</v-icon> Tour
+          </button>
+          <button
+            class="kids-btn-pill kids-btn-gold kids-btn-sm font-weight-black"
             @click="openCreateModal"
           >
-            New Scenario
-          </v-btn>
+            <v-icon size="small">mdi-plus-circle</v-icon> New Scenario
+          </button>
         </div>
       </div>
     </v-card>
@@ -247,41 +241,33 @@
               </div>
             </div>
 
-            <!-- Microphone Controls -->
+            <!-- Microphone Controls (Photo 2 Candy Pills) -->
             <div id="tour-picture-record-btn" class="d-flex flex-column align-center ga-3">
-              <div class="d-flex align-center ga-3 w-100 justify-center">
-                <v-btn
+              <div class="d-flex align-center ga-3 w-100 justify-center flex-wrap">
+                <button
                   v-if="!isRecording"
-                  color="primary"
-                  variant="flat"
-                  size="large"
-                  class="font-weight-black text-none px-8"
-                  prepend-icon="mdi-microphone"
+                  type="button"
+                  class="kids-btn-pill kids-btn-green kids-btn-lg px-8 py-3.5 text-h6 font-weight-black kids-sparkle-pill"
                   @click="startRecording"
                 >
-                  Start Speaking
-                </v-btn>
+                  <v-icon size="medium">mdi-microphone</v-icon> Start Speaking 🎙️
+                </button>
 
                 <template v-else>
-                  <v-btn
-                    color="error"
-                    variant="flat"
-                    size="large"
-                    class="font-weight-black text-none px-6"
-                    prepend-icon="mdi-stop-circle"
+                  <button
+                    type="button"
+                    class="kids-btn-pill kids-btn-coral kids-btn-lg px-6 py-3.5 text-h6 font-weight-black"
                     @click="stopRecording"
                   >
-                    Finish & Submit
-                  </v-btn>
-                  <v-btn
-                    variant="outlined"
-                    color="grey-darken-2"
-                    size="large"
-                    class="font-weight-bold text-none"
+                    <v-icon size="medium">mdi-stop-circle</v-icon> Finish & Submit ⭐
+                  </button>
+                  <button
+                    type="button"
+                    class="kids-btn-pill kids-btn-white kids-btn-lg px-6 py-3.5 text-h6 font-weight-black"
                     @click="cancelRecording"
                   >
                     Cancel
-                  </v-btn>
+                  </button>
                 </template>
               </div>
 
@@ -380,27 +366,21 @@
 
             <!-- Bottom Actions -->
             <div class="d-flex align-center ga-2">
-              <v-btn
-                variant="outlined"
-                color="primary"
-                size="small"
-                class="text-none flex-grow-1 font-weight-bold"
-                prepend-icon="mdi-refresh"
+              <button
+                type="button"
+                class="kids-btn-pill kids-btn-white kids-btn-sm flex-grow-1 font-weight-black"
                 @click="resetChallenge"
               >
-                Try Again
-              </v-btn>
+                <v-icon size="small">mdi-refresh</v-icon> Try Again
+              </button>
 
-              <v-btn
-                variant="flat"
-                color="primary"
-                size="small"
-                class="text-none flex-grow-1 font-weight-bold"
-                prepend-icon="mdi-plus-circle"
+              <button
+                type="button"
+                class="kids-btn-pill kids-btn-blue kids-btn-sm flex-grow-1 font-weight-black"
                 @click="openCreateModal"
               >
-                New Scenario
-              </v-btn>
+                <v-icon size="small">mdi-plus-circle</v-icon> New Scenario
+              </button>
             </div>
           </div>
         </v-card>

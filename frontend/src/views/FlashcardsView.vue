@@ -1,42 +1,37 @@
 <template>
   <v-container fluid class="pa-0 max-width-1400">
-    <!-- Header Banner -->
-    <v-card id="tour-flashcards-banner" border flat class="pa-3 pa-sm-4 mb-4 text-white rounded-lg" style="background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);">
-      <div class="d-flex align-center justify-space-between flex-wrap ga-2">
-        <div class="d-flex align-center ga-2 ga-sm-3">
-          <v-avatar color="white" size="44" class="flex-shrink-0 elevation-1">
-            <v-icon color="indigo-darken-3" size="default">mdi-cards-variant</v-icon>
-          </v-avatar>
+    <!-- Header Banner (Kids Duo / Pixar Theme) -->
+    <v-card id="tour-flashcards-banner" class="pa-4 pa-sm-5 mb-4 text-white kids-card-hero kids-gradient-purple">
+      <div class="d-flex align-center justify-space-between flex-wrap ga-3">
+        <div class="d-flex align-center ga-3">
+          <div class="kids-floating d-flex align-center justify-center" style="width: 58px; height: 58px; background: rgba(255,255,255,0.25); border-radius: 18px; backdrop-filter: blur(8px);">
+            <img src="/assets/kids/icon-flashcards-duo.svg" alt="Flashcards" style="width: 48px; height: 48px; object-fit: contain;" />
+          </div>
           <div>
-            <div class="text-subtitle-1 text-sm-h6 font-weight-black tracking-tight leading-tight">
-              VOCABULARY FLASHCARDS
+            <div class="d-flex align-center ga-2 flex-wrap">
+              <span class="text-subtitle-1 text-sm-h5 font-weight-black tracking-tight leading-tight">VOCABULARY FLASHCARDS 🎴</span>
+              <span class="kids-pill-badge kids-pill-gold text-caption">⭐ Visual SRS Decks</span>
             </div>
-            <div class="text-caption text-indigo-lighten-4">
-              Learn new words faster with picture illustrations and interactive pronunciation practice
+            <div class="text-caption font-weight-medium" style="opacity: 0.95;">
+              Learn new words faster with picture illustrations and interactive pronunciation practice!
             </div>
           </div>
         </div>
 
         <div class="d-flex align-center ga-2">
-          <v-btn
-            icon="mdi-lightbulb-on-outline"
-            size="small"
-            variant="text"
-            color="white"
-            title="Xem hướng dẫn Thẻ từ vựng"
+          <button
+            class="kids-btn-pill kids-btn-white kids-btn-sm font-weight-black"
             @click="replayFlashcardsTour"
-          />
-          <v-btn
+          >
+            <v-icon size="small" color="amber-darken-3">mdi-lightbulb-on-outline</v-icon> Tour
+          </button>
+          <button
             id="tour-flashcards-create-btn"
-            color="white"
-            variant="flat"
-            size="small"
-            class="text-indigo-darken-3 font-weight-black text-none"
-            prepend-icon="mdi-plus-circle"
+            class="kids-btn-pill kids-btn-gold kids-btn-sm font-weight-black"
             @click="showCreateModal = true"
           >
-            Create AI Deck
-          </v-btn>
+            <v-icon size="small">mdi-plus-circle</v-icon> Create AI Deck
+          </button>
         </div>
       </div>
     </v-card>
@@ -109,16 +104,12 @@
               </div>
 
               <div class="d-flex align-center justify-space-between pt-2 border-t mt-2">
-                <v-btn
-                  color="primary"
-                  variant="flat"
-                  size="small"
-                  class="text-none font-weight-bold"
-                  prepend-icon="mdi-play"
+                <button
+                  class="kids-btn-pill kids-btn-blue kids-btn-sm font-weight-black"
                   @click="startStudyDeck(d)"
                 >
-                  Study Deck
-                </v-btn>
+                  <v-icon size="small">mdi-play</v-icon> Study Deck
+                </button>
                 <v-btn
                   color="error"
                   variant="text"
@@ -206,16 +197,12 @@
                     <div class="text-subtitle-1 text-primary font-italic font-weight-bold mb-2">
                       /{{ activeCard.ipa || '...' }}/
                     </div>
-                    <v-btn
-                      color="indigo-darken-2"
-                      variant="tonal"
-                      size="small"
-                      class="text-none font-weight-bold"
-                      prepend-icon="mdi-volume-high"
+                    <button
+                      class="kids-btn-pill kids-btn-purple kids-btn-sm font-weight-black mt-1"
                       @click.stop="playAudio(activeCard.word)"
                     >
-                      Listen Native Audio
-                    </v-btn>
+                      <v-icon size="small">mdi-volume-high</v-icon> Listen Native Audio 🔊
+                    </button>
                   </div>
 
                   <div class="text-caption text-grey mt-2">
@@ -293,29 +280,21 @@
 
             <!-- Navigation Controls Below Card -->
             <div class="d-flex align-center justify-space-between ga-2">
-              <v-btn
-                variant="tonal"
-                color="grey-darken-2"
-                size="small"
-                class="text-none flex-grow-1 font-weight-bold"
-                prepend-icon="mdi-chevron-left"
+              <button
+                class="kids-btn-pill kids-btn-white kids-btn-sm flex-grow-1 font-weight-black"
                 :disabled="activeCardIndex === 0"
                 @click="prevCard"
               >
-                Previous Card
-              </v-btn>
+                <v-icon size="small">mdi-chevron-left</v-icon> Previous Card
+              </button>
 
-              <v-btn
-                variant="flat"
-                color="primary"
-                size="small"
-                class="text-none flex-grow-1 font-weight-bold"
-                append-icon="mdi-chevron-right"
+              <button
+                class="kids-btn-pill kids-btn-blue kids-btn-sm flex-grow-1 font-weight-black"
                 :disabled="activeCardIndex >= activeCards.length - 1"
                 @click="nextCard"
               >
-                Next Card
-              </v-btn>
+                Next Card <v-icon size="small">mdi-chevron-right</v-icon>
+              </button>
             </div>
           </v-col>
 

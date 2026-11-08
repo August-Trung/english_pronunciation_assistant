@@ -1,59 +1,44 @@
 <template>
   <v-container fluid class="pa-0">
-    <!-- Header Banner -->
-    <v-card id="tour-history-header" flat border class="pa-4 pa-md-6 mb-4 bg-white" rounded="lg">
+    <!-- Header Banner (Kids 3D Theme) -->
+    <v-card id="tour-history-header" class="pa-4 pa-sm-5 mb-4 text-white kids-card-hero kids-gradient-sky">
       <div class="d-flex flex-column flex-md-row align-start align-md-center justify-space-between ga-3">
         <div class="d-flex align-center ga-3">
-          <v-avatar color="indigo-lighten-5" size="48" class="text-indigo border flex-shrink-0">
-            <v-icon size="28">mdi-history</v-icon>
-          </v-avatar>
+          <div class="kids-floating d-flex align-center justify-center" style="width: 58px; height: 58px; background: rgba(255,255,255,0.25); border-radius: 18px; backdrop-filter: blur(8px);">
+            <img src="/assets/kids/icon-history-duo.svg" alt="History Log" style="width: 48px; height: 48px; object-fit: contain;" />
+          </div>
           <div>
             <div class="d-flex align-center ga-2 flex-wrap">
-              <h1 class="text-h6 font-weight-black text-indigo-darken-3 tracking-tight mb-0">
-                Student Practice History & Evaluation Logs
-              </h1>
-              <v-chip v-if="userName" size="small" color="indigo" variant="tonal" class="font-weight-black flex-shrink-0">
-                <v-icon start size="x-small">mdi-account-circle</v-icon>
-                {{ userName }}
-              </v-chip>
+              <span class="text-subtitle-1 text-sm-h5 font-weight-black tracking-tight leading-tight">PRACTICE HISTORY & LOGS 📜</span>
+              <span class="kids-pill-badge kids-pill-gold text-caption">⭐ Audio Portfolio</span>
             </div>
-            <p class="text-caption font-weight-medium text-grey-darken-1 mb-0 mt-1">
-              Personalized practice portfolio. Review your past audio recordings, 5-skill AI scores, and export reports.
-            </p>
+            <div class="text-caption font-weight-medium" style="opacity: 0.95;">
+              Review your past audio recordings, 5-skill AI scores, and export progress reports!
+            </div>
           </div>
         </div>
 
-        <!-- Export Actions -->
+        <!-- Export Actions (Photo 2 Candy Pills) -->
         <div id="tour-history-exports" class="d-flex align-center ga-2 flex-wrap">
-          <v-btn
-            icon="mdi-lightbulb-on-outline"
-            size="small"
-            variant="text"
-            color="amber-darken-3"
-            title="Xem hướng dẫn Lịch sử luyện tập"
+          <button
+            class="kids-btn-pill kids-btn-white kids-btn-sm font-weight-black"
             @click="replayHistoryTour"
-          />
-          <v-btn
-            color="secondary"
-            variant="outlined"
-            size="small"
-            class="text-none font-weight-bold"
-            prepend-icon="mdi-file-pdf-box"
+          >
+            <v-icon size="small" color="amber-darken-3">mdi-lightbulb-on-outline</v-icon> Tour
+          </button>
+          <button
+            class="kids-btn-pill kids-btn-white kids-btn-sm font-weight-black"
             @click="showPdfDialog = true"
           >
-            Export PDF Report
-          </v-btn>
-          <v-btn
-            color="primary"
-            variant="flat"
-            size="small"
-            class="text-none font-weight-bold"
-            prepend-icon="mdi-zip-box"
-            :loading="isExportingZip"
+            <v-icon size="small">mdi-file-pdf-box</v-icon> Export PDF
+          </button>
+          <button
+            class="kids-btn-pill kids-btn-gold kids-btn-sm font-weight-black"
+            :disabled="isExportingZip"
             @click="downloadZipArchive"
           >
-            Download ZIP Archive
-          </v-btn>
+            <v-icon size="small">mdi-zip-box</v-icon> Download ZIP
+          </button>
         </div>
       </div>
     </v-card>

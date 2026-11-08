@@ -11,7 +11,7 @@
       </div>
 
       <!-- Universal Sign-In Card -->
-      <v-card border flat class="pa-4 pa-sm-5 bg-white rounded-lg elevation-1 text-left">
+      <div class="pa-4 pa-sm-5 bg-white kids-card text-left">
         <div class="text-subtitle-2 font-weight-black text-purple-darken-3 mb-3 text-center">
           SIGN IN TO YOUR ACCOUNT
         </div>
@@ -78,18 +78,13 @@
             hide-details="auto"
           />
 
-          <v-btn
+          <button
             type="submit"
-            color="purple-darken-3"
-            variant="flat"
-            block
-            height="44"
-            class="font-weight-black text-none mb-3"
-            prepend-icon="mdi-login"
-            :loading="isEmailLoading"
+            class="kids-btn-pill kids-btn-purple kids-btn-lg w-100 py-3 font-weight-black mb-3 text-h6"
+            :disabled="isEmailLoading"
           >
-            Sign In
-          </v-btn>
+            <v-icon size="small">mdi-login</v-icon> Sign In
+          </button>
         </v-form>
 
         <div class="d-flex align-center my-2 ga-2">
@@ -125,7 +120,7 @@
             Start Guest Session
           </v-btn>
         </v-form>
-      </v-card>
+      </div>
 
       <!-- Footer Attribution -->
       <div class="mt-6 border-t pt-4 text-caption text-grey">
